@@ -1591,21 +1591,26 @@ function QuizModule() {
             </CardHeader>
             <CardContent>
               <RadioGroup
-                value={answers[current]?.toString()}
+                value={answers[current] !== undefined ? answers[current].toString() : ""}
                 onValueChange={v => setAnswers(prev => ({ ...prev, [current]: parseInt(v) }))}
                 className="space-y-3"
               >
-                {q.options.map((opt, i) => (
-                  <label
-                    key={i}
-                    className={`flex items-center gap-3 p-4 rounded-xl border cursor-pointer transition-all ${
-                      answers[current] === i ? 'bg-[#48805b]/5 border-[#48805b]/30' : 'border-[#e3dfd8] hover:border-[#48805b]/20'
-                    }`}
-                  >
-                    <RadioGroupItem value={i.toString()} id={`opt-${i}`} />
-                    <Label htmlFor={`opt-${i}`} className="cursor-pointer flex-1">{opt}</Label>
-                  </label>
-                ))}
+                {q.options.map((opt, i) => {
+                  const isSelected = answers[current] === i
+                  return (
+                    <label
+                      key={i}
+                      className={`flex items-center gap-3 p-4 rounded-xl border cursor-pointer transition-all ${
+                        isSelected
+                          ? 'bg-[#48805b]/5 border-[#48805b]/30 ring-1 ring-[#48805b]/20'
+                          : 'border-[#e3dfd8] hover:border-[#48805b]/20 hover:bg-[#48805b]/[0.02]'
+                      }`}
+                    >
+                      <RadioGroupItem value={i.toString()} id={`opt-${current}-${i}`} />
+                      <Label htmlFor={`opt-${current}-${i}`} className="cursor-pointer flex-1">{opt}</Label>
+                    </label>
+                  )
+                })}
               </RadioGroup>
             </CardContent>
             <CardFooter className="flex justify-between">

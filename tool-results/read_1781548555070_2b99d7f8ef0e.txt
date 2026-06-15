@@ -1,0 +1,402 @@
+  2701→                      </Button>
+  2702→                      <Button variant="outline" size="sm" className="flex-1 rounded-md text-[11px] h-8" style={{ borderColor: A.border, color: A.text }} onClick={() => { navigator.clipboard.writeText(qrUrl); toast.success('QR URL copied!') }}>
+  2703→                        <Copy className="w-3 h-3 mr-1" /> Copy URL
+  2704→                      </Button>
+  2705→                    </div>
+  2706→                  </div>
+  2707→                )
+  2708→              })}
+  2709→              {campaigns.filter(c => c.status === 'ACTIVE').length === 0 && (
+  2710→                <div className="col-span-full bg-white border rounded-lg py-16 text-center" style={{ borderColor: A.border }}>
+  2711→                  <QrCode className="w-10 h-10 mx-auto mb-3" style={{ color: A.border }} />
+  2712→                  <p className="text-sm" style={{ color: A.textMuted }}>No active campaigns. Create one to generate QR codes.</p>
+  2713→                </div>
+  2714→              )}
+  2715→            </div>
+  2716→            <div className="bg-white border rounded-lg overflow-hidden" style={{ borderColor: A.border }}>
+  2717→              <div className="px-5 py-3 flex items-center justify-between" style={{ borderBottom: `1px solid ${A.borderLight}` }}>
+  2718→                <h3 className="text-sm font-semibold" style={{ color: A.text }}>Scan History</h3>
+  2719→                <span className="text-[11px] px-2 py-0.5 rounded" style={{ color: A.textSecondary, background: A.bg }}>{scans.length} scans</span>
+  2720→              </div>
+  2721→              <Table>
+  2722→                <TableHeader>
+  2723→                  <TableRow className="hover:bg-transparent" style={{ borderColor: A.borderLight }}>
+  2724→                    <TableHead className="text-[11px]" style={{ color: A.textMuted }}>ID</TableHead>
+  2725→                    <TableHead className="text-[11px]" style={{ color: A.textMuted }}>Campaign</TableHead>
+  2726→                    <TableHead className="text-[11px]" style={{ color: A.textMuted }}>Device</TableHead>
+  2727→                    <TableHead className="text-[11px]" style={{ color: A.textMuted }}>Location</TableHead>
+  2728→                    <TableHead className="text-[11px]" style={{ color: A.textMuted }}>Date</TableHead>
+  2729→                  </TableRow>
+  2730→                </TableHeader>
+  2731→                <TableBody>
+  2732→                  {scans.slice(0, 20).map(s => (
+  2733→                    <TableRow key={s.id} className="hover:bg-[#f8f7f5]" style={{ borderColor: A.borderLight }}>
+  2734→                      <TableCell className="font-mono text-[11px]" style={{ color: A.textMuted }}>{s.id.slice(0, 8)}</TableCell>
+  2735→                      <TableCell className="text-[12px]" style={{ color: A.text }}>{s.campaign_id ? s.campaign_id.slice(0, 8) : '-'}</TableCell>
+  2736→                      <TableCell className="text-[11px]" style={{ color: A.textSecondary }}>{s.device || '-'}</TableCell>
+  2737→                      <TableCell className="text-[11px]" style={{ color: A.textSecondary }}>{s.location || '-'}</TableCell>
+  2738→                      <TableCell className="text-[11px]" style={{ color: A.textMuted }}>{new Date(s.created_at).toLocaleDateString()}</TableCell>
+  2739→                    </TableRow>
+  2740→                  ))}
+  2741→                </TableBody>
+  2742→              </Table>
+  2743→            </div>
+  2744→          </div>
+  2745→        )
+  2746→
+  2747→      case 'orders':
+  2748→        return (
+  2749→          <div className="space-y-4">
+  2750→            <div className="flex items-center justify-between">
+  2751→              <div>
+  2752→                <h2 className="text-base font-semibold" style={{ color: A.text }}>Orders</h2>
+  2753→                <p className="text-[12px]" style={{ color: A.textMuted }}>{orders.length} total orders</p>
+  2754→              </div>
+  2755→              <div className="flex items-center gap-1 p-1 rounded-md border" style={{ borderColor: A.border, background: '#fff' }}>
+  2756→                <button onClick={() => setOrderView('table')} className={`px-3 py-1.5 rounded text-[11px] font-medium transition-colors ${orderView === 'table' ? 'text-white' : ''}`} style={orderView === 'table' ? { background: A.green, color: '#fff' } : { color: A.textSecondary }}>
+  2757→                  <ClipboardList className="w-3.5 h-3.5 inline mr-1" /> Table
+  2758→                </button>
+  2759→                <button onClick={() => setOrderView('kanban')} className={`px-3 py-1.5 rounded text-[11px] font-medium transition-colors ${orderView === 'kanban' ? 'text-white' : ''}`} style={orderView === 'kanban' ? { background: A.green, color: '#fff' } : { color: A.textSecondary }}>
+  2760→                  <Columns3 className="w-3.5 h-3.5 inline mr-1" /> Board
+  2761→                </button>
+  2762→              </div>
+  2763→            </div>
+  2764→
+  2765→            {orderView === 'kanban' ? (
+  2766→              <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
+  2767→                {orderStatuses.map(status => {
+  2768→                  const statusOrders = ordersByKanbanStatus(status)
+  2769→                  const c = statusColors[status] || { text: A.textMuted, bg: A.bg, dot: A.textMuted }
+  2770→                  return (
+  2771→                    <div key={status} className="rounded-lg p-3" style={{ background: A.bg, border: `1px solid ${A.border}` }}>
+  2772→                      <div className="flex items-center justify-between mb-3">
+  2773→                        <div className="flex items-center gap-2">
+  2774→                          <div className="w-2 h-2 rounded-full" style={{ background: c.dot }} />
+  2775→                          <h3 className="text-xs font-semibold" style={{ color: c.text }}>{status}</h3>
+  2776→                        </div>
+  2777→                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded" style={{ color: c.text, background: c.bg }}>{statusOrders.length}</span>
+  2778→                      </div>
+  2779→                      <div className="space-y-2 max-h-[420px] overflow-y-auto">
+  2780→                        {statusOrders.map((o: any) => (
+  2781→                          <div key={o.id} className="bg-white border rounded-lg p-3 cursor-pointer hover:shadow-sm transition-shadow" style={{ borderColor: A.border }} onClick={() => setSelectedOrder(o)}>
+  2782→                            <p className="font-mono text-[9px] mb-1" style={{ color: A.textMuted }}>{o.id.slice(0, 10)}</p>
+  2783→                            <p className="text-[12px] font-medium truncate" style={{ color: A.text }}>{o.user?.name || 'Customer'}</p>
+  2784→                            <div className="flex items-center justify-between mt-2">
+  2785→                              <p className="font-semibold text-[12px]" style={{ color: A.green }}>₹{o.amount?.toLocaleString()}</p>
+  2786→                              <Select value={o.status} onValueChange={async (newStatus) => { await orderService.updateStatus(o.id, newStatus); setOrders(prev => prev.map(p => p.id === o.id ? { ...p, status: newStatus } : p)); toast.success('Status updated') }}>
+  2787→                                <SelectTrigger className="h-5 text-[9px] w-[70px]" style={{ background: A.bg, borderColor: A.border, color: A.textSecondary }} onClick={e => e.stopPropagation()}><SelectValue /></SelectTrigger>
+  2788→                                <SelectContent style={{ background: '#fff', borderColor: A.border }}>
+  2789→                                  <SelectItem value="PENDING" style={{ color: A.text }}>Pending</SelectItem>
+  2790→                                  <SelectItem value="CONFIRMED" style={{ color: A.text }}>Confirmed</SelectItem>
+  2791→                                  <SelectItem value="SHIPPED" style={{ color: A.text }}>Shipped</SelectItem>
+  2792→                                  <SelectItem value="DELIVERED" style={{ color: A.text }}>Delivered</SelectItem>
+  2793→                                  <SelectItem value="CANCELLED" style={{ color: A.text }}>Cancelled</SelectItem>
+  2794→                                </SelectContent>
+  2795→                              </Select>
+  2796→                            </div>
+  2797→                            <p className="text-[9px] mt-1" style={{ color: A.textMuted }}>{new Date(o.created_at).toLocaleDateString()}</p>
+  2798→                          </div>
+  2799→                        ))}
+  2800→                        {statusOrders.length === 0 && <p className="text-[10px] text-center py-6" style={{ color: A.textMuted }}>No orders</p>}
+  2801→                      </div>
+  2802→                    </div>
+  2803→                  )
+  2804→                })}
+  2805→              </div>
+  2806→            ) : (
+  2807→              <div className="bg-white border rounded-lg overflow-hidden" style={{ borderColor: A.border }}>
+  2808→                <Table>
+  2809→                  <TableHeader>
+  2810→                    <TableRow className="hover:bg-transparent" style={{ borderColor: A.borderLight }}>
+  2811→                      <TableHead className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: A.textMuted }}>Order ID</TableHead>
+  2812→                      <TableHead className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: A.textMuted }}>Customer</TableHead>
+  2813→                      <TableHead className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: A.textMuted }}>Amount</TableHead>
+  2814→                      <TableHead className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: A.textMuted }}>Status</TableHead>
+  2815→                      <TableHead className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: A.textMuted }}>Payment</TableHead>
+  2816→                      <TableHead className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: A.textMuted }}>Date</TableHead>
+  2817→                    </TableRow>
+  2818→                  </TableHeader>
+  2819→                  <TableBody>
+  2820→                    {orders.map((o: any) => (
+  2821→                      <TableRow key={o.id} className="hover:bg-[#f8f7f5] cursor-pointer" style={{ borderColor: A.borderLight }} onClick={() => setSelectedOrder(o)}>
+  2822→                        <TableCell className="font-mono text-[11px]" style={{ color: A.textMuted }}>{o.id.slice(0, 10)}</TableCell>
+  2823→                        <TableCell className="text-[12px]" style={{ color: A.text }}>{o.user?.name || 'Customer'}</TableCell>
+  2824→                        <TableCell className="font-semibold text-[12px]" style={{ color: A.green }}>₹{o.amount?.toLocaleString()}</TableCell>
+  2825→                        <TableCell><StatusBadge status={o.status} /></TableCell>
+  2826→                        <TableCell className="text-[11px]" style={{ color: A.textSecondary }}>{o.payment_method || 'N/A'}</TableCell>
+  2827→                        <TableCell className="text-[11px]" style={{ color: A.textMuted }}>{new Date(o.created_at).toLocaleDateString()}</TableCell>
+  2828→                      </TableRow>
+  2829→                    ))}
+  2830→                  </TableBody>
+  2831→                </Table>
+  2832→              </div>
+  2833→            )}
+  2834→
+  2835→            <Dialog open={!!selectedOrder} onOpenChange={() => setSelectedOrder(null)}>
+  2836→              <DialogContent className="max-w-md" style={{ background: '#fff', borderColor: A.border, color: A.text }}>
+  2837→                <DialogHeader><DialogTitle style={{ color: A.text }}>Order Details</DialogTitle></DialogHeader>
+  2838→                {selectedOrder && (
+  2839→                  <div className="space-y-4">
+  2840→                    <div className="grid grid-cols-2 gap-3 text-sm">
+  2841→                      <div><span className="text-[11px]" style={{ color: A.textMuted }}>Order ID</span><p className="font-mono text-[11px]" style={{ color: A.text }}>{selectedOrder.id}</p></div>
+  2842→                      <div><span className="text-[11px]" style={{ color: A.textMuted }}>Customer</span><p className="font-medium" style={{ color: A.text }}>{selectedOrder.user?.name || selectedOrder.user_id}</p></div>
+  2843→                      <div><span className="text-[11px]" style={{ color: A.textMuted }}>Amount</span><p className="font-bold" style={{ color: A.green }}>₹{selectedOrder.amount?.toLocaleString()}</p></div>
+  2844→                      <div><span className="text-[11px]" style={{ color: A.textMuted }}>Status</span><StatusBadge status={selectedOrder.status} /></div>
+  2845→                      <div><span className="text-[11px]" style={{ color: A.textMuted }}>Payment</span><p className="text-[11px]" style={{ color: A.text }}>{selectedOrder.payment_method || 'N/A'}</p></div>
+  2846→                      <div><span className="text-[11px]" style={{ color: A.textMuted }}>Date</span><p className="text-[11px]" style={{ color: A.text }}>{new Date(selectedOrder.created_at).toLocaleDateString()}</p></div>
+  2847→                    </div>
+  2848→                    <Separator style={{ background: A.border }} />
+  2849→                    <Select value={selectedOrder.status} onValueChange={async (newStatus) => { await orderService.updateStatus(selectedOrder.id, newStatus); setOrders(prev => prev.map(p => p.id === selectedOrder.id ? { ...p, status: newStatus } : p)); setSelectedOrder({ ...selectedOrder, status: newStatus }); toast.success('Status updated') }}>
+  2850→                      <SelectTrigger className="rounded-md" style={{ borderColor: A.border, color: A.text }}><SelectValue /></SelectTrigger>
+  2851→                      <SelectContent style={{ background: '#fff', borderColor: A.border }}>
+  2852→                        <SelectItem value="PENDING" style={{ color: A.text }}>Pending</SelectItem>
+  2853→                        <SelectItem value="CONFIRMED" style={{ color: A.text }}>Confirmed</SelectItem>
+  2854→                        <SelectItem value="SHIPPED" style={{ color: A.text }}>Shipped</SelectItem>
+  2855→                        <SelectItem value="DELIVERED" style={{ color: A.text }}>Delivered</SelectItem>
+  2856→                        <SelectItem value="CANCELLED" style={{ color: A.text }}>Cancelled</SelectItem>
+  2857→                      </SelectContent>
+  2858→                    </Select>
+  2859→                  </div>
+  2860→                )}
+  2861→              </DialogContent>
+  2862→            </Dialog>
+  2863→          </div>
+  2864→        )
+  2865→
+  2866→      case 'analytics':
+  2867→        return (
+  2868→          <div className="space-y-4">
+  2869→            <h2 className="text-base font-semibold" style={{ color: A.text }}>Analytics</h2>
+  2870→            <div className="grid lg:grid-cols-2 gap-4">
+  2871→              <div className="bg-white border rounded-lg p-5" style={{ borderColor: A.border }}>
+  2872→                <h3 className="text-sm font-semibold mb-4" style={{ color: A.text }}>Campaigns by Channel</h3>
+  2873→                <ResponsiveContainer width="100%" height={280}>
+  2874→                  <RechartsBarChart data={campaignsByChannel}>
+  2875→                    <CartesianGrid strokeDasharray="3 3" stroke="#eeebe5" />
+  2876→                    <XAxis dataKey="name" tick={{ fontSize: 10, fill: A.textMuted }} axisLine={{ stroke: A.border }} />
+  2877→                    <YAxis tick={{ fontSize: 10, fill: A.textMuted }} axisLine={{ stroke: A.border }} />
+  2878→                    <Tooltip contentStyle={{ backgroundColor: '#fff', border: `1px solid ${A.border}`, borderRadius: 8, color: A.text, fontSize: 12 }} />
+  2879→                    <Bar dataKey="value" fill={A.lime} radius={[4, 4, 0, 0]} />
+  2880→                  </RechartsBarChart>
+  2881→                </ResponsiveContainer>
+  2882→              </div>
+  2883→              <div className="bg-white border rounded-lg p-5" style={{ borderColor: A.border }}>
+  2884→                <h3 className="text-sm font-semibold mb-4" style={{ color: A.text }}>Scans by Campaign</h3>
+  2885→                <ResponsiveContainer width="100%" height={280}>
+  2886→                  <RechartsBarChart data={scansByCampaign}>
+  2887→                    <CartesianGrid strokeDasharray="3 3" stroke="#eeebe5" />
+  2888→                    <XAxis dataKey="name" tick={{ fontSize: 10, fill: A.textMuted }} axisLine={{ stroke: A.border }} />
+  2889→                    <YAxis tick={{ fontSize: 10, fill: A.textMuted }} axisLine={{ stroke: A.border }} />
+  2890→                    <Tooltip contentStyle={{ backgroundColor: '#fff', border: `1px solid ${A.border}`, borderRadius: 8, color: A.text, fontSize: 12 }} />
+  2891→                    <Bar dataKey="value" fill={A.green} radius={[4, 4, 0, 0]} />
+  2892→                  </RechartsBarChart>
+  2893→                </ResponsiveContainer>
+  2894→              </div>
+  2895→              <div className="bg-white border rounded-lg p-5" style={{ borderColor: A.border }}>
+  2896→                <h3 className="text-sm font-semibold mb-4" style={{ color: A.text }}>Conversion Funnel</h3>
+  2897→                <div className="flex items-center justify-center h-[280px]">
+  2898→                  <div className="text-center">
+  2899→                    <p className="text-5xl font-bold" style={{ color: A.green }}>{stats.conversionRate}%</p>
+  2900→                    <p className="mt-2 text-sm" style={{ color: A.textSecondary }}>Learning Completion Rate</p>
+  2901→                    <div className="mt-6 grid grid-cols-2 gap-6">
+  2902→                      <div className="rounded-lg p-4" style={{ background: A.bg }}><p className="font-bold text-xl" style={{ color: A.green }}>{stats.learningCompleted}</p><p className="text-[11px]" style={{ color: A.textMuted }}>Completed</p></div>
+  2903→                      <div className="rounded-lg p-4" style={{ background: A.bg }}><p className="font-bold text-xl" style={{ color: A.amber }}>{stats.totalUsers - stats.learningCompleted}</p><p className="text-[11px]" style={{ color: A.textMuted }}>Pending</p></div>
+  2904→                    </div>
+  2905→                  </div>
+  2906→                </div>
+  2907→              </div>
+  2908→              <div className="bg-white border rounded-lg p-5" style={{ borderColor: A.border }}>
+  2909→                <h3 className="text-sm font-semibold mb-4" style={{ color: A.text }}>Revenue Trend</h3>
+  2910→                <ResponsiveContainer width="100%" height={280}>
+  2911→                  <LineChart data={revenueTrend}>
+  2912→                    <CartesianGrid strokeDasharray="3 3" stroke="#eeebe5" />
+  2913→                    <XAxis dataKey="month" tick={{ fontSize: 10, fill: A.textMuted }} axisLine={{ stroke: A.border }} />
+  2914→                    <YAxis tick={{ fontSize: 10, fill: A.textMuted }} axisLine={{ stroke: A.border }} />
+  2915→                    <Tooltip contentStyle={{ backgroundColor: '#fff', border: `1px solid ${A.border}`, borderRadius: 8, color: A.text, fontSize: 12 }} />
+  2916→                    <Line type="monotone" dataKey="revenue" stroke={A.green} strokeWidth={2.5} dot={{ r: 4, fill: A.green }} />
+  2917→                  </LineChart>
+  2918→                </ResponsiveContainer>
+  2919→              </div>
+  2920→            </div>
+  2921→          </div>
+  2922→        )
+  2923→
+  2924→      case 'content':
+  2925→        return <QuizManager questions={questions} setQuestions={setQuestions} />
+  2926→
+  2927→      case 'guarantees':
+  2928→        return (
+  2929→          <div className="space-y-4">
+  2930→            <h2 className="text-base font-semibold" style={{ color: A.text }}>Guarantee Plans</h2>
+  2931→            <div className="grid md:grid-cols-2 gap-4">
+  2932→              {guarantees.map(plan => (
+  2933→                <div key={plan.id} className="bg-white border rounded-lg p-5 hover:shadow-sm transition-shadow" style={{ borderColor: A.border }}>
+  2934→                  <div className="flex items-center gap-3 mb-4">
+  2935→                    <div className="w-9 h-9 rounded-md flex items-center justify-center" style={{ background: A.greenLight }}><Shield className="w-4 h-4" style={{ color: A.green }} /></div>
+  2936→                    <div><h3 className="font-semibold text-sm" style={{ color: A.text }}>{plan.name}</h3><p className="text-[11px]" style={{ color: A.textMuted }}>{plan.duration}</p></div>
+  2937→                  </div>
+  2938→                  <p className="text-[12px] mb-4 leading-relaxed" style={{ color: A.textSecondary }}>{plan.description}</p>
+  2939→                  <ul className="space-y-2">
+  2940→                    {plan.features.map((f, i) => (<li key={i} className="flex items-center gap-2 text-[12px]" style={{ color: A.text }}><CheckCircle className="w-3.5 h-3.5 flex-shrink-0" style={{ color: A.green }} /> {f}</li>))}
+  2941→                  </ul>
+  2942→                </div>
+  2943→              ))}
+  2944→            </div>
+  2945→          </div>
+  2946→        )
+  2947→
+  2948→      default: return null
+  2949→    }
+  2950→  }
+  2951→
+  2952→  return (
+  2953→    <div className="min-h-screen flex font-[family-name:var(--font-admin)]" style={{ background: A.bg }}>
+  2954→      {/* Sidebar — Dark */}
+  2955→      <aside className={`${sidebarCollapsed ? 'w-[56px]' : 'w-[220px]'} flex flex-col flex-shrink-0 sticky top-0 h-screen transition-all duration-200`} style={{ background: A.sidebarBg, borderRight: '1px solid #2a2926' }}>
+  2956→        <div className="px-3 py-3 flex items-center gap-2.5 h-[52px]" style={{ borderBottom: '1px solid #2a2926' }}>
+  2957→          <div className="w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0" style={{ background: A.green }}>
+  2958→            <Leaf className="w-3.5 h-3.5 text-white" />
+  2959→          </div>
+  2960→          {!sidebarCollapsed && (
+  2961→            <div className="flex-1 min-w-0">
+  2962→              <p className="font-semibold text-[12px] text-white truncate">NotJust</p>
+  2963→              <p className="text-[8px]" style={{ color: '#6b6560' }}>Admin Console</p>
+  2964→            </div>
+  2965→          )}
+  2966→          <button onClick={() => setSidebarCollapsed(!sidebarCollapsed)} className="w-5 h-5 rounded flex items-center justify-center hover:bg-[#2a2926] transition-colors flex-shrink-0" style={{ color: '#6b6560' }}>
+  2967→            <ChevronLeft className={`w-3 h-3 transition-transform ${sidebarCollapsed ? 'rotate-180' : ''}`} />
+  2968→          </button>
+  2969→        </div>
+  2970→        <nav className="flex-1 px-2 py-2 space-y-0.5 overflow-y-auto">
+  2971→          {sidebarItems.map(item => (
+  2972→            <button key={item.value} onClick={() => setAdminTab(item.value)} className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md text-[11px] font-medium transition-all`} style={adminTab === item.value ? { background: A.green, color: '#fff' } : { color: A.sidebarText, background: 'transparent' }} onMouseEnter={e => { if (adminTab !== item.value) (e.currentTarget as HTMLElement).style.background = A.sidebarHover }} onMouseLeave={e => { if (adminTab !== item.value) (e.currentTarget as HTMLElement).style.background = 'transparent' }} title={sidebarCollapsed ? item.label : undefined}>
+  2973→              <item.icon className="w-4 h-4 flex-shrink-0" />
+  2974→              {!sidebarCollapsed && (<><span className="flex-1 text-left">{item.label}</span>{item.badge !== null && (<span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded`} style={adminTab === item.value ? { background: 'rgba(255,255,255,0.2)', color: '#fff' } : { background: '#2a2926', color: '#6b6560' }}>{item.badge}</span>)}</>)}
+  2975→            </button>
+  2976→          ))}
+  2977→        </nav>
+  2978→        <div className="px-3 py-3" style={{ borderTop: '1px solid #2a2926' }}>
+  2979→          <div className="flex items-center gap-2">
+  2980→            <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: A.greenLight }}>
+  2981→              <span className="font-bold text-[10px]" style={{ color: A.green }}>{user?.name?.charAt(0) || 'A'}</span>
+  2982→            </div>
+  2983→            {!sidebarCollapsed && (<div className="flex-1 min-w-0"><p className="text-[11px] font-medium text-white truncate">{user?.name || 'Admin'}</p><p className="text-[9px]" style={{ color: '#6b6560' }}>Administrator</p></div>)}
+  2984→          </div>
+  2985→        </div>
+  2986→      </aside>
+  2987→
+  2988→      {/* Main Area — Light */}
+  2989→      <main className="flex-1 min-h-screen">
+  2990→        {/* Top Bar */}
+  2991→        <div className="bg-white border-b px-5 h-[52px] flex items-center justify-between sticky top-0 z-10" style={{ borderColor: A.border }}>
+  2992→          <div className="flex items-center gap-3">
+  2993→            <div className="flex items-center gap-2">
+  2994→              <div className="w-5 h-5 rounded flex items-center justify-center" style={{ background: A.greenLight }}>
+  2995→                {(() => { const Item = sidebarItems.find(i => i.value === adminTab); return Item ? <Item.icon className="w-3 h-3" style={{ color: A.green }} /> : null })()}
+  2996→              </div>
+  2997→              <span className="font-semibold text-[13px]" style={{ color: A.text }}>{sidebarItems.find(i => i.value === adminTab)?.label || 'Overview'}</span>
+  2998→            </div>
+  2999→            <div className="h-4 w-px" style={{ background: A.border }} />
+  3000→            <span className="text-[11px]" style={{ color: A.textMuted }}>
+  3001→              {adminTab === 'dashboard' && `${stats.totalUsers} users · ${stats.totalOrders} orders · ₹${stats.totalRevenue?.toLocaleString()} revenue`}
+  3002→              {adminTab === 'users' && `${filteredUsers.length} shown`}
+  3003→              {adminTab === 'campaigns' && `${campaigns.length} campaigns`}
+  3004→              {adminTab === 'qr' && `${campaigns.filter(c => c.status === 'ACTIVE').length} QR codes`}
+  3005→              {adminTab === 'orders' && `${orders.length} orders`}
+  3006→              {adminTab === 'analytics' && 'Real-time analytics'}
+  3007→              {adminTab === 'content' && `${questions.length} questions`}
+  3008→              {adminTab === 'guarantees' && `${guarantees.length} plans`}
+  3009→            </span>
+  3010→          </div>
+  3011→          <div className="flex items-center gap-1.5">
+  3012→            {adminTab !== 'dashboard' && adminTab !== 'guarantees' && (
+  3013→              <>
+  3014→                <button onClick={() => {
+  3015→                  if (adminTab === 'users') exportToCSV(filteredUsers, 'notjust-users', [{ key: 'name', label: 'Name' }, { key: 'email', label: 'Email' }, { key: 'phone', label: 'Phone' }, { key: 'country', label: 'Country' }, { key: 'state', label: 'State' }, { key: 'learning_completed', label: 'Learning Completed' }, { key: 'created_at', label: 'Joined' }])
+  3016→                  else if (adminTab === 'orders') exportToCSV(orders, 'notjust-orders', [{ key: 'id', label: 'Order ID' }, { key: 'user_id', label: 'User ID' }, { key: 'status', label: 'Status' }, { key: 'amount', label: 'Amount' }, { key: 'payment_gateway', label: 'Payment Gateway' }, { key: 'created_at', label: 'Date' }])
+  3017→                  else if (adminTab === 'campaigns') exportToCSV(campaigns, 'notjust-campaigns', [{ key: 'name', label: 'Name' }, { key: 'channel', label: 'Channel' }, { key: 'partner_name', label: 'Partner' }, { key: 'location', label: 'Location' }, { key: 'status', label: 'Status' }, { key: 'created_at', label: 'Created' }])
+  3018→                  else if (adminTab === 'qr') exportToCSV(scans, 'notjust-qr-scans', [{ key: 'id', label: 'Scan ID' }, { key: 'campaign_id', label: 'Campaign ID' }, { key: 'device', label: 'Device' }, { key: 'location', label: 'Location' }, { key: 'created_at', label: 'Date' }])
+  3019→                  else if (adminTab === 'analytics') exportToCSV([...orders.map(o => ({ month: new Date(o.created_at).toLocaleDateString('en', { month: 'short' }), revenue: o.amount, status: o.status }))], 'notjust-analytics', [{ key: 'month', label: 'Month' }, { key: 'revenue', label: 'Revenue' }, { key: 'status', label: 'Status' }])
+  3020→                  else if (adminTab === 'content') exportToCSV(questions, 'notjust-quiz-questions', [{ key: 'question', label: 'Question' }, { key: 'category', label: 'Category' }, { key: 'difficulty', label: 'Difficulty' }, { key: 'answer', label: 'Answer Index' }])
+  3021→                }} className="h-7 px-2.5 rounded-md flex items-center gap-1.5 text-[11px] font-medium border transition-colors hover:bg-[#f8f7f5]" style={{ borderColor: A.border, color: A.textSecondary }} title="Export CSV">
+  3022→                  <Download className="w-3 h-3" /> CSV
+  3023→                </button>
+  3024→                <button onClick={() => exportToPDF(sidebarItems.find(i => i.value === adminTab)?.label || 'Report')} className="h-7 px-2.5 rounded-md flex items-center gap-1.5 text-[11px] font-medium border transition-colors hover:bg-[#f8f7f5]" style={{ borderColor: A.border, color: A.textSecondary }} title="Export PDF">
+  3025→                  <FileText className="w-3 h-3" /> PDF
+  3026→                </button>
+  3027→              </>
+  3028→            )}
+  3029→            <button onClick={() => navigateTo('landing')} className="w-7 h-7 rounded-md flex items-center justify-center border transition-colors hover:bg-[#f8f7f5]" style={{ borderColor: A.border, color: A.textMuted }} title="Back to site"><ExternalLink className="w-3.5 h-3.5" /></button>
+  3030→            <button onClick={refreshData} className="w-7 h-7 rounded-md flex items-center justify-center border transition-colors hover:bg-[#f8f7f5]" style={{ borderColor: A.border, color: A.textMuted }} title="Refresh data"><RefreshCw className="w-3.5 h-3.5" /></button>
+  3031→          </div>
+  3032→        </div>
+  3033→        <div className="p-5" data-admin-content>{renderContent()}</div>
+  3034→      </main>
+  3035→    </div>
+  3036→  )
+  3037→}
+  3038→
+  3039→// ============================================================
+  3040→// CAMPAIGN MANAGER — Light Theme
+  3041→// ============================================================
+  3042→function CampaignManager({ campaigns, setCampaigns, scans }: { campaigns: Campaign[]; setCampaigns: React.Dispatch<React.SetStateAction<Campaign[]>>; scans: QrScan[] }) {
+  3043→  const [dialogOpen, setDialogOpen] = useState(false)
+  3044→  const [detailCampaign, setDetailCampaign] = useState<Campaign | null>(null)
+  3045→  const [form, setForm] = useState({ name: '', channel: 'HOTEL', partner_name: '', location: '' })
+  3046→
+  3047→  const handleCreate = async () => {
+  3048→    if (!form.name) { toast.error('Campaign name is required'); return }
+  3049→    const result = await campaignService.create(form as any)
+  3050→    if (result.data) {
+  3051→      setCampaigns(prev => [result.data as Campaign, ...prev])
+  3052→      toast.success('Campaign created with QR code')
+  3053→      setDialogOpen(false)
+  3054→      setForm({ name: '', channel: 'HOTEL', partner_name: '', location: '' })
+  3055→    }
+  3056→  }
+  3057→
+  3058→  const toggleStatus = async (id: string, status: string) => {
+  3059→    const newStatus = status === 'ACTIVE' ? 'ARCHIVED' : 'ACTIVE'
+  3060→    await campaignService.updateStatus(id, newStatus)
+  3061→    setCampaigns(prev => prev.map(c => c.id === id ? { ...c, status: newStatus } : c))
+  3062→    toast.success('Status updated')
+  3063→  }
+  3064→
+  3065→  const channelIcons: Record<string, string> = {
+  3066→    HOTEL: '🏨', HOSPITAL: '🏥', CLINIC: '🏥', DOCTOR: '👨‍⚕️',
+  3067→    EVENT: '🎉', CORPORATE: '🏢', INFLUENCER: '📱', WELLNESS: '🧘',
+  3068→  }
+  3069→
+  3070→  return (
+  3071→    <div className="space-y-4">
+  3072→      <div className="flex items-center justify-between">
+  3073→        <div>
+  3074→          <h2 className="text-base font-semibold" style={{ color: A.text }}>Campaigns</h2>
+  3075→          <p className="text-[12px]" style={{ color: A.textMuted }}>{campaigns.length} total campaigns</p>
+  3076→        </div>
+  3077→        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+  3078→          <DialogTrigger asChild>
+  3079→            <Button size="sm" className="rounded-md text-[12px] h-8 text-white" style={{ background: A.green }}>
+  3080→              <Plus className="w-3.5 h-3.5 mr-1" /> Create Campaign
+  3081→            </Button>
+  3082→          </DialogTrigger>
+  3083→          <DialogContent style={{ background: '#fff', borderColor: A.border, color: A.text }}>
+  3084→            <DialogHeader><DialogTitle style={{ color: A.text }}>Create Campaign</DialogTitle></DialogHeader>
+  3085→            <div className="space-y-3 py-4">
+  3086→              <div className="space-y-1.5"><Label style={{ color: A.textSecondary }}>Name</Label><Input value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} placeholder="Campaign name" className="rounded-md" style={{ borderColor: A.border, color: A.text }} /></div>
+  3087→              <div className="space-y-1.5">
+  3088→                <Label style={{ color: A.textSecondary }}>Channel</Label>
+  3089→                <Select value={form.channel} onValueChange={v => setForm(p => ({ ...p, channel: v }))}>
+  3090→                  <SelectTrigger className="rounded-md" style={{ borderColor: A.border, color: A.text }}><SelectValue /></SelectTrigger>
+  3091→                  <SelectContent style={{ background: '#fff', borderColor: A.border }}>
+  3092→                    {['HOTEL', 'HOSPITAL', 'CLINIC', 'DOCTOR', 'EVENT', 'CORPORATE', 'INFLUENCER', 'WELLNESS'].map(c => <SelectItem key={c} value={c} style={{ color: A.text }}>{channelIcons[c]} {c}</SelectItem>)}
+  3093→                  </SelectContent>
+  3094→                </Select>
+  3095→              </div>
+  3096→              <div className="space-y-1.5"><Label style={{ color: A.textSecondary }}>Partner</Label><Input value={form.partner_name} onChange={e => setForm(p => ({ ...p, partner_name: e.target.value }))} className="rounded-md" style={{ borderColor: A.border, color: A.text }} /></div>
+  3097→              <div className="space-y-1.5"><Label style={{ color: A.textSecondary }}>Location</Label><Input value={form.location} onChange={e => setForm(p => ({ ...p, location: e.target.value }))} className="rounded-md" style={{ borderColor: A.border, color: A.text }} /></div>
+  3098→              <div className="flex items-center gap-2 p-3 rounded-md" style={{ background: A.greenLight, border: `1px solid ${A.green}20` }}>
+  3099→                <QrCode className="w-4 h-4" style={{ color: A.green }} />
+  3100→                <span className="text-[11px]" style={{ color: A.green }}>QR code will be auto-generated for this campaign</span>
+
+[showing lines 2701-3100 of 3512; use offset=3101 with limit to continue reading]

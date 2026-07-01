@@ -4,11 +4,11 @@
 // All data operations go through this module
 
 import { getMockStore, shouldUseMockSupabase } from './mock-supabase'
-import type { UserProfile, Campaign, QrScan, LearningProgress, QuizQuestion, Product, Order, OrderItem, GuaranteePlan, ProductVideo, Subscription } from './mock-supabase'
+import type { UserProfile, Campaign, QrScan, LearningProgress, QuizQuestion, Product, Order, OrderItem, ProductVideo, ProductQuiz, ProductLearningProgress, Subscription, ReorderReminder } from './mock-supabase'
 import { isSupabaseConfigured, supabase, testSupabaseConnection } from './supabase-client'
 
 // Re-export types
-export type { UserProfile, Campaign, QrScan, LearningProgress, QuizQuestion, Product, Order, OrderItem, GuaranteePlan, ProductVideo, Subscription }
+export type { UserProfile, Campaign, QrScan, LearningProgress, QuizQuestion, Product, Order, OrderItem, ProductVideo, ProductQuiz, ProductLearningProgress, Subscription, ReorderReminder }
 
 // Whether to use real Supabase (only if configured AND tables exist)
 let _useReal = false
@@ -274,6 +274,27 @@ export const campaignService = {
     )
   },
 
+  async getSalesCount(campaignId: string) {
+    return tryRealOrMock(
+      async () => {
+        // Get QR scans for this campaign that have user_ids
+        const { data: scans } = await supabase.from('qr_scans').select('user_id').eq('campaign_id', campaignId).not('user_id', 'is', null)
+        if (!scans || scans.length === 0) return { data: 0, error: null }
+        const userIds = [...new Set(scans.map(s => s.user_id))]
+        // Count orders from these users
+        const { count, error } = await supabase.from('orders').select('*', { count: 'exact', head: true }).in('user_id', userIds).in('status', ['CONFIRMED', 'SHIPPED', 'DELIVERED'])
+        return { data: count || 0, error }
+      },
+      () => {
+        const store = getMockStore()
+        const scans = store.find<QrScan>('qr_scans', { campaign_id: campaignId } as any)
+        const userIds = [...new Set(scans.filter(s => s.user_id).map(s => s.user_id))]
+        const orders = store.getAll<Order>('orders').filter(o => userIds.includes(o.user_id) && ['CONFIRMED', 'SHIPPED', 'DELIVERED'].includes(o.status))
+        return { data: orders.length, error: null }
+      }
+    )
+  },
+
   async getCampaignSales() {
     return tryRealOrMock(
       async () => {
@@ -456,36 +477,6 @@ export const quizService = {
       () => ({ data: getMockStore().insert('quiz_questions', { ...question, active: true }), error: null })
     )
   },
-
-  async updateQuestion(id: string, data: Partial<QuizQuestion>) {
-    return tryRealOrMock(
-      async () => {
-        const { data: updated, error } = await supabase.from('quiz_questions').update(data).eq('id', id).select().single()
-        return { data: updated, error }
-      },
-      () => ({ data: getMockStore().update('quiz_questions', id, data), error: null })
-    )
-  },
-
-  async deleteQuestion(id: string) {
-    return tryRealOrMock(
-      async () => {
-        const { error } = await supabase.from('quiz_questions').delete().eq('id', id)
-        return { data: !error, error }
-      },
-      () => ({ data: getMockStore().delete('quiz_questions', id), error: null })
-    )
-  },
-
-  async getByProduct(productId: string) {
-    return tryRealOrMock(
-      async () => {
-        const { data, error } = await supabase.from('quiz_questions').select('*').eq('product_id', productId).eq('active', true)
-        return { data, error }
-      },
-      () => ({ data: getMockStore().find<QuizQuestion>('quiz_questions', { product_id: productId, active: true } as any), error: null })
-    )
-  },
 }
 
 // ============================================================
@@ -502,6 +493,16 @@ export const productService = {
     )
   },
 
+  async getAllForAdmin() {
+    return tryRealOrMock(
+      async () => {
+        const { data, error } = await supabase.from('products').select('*').order('created_at', { ascending: true })
+        return { data, error }
+      },
+      () => ({ data: getMockStore().getAll<Product>('products'), error: null })
+    )
+  },
+
   async getById(id: string) {
     return tryRealOrMock(
       async () => {
@@ -512,23 +513,62 @@ export const productService = {
     )
   },
 
-  async create(data: Partial<Product>) {
+  async create(data: Omit<Product, 'id' | 'created_at'>) {
     return tryRealOrMock(
       async () => {
         const { data: product, error } = await supabase.from('products').insert([data]).select().single()
         return { data: product, error }
       },
-      () => ({ data: getMockStore().insert('products', { ...data, active: true, created_at: new Date().toISOString() }), error: null })
+      () => {
+        const product = getMockStore().insert<Product>('products', {
+          ...data,
+          created_at: new Date().toISOString(),
+        })
+        return { data: product, error: null }
+      }
     )
   },
 
-  async update(id: string, data: Partial<Product>) {
+  async update(id: string, updates: Partial<Product>) {
     return tryRealOrMock(
       async () => {
-        const { data: updated, error } = await supabase.from('products').update(data).eq('id', id).select().single()
-        return { data: updated, error }
+        const { data, error } = await supabase.from('products').update(updates).eq('id', id).select().single()
+        return { data, error }
       },
-      () => ({ data: getMockStore().update('products', id, data), error: null })
+      () => {
+        const product = getMockStore().update<Product>('products', id, updates)
+        return { data: product || null, error: product ? null : { message: 'Product not found' } }
+      }
+    )
+  },
+
+  async delete(id: string) {
+    return tryRealOrMock(
+      async () => {
+        const { data, error } = await supabase.from('products').update({ active: false }).eq('id', id).select().single()
+        return { data, error }
+      },
+      () => {
+        const product = getMockStore().update<Product>('products', id, { active: false } as Partial<Product>)
+        return { data: product || null, error: product ? null : { message: 'Product not found' } }
+      }
+    )
+  },
+
+  async toggleActive(id: string) {
+    return tryRealOrMock(
+      async () => {
+        const { data: current } = await supabase.from('products').select('active').eq('id', id).single()
+        if (!current) return { data: null, error: { message: 'Product not found' } }
+        const { data, error } = await supabase.from('products').update({ active: !current.active }).eq('id', id).select().single()
+        return { data, error }
+      },
+      () => {
+        const current = getMockStore().getById<Product>('products', id)
+        if (!current) return { data: null, error: { message: 'Product not found' } }
+        const product = getMockStore().update<Product>('products', id, { active: !current.active } as Partial<Product>)
+        return { data: product || null, error: product ? null : { message: 'Product not found' } }
+      }
     )
   },
 }
@@ -537,11 +577,11 @@ export const productService = {
 // ORDER SERVICE
 // ============================================================
 export const orderService = {
-  async create(userId: string, items: { productId: string; quantity: number; purchaseType?: 'one-time' | 'subscription' }[], shippingAddress: any, paymentGateway: string = 'RAZORPAY', orderType: 'one-time' | 'subscription' = 'one-time') {
+  async create(userId: string, items: { productId: string; quantity: number }[], shippingAddress: any, paymentGateway: string = 'RAZORPAY') {
     return tryRealOrMock(
       async () => {
         const { data, error } = await supabase.from('orders').insert([{
-          user_id: userId, status: 'CONFIRMED', order_type: orderType, amount: 0, payment_gateway: paymentGateway, shipping_address: shippingAddress,
+          user_id: userId, status: 'CONFIRMED', amount: 0, payment_gateway: paymentGateway, shipping_address: shippingAddress,
         }]).select().single()
         return { data, error }
       },
@@ -552,14 +592,13 @@ export const orderService = {
         for (const item of items) {
           const product = store.getById<Product>('products', item.productId)
           if (!product) continue
-          const price = item.purchaseType === 'subscription' && product.subscription_price ? product.subscription_price : product.price
-          totalAmount += price * item.quantity
-          orderItems.push({ product_id: product.id, quantity: item.quantity, price })
+          totalAmount += product.price * item.quantity
+          orderItems.push({ product_id: product.id, quantity: item.quantity, price: product.price })
         }
         const paymentId = `pay_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`
         const now = new Date().toISOString()
         const order = store.insert('orders', {
-          user_id: userId, status: 'CONFIRMED', order_type: orderType, amount: totalAmount,
+          user_id: userId, status: 'CONFIRMED', amount: totalAmount,
           payment_gateway: paymentGateway, payment_id: paymentId,
           shipping_address: shippingAddress, created_at: now, updated_at: now,
         })
@@ -729,66 +768,170 @@ export const productVideoService = {
   async getByProduct(productId: string) {
     return tryRealOrMock(
       async () => {
-        const { data, error } = await supabase.from('product_videos').select('*').eq('product_id', productId).order('order_index', { ascending: true })
+        const { data, error } = await supabase.from('product_videos').select('*').eq('product_id', productId).eq('active', true).order('order', { ascending: true })
         return { data, error }
       },
-      () => {
-        const videos = getMockStore().find<ProductVideo>('product_videos', { product_id: productId } as any)
-        const sorted = [...videos].sort((a, b) => a.order_index - b.order_index)
-        return { data: sorted, error: null }
-      }
+      () => ({ data: getMockStore().find<ProductVideo>('product_videos', { product_id: productId, active: true } as any).sort((a, b) => a.order - b.order), error: null })
     )
   },
-
   async create(video: Partial<ProductVideo>) {
     return tryRealOrMock(
       async () => {
         const { data, error } = await supabase.from('product_videos').insert([video]).select().single()
         return { data, error }
       },
-      () => ({ data: getMockStore().insert('product_videos', { ...video, created_at: new Date().toISOString() }), error: null })
+      () => ({ data: getMockStore().insert('product_videos', { ...video, active: true }), error: null })
     )
   },
-
-  async update(id: string, data: Partial<ProductVideo>) {
+  async update(id: string, updates: Partial<ProductVideo>) {
     return tryRealOrMock(
       async () => {
-        const { data: updated, error } = await supabase.from('product_videos').update(data).eq('id', id).select().single()
-        return { data: updated, error }
+        const { data, error } = await supabase.from('product_videos').update(updates).eq('id', id).select().single()
+        return { data, error }
       },
-      () => ({ data: getMockStore().update('product_videos', id, data), error: null })
+      () => ({ data: getMockStore().update('product_videos', id, updates), error: null })
     )
   },
-
   async delete(id: string) {
     return tryRealOrMock(
       async () => {
-        const { error } = await supabase.from('product_videos').delete().eq('id', id)
-        return { data: !error, error }
+        const { data, error } = await supabase.from('product_videos').update({ active: false }).eq('id', id).select().single()
+        return { data, error }
       },
-      () => ({ data: getMockStore().delete('product_videos', id), error: null })
+      () => ({ data: getMockStore().update('product_videos', id, { active: false }), error: null })
     )
   },
+}
 
-  async reorder(productId: string, videoIds: string[]) {
+// ============================================================
+// PRODUCT QUIZ SERVICE
+// ============================================================
+export const productQuizService = {
+  async getByProduct(productId: string) {
     return tryRealOrMock(
       async () => {
-        // Update order_index for each video
-        const updates = videoIds.map((videoId, index) =>
-          supabase.from('product_videos').update({ order_index: index + 1 }).eq('id', videoId).eq('product_id', productId)
-        )
-        await Promise.all(updates)
-        const { data, error } = await supabase.from('product_videos').select('*').eq('product_id', productId).order('order_index', { ascending: true })
+        const { data, error } = await supabase.from('product_quizzes').select('*').eq('product_id', productId).eq('active', true).order('order', { ascending: true })
+        return { data, error }
+      },
+      () => ({ data: getMockStore().find<ProductQuiz>('product_quizzes', { product_id: productId, active: true } as any).sort((a, b) => a.order - b.order), error: null })
+    )
+  },
+  async getByVideo(videoId: string) {
+    return tryRealOrMock(
+      async () => {
+        const { data, error } = await supabase.from('product_quizzes').select('*').eq('video_id', videoId).eq('active', true)
+        return { data, error }
+      },
+      () => ({ data: getMockStore().find<ProductQuiz>('product_quizzes', { video_id: videoId, active: true } as any), error: null })
+    )
+  },
+  async create(question: Partial<ProductQuiz>) {
+    return tryRealOrMock(
+      async () => {
+        const { data, error } = await supabase.from('product_quizzes').insert([question]).select().single()
+        return { data, error }
+      },
+      () => ({ data: getMockStore().insert('product_quizzes', { ...question, active: true }), error: null })
+    )
+  },
+  async update(id: string, updates: Partial<ProductQuiz>) {
+    return tryRealOrMock(
+      async () => {
+        const { data, error } = await supabase.from('product_quizzes').update(updates).eq('id', id).select().single()
+        return { data, error }
+      },
+      () => ({ data: getMockStore().update('product_quizzes', id, updates), error: null })
+    )
+  },
+  async delete(id: string) {
+    return tryRealOrMock(
+      async () => {
+        const { data, error } = await supabase.from('product_quizzes').update({ active: false }).eq('id', id).select().single()
+        return { data, error }
+      },
+      () => ({ data: getMockStore().update('product_quizzes', id, { active: false }), error: null })
+    )
+  },
+}
+
+// ============================================================
+// PRODUCT LEARNING SERVICE
+// ============================================================
+export const productLearningService = {
+  async getProgress(userId: string, productId: string) {
+    return tryRealOrMock(
+      async () => {
+        const { data, error } = await supabase.from('product_learning_progress').select('*').eq('user_id', userId).eq('product_id', productId).single()
         return { data, error }
       },
       () => {
-        const store = getMockStore()
-        videoIds.forEach((videoId, index) => {
-          store.update('product_videos', videoId, { order_index: index + 1 })
-        })
-        const videos = store.find<ProductVideo>('product_videos', { product_id: productId } as any)
-        const sorted = [...videos].sort((a, b) => a.order_index - b.order_index)
-        return { data: sorted, error: null }
+        const progress = getMockStore().findOne<ProductLearningProgress>('product_learning_progress', { user_id: userId, product_id: productId } as any)
+        return { data: progress || null, error: null }
+      }
+    )
+  },
+  async getAllProgress(userId: string) {
+    return tryRealOrMock(
+      async () => {
+        const { data, error } = await supabase.from('product_learning_progress').select('*').eq('user_id', userId)
+        return { data, error }
+      },
+      () => ({ data: getMockStore().find<ProductLearningProgress>('product_learning_progress', { user_id: userId } as any), error: null })
+    )
+  },
+  async updateVideoProgress(userId: string, productId: string, videoProgress: Record<string, number>) {
+    return tryRealOrMock(
+      async () => {
+        const { data, error } = await supabase.from('product_learning_progress').upsert({ user_id: userId, product_id: productId, video_progress: videoProgress, status: 'IN_PROGRESS' }).eq('user_id', userId).eq('product_id', productId).select().single()
+        return { data, error }
+      },
+      () => {
+        const existing = getMockStore().findOne<ProductLearningProgress>('product_learning_progress', { user_id: userId, product_id: productId } as any)
+        const now = new Date().toISOString()
+        if (existing) {
+          return { data: getMockStore().update('product_learning_progress', existing.id, { video_progress: videoProgress, status: 'IN_PROGRESS', updated_at: now }), error: null }
+        }
+        return { data: getMockStore().insert('product_learning_progress', { user_id: userId, product_id: productId, video_progress: videoProgress, quiz_answers: {}, quiz_completed: false, quiz_score: 0, status: 'IN_PROGRESS', created_at: now, updated_at: now }), error: null }
+      }
+    )
+  },
+  async submitQuiz(userId: string, productId: string, quizAnswers: Record<string, number>, score: number, isPassed: boolean) {
+    return tryRealOrMock(
+      async () => {
+        const status = isPassed ? 'UNLOCKED' : 'PENDING_REEVALUATION'
+        const { data, error } = await supabase.from('product_learning_progress').update({
+          quiz_answers: quizAnswers, quiz_completed: isPassed, quiz_score: score, status, completed_at: isPassed ? new Date().toISOString() : null,
+        }).eq('user_id', userId).eq('product_id', productId).select().single()
+        return { data, error }
+      },
+      () => {
+        const existing = getMockStore().findOne<ProductLearningProgress>('product_learning_progress', { user_id: userId, product_id: productId } as any)
+        const now = new Date().toISOString()
+        const status = isPassed ? 'UNLOCKED' : 'PENDING_REEVALUATION'
+        if (existing) {
+          // Smart remediation: if not passed (score < 80%), mark only incorrect video modules as incomplete
+          if (!isPassed && existing.video_progress) {
+            // Get quizzes for this product to find which videos need review
+            const quizzes = getMockStore().find<ProductQuiz>('product_quizzes', { product_id: productId, active: true } as any)
+            const updatedVideoProgress = { ...existing.video_progress }
+            for (const quiz of quizzes) {
+              const userAnswer = quizAnswers[quiz.id]
+              if (userAnswer !== undefined && userAnswer !== quiz.answer) {
+                // Mark this quiz's linked video as incomplete (0%)
+                updatedVideoProgress[quiz.video_id] = 0
+              }
+            }
+            return { data: getMockStore().update('product_learning_progress', existing.id, {
+              quiz_answers: quizAnswers, quiz_completed: false, quiz_score: score, status, video_progress: updatedVideoProgress, updated_at: now,
+            }), error: null }
+          }
+          return { data: getMockStore().update('product_learning_progress', existing.id, {
+            quiz_answers: quizAnswers, quiz_completed: isPassed, quiz_score: score, status, completed_at: isPassed ? now : undefined, updated_at: now,
+          }), error: null }
+        }
+        return { data: getMockStore().insert('product_learning_progress', {
+          user_id: userId, product_id: productId, video_progress: {}, quiz_answers: quizAnswers, quiz_completed: isPassed, quiz_score: score, status, completed_at: isPassed ? now : undefined, created_at: now, updated_at: now,
+        }), error: null }
       }
     )
   },
@@ -798,89 +941,42 @@ export const productVideoService = {
 // SUBSCRIPTION SERVICE
 // ============================================================
 export const subscriptionService = {
-  async create(userId: string, productId: string, amount: number, interval: 'MONTHLY' | 'QUARTERLY') {
-    return tryRealOrMock(
-      async () => {
-        const now = new Date()
-        const nextBilling = new Date(now)
-        if (interval === 'MONTHLY') nextBilling.setMonth(nextBilling.getMonth() + 1)
-        else nextBilling.setMonth(nextBilling.getMonth() + 3)
-        const { data, error } = await supabase.from('subscriptions').insert([{
-          user_id: userId, product_id: productId, status: 'ACTIVE', amount, interval,
-          start_date: now.toISOString(), next_billing_date: nextBilling.toISOString(),
-        }]).select().single()
-        return { data, error }
-      },
-      () => {
-        const store = getMockStore()
-        const now = new Date()
-        const nextBilling = new Date(now)
-        if (interval === 'MONTHLY') nextBilling.setMonth(nextBilling.getMonth() + 1)
-        else nextBilling.setMonth(nextBilling.getMonth() + 3)
-        const sub = store.insert('subscriptions', {
-          user_id: userId, product_id: productId, status: 'ACTIVE', amount, interval,
-          start_date: now.toISOString(), next_billing_date: nextBilling.toISOString(),
-          created_at: now.toISOString(),
-        })
-        return { data: sub, error: null }
-      }
-    )
-  },
-
   async getByUser(userId: string) {
     return tryRealOrMock(
       async () => {
         const { data, error } = await supabase.from('subscriptions').select('*').eq('user_id', userId).order('created_at', { ascending: false })
         return { data, error }
       },
-      () => {
-        const subs = getMockStore().find<Subscription>('subscriptions', { user_id: userId } as any)
-        return { data: subs, error: null }
-      }
+      () => ({ data: getMockStore().find<Subscription>('subscriptions', { user_id: userId } as any), error: null })
     )
   },
-
-  async cancel(id: string) {
+  async create(subscription: Partial<Subscription>) {
     return tryRealOrMock(
       async () => {
-        const { data, error } = await supabase.from('subscriptions').update({ status: 'CANCELLED' }).eq('id', id).select().single()
+        const { data, error } = await supabase.from('subscriptions').insert([subscription]).select().single()
         return { data, error }
       },
-      () => ({ data: getMockStore().update('subscriptions', id, { status: 'CANCELLED' }), error: null })
+      () => ({ data: getMockStore().insert('subscriptions', { ...subscription, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }), error: null })
     )
   },
-
-  async pause(id: string) {
+  async updateStatus(id: string, status: string) {
     return tryRealOrMock(
       async () => {
-        const { data, error } = await supabase.from('subscriptions').update({ status: 'PAUSED' }).eq('id', id).select().single()
+        const { data, error } = await supabase.from('subscriptions').update({ status, updated_at: new Date().toISOString() }).eq('id', id).select().single()
         return { data, error }
       },
-      () => ({ data: getMockStore().update('subscriptions', id, { status: 'PAUSED' }), error: null })
+      () => ({ data: getMockStore().update('subscriptions', id, { status, updated_at: new Date().toISOString() }), error: null })
     )
   },
-
-  async resume(id: string) {
+  async toggleAutoRenew(id: string, autoRenew: boolean) {
     return tryRealOrMock(
       async () => {
-        const sub = getMockStore().getById<Subscription>('subscriptions', id)
-        const nextBilling = new Date()
-        if (sub?.interval === 'MONTHLY') nextBilling.setMonth(nextBilling.getMonth() + 1)
-        else nextBilling.setMonth(nextBilling.getMonth() + 3)
-        const { data, error } = await supabase.from('subscriptions').update({ status: 'ACTIVE', next_billing_date: nextBilling.toISOString() }).eq('id', id).select().single()
+        const { data, error } = await supabase.from('subscriptions').update({ auto_renew: autoRenew, updated_at: new Date().toISOString() }).eq('id', id).select().single()
         return { data, error }
       },
-      () => {
-        const store = getMockStore()
-        const sub = store.getById<Subscription>('subscriptions', id)
-        const nextBilling = new Date()
-        if (sub?.interval === 'MONTHLY') nextBilling.setMonth(nextBilling.getMonth() + 1)
-        else nextBilling.setMonth(nextBilling.getMonth() + 3)
-        return { data: store.update('subscriptions', id, { status: 'ACTIVE', next_billing_date: nextBilling.toISOString() }), error: null }
-      }
+      () => ({ data: getMockStore().update('subscriptions', id, { auto_renew: autoRenew, updated_at: new Date().toISOString() }), error: null })
     )
   },
-
   async getAll() {
     return tryRealOrMock(
       async () => {
@@ -893,16 +989,35 @@ export const subscriptionService = {
 }
 
 // ============================================================
-// GUARANTEE PLAN SERVICE
+// REORDER REMINDER SERVICE
 // ============================================================
-export const guaranteeService = {
+export const reorderReminderService = {
+  async getByUser(userId: string) {
+    return tryRealOrMock(
+      async () => {
+        const { data, error } = await supabase.from('reorder_reminders').select('*').eq('user_id', userId).order('reminder_date', { ascending: false })
+        return { data, error }
+      },
+      () => ({ data: getMockStore().find<ReorderReminder>('reorder_reminders', { user_id: userId } as any), error: null })
+    )
+  },
   async getAll() {
     return tryRealOrMock(
       async () => {
-        const { data, error } = await supabase.from('guarantee_plans').select('*').eq('active', true)
+        const { data, error } = await supabase.from('reorder_reminders').select('*').order('reminder_date', { ascending: false })
         return { data, error }
       },
-      () => ({ data: getMockStore().find<GuaranteePlan>('guarantee_plans', { active: true } as any), error: null })
+      () => ({ data: getMockStore().getAll<ReorderReminder>('reorder_reminders'), error: null })
+    )
+  },
+  async create(reminder: Partial<ReorderReminder>) {
+    return tryRealOrMock(
+      async () => {
+        const { data, error } = await supabase.from('reorder_reminders').insert([reminder]).select().single()
+        return { data, error }
+      },
+      () => ({ data: getMockStore().insert('reorder_reminders', { ...reminder, created_at: new Date().toISOString() }), error: null })
     )
   },
 }
+

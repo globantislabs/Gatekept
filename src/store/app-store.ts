@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { UserProfile, Product, GuaranteePlan } from '@/lib/data-service'
+import type { UserProfile, Product } from '@/lib/data-service'
 
 export type AppView =
   | 'landing'
@@ -11,6 +11,9 @@ export type AppView =
   | 'quiz'
   | 'products'
   | 'product-detail'
+  | 'product-learning'
+  | 'product-quiz'
+  | 'subscriptions'
   | 'cart'
   | 'checkout'
   | 'order-success'
@@ -21,19 +24,22 @@ export type AppView =
   | 'admin-orders'
   | 'admin-analytics'
   | 'admin-content'
-  | 'admin-guarantees'
+  | 'admin-products'
+  | 'admin-subscriptions'
   | 'profile'
 
 export interface CartItem {
   productId: string
   name: string
   price: number
-  subscriptionPrice?: number
   quantity: number
   imageUrl?: string
   type: string
   purchaseType: 'one-time' | 'subscription'
-  subscriptionInterval?: string
+  // Subscription metadata (only when purchaseType === 'subscription')
+  packType?: string
+  packDays?: number
+  packDiscount?: number
 }
 
 interface AppState {
@@ -50,9 +56,19 @@ interface AppState {
   pendingOtpType: 'phone' | 'email'
   setPendingOtp: (contact: string | null, type: 'phone' | 'email') => void
 
+  // Product Learning
+  selectedProductId: string | null
+  setSelectedProductId: (id: string | null) => void
+
   // Learning
   currentVideoIndex: number
   setCurrentVideoIndex: (idx: number) => void
+  currentQuizIndex: number
+  setCurrentQuizIndex: (idx: number) => void
+
+  // Subscription
+  selectedSubscriptionId: string | null
+  setSelectedSubscriptionId: (id: string | null) => void
 
   // Commerce
   cart: CartItem[]
@@ -62,10 +78,6 @@ interface AppState {
   clearCart: () => void
   cartTotal: () => number
 
-  // Product detail
-  selectedProductId: string | null
-  setSelectedProductId: (id: string | null) => void
-
   // Campaign
   scannedCampaignId: string | null
   setScannedCampaignId: (id: string | null) => void
@@ -73,10 +85,6 @@ interface AppState {
   // Admin tab
   adminTab: string
   setAdminTab: (tab: string) => void
-
-  // Guarantee plans (from scope doc requirement)
-  guaranteePlans: GuaranteePlan[]
-  setGuaranteePlans: (plans: GuaranteePlan[]) => void
 
   // Products cache
   products: Product[]
@@ -107,9 +115,19 @@ export const useAppStore = create<AppState>()(
       pendingOtpType: 'phone',
       setPendingOtp: (contact, type) => set({ pendingOtpContact: contact, pendingOtpType: type }),
 
+      // Product Learning
+      selectedProductId: null,
+      setSelectedProductId: (id) => set({ selectedProductId: id }),
+
       // Learning
       currentVideoIndex: 0,
       setCurrentVideoIndex: (idx) => set({ currentVideoIndex: idx }),
+      currentQuizIndex: 0,
+      setCurrentQuizIndex: (idx) => set({ currentQuizIndex: idx }),
+
+      // Subscription
+      selectedSubscriptionId: null,
+      setSelectedSubscriptionId: (id) => set({ selectedSubscriptionId: id }),
 
       // Commerce
       cart: [],
@@ -134,14 +152,7 @@ export const useAppStore = create<AppState>()(
             : state.cart.map((i) => i.productId === productId ? { ...i, quantity } : i),
         })),
       clearCart: () => set({ cart: [] }),
-      cartTotal: () => get().cart.reduce((sum, i) => {
-        const price = i.purchaseType === 'subscription' && i.subscriptionPrice ? i.subscriptionPrice : i.price
-        return sum + price * i.quantity
-      }, 0),
-
-      // Product detail
-      selectedProductId: null,
-      setSelectedProductId: (id) => set({ selectedProductId: id }),
+      cartTotal: () => get().cart.reduce((sum, i) => sum + i.price * i.quantity, 0),
 
       // Campaign
       scannedCampaignId: null,
@@ -150,10 +161,6 @@ export const useAppStore = create<AppState>()(
       // Admin
       adminTab: 'dashboard',
       setAdminTab: (tab) => set({ adminTab: tab }),
-
-      // Guarantee plans
-      guaranteePlans: [],
-      setGuaranteePlans: (plans) => set({ guaranteePlans: plans }),
 
       // Products
       products: [],
@@ -170,7 +177,7 @@ export const useAppStore = create<AppState>()(
         cart: state.cart,
         currentView: state.currentView,
         products: state.products,
-        guaranteePlans: state.guaranteePlans,
+        selectedProductId: state.selectedProductId,
       }),
     }
   )

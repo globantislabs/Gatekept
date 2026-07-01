@@ -1,0 +1,670 @@
+     1→'use client'
+     2→import React, { useState, useEffect } from 'react'
+     3→import { motion } from 'framer-motion'
+     4→import { RefreshCw, Pause, Play, X, CreditCard, Package, Calendar, Bell, CheckCircle, ArrowRight, Zap } from 'lucide-react'
+     5→import { useAppStore } from '@/store/app-store'
+     6→import { subscriptionService, productService, productLearningService } from '@/lib/data-service'
+     7→import type { Subscription, Product, ProductLearningProgress } from '@/lib/data-service'
+     8→import { Button } from '@/components/ui/button'
+     9→import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card'
+    10→import { Badge } from '@/components/ui/badge'
+    11→import { Switch } from '@/components/ui/switch'
+    12→import { Label } from '@/components/ui/label'
+    13→import { Separator } from '@/components/ui/separator'
+    14→import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog'
+    15→import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+    16→import { toast } from 'sonner'
+    17→
+    18→// ── Brand Constants ──────────────────────────────────────────
+    19→const BRAND = {
+    20→  green: '#48805b',
+    21→  lime: '#afb75d',
+    22→  dark: '#1f1e1c',
+    23→  muted: '#88837b',
+    24→  surface: '#e3dfd8',
+    25→  bg: '#f4f3f0',
+    26→  blue: '#2e91b2',
+    27→} as const
+    28→
+    29→// ── Pack Types ───────────────────────────────────────────────
+    30→const PACK_TYPES = [
+    31→  { value: '30_DAY', label: '30-Day Pack', days: 30, discount: 0 },
+    32→  { value: '60_DAY', label: '60-Day Pack', days: 60, discount: 5 },
+    33→  { value: '90_DAY', label: '90-Day Pack', days: 90, discount: 10 },
+    34→  { value: '180_DAY', label: '180-Day Pack', days: 180, discount: 15 },
+    35→  { value: 'CUSTOM', label: 'Custom Pack', days: 30, discount: 0 },
+    36→]
+    37→
+    38→// ── Status Badge Config ──────────────────────────────────────
+    39→const STATUS_CONFIG: Record<string, { label: string; bg: string; text: string }> = {
+    40→  ACTIVE: { label: 'Active', bg: 'bg-emerald-100', text: 'text-emerald-700' },
+    41→  PAUSED: { label: 'Paused', bg: 'bg-amber-100', text: 'text-amber-700' },
+    42→  CANCELLED: { label: 'Cancelled', bg: 'bg-red-100', text: 'text-red-700' },
+    43→  EXPIRED: { label: 'Expired', bg: 'bg-gray-100', text: 'text-gray-500' },
+    44→}
+    45→
+    46→// ── Animation Variants ───────────────────────────────────────
+    47→const cardVariants = {
+    48→  hidden: { opacity: 0, y: 20 },
+    49→  visible: (i: number) => ({
+    50→    opacity: 1,
+    51→    y: 0,
+    52→    transition: { delay: i * 0.08, duration: 0.4, ease: 'easeOut' },
+    53→  }),
+    54→  exit: { opacity: 0, y: -10, transition: { duration: 0.2 } },
+    55→}
+    56→
+    57→const fadeUp = {
+    58→  hidden: { opacity: 0, y: 16 },
+    59→  visible: { opacity: 1, y: 0, transition: { duration: 0.35 } },
+    60→}
+    61→
+    62→// ── Helper ───────────────────────────────────────────────────
+    63→function formatDate(dateStr: string) {
+    64→  try {
+    65→    return new Date(dateStr).toLocaleDateString('en-IN', {
+    66→      day: 'numeric',
+    67→      month: 'short',
+    68→      year: 'numeric',
+    69→    })
+    70→  } catch {
+    71→    return dateStr
+    72→  }
+    73→}
+    74→
+    75→function formatINR(amount: number) {
+    76→  return new Intl.NumberFormat('en-IN', {
+    77→    style: 'currency',
+    78→    currency: 'INR',
+    79→    minimumFractionDigits: 0,
+    80→    maximumFractionDigits: 0,
+    81→  }).format(amount)
+    82→}
+    83→
+    84→// ══════════════════════════════════════════════════════════════
+    85→// SubscriptionView
+    86→// ══════════════════════════════════════════════════════════════
+    87→export function SubscriptionView() {
+    88→  const user = useAppStore((s) => s.user)
+    89→  const navigateTo = useAppStore((s) => s.navigateTo)
+    90→
+    91→  const [subscriptions, setSubscriptions] = useState<Subscription[]>([])
+    92→  const [products, setProducts] = useState<Record<string, Product>>({})
+    93→  const [loading, setLoading] = useState(true)
+    94→  const [actionLoading, setActionLoading] = useState<string | null>(null)
+    95→
+    96→  // ── Fetch subscriptions + products ───────────────────────
+    97→  useEffect(() => {
+    98→    if (!user?.user_id) return
+    99→    let cancelled = false
+   100→
+   101→    async function fetch() {
+   102→      setLoading(true)
+   103→      try {
+   104→        const { data: subs } = await subscriptionService.getByUser(user.user_id)
+   105→        if (cancelled) return
+   106→        setSubscriptions(subs ?? [])
+   107→
+   108→        // Resolve product names for each subscription
+   109→        const { data: allProducts } = await productService.getAll()
+   110→        if (cancelled) return
+   111→        const map: Record<string, Product> = {}
+   112→        ;(allProducts ?? []).forEach((p) => {
+   113→          map[p.id] = p
+   114→        })
+   115→        setProducts(map)
+   116→      } catch (err) {
+   117→        console.error('Failed to load subscriptions', err)
+   118→      } finally {
+   119→        if (!cancelled) setLoading(false)
+   120→      }
+   121→    }
+   122→
+   123→    fetch()
+   124→    return () => {
+   125→      cancelled = true
+   126→    }
+   127→  }, [user?.user_id])
+   128→
+   129→  // ── Handlers ─────────────────────────────────────────────
+   130→  async function handlePauseResume(sub: Subscription) {
+   131→    const newStatus = sub.status === 'ACTIVE' ? 'PAUSED' : 'ACTIVE'
+   132→    setActionLoading(sub.id)
+   133→    try {
+   134→      const { error } = await subscriptionService.updateStatus(sub.id, newStatus)
+   135→      if (error) throw error
+   136→      setSubscriptions((prev) =>
+   137→        prev.map((s) => (s.id === sub.id ? { ...s, status: newStatus as Subscription['status'] } : s))
+   138→      )
+   139→      toast.success(newStatus === 'PAUSED' ? 'Subscription paused' : 'Subscription resumed')
+   140→    } catch {
+   141→      toast.error('Failed to update subscription')
+   142→    } finally {
+   143→      setActionLoading(null)
+   144→    }
+   145→  }
+   146→
+   147→  async function handleCancel(sub: Subscription) {
+   148→    setActionLoading(sub.id)
+   149→    try {
+   150→      const { error } = await subscriptionService.updateStatus(sub.id, 'CANCELLED')
+   151→      if (error) throw error
+   152→      setSubscriptions((prev) =>
+   153→        prev.map((s) => (s.id === sub.id ? { ...s, status: 'CANCELLED' } : s))
+   154→      )
+   155→      toast.success('Subscription cancelled')
+   156→    } catch {
+   157→      toast.error('Failed to cancel subscription')
+   158→    } finally {
+   159→      setActionLoading(null)
+   160→    }
+   161→  }
+   162→
+   163→  async function handleAutoRenewToggle(sub: Subscription, checked: boolean) {
+   164→    try {
+   165→      const { error } = await subscriptionService.toggleAutoRenew(sub.id, checked)
+   166→      if (error) throw error
+   167→      setSubscriptions((prev) =>
+   168→        prev.map((s) => (s.id === sub.id ? { ...s, auto_renew: checked } : s))
+   169→      )
+   170→      toast.success(checked ? 'Auto-renew enabled' : 'Auto-renew disabled')
+   171→    } catch {
+   172→      toast.error('Failed to toggle auto-renew')
+   173→    }
+   174→  }
+   175→
+   176→  // ── Loading state ────────────────────────────────────────
+   177→  if (loading) {
+   178→    return (
+   179→      <div className="flex flex-col items-center justify-center py-20 gap-4">
+   180→        <RefreshCw className="h-8 w-8 animate-spin" style={{ color: BRAND.muted }} />
+   181→        <p className="text-sm font-heading" style={{ color: BRAND.muted }}>
+   182→          Loading subscriptions…
+   183→        </p>
+   184→      </div>
+   185→    )
+   186→  }
+   187→
+   188→  // ── Empty state ──────────────────────────────────────────
+   189→  if (subscriptions.length === 0) {
+   190→    return (
+   191→      <motion.div
+   192→        initial="hidden"
+   193→        animate="visible"
+   194→        variants={fadeUp}
+   195→        className="flex flex-col items-center justify-center py-16 px-4"
+   196→      >
+   197→        <div
+   198→          className="rounded-full p-5 mb-5"
+   199→          style={{ backgroundColor: BRAND.surface }}
+   200→        >
+   201→          <Package className="h-10 w-10" style={{ color: BRAND.muted }} />
+   202→        </div>
+   203→        <h3 className="font-heading text-lg font-semibold mb-2" style={{ color: BRAND.dark }}>
+   204→          No subscriptions yet
+   205→        </h3>
+   206→        <p className="text-sm text-center max-w-xs mb-6" style={{ color: BRAND.muted }}>
+   207→          Subscribe to your favourite products and never run out. Enjoy auto-delivery with flexible pack options.
+   208→        </p>
+   209→        <Button
+   210→          onClick={() => navigateTo('products')}
+   211→          className="gap-2 text-white font-heading"
+   212→          style={{ backgroundColor: BRAND.green }}
+   213→        >
+   214→          <Zap className="h-4 w-4" />
+   215→          Browse Products
+   216→        </Button>
+   217→      </motion.div>
+   218→    )
+   219→  }
+   220→
+   221→  // ── Subscription cards ───────────────────────────────────
+   222→  return (
+   223→    <div className="space-y-4">
+   224→      {/* Header */}
+   225→      <div className="flex items-center justify-between mb-2">
+   226→        <h2 className="font-heading text-xl font-bold" style={{ color: BRAND.dark }}>
+   227→          My Subscriptions
+   228→        </h2>
+   229→        <Button
+   230→          variant="outline"
+   231→          size="sm"
+   232→          className="gap-1.5 font-heading"
+   233→          style={{ borderColor: BRAND.green, color: BRAND.green }}
+   234→          onClick={() => navigateTo('products')}
+   235→        >
+   236→          <PlusIcon className="h-3.5 w-3.5" />
+   237→          Subscribe
+   238→        </Button>
+   239→      </div>
+   240→
+   241→      {subscriptions.map((sub, i) => {
+   242→        const product = products[sub.product_id]
+   243→        const statusCfg = STATUS_CONFIG[sub.status] ?? STATUS_CONFIG.EXPIRED
+   244→        const pack = PACK_TYPES.find((p) => p.value === sub.pack_type)
+   245→        const isActive = sub.status === 'ACTIVE'
+   246→        const isPaused = sub.status === 'PAUSED'
+   247→        const isCancelled = sub.status === 'CANCELLED'
+   248→        const isExpired = sub.status === 'EXPIRED'
+   249→        const busy = actionLoading === sub.id
+   250→
+   251→        return (
+   252→          <motion.div
+   253→            key={sub.id}
+   254→            custom={i}
+   255→            initial="hidden"
+   256→            animate="visible"
+   257→            exit="exit"
+   258→            variants={cardVariants}
+   259→          >
+   260→            <Card
+   261→              className="overflow-hidden border-0 shadow-sm"
+   262→              style={{ backgroundColor: BRAND.bg }}
+   263→            >
+   264→              <CardContent className="p-0">
+   265→                {/* Top: product info row */}
+   266→                <div className="flex items-start gap-4 p-4 pb-3">
+   267→                  {/* Product image / icon */}
+   268→                  <div
+   269→                    className="flex-shrink-0 w-14 h-14 rounded-xl flex items-center justify-center overflow-hidden"
+   270→                    style={{ backgroundColor: BRAND.surface }}
+   271→                  >
+   272→                    {product?.image_url ? (
+   273→                      <img
+   274→                        src={product.image_url}
+   275→                        alt={product?.name ?? 'Product'}
+   276→                        className="w-full h-full object-cover"
+   277→                      />
+   278→                    ) : (
+   279→                      <Package className="h-6 w-6" style={{ color: BRAND.muted }} />
+   280→                    )}
+   281→                  </div>
+   282→
+   283→                  {/* Product name, pack, status */}
+   284→                  <div className="flex-1 min-w-0">
+   285→                    <div className="flex items-center gap-2 mb-1">
+   286→                      <h4 className="font-heading font-semibold truncate" style={{ color: BRAND.dark }}>
+   287→                        {product?.name ?? sub.product_id}
+   288→                      </h4>
+   289→                      <Badge
+   290→                        variant="secondary"
+   291→                        className={`${statusCfg.bg} ${statusCfg.text} text-[10px] px-1.5 py-0 font-heading shrink-0`}
+   292→                      >
+   293→                        {statusCfg.label}
+   294→                      </Badge>
+   295→                    </div>
+   296→                    <div className="flex items-center gap-3 text-xs" style={{ color: BRAND.muted }}>
+   297→                      <span className="flex items-center gap-1">
+   298→                        <Package className="h-3 w-3" />
+   299→                        {pack?.label ?? sub.pack_type}
+   300→                      </span>
+   301→                      <span className="flex items-center gap-1">
+   302→                        <Calendar className="h-3 w-3" />
+   303→                        {sub.pack_duration_days} days
+   304→                      </span>
+   305→                    </div>
+   306→                  </div>
+   307→
+   308→                  {/* Amount */}
+   309→                  <div className="text-right shrink-0">
+   310→                    <p className="font-heading font-bold text-base" style={{ color: BRAND.dark }}>
+   311→                      {formatINR(sub.amount)}
+   312→                    </p>
+   313→                    <p className="text-[10px]" style={{ color: BRAND.muted }}>
+   314→                      per pack
+   315→                    </p>
+   316→                  </div>
+   317→                </div>
+   318→
+   319→                <Separator style={{ backgroundColor: BRAND.surface }} />
+   320→
+   321→                {/* Dates row */}
+   322→                <div className="flex items-center justify-between px-4 py-2.5 text-xs" style={{ color: BRAND.muted }}>
+   323→                  <span className="flex items-center gap-1">
+   324→                    <Calendar className="h-3 w-3" />
+   325→                    Started {formatDate(sub.start_date)}
+   326→                  </span>
+   327→                  <ArrowRight className="h-3 w-3" />
+   328→                  <span className="flex items-center gap-1">
+   329→                    Expires {formatDate(sub.end_date)}
+   330→                  </span>
+   331→                </div>
+   332→
+   333→                <Separator style={{ backgroundColor: BRAND.surface }} />
+   334→
+   335→                {/* Auto-renew + Actions */}
+   336→                <div className="flex items-center justify-between px-4 py-3">
+   337→                  {/* Auto-renew toggle */}
+   338→                  <div className="flex items-center gap-2">
+   339→                    <Switch
+   340→                      id={`auto-renew-${sub.id}`}
+   341→                      checked={sub.auto_renew}
+   342→                      onCheckedChange={(checked) => handleAutoRenewToggle(sub, checked)}
+   343→                      disabled={isCancelled || isExpired}
+   344→                    />
+   345→                    <Label
+   346→                      htmlFor={`auto-renew-${sub.id}`}
+   347→                      className="text-xs font-heading cursor-pointer"
+   348→                      style={{ color: BRAND.muted }}
+   349→                    >
+   350→                      <Bell className="h-3 w-3 inline mr-1" />
+   351→                      Auto-renew
+   352→                    </Label>
+   353→                  </div>
+   354→
+   355→                  {/* Action buttons */}
+   356→                  <div className="flex items-center gap-2">
+   357→                    {(isActive || isPaused) && (
+   358→                      <Button
+   359→                        variant="outline"
+   360→                        size="sm"
+   361→                        className="h-7 text-xs gap-1 font-heading"
+   362→                        style={{
+   363→                          borderColor: isPaused ? BRAND.green : BRAND.blue,
+   364→                          color: isPaused ? BRAND.green : BRAND.blue,
+   365→                        }}
+   366→                        onClick={() => handlePauseResume(sub)}
+   367→                        disabled={busy}
+   368→                      >
+   369→                        {busy ? (
+   370→                          <RefreshCw className="h-3 w-3 animate-spin" />
+   371→                        ) : isPaused ? (
+   372→                          <Play className="h-3 w-3" />
+   373→                        ) : (
+   374→                          <Pause className="h-3 w-3" />
+   375→                        )}
+   376→                        {isPaused ? 'Resume' : 'Pause'}
+   377→                      </Button>
+   378→                    )}
+   379→
+   380→                    {(isActive || isPaused) && (
+   381→                      <Button
+   382→                        variant="outline"
+   383→                        size="sm"
+   384→                        className="h-7 text-xs gap-1 font-heading text-red-500 border-red-300 hover:bg-red-50"
+   385→                        onClick={() => handleCancel(sub)}
+   386→                        disabled={busy}
+   387→                      >
+   388→                        <X className="h-3 w-3" />
+   389→                        Cancel
+   390→                      </Button>
+   391→                    )}
+   392→
+   393→                    {(isCancelled || isExpired) && (
+   394→                      <span className="text-xs italic" style={{ color: BRAND.muted }}>
+   395→                        {isCancelled ? 'Subscription cancelled' : 'Subscription expired'}
+   396→                      </span>
+   397→                    )}
+   398→                  </div>
+   399→                </div>
+   400→              </CardContent>
+   401→            </Card>
+   402→          </motion.div>
+   403→        )
+   404→      })}
+   405→    </div>
+   406→  )
+   407→}
+   408→
+   409→// ── Small Plus icon (inline to avoid extra import) ──────────
+   410→function PlusIcon({ className }: { className?: string }) {
+   411→  return (
+   412→    <svg
+   413→      xmlns="http://www.w3.org/2000/svg"
+   414→      viewBox="0 0 24 24"
+   415→      fill="none"
+   416→      stroke="currentColor"
+   417→      strokeWidth="2"
+   418→      strokeLinecap="round"
+   419→      strokeLinejoin="round"
+   420→      className={className}
+   421→    >
+   422→      <path d="M5 12h14" />
+   423→      <path d="M12 5v14" />
+   424→    </svg>
+   425→  )
+   426→}
+   427→
+   428→// ══════════════════════════════════════════════════════════════
+   429→// SubscriptionSelector
+   430→// ══════════════════════════════════════════════════════════════
+   431→interface SubscriptionSelectorProps {
+   432→  product: Product
+   433→  open: boolean
+   434→  onClose: () => void
+   435→  onSubscribe: (packType: string, amount: number) => void
+   436→}
+   437→
+   438→export function SubscriptionSelector({
+   439→  product,
+   440→  open,
+   441→  onClose,
+   442→  onSubscribe,
+   443→}: SubscriptionSelectorProps) {
+   444→  const [mode, setMode] = useState<'one-time' | 'subscribe'>('subscribe')
+   445→  const [selectedPack, setSelectedPack] = useState<string>('30_DAY')
+   446→  const [confirming, setConfirming] = useState(false)
+   447→
+   448→  const selectedPackDef = PACK_TYPES.find((p) => p.value === selectedPack) ?? PACK_TYPES[0]
+   449→  const discountAmount = product.price * (selectedPackDef.discount / 100)
+   450→  const finalPrice = product.price - discountAmount
+   451→
+   452→  // Reset state when dialog opens
+   453→  useEffect(() => {
+   454→    if (open) {
+   455→      setMode('subscribe')
+   456→      setSelectedPack('30_DAY')
+   457→      setConfirming(false)
+   458→    }
+   459→  }, [open])
+   460→
+   461→  async function handleConfirm() {
+   462→    setConfirming(true)
+   463→    try {
+   464→      if (mode === 'one-time') {
+   465→        onSubscribe('ONE_TIME', product.price)
+   466→      } else {
+   467→        onSubscribe(selectedPack, finalPrice)
+   468→      }
+   469→    } finally {
+   470→      setConfirming(false)
+   471→    }
+   472→  }
+   473→
+   474→  return (
+   475→    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+   476→      <DialogContent
+   477→        className="sm:max-w-md border-0 shadow-xl"
+   478→        style={{ backgroundColor: BRAND.bg }}
+   479→      >
+   480→        <DialogHeader>
+   481→          <DialogTitle className="font-heading text-lg" style={{ color: BRAND.dark }}>
+   482→            Choose Your Plan
+   483→          </DialogTitle>
+   484→        </DialogHeader>
+   485→
+   486→        {/* Product info */}
+   487→        <div className="flex items-center gap-3 p-3 rounded-xl" style={{ backgroundColor: BRAND.surface }}>
+   488→          <div
+   489→            className="w-12 h-12 rounded-lg flex items-center justify-center overflow-hidden shrink-0"
+   490→            style={{ backgroundColor: BRAND.bg }}
+   491→          >
+   492→            {product.image_url ? (
+   493→              <img
+   494→                src={product.image_url}
+   495→                alt={product.name}
+   496→                className="w-full h-full object-cover"
+   497→              />
+   498→            ) : (
+   499→              <Package className="h-5 w-5" style={{ color: BRAND.muted }} />
+   500→            )}
+   501→          </div>
+   502→          <div className="flex-1 min-w-0">
+   503→            <h4 className="font-heading font-semibold text-sm truncate" style={{ color: BRAND.dark }}>
+   504→              {product.name}
+   505→            </h4>
+   506→            <p className="text-xs" style={{ color: BRAND.muted }}>
+   507→              {product.description ?? product.type}
+   508→            </p>
+   509→          </div>
+   510→          <p className="font-heading font-bold shrink-0" style={{ color: BRAND.dark }}>
+   511→            {formatINR(product.price)}
+   512→          </p>
+   513→        </div>
+   514→
+   515→        {/* Mode selector */}
+   516→        <div className="grid grid-cols-2 gap-2 mt-4">
+   517→          <button
+   518→            type="button"
+   519→            onClick={() => setMode('one-time')}
+   520→            className="relative rounded-xl p-3 text-left transition-all border-2"
+   521→            style={{
+   522→              borderColor: mode === 'one-time' ? BRAND.green : 'transparent',
+   523→              backgroundColor: mode === 'one-time' ? 'rgba(72,128,91,0.08)' : BRAND.surface,
+   524→            }}
+   525→          >
+   526→            <CreditCard className="h-5 w-5 mb-1.5" style={{ color: mode === 'one-time' ? BRAND.green : BRAND.muted }} />
+   527→            <p className="font-heading text-sm font-semibold" style={{ color: BRAND.dark }}>
+   528→              One-Time
+   529→            </p>
+   530→            <p className="text-[11px]" style={{ color: BRAND.muted }}>
+   531→              Single purchase
+   532→            </p>
+   533→            {mode === 'one-time' && (
+   534→              <CheckCircle className="absolute top-2 right-2 h-4 w-4" style={{ color: BRAND.green }} />
+   535→            )}
+   536→          </button>
+   537→
+   538→          <button
+   539→            type="button"
+   540→            onClick={() => setMode('subscribe')}
+   541→            className="relative rounded-xl p-3 text-left transition-all border-2"
+   542→            style={{
+   543→              borderColor: mode === 'subscribe' ? BRAND.green : 'transparent',
+   544→              backgroundColor: mode === 'subscribe' ? 'rgba(72,128,91,0.08)' : BRAND.surface,
+   545→            }}
+   546→          >
+   547→            <Zap className="h-5 w-5 mb-1.5" style={{ color: mode === 'subscribe' ? BRAND.green : BRAND.muted }} />
+   548→            <p className="font-heading text-sm font-semibold" style={{ color: BRAND.dark }}>
+   549→              Subscribe
+   550→            </p>
+   551→            <p className="text-[11px]" style={{ color: BRAND.muted }}>
+   552→              Save up to 15%
+   553→            </p>
+   554→            {mode === 'subscribe' && (
+   555→              <CheckCircle className="absolute top-2 right-2 h-4 w-4" style={{ color: BRAND.green }} />
+   556→            )}
+   557→          </button>
+   558→        </div>
+   559→
+   560→        {/* Pack type selector (only for subscribe mode) */}
+   561→        {mode === 'subscribe' && (
+   562→          <motion.div
+   563→            initial={{ opacity: 0, height: 0 }}
+   564→            animate={{ opacity: 1, height: 'auto' }}
+   565→            exit={{ opacity: 0, height: 0 }}
+   566→            transition={{ duration: 0.25 }}
+   567→            className="mt-4"
+   568→          >
+   569→            <Label className="text-xs font-heading mb-2 block" style={{ color: BRAND.muted }}>
+   570→              Select Pack Duration
+   571→            </Label>
+   572→            <Select value={selectedPack} onValueChange={setSelectedPack}>
+   573→              <SelectTrigger className="font-heading" style={{ backgroundColor: BRAND.surface, borderColor: BRAND.surface }}>
+   574→                <SelectValue placeholder="Choose pack" />
+   575→              </SelectTrigger>
+   576→              <SelectContent>
+   577→                {PACK_TYPES.map((pt) => (
+   578→                  <SelectItem key={pt.value} value={pt.value} className="font-heading">
+   579→                    <span className="flex items-center justify-between gap-4 w-full">
+   580→                      <span>{pt.label}</span>
+   581→                      <span className="text-xs ml-auto" style={{ color: BRAND.muted }}>
+   582→                        {pt.discount > 0 ? `${pt.discount}% off` : 'No discount'}
+   583→                      </span>
+   584→                    </span>
+   585→                  </SelectItem>
+   586→                ))}
+   587→              </SelectContent>
+   588→            </Select>
+   589→
+   590→            {/* Price breakdown */}
+   591→            <div className="mt-3 p-3 rounded-xl space-y-1.5" style={{ backgroundColor: BRAND.surface }}>
+   592→              <div className="flex items-center justify-between text-xs">
+   593→                <span style={{ color: BRAND.muted }}>Base price</span>
+   594→                <span style={{ color: BRAND.dark }}>{formatINR(product.price)}</span>
+   595→              </div>
+   596→              {selectedPackDef.discount > 0 && (
+   597→                <div className="flex items-center justify-between text-xs">
+   598→                  <span style={{ color: BRAND.green }}>Discount ({selectedPackDef.discount}%)</span>
+   599→                  <span style={{ color: BRAND.green }}>-{formatINR(discountAmount)}</span>
+   600→                </div>
+   601→              )}
+   602→              <Separator style={{ backgroundColor: BRAND.bg }} />
+   603→              <div className="flex items-center justify-between">
+   604→                <span className="font-heading text-sm font-semibold" style={{ color: BRAND.dark }}>
+   605→                  You pay
+   606→                </span>
+   607→                <span className="font-heading text-lg font-bold" style={{ color: BRAND.green }}>
+   608→                  {formatINR(finalPrice)}
+   609→                </span>
+   610→              </div>
+   611→              <p className="text-[10px]" style={{ color: BRAND.muted }}>
+   612→                Duration: {selectedPackDef.days} days &middot; Auto-renews unless cancelled
+   613→              </p>
+   614→            </div>
+   615→          </motion.div>
+   616→        )}
+   617→
+   618→        {/* One-time purchase summary */}
+   619→        {mode === 'one-time' && (
+   620→          <motion.div
+   621→            initial={{ opacity: 0, height: 0 }}
+   622→            animate={{ opacity: 1, height: 'auto' }}
+   623→            exit={{ opacity: 0, height: 0 }}
+   624→            transition={{ duration: 0.25 }}
+   625→            className="mt-4 p-3 rounded-xl"
+   626→            style={{ backgroundColor: BRAND.surface }}
+   627→          >
+   628→            <div className="flex items-center justify-between">
+   629→              <span className="font-heading text-sm font-semibold" style={{ color: BRAND.dark }}>
+   630→                Total
+   631→              </span>
+   632→              <span className="font-heading text-lg font-bold" style={{ color: BRAND.dark }}>
+   633→                {formatINR(product.price)}
+   634→              </span>
+   635→            </div>
+   636→            <p className="text-[10px] mt-1" style={{ color: BRAND.muted }}>
+   637→              One-time purchase &middot; No auto-renewal
+   638→            </p>
+   639→          </motion.div>
+   640→        )}
+   641→
+   642→        {/* Footer actions */}
+   643→        <DialogFooter className="mt-5 gap-2 sm:gap-0">
+   644→          <Button
+   645→            variant="outline"
+   646→            onClick={onClose}
+   647→            className="font-heading"
+   648→            style={{ borderColor: BRAND.muted, color: BRAND.muted }}
+   649→          >
+   650→            Cancel
+   651→          </Button>
+   652→          <Button
+   653→            onClick={handleConfirm}
+   654→            disabled={confirming}
+   655→            className="gap-2 text-white font-heading"
+   656→            style={{ backgroundColor: BRAND.green }}
+   657→          >
+   658→            {confirming ? (
+   659→              <RefreshCw className="h-4 w-4 animate-spin" />
+   660→            ) : (
+   661→              <CheckCircle className="h-4 w-4" />
+   662→            )}
+   663→            {mode === 'one-time' ? 'Confirm Purchase' : 'Confirm Subscription'}
+   664→          </Button>
+   665→        </DialogFooter>
+   666→      </DialogContent>
+   667→    </Dialog>
+   668→  )
+   669→}
+   670→

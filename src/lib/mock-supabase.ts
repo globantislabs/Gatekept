@@ -58,21 +58,41 @@ export interface QuizQuestion {
   category?: string
   difficulty: string
   active: boolean
-  product_id?: string
 }
 
 export interface Product {
   id: string
   name: string
   description?: string
+  short_description?: string
   price: number
-  subscription_price?: number
-  subscription_interval?: 'MONTHLY' | 'QUARTERLY'
-  has_subscription: boolean
+  mrp?: number
   stock: number
   image_url?: string
+  gallery_images?: string
   type: string
+  category?: string
+  sku?: string
+  weight?: string
+  ingredients?: string
+  nutrition_info?: string
+  tags?: string
   active: boolean
+  featured?: boolean
+  brand?: string
+  flavor?: string
+  serving_size?: string
+  allergen_info?: string
+  storage_info?: string
+  shelf_life?: string
+  country_origin?: string
+  fssai_license?: string
+  hsn_code?: string
+  gst_rate?: number
+  min_order_qty?: number
+  max_order_qty?: number
+  discount_label?: string
+  highlights?: string
   created_at: string
 }
 
@@ -80,7 +100,6 @@ export interface Order {
   id: string
   user_id: string
   status: string
-  order_type: 'one-time' | 'subscription'
   amount: number
   payment_gateway?: string
   payment_id?: string
@@ -100,40 +119,73 @@ export interface OrderItem {
   product?: Product
 }
 
-export interface GuaranteePlan {
-  id: string
-  name: string
-  description: string
-  duration: string
-  price: number
-  features: string[]
-  active: boolean
-  created_at: string
-}
-
 export interface ProductVideo {
   id: string
   product_id: string
   title: string
-  url: string
-  order_index: number
-  duration?: number
+  duration: string
+  description: string
+  order: number  // sequence within product
+  video_url?: string
+  active: boolean
+}
+
+export interface ProductQuiz {
+  id: string
+  product_id: string
+  video_id: string  // linked to which video
+  question: string
+  options: string[]
+  answer: number
+  category?: string
+  difficulty: string
+  order: number
+  active: boolean
+}
+
+export interface ProductLearningProgress {
+  id: string
+  user_id: string
+  product_id: string
+  video_progress: Record<string, number>  // videoId -> percentage
+  quiz_answers: Record<string, number>  // quizId -> selectedOptionIndex
+  quiz_completed: boolean
+  quiz_score: number
+  status: 'NOT_STARTED' | 'IN_PROGRESS' | 'PENDING_REEVALUATION' | 'COMPLETED' | 'UNLOCKED'
+  completed_at?: string
   created_at: string
+  updated_at: string
 }
 
 export interface Subscription {
   id: string
   user_id: string
   product_id: string
-  status: 'ACTIVE' | 'PAUSED' | 'CANCELLED'
+  pack_type: string  // 30_DAY, 60_DAY, 90_DAY, 180_DAY, CUSTOM
+  pack_duration_days: number
+  status: 'ACTIVE' | 'PAUSED' | 'CANCELLED' | 'EXPIRED'
   amount: number
-  interval: 'MONTHLY' | 'QUARTERLY'
   start_date: string
-  next_billing_date: string
+  end_date: string
+  auto_renew: boolean
+  payment_id?: string
+  created_at: string
+  updated_at: string
+}
+
+export interface ReorderReminder {
+  id: string
+  user_id: string
+  subscription_id: string
+  product_id: string
+  reminder_date: string
+  channel: string  // WHATSAPP, EMAIL, SMS, PUSH
+  status: 'PENDING' | 'SENT' | 'DISMISSED'
+  message: string
   created_at: string
 }
 
-type TableName = 'users_profile' | 'campaigns' | 'qr_scans' | 'learning_progress' | 'quiz_questions' | 'products' | 'orders' | 'order_items' | 'guarantee_plans' | 'product_videos' | 'subscriptions'
+type TableName = 'users_profile' | 'campaigns' | 'qr_scans' | 'learning_progress' | 'quiz_questions' | 'products' | 'orders' | 'order_items' | 'product_videos' | 'product_quizzes' | 'product_learning_progress' | 'subscriptions' | 'reorder_reminders'
 
 // ============================================================
 // Data Store with localStorage persistence
@@ -148,9 +200,11 @@ class MockDataStore {
     products: [],
     orders: [],
     order_items: [],
-    guarantee_plans: [],
     product_videos: [],
+    product_quizzes: [],
+    product_learning_progress: [],
     subscriptions: [],
+    reorder_reminders: [],
   }
 
   constructor() {
@@ -161,7 +215,7 @@ class MockDataStore {
     if (typeof window === 'undefined') return
     try {
       const storedVersion = localStorage.getItem('notjust_mock_db_version')
-      const currentVersion = 'v6' // Increment when seed data changes
+      const currentVersion = 'v9' // Increment when seed data changes
       if (storedVersion === currentVersion) {
         const stored = localStorage.getItem('notjust_mock_db')
         if (stored) {
@@ -287,30 +341,30 @@ class MockDataStore {
 
     // Products
     this.data.products = [
-      { id: 'prod_001', name: 'NOTJUST Watr Fizz', description: 'Sparkling 50 ml pre-meal wellness shots designed to help reduce the GI impact of carbohydrate-rich meals. Available as a Monthly Pack with 60 shots for daily use.', price: 2999, subscription_price: 2499, subscription_interval: 'MONTHLY', has_subscription: true, stock: 500, image_url: '/images/notjust-logo.png', type: 'FIZZ', active: true, created_at: '2026-06-01T00:00:00Z' },
-      { id: 'prod_002', name: 'NOTJUST Watr Still', description: 'Still 50 ml pre-meal wellness shots designed to support healthy blood sugar management. Available with an eco-friendly refill pack that is sustainable and affordable.', price: 2499, subscription_price: 1999, subscription_interval: 'MONTHLY', has_subscription: true, stock: 300, image_url: '/images/notjust-logo.png', type: 'STILL', active: true, created_at: '2026-06-01T00:00:00Z' },
+      { id: 'prod_001', name: 'NOTJUST Watr Fizz', description: 'Sparkling 50 ml pre-meal wellness shots designed to help reduce the GI impact of carbohydrate-rich meals. Available as a Monthly Pack with 60 shots for daily use.', short_description: 'Sparkling pre-meal wellness shot for glycemic support', price: 2999, mrp: 3499, stock: 500, image_url: '/images/product-fizz.webp', gallery_images: '', type: 'FIZZ', category: 'Wellness Shot', sku: 'NJW-FIZZ-060', weight: '50ml per shot, 60 shots', ingredients: 'Carbonated water, apple cider vinegar, green tea extract, chromium picolinate, natural flavors', nutrition_info: 'Calories: 0, Sugar: 0g, Sodium: 5mg per 50ml shot', tags: 'sugar-free, zero-calorie, carbonated, pre-meal', active: true, featured: true, brand: 'NOTJUST', flavor: 'Original Sparkling', serving_size: '50ml (1 shot)', allergen_info: 'Contains apple cider vinegar. May contain traces of sulphites.', storage_info: 'Store in a cool, dry place away from direct sunlight. Refrigerate after opening.', shelf_life: '12 months from manufacture', country_origin: 'India', fssai_license: 'FSSAI-12345678000123', hsn_code: '2202', gst_rate: 18, min_order_qty: 1, max_order_qty: 10, discount_label: 'Launch Offer', highlights: 'Zero sugar, Zero calories, Pre-meal glycemic support, 60 shots per pack, Carbonated', created_at: '2026-06-01T00:00:00Z' },
+      { id: 'prod_002', name: 'NOTJUST Watr Still', description: 'Still 50 ml pre-meal wellness shots designed to support healthy blood sugar management. Available with an eco-friendly refill pack that is sustainable and affordable.', short_description: 'Smooth non-carbonated wellness shot for daily health', price: 2499, mrp: 2999, stock: 300, image_url: '/images/product-still.webp', gallery_images: '', type: 'STILL', category: 'Wellness Shot', sku: 'NJW-STIL-014', weight: '50ml per shot, 14 shots per pack', ingredients: 'Purified water, apple cider vinegar, gymnema sylvestre, fenugreek extract, natural flavors', nutrition_info: 'Calories: 0, Sugar: 0g, Sodium: 3mg per 50ml shot', tags: 'sugar-free, zero-calorie, still, eco-friendly', active: true, featured: false, brand: 'NOTJUST', flavor: 'Original Still', serving_size: '50ml (1 shot)', allergen_info: 'Contains apple cider vinegar and fenugreek. May contain traces of sulphites.', storage_info: 'Store in a cool, dry place away from direct sunlight. Refrigerate after opening.', shelf_life: '12 months from manufacture', country_origin: 'India', fssai_license: 'FSSAI-12345678000124', hsn_code: '2202', gst_rate: 18, min_order_qty: 1, max_order_qty: 10, discount_label: 'Eco Save', highlights: 'Zero sugar, Zero calories, Eco-friendly refill pack, Gymnema & Fenugreek extract, 14 shots per pack', created_at: '2026-06-01T00:00:00Z' },
     ]
 
     // Orders — 18 orders covering all statuses and time range
     this.data.orders = [
-      { id: 'ord_001', user_id: 'user_002', status: 'DELIVERED', order_type: 'one-time', amount: 2999, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_001', shipping_address: { name: 'Priya Sharma', line1: '42 MG Road', city: 'Bangalore', state: 'Karnataka', pincode: '560001' }, created_at: '2026-05-02T10:30:00Z', updated_at: '2026-05-05T14:00:00Z' },
-      { id: 'ord_002', user_id: 'user_003', status: 'DELIVERED', order_type: 'one-time', amount: 2499, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_002', shipping_address: { name: 'Rajesh Kumar', line1: '15 Anna Nagar', city: 'Chennai', state: 'Tamil Nadu', pincode: '600040' }, created_at: '2026-05-05T15:30:00Z', updated_at: '2026-05-08T09:00:00Z' },
-      { id: 'ord_003', user_id: 'user_005', status: 'DELIVERED', order_type: 'subscription', amount: 2499, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_003', shipping_address: { name: 'Vikram Patel', line1: '78 CG Road', city: 'Ahmedabad', state: 'Gujarat', pincode: '380006' }, created_at: '2026-05-10T11:00:00Z', updated_at: '2026-05-13T11:05:00Z' },
-      { id: 'ord_004', user_id: 'user_007', status: 'DELIVERED', order_type: 'one-time', amount: 2499, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_004', shipping_address: { name: 'Suresh Menon', line1: '23 Panaji Market', city: 'Panaji', state: 'Goa', pincode: '403001' }, created_at: '2026-05-14T14:00:00Z', updated_at: '2026-05-17T14:05:00Z' },
-      { id: 'ord_005', user_id: 'user_002', status: 'DELIVERED', order_type: 'subscription', amount: 2499, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_005', shipping_address: { name: 'Priya Sharma', line1: '42 MG Road', city: 'Bangalore', state: 'Karnataka', pincode: '560001' }, created_at: '2026-05-18T09:20:00Z', updated_at: '2026-05-21T10:00:00Z' },
-      { id: 'ord_006', user_id: 'user_009', status: 'DELIVERED', order_type: 'one-time', amount: 2999, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_006', shipping_address: { name: 'Arjun Reddy', line1: '56 Jubilee Hills', city: 'Hyderabad', state: 'Telangana', pincode: '500033' }, created_at: '2026-05-22T16:45:00Z', updated_at: '2026-05-25T10:00:00Z' },
-      { id: 'ord_007', user_id: 'user_010', status: 'DELIVERED', order_type: 'one-time', amount: 2499, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_007', shipping_address: { name: 'Kavita Joshi', line1: '9 MI Road', city: 'Jaipur', state: 'Rajasthan', pincode: '302001' }, created_at: '2026-05-26T11:30:00Z', updated_at: '2026-05-29T09:00:00Z' },
-      { id: 'ord_008', user_id: 'user_003', status: 'SHIPPED', order_type: 'one-time', amount: 2999, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_008', shipping_address: { name: 'Rajesh Kumar', line1: '15 Anna Nagar', city: 'Chennai', state: 'Tamil Nadu', pincode: '600040' }, created_at: '2026-06-02T08:15:00Z', updated_at: '2026-06-04T07:00:00Z' },
-      { id: 'ord_009', user_id: 'user_005', status: 'SHIPPED', order_type: 'subscription', amount: 1999, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_009', shipping_address: { name: 'Vikram Patel', line1: '78 CG Road', city: 'Ahmedabad', state: 'Gujarat', pincode: '380006' }, created_at: '2026-06-04T13:40:00Z', updated_at: '2026-06-06T11:00:00Z' },
-      { id: 'ord_010', user_id: 'user_007', status: 'SHIPPED', order_type: 'one-time', amount: 799, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_010', shipping_address: { name: 'Suresh Menon', line1: '23 Panaji Market', city: 'Panaji', state: 'Goa', pincode: '403001' }, created_at: '2026-06-06T10:20:00Z', updated_at: '2026-06-08T09:00:00Z' },
-      { id: 'ord_011', user_id: 'user_002', status: 'CONFIRMED', order_type: 'one-time', amount: 2999, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_011', shipping_address: { name: 'Priya Sharma', line1: '42 MG Road', city: 'Bangalore', state: 'Karnataka', pincode: '560001' }, created_at: '2026-06-08T15:10:00Z', updated_at: '2026-06-08T15:15:00Z' },
-      { id: 'ord_012', user_id: 'user_009', status: 'CONFIRMED', order_type: 'subscription', amount: 1999, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_012', shipping_address: { name: 'Arjun Reddy', line1: '56 Jubilee Hills', city: 'Hyderabad', state: 'Telangana', pincode: '500033' }, created_at: '2026-06-09T09:45:00Z', updated_at: '2026-06-09T09:50:00Z' },
-      { id: 'ord_013', user_id: 'user_010', status: 'CONFIRMED', order_type: 'one-time', amount: 2999, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_013', shipping_address: { name: 'Kavita Joshi', line1: '9 MI Road', city: 'Jaipur', state: 'Rajasthan', pincode: '302001' }, created_at: '2026-06-10T14:30:00Z', updated_at: '2026-06-10T14:35:00Z' },
-      { id: 'ord_014', user_id: 'user_003', status: 'CONFIRMED', order_type: 'one-time', amount: 799, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_014', shipping_address: { name: 'Rajesh Kumar', line1: '15 Anna Nagar', city: 'Chennai', state: 'Tamil Nadu', pincode: '600040' }, created_at: '2026-06-11T08:00:00Z', updated_at: '2026-06-11T08:05:00Z' },
-      { id: 'ord_015', user_id: 'user_005', status: 'PENDING', order_type: 'one-time', amount: 2999, payment_gateway: null, payment_id: null, shipping_address: { name: 'Vikram Patel', line1: '78 CG Road', city: 'Ahmedabad', state: 'Gujarat', pincode: '380006' }, created_at: '2026-06-12T11:20:00Z', updated_at: '2026-06-12T11:20:00Z' },
-      { id: 'ord_016', user_id: 'user_007', status: 'PENDING', order_type: 'subscription', amount: 2499, payment_gateway: null, payment_id: null, shipping_address: { name: 'Suresh Menon', line1: '23 Panaji Market', city: 'Panaji', state: 'Goa', pincode: '403001' }, created_at: '2026-06-13T09:30:00Z', updated_at: '2026-06-13T09:30:00Z' },
-      { id: 'ord_017', user_id: 'user_002', status: 'CANCELLED', order_type: 'one-time', amount: 799, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_017', shipping_address: { name: 'Priya Sharma', line1: '42 MG Road', city: 'Bangalore', state: 'Karnataka', pincode: '560001' }, created_at: '2026-05-08T10:00:00Z', updated_at: '2026-05-09T08:00:00Z' },
-      { id: 'ord_018', user_id: 'user_009', status: 'CANCELLED', order_type: 'one-time', amount: 2499, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_018', shipping_address: { name: 'Arjun Reddy', line1: '56 Jubilee Hills', city: 'Hyderabad', state: 'Telangana', pincode: '500033' }, created_at: '2026-05-15T14:00:00Z', updated_at: '2026-05-16T10:00:00Z' },
+      { id: 'ord_001', user_id: 'user_002', status: 'DELIVERED', amount: 2999, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_001', shipping_address: { name: 'Priya Sharma', line1: '42 MG Road', city: 'Bangalore', state: 'Karnataka', pincode: '560001' }, created_at: '2026-05-02T10:30:00Z', updated_at: '2026-05-05T14:00:00Z' },
+      { id: 'ord_002', user_id: 'user_003', status: 'DELIVERED', amount: 2499, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_002', shipping_address: { name: 'Rajesh Kumar', line1: '15 Anna Nagar', city: 'Chennai', state: 'Tamil Nadu', pincode: '600040' }, created_at: '2026-05-05T15:30:00Z', updated_at: '2026-05-08T09:00:00Z' },
+      { id: 'ord_003', user_id: 'user_005', status: 'DELIVERED', amount: 2999, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_003', shipping_address: { name: 'Vikram Patel', line1: '78 CG Road', city: 'Ahmedabad', state: 'Gujarat', pincode: '380006' }, created_at: '2026-05-10T11:00:00Z', updated_at: '2026-05-13T11:05:00Z' },
+      { id: 'ord_004', user_id: 'user_007', status: 'DELIVERED', amount: 2499, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_004', shipping_address: { name: 'Suresh Menon', line1: '23 Panaji Market', city: 'Panaji', state: 'Goa', pincode: '403001' }, created_at: '2026-05-14T14:00:00Z', updated_at: '2026-05-17T14:05:00Z' },
+      { id: 'ord_005', user_id: 'user_002', status: 'DELIVERED', amount: 799, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_005', shipping_address: { name: 'Priya Sharma', line1: '42 MG Road', city: 'Bangalore', state: 'Karnataka', pincode: '560001' }, created_at: '2026-05-18T09:20:00Z', updated_at: '2026-05-21T10:00:00Z' },
+      { id: 'ord_006', user_id: 'user_009', status: 'DELIVERED', amount: 2999, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_006', shipping_address: { name: 'Arjun Reddy', line1: '56 Jubilee Hills', city: 'Hyderabad', state: 'Telangana', pincode: '500033' }, created_at: '2026-05-22T16:45:00Z', updated_at: '2026-05-25T10:00:00Z' },
+      { id: 'ord_007', user_id: 'user_010', status: 'DELIVERED', amount: 2499, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_007', shipping_address: { name: 'Kavita Joshi', line1: '9 MI Road', city: 'Jaipur', state: 'Rajasthan', pincode: '302001' }, created_at: '2026-05-26T11:30:00Z', updated_at: '2026-05-29T09:00:00Z' },
+      { id: 'ord_008', user_id: 'user_003', status: 'SHIPPED', amount: 2999, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_008', shipping_address: { name: 'Rajesh Kumar', line1: '15 Anna Nagar', city: 'Chennai', state: 'Tamil Nadu', pincode: '600040' }, created_at: '2026-06-02T08:15:00Z', updated_at: '2026-06-04T07:00:00Z' },
+      { id: 'ord_009', user_id: 'user_005', status: 'SHIPPED', amount: 2499, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_009', shipping_address: { name: 'Vikram Patel', line1: '78 CG Road', city: 'Ahmedabad', state: 'Gujarat', pincode: '380006' }, created_at: '2026-06-04T13:40:00Z', updated_at: '2026-06-06T11:00:00Z' },
+      { id: 'ord_010', user_id: 'user_007', status: 'SHIPPED', amount: 799, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_010', shipping_address: { name: 'Suresh Menon', line1: '23 Panaji Market', city: 'Panaji', state: 'Goa', pincode: '403001' }, created_at: '2026-06-06T10:20:00Z', updated_at: '2026-06-08T09:00:00Z' },
+      { id: 'ord_011', user_id: 'user_002', status: 'CONFIRMED', amount: 2999, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_011', shipping_address: { name: 'Priya Sharma', line1: '42 MG Road', city: 'Bangalore', state: 'Karnataka', pincode: '560001' }, created_at: '2026-06-08T15:10:00Z', updated_at: '2026-06-08T15:15:00Z' },
+      { id: 'ord_012', user_id: 'user_009', status: 'CONFIRMED', amount: 2499, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_012', shipping_address: { name: 'Arjun Reddy', line1: '56 Jubilee Hills', city: 'Hyderabad', state: 'Telangana', pincode: '500033' }, created_at: '2026-06-09T09:45:00Z', updated_at: '2026-06-09T09:50:00Z' },
+      { id: 'ord_013', user_id: 'user_010', status: 'CONFIRMED', amount: 2999, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_013', shipping_address: { name: 'Kavita Joshi', line1: '9 MI Road', city: 'Jaipur', state: 'Rajasthan', pincode: '302001' }, created_at: '2026-06-10T14:30:00Z', updated_at: '2026-06-10T14:35:00Z' },
+      { id: 'ord_014', user_id: 'user_003', status: 'CONFIRMED', amount: 799, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_014', shipping_address: { name: 'Rajesh Kumar', line1: '15 Anna Nagar', city: 'Chennai', state: 'Tamil Nadu', pincode: '600040' }, created_at: '2026-06-11T08:00:00Z', updated_at: '2026-06-11T08:05:00Z' },
+      { id: 'ord_015', user_id: 'user_005', status: 'PENDING', amount: 2999, payment_gateway: null, payment_id: null, shipping_address: { name: 'Vikram Patel', line1: '78 CG Road', city: 'Ahmedabad', state: 'Gujarat', pincode: '380006' }, created_at: '2026-06-12T11:20:00Z', updated_at: '2026-06-12T11:20:00Z' },
+      { id: 'ord_016', user_id: 'user_007', status: 'PENDING', amount: 2499, payment_gateway: null, payment_id: null, shipping_address: { name: 'Suresh Menon', line1: '23 Panaji Market', city: 'Panaji', state: 'Goa', pincode: '403001' }, created_at: '2026-06-13T09:30:00Z', updated_at: '2026-06-13T09:30:00Z' },
+      { id: 'ord_017', user_id: 'user_002', status: 'CANCELLED', amount: 799, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_017', shipping_address: { name: 'Priya Sharma', line1: '42 MG Road', city: 'Bangalore', state: 'Karnataka', pincode: '560001' }, created_at: '2026-05-08T10:00:00Z', updated_at: '2026-05-09T08:00:00Z' },
+      { id: 'ord_018', user_id: 'user_009', status: 'CANCELLED', amount: 2499, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_018', shipping_address: { name: 'Arjun Reddy', line1: '56 Jubilee Hills', city: 'Hyderabad', state: 'Telangana', pincode: '500033' }, created_at: '2026-05-15T14:00:00Z', updated_at: '2026-05-16T10:00:00Z' },
     ]
 
     // Order items — one item per order, matching product prices
@@ -335,28 +389,419 @@ class MockDataStore {
       { id: 'oi_018', order_id: 'ord_018', product_id: 'prod_002', quantity: 1, price: 2499 },
     ]
 
-    // Product Videos — 3 per product
+    // ─── NEW: Product Videos (3 per product = 6 total) ───
     this.data.product_videos = [
-      { id: 'pv_001', product_id: 'prod_001', title: 'What is NOTJUST Watr Fizz?', url: '/videos/fizz-intro.mp4', order_index: 1, duration: 120, created_at: '2026-06-01T00:00:00Z' },
-      { id: 'pv_002', product_id: 'prod_001', title: 'How to Use the Fizz Shot', url: '/videos/fizz-usage.mp4', order_index: 2, duration: 90, created_at: '2026-06-01T00:00:00Z' },
-      { id: 'pv_003', product_id: 'prod_001', title: 'The Science Behind Fizz', url: '/videos/fizz-science.mp4', order_index: 3, duration: 150, created_at: '2026-06-01T00:00:00Z' },
-      { id: 'pv_004', product_id: 'prod_002', title: 'What is NOTJUST Watr Still?', url: '/videos/still-intro.mp4', order_index: 1, duration: 110, created_at: '2026-06-01T00:00:00Z' },
-      { id: 'pv_005', product_id: 'prod_002', title: 'How to Use the Still Shot', url: '/videos/still-usage.mp4', order_index: 2, duration: 85, created_at: '2026-06-01T00:00:00Z' },
-      { id: 'pv_006', product_id: 'prod_002', title: 'The Science Behind Still', url: '/videos/still-science.mp4', order_index: 3, duration: 140, created_at: '2026-06-01T00:00:00Z' },
+      // Product 1: NOTJUST Watr Fizz
+      { id: 'pvid_001', product_id: 'prod_001', title: 'Introduction to NOTJUST Watr Fizz', duration: '4:32', description: 'Learn what NOTJUST Watr Fizz is, how it works, and why pre-meal wellness shots are transforming glycemic health management.', order: 1, video_url: undefined, active: true },
+      { id: 'pvid_002', product_id: 'prod_001', title: 'How to Use Fizz', duration: '3:15', description: 'A step-by-step guide on when and how to consume your NOTJUST Watr Fizz shot for maximum effectiveness before meals.', order: 2, video_url: undefined, active: true },
+      { id: 'pvid_003', product_id: 'prod_001', title: 'Science Behind Fizz', duration: '5:48', description: 'Deep dive into the science of sparkling pre-meal shots — how carbonation and active ingredients slow carbohydrate absorption.', order: 3, video_url: undefined, active: true },
+      // Product 2: NOTJUST Watr Still
+      { id: 'pvid_004', product_id: 'prod_002', title: 'Introduction to NOTJUST Watr Still', duration: '4:10', description: 'Discover NOTJUST Watr Still — the gentle, non-carbonated pre-meal wellness shot designed for daily blood sugar support.', order: 1, video_url: undefined, active: true },
+      { id: 'pvid_005', product_id: 'prod_002', title: 'How to Use Still', duration: '3:05', description: 'Learn the recommended usage pattern for NOTJUST Watr Still, including timing, dosage, and tips for best results.', order: 2, video_url: undefined, active: true },
+      { id: 'pvid_006', product_id: 'prod_002', title: 'Science Behind Still', duration: '5:22', description: 'Explore the clinical science behind NOTJUST Watr Still and how its formulation supports healthy post-meal glycemic response.', order: 3, video_url: undefined, active: true },
     ]
 
-    // Subscriptions
+    // ─── NEW: Product Quizzes (5 per video = 30 total) ───
+    this.data.product_quizzes = [
+      // Video 1: Introduction to Fizz (5 questions)
+      { id: 'pq_001', product_id: 'prod_001', video_id: 'pvid_001', question: 'What is NOTJUST Watr Fizz primarily designed for?', options: ['Hydration during exercise', 'Reducing the glycemic impact of carbohydrate-rich meals', 'Replacing your daily water intake', 'Enhancing muscle recovery'], answer: 1, category: 'intro', difficulty: 'EASY', order: 1, active: true },
+      { id: 'pq_002', product_id: 'prod_001', video_id: 'pvid_001', question: 'When should you take the NOTJUST Watr Fizz shot?', options: ['After dinner', 'Before a meal', 'During a workout', 'Right before sleeping'], answer: 1, category: 'intro', difficulty: 'EASY', order: 2, active: true },
+      { id: 'pq_013', product_id: 'prod_001', video_id: 'pvid_001', question: 'What type of beverage is NOTJUST Watr Fizz?', options: ['A protein shake', 'A pre-meal carbonated wellness shot', 'A post-workout recovery drink', 'A meal replacement smoothie'], answer: 1, category: 'intro', difficulty: 'EASY', order: 3, active: true },
+      { id: 'pq_014', product_id: 'prod_001', video_id: 'pvid_001', question: 'What is the key health concern that NOTJUST Watr Fizz addresses?', options: ['Joint pain and inflammation', 'Post-meal blood sugar spikes', 'Vitamin D deficiency', 'Dehydration during sports'], answer: 1, category: 'intro', difficulty: 'MEDIUM', order: 4, active: true },
+      { id: 'pq_015', product_id: 'prod_001', video_id: 'pvid_001', question: 'Which of the following best describes the NOTJUST Watr Fizz product format?', options: ['A large bottle to drink throughout the day', 'A small 50ml shot taken before meals', 'A powder to mix with water', 'A capsule supplement'], answer: 1, category: 'intro', difficulty: 'EASY', order: 5, active: true },
+      // Video 2: How to Use Fizz (5 questions)
+      { id: 'pq_003', product_id: 'prod_001', video_id: 'pvid_002', question: 'How many minutes before a meal is the Fizz shot recommended?', options: ['1-2 minutes', '5-10 minutes', '30 minutes', '60 minutes'], answer: 1, category: 'usage', difficulty: 'EASY', order: 1, active: true },
+      { id: 'pq_004', product_id: 'prod_001', video_id: 'pvid_002', question: 'What should you do if you forget to take your Fizz shot before a meal?', options: ['Skip it entirely', 'Double the dose next time', 'Take it as soon as you remember or before the next meal', 'Take it after the meal'], answer: 2, category: 'usage', difficulty: 'MEDIUM', order: 2, active: true },
+      { id: 'pq_016', product_id: 'prod_001', video_id: 'pvid_002', question: 'How many Fizz shots are included in a standard pack?', options: ['7 shots', '30 shots', '60 shots', '14 shots'], answer: 2, category: 'usage', difficulty: 'EASY', order: 3, active: true },
+      { id: 'pq_017', product_id: 'prod_001', video_id: 'pvid_002', question: 'Can NOTJUST Watr Fizz be taken on an empty stomach?', options: ['No, it must always be taken with food', 'Yes, but it is designed to be taken shortly before eating', 'Only with breakfast', 'It should only be taken after a heavy meal'], answer: 1, category: 'usage', difficulty: 'MEDIUM', order: 4, active: true },
+      { id: 'pq_018', product_id: 'prod_001', video_id: 'pvid_002', question: 'What is the recommended daily usage pattern for NOTJUST Watr Fizz?', options: ['One shot per day regardless of meals', 'One shot before each main meal (up to 2-3 times daily)', 'Multiple shots at bedtime', 'Only on weekends'], answer: 1, category: 'usage', difficulty: 'EASY', order: 5, active: true },
+      // Video 3: Science Behind Fizz (5 questions)
+      { id: 'pq_005', product_id: 'prod_001', video_id: 'pvid_003', question: 'How does the carbonation in Fizz help with glycemic control?', options: ['It increases insulin production', 'It slows down gastric emptying and carbohydrate absorption', 'It directly neutralizes sugar in the blood', 'It has no effect on glycemic control'], answer: 1, category: 'science', difficulty: 'MEDIUM', order: 1, active: true },
+      { id: 'pq_006', product_id: 'prod_001', video_id: 'pvid_003', question: 'Which mechanism is central to how NOTJUST Watr Fizz works?', options: ['Increasing metabolic rate', 'Replacing carbohydrate intake', 'Slowing carbohydrate absorption in the digestive system', 'Stimulating the pancreas'], answer: 2, category: 'science', difficulty: 'HARD', order: 2, active: true },
+      { id: 'pq_019', product_id: 'prod_001', video_id: 'pvid_003', question: 'What key ingredient in NOTJUST Watr Fizz contributes to glycemic control?', options: ['Caffeine', 'Apple cider vinegar', 'Artificial sweeteners', 'High-fructose corn syrup'], answer: 1, category: 'science', difficulty: 'MEDIUM', order: 3, active: true },
+      { id: 'pq_020', product_id: 'prod_001', video_id: 'pvid_003', question: 'What does research show about pre-meal vinegar consumption and blood sugar?', options: ['It has no measurable effect', 'It can reduce post-meal blood sugar spikes by up to 30-40%', 'It dramatically increases blood sugar', 'It only works during exercise'], answer: 1, category: 'science', difficulty: 'HARD', order: 4, active: true },
+      { id: 'pq_021', product_id: 'prod_001', video_id: 'pvid_003', question: 'Why is the Fizz shot carbonated rather than still?', options: ['Carbonation makes it taste sweeter', 'Carbonation helps slow gastric emptying, enhancing the glycemic benefit', 'Carbonation is required by food safety regulations', 'Carbonation has no functional purpose'], answer: 1, category: 'science', difficulty: 'MEDIUM', order: 5, active: true },
+      // Video 4: Introduction to Still (5 questions)
+      { id: 'pq_007', product_id: 'prod_002', video_id: 'pvid_004', question: 'What makes NOTJUST Watr Still different from Fizz?', options: ['It contains caffeine', 'It is non-carbonated and gentler on the stomach', 'It is only for children', 'It has no active ingredients'], answer: 1, category: 'intro', difficulty: 'EASY', order: 1, active: true },
+      { id: 'pq_008', product_id: 'prod_002', video_id: 'pvid_004', question: 'Who is NOTJUST Watr Still best suited for?', options: ['Athletes only', 'People who prefer a non-sparkling option for blood sugar support', 'People who want to lose weight quickly', 'Children under 12'], answer: 1, category: 'intro', difficulty: 'EASY', order: 2, active: true },
+      { id: 'pq_022', product_id: 'prod_002', video_id: 'pvid_004', question: 'What is the serving size of one NOTJUST Watr Still shot?', options: ['200ml', '50ml', '500ml', '100ml'], answer: 1, category: 'intro', difficulty: 'EASY', order: 3, active: true },
+      { id: 'pq_023', product_id: 'prod_002', video_id: 'pvid_004', question: 'Which botanical extract is unique to the Still formulation compared to Fizz?', options: ['Green tea extract', 'Gymnema and Fenugreek extract', 'Turmeric extract', 'Ginger root extract'], answer: 1, category: 'intro', difficulty: 'MEDIUM', order: 4, active: true },
+      { id: 'pq_024', product_id: 'prod_002', video_id: 'pvid_004', question: 'How many shots are included in the NOTJUST Watr Still Eco Refill Pack?', options: ['60 shots', '30 shots', '14 shots', '7 shots'], answer: 2, category: 'intro', difficulty: 'EASY', order: 5, active: true },
+      // Video 5: How to Use Still (5 questions)
+      { id: 'pq_009', product_id: 'prod_002', video_id: 'pvid_005', question: 'How is the Still shot typically consumed?', options: ['Mixed with hot tea', 'Drunk directly before a meal', 'Applied topically', 'Diluted in a liter of water'], answer: 1, category: 'usage', difficulty: 'EASY', order: 1, active: true },
+      { id: 'pq_010', product_id: 'prod_002', video_id: 'pvid_005', question: 'What is the recommended frequency for taking NOTJUST Watr Still?', options: ['Once a week', 'Once before each main meal', 'Only when you feel unwell', 'Three times a day regardless of meals'], answer: 1, category: 'usage', difficulty: 'MEDIUM', order: 2, active: true },
+      { id: 'pq_025', product_id: 'prod_002', video_id: 'pvid_005', question: 'Should NOTJUST Watr Still be refrigerated?', options: ['Yes, it must always be refrigerated', 'It should be stored in a cool dry place and refrigerated after opening', 'It must be frozen before use', 'Refrigeration is not allowed'], answer: 1, category: 'usage', difficulty: 'EASY', order: 3, active: true },
+      { id: 'pq_026', product_id: 'prod_002', video_id: 'pvid_005', question: 'Can NOTJUST Watr Still be taken alongside prescription diabetes medication?', options: ['Yes, it replaces the need for medication', 'It can be used as a complementary wellness product, but consult your doctor', 'No, it should never be taken with any medication', 'It is only for people not on any medication'], answer: 1, category: 'usage', difficulty: 'MEDIUM', order: 4, active: true },
+      { id: 'pq_027', product_id: 'prod_002', video_id: 'pvid_005', question: 'What is the best way to incorporate Still shots into a daily routine?', options: ['Take them only on weekends', 'Take one shot 5-10 minutes before each main meal consistently', 'Take all daily shots at once in the morning', 'Only take them when blood sugar feels high'], answer: 1, category: 'usage', difficulty: 'EASY', order: 5, active: true },
+      // Video 6: Science Behind Still (5 questions)
+      { id: 'pq_011', product_id: 'prod_002', video_id: 'pvid_006', question: 'What does clinical research suggest about the Still formulation?', options: ['It cures diabetes', 'It supports healthy post-meal glycemic response', 'It replaces the need for medication', 'It increases blood sugar levels'], answer: 1, category: 'science', difficulty: 'MEDIUM', order: 1, active: true },
+      { id: 'pq_012', product_id: 'prod_002', video_id: 'pvid_006', question: 'Which of the following is NOT a mechanism of the Still formulation?', options: ['Slowing carbohydrate absorption', 'Directly reducing blood glucose', 'Supporting digestive health', 'Modulating glycemic response'], answer: 1, category: 'science', difficulty: 'HARD', order: 2, active: true },
+      { id: 'pq_028', product_id: 'prod_002', video_id: 'pvid_006', question: 'What role does Gymnema sylvestre play in the Still formulation?', options: ['It adds flavor and sweetness', 'It is traditionally used to support healthy blood sugar levels', 'It acts as a preservative', 'It provides carbonation'], answer: 1, category: 'science', difficulty: 'MEDIUM', order: 3, active: true },
+      { id: 'pq_029', product_id: 'prod_002', video_id: 'pvid_006', question: 'How does Fenugreek contribute to the Still formulation\'s effect?', options: ['It acts as a flavoring agent only', 'It may help slow sugar absorption and improve glycemic response', 'It increases carbonation', 'It has no known health benefit'], answer: 1, category: 'science', difficulty: 'HARD', order: 4, active: true },
+      { id: 'pq_030', product_id: 'prod_002', video_id: 'pvid_006', question: 'Is the glycemic benefit of NOTJUST Watr Still clinically proven?', options: ['Yes, it is an FDA-approved treatment for diabetes', 'Clinical studies suggest it supports glycemic response, but individual results may vary', 'No, there is no research at all', 'It has been proven to cure type 2 diabetes'], answer: 1, category: 'science', difficulty: 'MEDIUM', order: 5, active: true },
+    ]
+
+    // ─── NEW: Product Learning Progress ───
+    this.data.product_learning_progress = [
+      // admin_001: completed for both products
+      {
+        id: 'plp_001',
+        user_id: 'admin_001',
+        product_id: 'prod_001',
+        video_progress: { 'pvid_001': 100, 'pvid_002': 100, 'pvid_003': 100 },
+        quiz_answers: { 'pq_001': 1, 'pq_002': 1, 'pq_003': 1, 'pq_004': 2, 'pq_005': 1, 'pq_006': 2, 'pq_013': 1, 'pq_014': 1, 'pq_015': 1, 'pq_016': 2, 'pq_017': 1, 'pq_018': 1, 'pq_019': 1, 'pq_020': 1, 'pq_021': 1 },
+        quiz_completed: true,
+        quiz_score: 100,
+        status: 'COMPLETED',
+        completed_at: '2026-06-01T12:00:00Z',
+        created_at: '2026-06-01T10:00:00Z',
+        updated_at: '2026-06-01T12:00:00Z',
+      },
+      {
+        id: 'plp_002',
+        user_id: 'admin_001',
+        product_id: 'prod_002',
+        video_progress: { 'pvid_004': 100, 'pvid_005': 100, 'pvid_006': 100 },
+        quiz_answers: { 'pq_007': 1, 'pq_008': 1, 'pq_009': 1, 'pq_010': 1, 'pq_011': 1, 'pq_012': 1, 'pq_022': 1, 'pq_023': 1, 'pq_024': 2, 'pq_025': 1, 'pq_026': 1, 'pq_027': 1, 'pq_028': 1, 'pq_029': 1, 'pq_030': 1 },
+        quiz_completed: true,
+        quiz_score: 100,
+        status: 'COMPLETED',
+        completed_at: '2026-06-01T14:00:00Z',
+        created_at: '2026-06-01T10:00:00Z',
+        updated_at: '2026-06-01T14:00:00Z',
+      },
+      // user_002 (Priya): completed for prod_001, in_progress for prod_002
+      {
+        id: 'plp_003',
+        user_id: 'user_002',
+        product_id: 'prod_001',
+        video_progress: { 'pvid_001': 100, 'pvid_002': 100, 'pvid_003': 100 },
+        quiz_answers: { 'pq_001': 1, 'pq_002': 1, 'pq_003': 1, 'pq_004': 2, 'pq_005': 1, 'pq_006': 0, 'pq_013': 1, 'pq_014': 1, 'pq_015': 1, 'pq_016': 2, 'pq_017': 1, 'pq_018': 1, 'pq_019': 1, 'pq_020': 0, 'pq_021': 1 },
+        quiz_completed: true,
+        quiz_score: 87,
+        status: 'COMPLETED',
+        completed_at: '2026-06-06T09:00:00Z',
+        created_at: '2026-06-05T08:30:00Z',
+        updated_at: '2026-06-06T09:00:00Z',
+      },
+      {
+        id: 'plp_004',
+        user_id: 'user_002',
+        product_id: 'prod_002',
+        video_progress: { 'pvid_004': 100, 'pvid_005': 80 },
+        quiz_answers: { 'pq_007': 1, 'pq_008': 1 },
+        quiz_completed: false,
+        quiz_score: 0,
+        status: 'IN_PROGRESS',
+        completed_at: undefined,
+        created_at: '2026-06-05T08:30:00Z',
+        updated_at: now,
+      },
+      // user_003 (Rajesh): completed for prod_001, NOT_STARTED for prod_002
+      {
+        id: 'plp_005',
+        user_id: 'user_003',
+        product_id: 'prod_001',
+        video_progress: { 'pvid_001': 100, 'pvid_002': 100, 'pvid_003': 100 },
+        quiz_answers: { 'pq_001': 1, 'pq_002': 1, 'pq_003': 0, 'pq_004': 2, 'pq_005': 1, 'pq_006': 2, 'pq_013': 1, 'pq_014': 1, 'pq_015': 1, 'pq_016': 2, 'pq_017': 1, 'pq_018': 1, 'pq_019': 0, 'pq_020': 1, 'pq_021': 1 },
+        quiz_completed: true,
+        quiz_score: 87,
+        status: 'COMPLETED',
+        completed_at: '2026-06-07T16:00:00Z',
+        created_at: '2026-06-06T14:20:00Z',
+        updated_at: '2026-06-07T16:00:00Z',
+      },
+      {
+        id: 'plp_006',
+        user_id: 'user_003',
+        product_id: 'prod_002',
+        video_progress: {},
+        quiz_answers: {},
+        quiz_completed: false,
+        quiz_score: 0,
+        status: 'NOT_STARTED',
+        completed_at: undefined,
+        created_at: '2026-06-06T14:20:00Z',
+        updated_at: '2026-06-06T14:20:00Z',
+      },
+      // user_004 (Anita): IN_PROGRESS for prod_001 (video 1 done, video 2 at 60%)
+      {
+        id: 'plp_007',
+        user_id: 'user_004',
+        product_id: 'prod_001',
+        video_progress: { 'pvid_001': 100, 'pvid_002': 60 },
+        quiz_answers: { 'pq_001': 1, 'pq_002': 0 },
+        quiz_completed: false,
+        quiz_score: 0,
+        status: 'IN_PROGRESS',
+        completed_at: undefined,
+        created_at: '2026-06-08T09:15:00Z',
+        updated_at: now,
+      },
+      {
+        id: 'plp_008',
+        user_id: 'user_004',
+        product_id: 'prod_002',
+        video_progress: {},
+        quiz_answers: {},
+        quiz_completed: false,
+        quiz_score: 0,
+        status: 'NOT_STARTED',
+        completed_at: undefined,
+        created_at: '2026-06-08T09:15:00Z',
+        updated_at: '2026-06-08T09:15:00Z',
+      },
+      // user_005 (Vikram): NOT_STARTED for both
+      {
+        id: 'plp_009',
+        user_id: 'user_005',
+        product_id: 'prod_001',
+        video_progress: {},
+        quiz_answers: {},
+        quiz_completed: false,
+        quiz_score: 0,
+        status: 'NOT_STARTED',
+        completed_at: undefined,
+        created_at: '2026-06-09T16:45:00Z',
+        updated_at: '2026-06-09T16:45:00Z',
+      },
+      {
+        id: 'plp_010',
+        user_id: 'user_005',
+        product_id: 'prod_002',
+        video_progress: {},
+        quiz_answers: {},
+        quiz_completed: false,
+        quiz_score: 0,
+        status: 'NOT_STARTED',
+        completed_at: undefined,
+        created_at: '2026-06-09T16:45:00Z',
+        updated_at: '2026-06-09T16:45:00Z',
+      },
+      // user_006 (Meera): NOT_STARTED for both
+      {
+        id: 'plp_011',
+        user_id: 'user_006',
+        product_id: 'prod_001',
+        video_progress: {},
+        quiz_answers: {},
+        quiz_completed: false,
+        quiz_score: 0,
+        status: 'NOT_STARTED',
+        completed_at: undefined,
+        created_at: '2026-06-10T11:00:00Z',
+        updated_at: '2026-06-10T11:00:00Z',
+      },
+      {
+        id: 'plp_012',
+        user_id: 'user_006',
+        product_id: 'prod_002',
+        video_progress: {},
+        quiz_answers: {},
+        quiz_completed: false,
+        quiz_score: 0,
+        status: 'NOT_STARTED',
+        completed_at: undefined,
+        created_at: '2026-06-10T11:00:00Z',
+        updated_at: '2026-06-10T11:00:00Z',
+      },
+      // user_007 (Suresh): NOT_STARTED for both
+      {
+        id: 'plp_013',
+        user_id: 'user_007',
+        product_id: 'prod_001',
+        video_progress: {},
+        quiz_answers: {},
+        quiz_completed: false,
+        quiz_score: 0,
+        status: 'NOT_STARTED',
+        completed_at: undefined,
+        created_at: '2026-06-11T13:30:00Z',
+        updated_at: '2026-06-11T13:30:00Z',
+      },
+      {
+        id: 'plp_014',
+        user_id: 'user_007',
+        product_id: 'prod_002',
+        video_progress: {},
+        quiz_answers: {},
+        quiz_completed: false,
+        quiz_score: 0,
+        status: 'NOT_STARTED',
+        completed_at: undefined,
+        created_at: '2026-06-11T13:30:00Z',
+        updated_at: '2026-06-11T13:30:00Z',
+      },
+      // user_008 (Deepa): NOT_STARTED for both
+      {
+        id: 'plp_015',
+        user_id: 'user_008',
+        product_id: 'prod_001',
+        video_progress: {},
+        quiz_answers: {},
+        quiz_completed: false,
+        quiz_score: 0,
+        status: 'NOT_STARTED',
+        completed_at: undefined,
+        created_at: '2026-06-12T07:20:00Z',
+        updated_at: '2026-06-12T07:20:00Z',
+      },
+      {
+        id: 'plp_016',
+        user_id: 'user_008',
+        product_id: 'prod_002',
+        video_progress: {},
+        quiz_answers: {},
+        quiz_completed: false,
+        quiz_score: 0,
+        status: 'NOT_STARTED',
+        completed_at: undefined,
+        created_at: '2026-06-12T07:20:00Z',
+        updated_at: '2026-06-12T07:20:00Z',
+      },
+      // user_009 (Arjun): NOT_STARTED for both
+      {
+        id: 'plp_017',
+        user_id: 'user_009',
+        product_id: 'prod_001',
+        video_progress: {},
+        quiz_answers: {},
+        quiz_completed: false,
+        quiz_score: 0,
+        status: 'NOT_STARTED',
+        completed_at: undefined,
+        created_at: '2026-06-13T10:10:00Z',
+        updated_at: '2026-06-13T10:10:00Z',
+      },
+      {
+        id: 'plp_018',
+        user_id: 'user_009',
+        product_id: 'prod_002',
+        video_progress: {},
+        quiz_answers: {},
+        quiz_completed: false,
+        quiz_score: 0,
+        status: 'NOT_STARTED',
+        completed_at: undefined,
+        created_at: '2026-06-13T10:10:00Z',
+        updated_at: '2026-06-13T10:10:00Z',
+      },
+      // user_010 (Kavita): NOT_STARTED for both
+      {
+        id: 'plp_019',
+        user_id: 'user_010',
+        product_id: 'prod_001',
+        video_progress: {},
+        quiz_answers: {},
+        quiz_completed: false,
+        quiz_score: 0,
+        status: 'NOT_STARTED',
+        completed_at: undefined,
+        created_at: '2026-06-13T15:40:00Z',
+        updated_at: '2026-06-13T15:40:00Z',
+      },
+      {
+        id: 'plp_020',
+        user_id: 'user_010',
+        product_id: 'prod_002',
+        video_progress: {},
+        quiz_answers: {},
+        quiz_completed: false,
+        quiz_score: 0,
+        status: 'NOT_STARTED',
+        completed_at: undefined,
+        created_at: '2026-06-13T15:40:00Z',
+        updated_at: '2026-06-13T15:40:00Z',
+      },
+    ]
+
+    // ─── NEW: Subscriptions ───
     this.data.subscriptions = [
-      { id: 'sub_001', user_id: 'user_002', product_id: 'prod_001', status: 'ACTIVE', amount: 2499, interval: 'MONTHLY', start_date: '2026-05-01T00:00:00Z', next_billing_date: '2026-07-01T00:00:00Z', created_at: '2026-05-01T00:00:00Z' },
-      { id: 'sub_002', user_id: 'user_005', product_id: 'prod_002', status: 'ACTIVE', amount: 1999, interval: 'MONTHLY', start_date: '2026-05-15T00:00:00Z', next_billing_date: '2026-07-15T00:00:00Z', created_at: '2026-05-15T00:00:00Z' },
-      { id: 'sub_003', user_id: 'user_007', product_id: 'prod_001', status: 'PAUSED', amount: 2499, interval: 'MONTHLY', start_date: '2026-04-01T00:00:00Z', next_billing_date: '2026-07-01T00:00:00Z', created_at: '2026-04-01T00:00:00Z' },
-      { id: 'sub_004', user_id: 'user_009', product_id: 'prod_002', status: 'CANCELLED', amount: 1999, interval: 'MONTHLY', start_date: '2026-03-01T00:00:00Z', next_billing_date: '2026-04-01T00:00:00Z', created_at: '2026-03-01T00:00:00Z' },
+      // user_002 (Priya): ACTIVE 30-Day subscription for prod_001
+      {
+        id: 'sub_001',
+        user_id: 'user_002',
+        product_id: 'prod_001',
+        pack_type: '30_DAY',
+        pack_duration_days: 30,
+        status: 'ACTIVE',
+        amount: 2999,
+        start_date: '2026-06-05',
+        end_date: '2026-07-05',
+        auto_renew: true,
+        payment_id: 'pay_rz_sub_001',
+        created_at: '2026-06-05T08:30:00Z',
+        updated_at: now,
+      },
+      // user_003 (Rajesh): ACTIVE 60-Day subscription for prod_002
+      {
+        id: 'sub_002',
+        user_id: 'user_003',
+        product_id: 'prod_002',
+        pack_type: '60_DAY',
+        pack_duration_days: 60,
+        status: 'ACTIVE',
+        amount: 4499,
+        start_date: '2026-06-06',
+        end_date: '2026-08-05',
+        auto_renew: true,
+        payment_id: 'pay_rz_sub_002',
+        created_at: '2026-06-06T14:20:00Z',
+        updated_at: now,
+      },
+      // user_005 (Vikram): PAUSED 30-Day subscription for prod_001
+      {
+        id: 'sub_003',
+        user_id: 'user_005',
+        product_id: 'prod_001',
+        pack_type: '30_DAY',
+        pack_duration_days: 30,
+        status: 'PAUSED',
+        amount: 2999,
+        start_date: '2026-06-01',
+        end_date: '2026-07-01',
+        auto_renew: false,
+        payment_id: 'pay_rz_sub_003',
+        created_at: '2026-06-01T10:00:00Z',
+        updated_at: '2026-06-10T09:00:00Z',
+      },
     ]
 
-    // Guarantee Plans
-    this.data.guarantee_plans = [
-      { id: 'gp_001', name: '30-Day Satisfaction Guarantee', description: 'If you are not satisfied with the product within 30 days of purchase, get a full refund. No questions asked.', duration: '30 days', price: 0, features: ['Full refund within 30 days', 'No questions asked', 'Free return shipping', 'Dedicated support'], active: true, created_at: '2026-06-01T00:00:00Z' },
-      { id: 'gp_002', name: '60-Day Wellness Promise', description: 'Our extended guarantee ensures you see real results. If glycemic response improvement is not observed within 60 days, receive a full refund plus a complimentary consultation with our wellness advisor.', duration: '60 days', price: 0, features: ['Full refund within 60 days', 'Complimentary wellness consultation', 'Priority customer support', 'Extended return window', 'Free return shipping'], active: true, created_at: '2026-06-01T00:00:00Z' },
+    // ─── NEW: Reorder Reminders ───
+    this.data.reorder_reminders = [
+      {
+        id: 'rem_001',
+        user_id: 'user_002',
+        subscription_id: 'sub_001',
+        product_id: 'prod_001',
+        reminder_date: '2026-06-28',
+        channel: 'WHATSAPP',
+        status: 'PENDING',
+        message: 'Hi Priya! Your NOTJUST Watr Fizz 30-Day pack is ending soon on July 5th. Reorder now to keep your wellness routine on track! 🌿',
+        created_at: '2026-06-20T08:00:00Z',
+      },
+      {
+        id: 'rem_002',
+        user_id: 'user_003',
+        subscription_id: 'sub_002',
+        product_id: 'prod_002',
+        reminder_date: '2026-07-20',
+        channel: 'EMAIL',
+        status: 'PENDING',
+        message: 'Dear Rajesh, your NOTJUST Watr Still 60-Day subscription expires on August 5th. Renew today and continue your wellness journey.',
+        created_at: '2026-06-20T08:00:00Z',
+      },
+      {
+        id: 'rem_003',
+        user_id: 'user_005',
+        subscription_id: 'sub_003',
+        product_id: 'prod_001',
+        reminder_date: '2026-06-20',
+        channel: 'SMS',
+        status: 'SENT',
+        message: 'Vikram, your NOTJUST Watr Fizz subscription is currently paused. Resume anytime from your account settings. Stay healthy!',
+        created_at: '2026-06-15T10:00:00Z',
+      },
     ]
 
     this.save()

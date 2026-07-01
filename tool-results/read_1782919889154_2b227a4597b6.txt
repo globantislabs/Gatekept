@@ -1,0 +1,2002 @@
+     1→'use client'
+     2→
+     3→import React, { useState, useEffect, useCallback, useRef } from 'react'
+     4→import Image from 'next/image'
+     5→import Link from 'next/link'
+     6→import { motion, AnimatePresence, useInView } from 'framer-motion'
+     7→import {
+     8→  ChevronDown, ChevronLeft, Menu, X, ShoppingCart, User, LogOut, Shield, Play,
+     9→  CheckCircle, Lock, ArrowRight, ArrowLeft, Minus, Plus, Trash2,
+    10→  QrCode, BookOpen, Users, BarChart3, Settings, FileText, Package,
+    11→  TrendingUp, Eye, Clock, MapPin, Smartphone, Star, Award,
+    12→  Heart, Zap, Leaf, ChevronRight, Home, Scan, GraduationCap,
+    13→  Store, ClipboardList, MessageSquare, RefreshCw, Search,
+    14→  Filter, Download, MoreVertical, AlertCircle, Info, ChevronUp,
+    15→  DollarSign, Activity, PieChart, BarChart, Globe, Mail, Phone as PhoneIcon,
+    16→  Facebook, Twitter, Instagram, Linkedin, Youtube, Send,
+    17→  LayoutDashboard, CreditCard, Truck, Kanban, Columns3, Tag, Copy, ExternalLink, Utensils
+    18→} from 'lucide-react'
+    19→import { useAppStore, type AppView, type CartItem } from '@/store/app-store'
+    20→import {
+    21→  authService, campaignService, learningService, quizService,
+    22→  productService, orderService, adminStatsService, userService,
+    23→  guaranteeService, qrScanService, initDataService, isUsingRealSupabase
+    24→} from '@/lib/data-service'
+    25→import type {
+    26→  UserProfile, Campaign, QrScan, LearningProgress, QuizQuestion,
+    27→  Product, Order, OrderItem, GuaranteePlan
+    28→} from '@/lib/data-service'
+    29→import { Button } from '@/components/ui/button'
+    30→import { Input } from '@/components/ui/input'
+    31→import { Label } from '@/components/ui/label'
+    32→import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+    33→import { Badge } from '@/components/ui/badge'
+    34→import { Separator } from '@/components/ui/separator'
+    35→import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+    36→import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+    37→import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+    38→import { Progress } from '@/components/ui/progress'
+    39→import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+    40→import { Switch } from '@/components/ui/switch'
+    41→import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+    42→import { Textarea } from '@/components/ui/textarea'
+    43→import {
+    44→  PieChart as RechartsPieChart, Pie, Cell, BarChart as RechartsBarChart, Bar,
+    45→  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line
+    46→} from 'recharts'
+    47→import { toast } from 'sonner'
+    48→import { QRCodeSVG } from 'qrcode.react'
+    49→import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp'
+    50→import { ScrollArea } from '@/components/ui/scroll-area'
+    51→import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '@/components/ui/sheet'
+    52→import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu'
+    53→
+    54→// ============================================================
+    55→// BRAND CONSTANTS
+    56→// ============================================================
+    57→const BRAND = {
+    58→  green: '#48805b',
+    59→  lime: '#afb75d',
+    60→  dark: '#1f1e1c',
+    61→  muted: '#88837b',
+    62→  surface: '#e3dfd8',
+    63→  bg: '#f4f3f0',
+    64→  blue: '#2e91b2',
+    65→}
+    66→
+    67→const CHART_COLORS = [BRAND.green, BRAND.lime, BRAND.blue, BRAND.muted, BRAND.dark]
+    68→
+    69→// ============================================================
+    70→// ANIMATION VARIANTS
+    71→// ============================================================
+    72→const fadeInUp = {
+    73→  hidden: { opacity: 0, y: 40 },
+    74→  visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease: 'easeOut' } }
+    75→}
+    76→const fadeIn = {
+    77→  hidden: { opacity: 0 },
+    78→  visible: { opacity: 1, transition: { duration: 0.6 } }
+    79→}
+    80→const slideInLeft = {
+    81→  hidden: { opacity: 0, x: -60 },
+    82→  visible: { opacity: 1, x: 0, transition: { duration: 0.7, ease: 'easeOut' } }
+    83→}
+    84→const slideInRight = {
+    85→  hidden: { opacity: 0, x: 60 },
+    86→  visible: { opacity: 1, x: 0, transition: { duration: 0.7, ease: 'easeOut' } }
+    87→}
+    88→const staggerContainer = {
+    89→  hidden: { opacity: 0 },
+    90→  visible: { opacity: 1, transition: { staggerChildren: 0.15 } }
+    91→}
+    92→const scaleIn = {
+    93→  hidden: { opacity: 0, scale: 0.85 },
+    94→  visible: { opacity: 1, scale: 1, transition: { duration: 0.5, ease: 'easeOut' } }
+    95→}
+    96→
+    97→// ============================================================
+    98→// SECTION WRAPPER WITH SCROLL ANIMATION
+    99→// ============================================================
+   100→function AnimatedSection({ children, className = '', id }: { children: React.ReactNode; className?: string; id?: string }) {
+   101→  const ref = useRef(null)
+   102→  const isInView = useInView(ref, { once: true, margin: '-80px' })
+   103→  return (
+   104→    <motion.section
+   105→      ref={ref}
+   106→      id={id}
+   107→      initial="hidden"
+   108→      animate={isInView ? 'visible' : 'hidden'}
+   109→      variants={staggerContainer}
+   110→      className={className}
+   111→    >
+   112→      {children}
+   113→    </motion.section>
+   114→  )
+   115→}
+   116→
+   117→// ============================================================
+   118→// COUNTER ANIMATION COMPONENT
+   119→// ============================================================
+   120→function AnimatedCounter({ end, suffix = '', prefix = '' }: { end: number; suffix?: string; prefix?: string }) {
+   121→  const [count, setCount] = useState(0)
+   122→  const ref = useRef(null)
+   123→  const isInView = useInView(ref, { once: true })
+   124→  useEffect(() => {
+   125→    if (!isInView) return
+   126→    let start = 0
+   127→    const duration = 2000
+   128→    const increment = end / (duration / 16)
+   129→    const timer = setInterval(() => {
+   130→      start += increment
+   131→      if (start >= end) { setCount(end); clearInterval(timer) }
+   132→      else setCount(Math.floor(start))
+   133→    }, 16)
+   134→    return () => clearInterval(timer)
+   135→  }, [isInView, end])
+   136→  return <span ref={ref}>{prefix}{count.toLocaleString()}{suffix}</span>
+   137→}
+   138→
+   139→// ============================================================
+   140→// DATABASE STATUS BADGE
+   141→// ============================================================
+   142→function DbStatusBadge({ isHero }: { isHero: boolean }) {
+   143→  const [status, setStatus] = useState<'checking' | 'connected' | 'mock'>('checking')
+   144→
+   145→  useEffect(() => {
+   146→    initDataService().then((connected) => {
+   147→      setStatus(connected ? 'connected' : 'mock')
+   148→    })
+   149→  }, [])
+   150→
+   151→  return (
+   152→    <div className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold tracking-wide transition-all duration-300 ${
+   153→      isHero
+   154→        ? status === 'connected' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-amber-500/20 text-amber-300'
+   155→        : status === 'connected' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'
+   156→    }`}>
+   157→      <div className={`w-1.5 h-1.5 rounded-full ${
+   158→        status === 'checking' ? 'bg-gray-400 animate-pulse' : status === 'connected' ? 'bg-emerald-400' : 'bg-amber-400'
+   159→      }`} />
+   160→      {status === 'checking' ? 'DB...' : status === 'connected' ? 'Supabase' : 'Mock DB'}
+   161→    </div>
+   162→  )
+   163→}
+   164→
+   165→// ============================================================
+   166→// NAVBAR
+   167→// ============================================================
+   168→function Navbar() {
+   169→  const { currentView, navigateTo, user, setUser, cart, goBack } = useAppStore()
+   170→  const [scrolled, setScrolled] = useState(false)
+   171→  const [mobileOpen, setMobileOpen] = useState(false)
+   172→  const isLanding = currentView === 'landing'
+   173→  const isHero = isLanding && !scrolled
+   174→
+   175→  useEffect(() => {
+   176→    const handler = () => setScrolled(window.scrollY > 40)
+   177→    window.addEventListener('scroll', handler, { passive: true })
+   178→    return () => window.removeEventListener('scroll', handler)
+   179→  }, [])
+   180→
+   181→  const handleLogout = () => {
+   182→    setUser(null)
+   183→    navigateTo('landing')
+   184→    toast.success('Logged out successfully')
+   185→  }
+   186→
+   187→  const navLinks = [
+   188→    { label: 'Home', view: 'landing' as AppView, icon: Home },
+   189→    { label: 'Learn', view: 'learning' as AppView, icon: GraduationCap },
+   190→    { label: 'Products', view: 'products' as AppView, icon: Store },
+   191→  ]
+   192→
+   193→  const adminLinks = [
+   194→    { label: 'Dashboard', view: 'admin-dashboard' as AppView, icon: BarChart3 },
+   195→    { label: 'Users', view: 'admin-users' as AppView, icon: Users },
+   196→    { label: 'Campaigns', view: 'admin-campaigns' as AppView, icon: MegaphoneIcon },
+   197→    { label: 'Orders', view: 'admin-orders' as AppView, icon: Package },
+   198→    { label: 'Analytics', view: 'admin-analytics' as AppView, icon: TrendingUp },
+   199→    { label: 'Content', view: 'admin-content' as AppView, icon: FileText },
+   200→  ]
+   201→
+   202→  const cartCount = cart.reduce((s, i) => s + i.quantity, 0)
+   203→
+   204→  return (
+   205→    <nav
+   206→      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ease-out ${
+   207→        isHero
+   208→          ? 'bg-transparent'
+   209→          : isLanding && scrolled
+   210→            ? 'bg-white/95 backdrop-blur-xl shadow-[0_1px_0_0_rgba(0,0,0,0.06)]'
+   211→            : 'bg-white/95 backdrop-blur-xl shadow-[0_1px_0_0_rgba(0,0,0,0.06)]'
+   212→      }`}
+   213→    >
+   214→      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+   215→        <div className="flex items-center justify-between h-[72px]">
+   216→          {/* Logo */}
+   217→          <button onClick={() => navigateTo('landing')} className="flex items-center gap-2 cursor-pointer group">
+   218→            <Image src="/images/notjust-logo-clean.png" alt="NotJust" width={120} height={40} className="h-9 w-auto object-contain transition-transform duration-300 group-hover:scale-105" />
+   219→          </button>
+   220→
+   221→          {/* Center Nav Links - Desktop */}
+   222→          <div className="hidden md:flex items-center gap-1">
+   223→            {navLinks.map(link => (
+   224→              <button
+   225→                key={link.view}
+   226→                onClick={() => {
+   227→                  if (!user && link.view !== 'landing') {
+   228→                    navigateTo('auth-login')
+   229→                    toast.info('Please login first')
+   230→                    return
+   231→                  }
+   232→                  navigateTo(link.view)
+   233→                }}
+   234→                className={`relative px-4 py-2 rounded-full text-[13px] font-medium tracking-wide transition-all duration-300 ${
+   235→                  currentView === link.view
+   236→                    ? isHero
+   237→                      ? 'bg-white/15 text-white'
+   238→                      : 'bg-[#48805b]/10 text-[#48805b]'
+   239→                    : isHero
+   240→                      ? 'text-white/70 hover:text-white hover:bg-white/10'
+   241→                      : 'text-[#88837b] hover:text-[#1f1e1c] hover:bg-[#e3dfd8]/60'
+   242→                }`}
+   243→              >
+   244→                {link.label}
+   245→              </button>
+   246→            ))}
+   247→            {user?.is_admin && (
+   248→              <DropdownMenu>
+   249→                <DropdownMenuTrigger asChild>
+   250→                  <button className={`px-4 py-2 rounded-full text-[13px] font-medium tracking-wide transition-all duration-300 flex items-center gap-1.5 ${
+   251→                    currentView.startsWith('admin')
+   252→                      ? isHero
+   253→                        ? 'bg-white/15 text-white'
+   254→                        : 'bg-[#48805b]/10 text-[#48805b]'
+   255→                      : isHero
+   256→                        ? 'text-white/70 hover:text-white hover:bg-white/10'
+   257→                        : 'text-[#88837b] hover:text-[#1f1e1c] hover:bg-[#e3dfd8]/60'
+   258→                  }`}>
+   259→                    Admin <ChevronDown className="w-3 h-3" />
+   260→                  </button>
+   261→                </DropdownMenuTrigger>
+   262→                <DropdownMenuContent align="end" className="rounded-xl shadow-xl border-[#e3dfd8]/80">
+   263→                  {adminLinks.map(link => (
+   264→                    <DropdownMenuItem key={link.view} onClick={() => navigateTo(link.view)} className="rounded-lg">
+   265→                      <link.icon className="w-4 h-4 mr-2 text-[#88837b]" />
+   266→                      {link.label}
+   267→                    </DropdownMenuItem>
+   268→                  ))}
+   269→                </DropdownMenuContent>
+   270→              </DropdownMenu>
+   271→            )}
+   272→          </div>
+   273→
+   274→          {/* Right Side */}
+   275→          <div className="flex items-center gap-3">
+   276→            {/* Supabase Status Indicator */}
+   277→            <DbStatusBadge isHero={isHero} />
+   278→
+   279→            {user ? (
+   280→              <>
+   281→                {/* Cart */}
+   282→                <button
+   283→                  onClick={() => navigateTo('cart')}
+   284→                  className={`relative p-2.5 rounded-full transition-all duration-300 ${
+   285→                    isHero
+   286→                      ? 'text-white/80 hover:text-white hover:bg-white/10'
+   287→                      : 'text-[#88837b] hover:text-[#1f1e1c] hover:bg-[#e3dfd8]/60'
+   288→                  }`}
+   289→                >
+   290→                  <ShoppingCart className="w-[18px] h-[18px]" />
+   291→                  {cartCount > 0 && (
+   292→                    <span className="absolute -top-0.5 -right-0.5 bg-[#afb75d] text-[#1f1e1c] text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center ring-2 ring-white">
+   293→                      {cartCount}
+   294→                    </span>
+   295→                  )}
+   296→                </button>
+   297→
+   298→                {/* User Dropdown */}
+   299→                <DropdownMenu>
+   300→                  <DropdownMenuTrigger asChild>
+   301→                    <button className={`flex items-center gap-2 pl-1 pr-3 py-1 rounded-full transition-all duration-300 ${
+   302→                      isHero ? 'hover:bg-white/10' : 'hover:bg-[#e3dfd8]/60'
+   303→                    }`}>
+   304→                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#48805b] to-[#afb75d] flex items-center justify-center text-white text-xs font-bold ring-2 ring-white/20">
+   305→                        {user.name.charAt(0).toUpperCase()}
+   306→                      </div>
+   307→                      <span className={`hidden sm:block text-sm font-medium transition-colors duration-500 ${isHero ? 'text-white/90' : 'text-[#1f1e1c]'}`}>
+   308→                        {user.name.split(' ')[0]}
+   309→                      </span>
+   310→                      <ChevronDown className={`w-3 h-3 transition-colors duration-500 ${isHero ? 'text-white/50' : 'text-[#88837b]'}`} />
+   311→                    </button>
+   312→                  </DropdownMenuTrigger>
+   313→                  <DropdownMenuContent align="end" className="w-52 rounded-xl shadow-xl border-[#e3dfd8]/80">
+   314→                    <DropdownMenuItem onClick={() => navigateTo('profile')} className="rounded-lg">
+   315→                      <User className="w-4 h-4 mr-2 text-[#88837b]" /> Profile
+   316→                    </DropdownMenuItem>
+   317→                    {user.is_admin && (
+   318→                      <DropdownMenuItem onClick={() => navigateTo('admin-dashboard')} className="rounded-lg">
+   319→                        <Shield className="w-4 h-4 mr-2 text-[#88837b]" /> Admin Dashboard
+   320→                      </DropdownMenuItem>
+   321→                    )}
+   322→                    <DropdownMenuSeparator />
+   323→                    <DropdownMenuItem onClick={handleLogout} className="text-red-600 rounded-lg">
+   324→                      <LogOut className="w-4 h-4 mr-2" /> Logout
+   325→                    </DropdownMenuItem>
+   326→                  </DropdownMenuContent>
+   327→                </DropdownMenu>
+   328→              </>
+   329→            ) : (
+   330→              <Button
+   331→                onClick={() => navigateTo('auth-login')}
+   332→                className={`font-heading font-semibold text-[13px] tracking-wide rounded-full px-5 h-10 transition-all duration-300 ${
+   333→                  isHero
+   334→                    ? 'bg-[#e3dfd8] text-[#1f1e1c] hover:bg-white hover:shadow-lg hover:shadow-white/10'
+   335→                    : 'bg-[#48805b] text-white hover:bg-[#3a6a4a] shadow-sm'
+   336→                }`}
+   337→              >
+   338→                Sign In
+   339→              </Button>
+   340→            )}
+   341→
+   342→            {/* Mobile Menu */}
+   343→            <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+   344→              <SheetTrigger asChild>
+   345→                <button className={`md:hidden p-2.5 rounded-full transition-all duration-300 ${
+   346→                  isHero ? 'text-white hover:bg-white/10' : 'text-[#1f1e1c] hover:bg-[#e3dfd8]/60'
+   347→                }`}>
+   348→                  <Menu className="w-5 h-5" />
+   349→                </button>
+   350→              </SheetTrigger>
+   351→              <SheetContent side="right" className="w-80 p-0">
+   352→                <div className="flex flex-col h-full">
+   353→                  {/* Mobile Header */}
+   354→                  <div className="flex items-center gap-3 px-6 py-5 border-b border-[#e3dfd8]/60">
+   355→                    <Image src="/images/notjust-logo-clean.png" alt="NotJust" width={100} height={34} className="h-8 w-auto object-contain" />
+   356→                  </div>
+   357→
+   358→                  {/* Mobile Nav */}
+   359→                  <div className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
+   360→                    {navLinks.map(link => (
+   361→                      <button
+   362→                        key={link.view}
+   363→                        onClick={() => {
+   364→                          if (!user && link.view !== 'landing') { navigateTo('auth-login'); toast.info('Please login first'); }
+   365→                          else navigateTo(link.view)
+   366→                          setMobileOpen(false)
+   367→                        }}
+   368→                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors ${
+   369→                          currentView === link.view
+   370→                            ? 'bg-[#48805b]/10 text-[#48805b]'
+   371→                            : 'text-[#1f1e1c] hover:bg-[#e3dfd8]/50'
+   372→                        }`}
+   373→                      >
+   374→                        <link.icon className="w-4 h-4" /> {link.label}
+   375→                      </button>
+   376→                    ))}
+   377→                    {user?.is_admin && (
+   378→                      <>
+   379→                        <Separator className="my-3" />
+   380→                        <p className="px-4 py-1 text-[10px] font-semibold text-[#88837b] uppercase tracking-widest">Admin</p>
+   381→                        {adminLinks.map(link => (
+   382→                          <button
+   383→                            key={link.view}
+   384→                            onClick={() => { navigateTo(link.view); setMobileOpen(false) }}
+   385→                            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-[#1f1e1c] hover:bg-[#e3dfd8]/50 transition-colors"
+   386→                          >
+   387→                            <link.icon className="w-4 h-4 text-[#88837b]" /> {link.label}
+   388→                          </button>
+   389→                        ))}
+   390→                      </>
+   391→                    )}
+   392→                  </div>
+   393→
+   394→                  {/* Mobile Footer */}
+   395→                  <div className="px-4 py-4 border-t border-[#e3dfd8]/60 space-y-1">
+   396→                    {user ? (
+   397→                      <>
+   398→                        <button onClick={() => { navigateTo('cart'); setMobileOpen(false) }} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-[#1f1e1c] hover:bg-[#e3dfd8]/50">
+   399→                          <ShoppingCart className="w-4 h-4" /> Cart {cartCount > 0 && <Badge className="bg-[#afb75d] text-[#1f1e1c] text-[10px] ml-auto">{cartCount}</Badge>}
+   400→                        </button>
+   401→                        <button onClick={() => { navigateTo('profile'); setMobileOpen(false) }} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-[#1f1e1c] hover:bg-[#e3dfd8]/50">
+   402→                          <User className="w-4 h-4" /> Profile
+   403→                        </button>
+   404→                        <button onClick={() => { handleLogout(); setMobileOpen(false) }} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-red-600 hover:bg-red-50">
+   405→                          <LogOut className="w-4 h-4" /> Logout
+   406→                        </button>
+   407→                      </>
+   408→                    ) : (
+   409→                      <Button onClick={() => { navigateTo('auth-login'); setMobileOpen(false) }} className="w-full bg-[#48805b] hover:bg-[#3a6a4a] text-white font-heading font-semibold rounded-xl h-12">
+   410→                        Sign In
+   411→                      </Button>
+   412→                    )}
+   413→                  </div>
+   414→                </div>
+   415→              </SheetContent>
+   416→            </Sheet>
+   417→          </div>
+   418→        </div>
+   419→      </div>
+   420→    </nav>
+   421→  )
+   422→}
+   423→
+   424→function MegaphoneIcon({ className }: { className?: string }) {
+   425→  return <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m3 11 18-5v12L3 13v-2Z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>
+   426→}
+   427→
+   428→// ============================================================
+   429→// LANDING PAGE
+   430→// ============================================================
+   431→function LandingPage() {
+   432→  const { navigateTo, user } = useAppStore()
+   433→  const [products, setProducts] = useState<Product[]>([])
+   434→
+   435→  useEffect(() => {
+   436→    productService.getAll().then(r => r.data && setProducts(r.data))
+   437→  }, [])
+   438→
+   439→  const scrollToSection = (id: string) => {
+   440→    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
+   441→  }
+   442→
+   443→  const heroProducts = products.slice(0, 4)
+   444→
+   445→  return (
+   446→    <div className="min-h-screen">
+   447→      {/* ═══════════════════════════════════════════════════════════
+   448→          A. HERO SECTION — housewine.nl style dark hero with gradient blobs
+   449→          ═══════════════════════════════════════════════════════════ */}
+   450→      <section className="relative min-h-screen flex items-center overflow-hidden bg-[#1f1e1c]">
+   451→        {/* Animated gradient blobs */}
+   452→        <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
+   453→          <div
+   454→            className="absolute mix-blend-screen opacity-25 animate-hero-drift-1"
+   455→            style={{
+   456→              width: '880px', height: '520px', left: '-5%', top: '0%',
+   457→              backgroundImage: 'radial-gradient(ellipse closest-side, oklch(55% 0.09 155) 0%, transparent 75%)',
+   458→              filter: 'blur(60px)'
+   459→            }}
+   460→          />
+   461→          <div
+   462→            className="absolute mix-blend-multiply opacity-20 animate-hero-drift-2"
+   463→            style={{
+   464→              width: '720px', height: '480px', right: '-8%', top: '10%',
+   465→              backgroundImage: 'radial-gradient(ellipse closest-side, oklch(75% 0.1 95) 0%, transparent 75%)',
+   466→              filter: 'blur(70px)'
+   467→            }}
+   468→          />
+   469→          <div
+   470→            className="absolute mix-blend-screen opacity-15 animate-hero-drift-3"
+   471→            style={{
+   472→              width: '600px', height: '400px', left: '30%', bottom: '5%',
+   473→              backgroundImage: 'radial-gradient(ellipse closest-side, oklch(65% 0.08 170) 0%, transparent 75%)',
+   474→              filter: 'blur(80px)'
+   475→            }}
+   476→          />
+   477→          <div
+   478→            className="absolute mix-blend-multiply opacity-18 animate-hero-drift-4"
+   479→            style={{
+   480→              width: '500px', height: '350px', right: '20%', top: '50%',
+   481→              backgroundImage: 'radial-gradient(ellipse closest-side, oklch(78% 0.06 145) 0%, transparent 75%)',
+   482→              filter: 'blur(90px)'
+   483→            }}
+   484→          />
+   485→          <div
+   486→            className="absolute mix-blend-screen opacity-12 animate-hero-drift-5"
+   487→            style={{
+   488→              width: '700px', height: '450px', left: '10%', top: '60%',
+   489→              backgroundImage: 'radial-gradient(ellipse closest-side, oklch(70% 0.07 160) 0%, transparent 75%)',
+   490→              filter: 'blur(75px)'
+   491→            }}
+   492→          />
+   493→        </div>
+   494→
+   495→        {/* Content */}
+   496→        <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-16 lg:pt-32 lg:pb-24">
+   497→          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+   498→            {/* LEFT — Headline & CTA */}
+   499→            <motion.div initial="hidden" animate="visible" variants={staggerContainer}>
+   500→              <motion.div variants={fadeInUp}>
+   501→                <Badge className="mb-6 bg-[#afb75d]/15 text-[#afb75d] border-[#afb75d]/25 px-4 py-1.5 text-xs font-semibold tracking-wider uppercase">
+   502→                  <Zap className="w-3 h-3 mr-1.5" /> NOTJUST WATER(TM)
+   503→                </Badge>
+   504→              </motion.div>
+   505→              <motion.h1
+   506→                variants={fadeInUp}
+   507→                className="font-heading text-[clamp(2.25rem,4vw+1rem,4.25rem)] font-extralight text-white leading-[1.05] tracking-tight mb-6"
+   508→              >
+   509→                Lower the{' '}
+   510→                <span className="font-[family-name:var(--font-display)] italic font-light text-[#afb75d]">Glycemic Impact</span>
+   511→                <br />
+   512→                of Your Meal
+   513→              </motion.h1>
+   514→              <motion.p variants={fadeInUp} className="text-white/60 text-base sm:text-lg max-w-xl mb-8 leading-relaxed">
+   515→                NOTJUST WATER(TM) is a convenient 50 ml pre-meal shot designed to help reduce the
+   516→                Glycemic Index (GI) impact of carbohydrate-rich foods. Simply take one shot before your
+   517→                meal to support a healthier glycemic response and help manage post-meal blood sugar spikes.
+   518→              </motion.p>
+   519→              <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-3 mb-8">
+   520→                <Button
+   521→                  size="lg"
+   522→                  onClick={() => {
+   523→                    if (!user) { navigateTo('auth-login'); toast.info('Please login first'); return }
+   524→                    navigateTo('learning')
+   525→                  }}
+   526→                  className="bg-[#e3dfd8] hover:bg-white text-[#1f1e1c] font-heading font-semibold text-sm px-7 py-5 rounded-full shadow-lg shadow-black/20 hover:shadow-xl transition-all duration-300"
+   527→                >
+   528→                  Get Started <ArrowRight className="w-4 h-4 ml-2" />
+   529→                </Button>
+   530→                <Button
+   531→                  size="lg"
+   532→                  variant="outline"
+   533→                  onClick={() => scrollToSection('how-it-works')}
+   534→                  className="border-white/30 text-white bg-white/10 hover:bg-white/20 hover:border-white/50 font-heading font-semibold text-sm px-7 py-5 rounded-full backdrop-blur-sm transition-all duration-300"
+   535→                >
+   536→                  Learn More <ChevronDown className="w-4 h-4 ml-2" />
+   537→                </Button>
+   538→              </motion.div>
+   539→              <motion.div variants={fadeInUp} className="flex flex-wrap gap-5 text-white/50 text-xs font-medium">
+   540→                <div className="flex items-center gap-1.5"><CheckCircle className="w-3.5 h-3.5 text-[#afb75d]" /> Supports Blood Sugar Management</div>
+   541→                <div className="flex items-center gap-1.5"><Leaf className="w-3.5 h-3.5 text-[#afb75d]" /> 50 ml Ready-to-Drink Shot</div>
+   542→                <div className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5 text-[#afb75d]" /> 10-15 Minutes Before Meals</div>
+   543→              </motion.div>
+   544→            </motion.div>
+   545→
+   546→            {/* RIGHT - Diagonal hero product cards */}
+   547→            <motion.div
+   548→              initial={{ opacity: 0, y: 30 }}
+   549→              animate={{ opacity: 1, y: 0 }}
+   550→              transition={{ duration: 0.8, delay: 0.3, ease: 'easeOut' }}
+   551→              className="hidden lg:block"
+   552→            >
+   553→              <div className="relative h-[620px] max-w-xl ml-auto">
+   554→                {heroProducts.slice(0, 2).map((product, idx) => {
+   555→                  const isSecond = idx === 1
+   556→                  return (
+   557→                    <div
+   558→                      key={product.id}
+   559→                      className={`card-reveal absolute w-[300px] bg-[#302f2c] rounded-xl overflow-hidden ring-1 ring-white/[0.12] shadow-2xl shadow-black/30 transition-all duration-300 cursor-pointer group hover:-translate-y-1 hover:ring-[#afb75d]/40 ${isSecond ? 'right-0 top-[270px]' : 'left-0 top-0'}`}
+   560→                      style={{ animationDelay: `${0.1 + idx * 0.2}s` }}
+   561→                      onClick={() => {
+   562→                        if (!user) { navigateTo('auth-login'); toast.info('Please login first'); return }
+   563→                        navigateTo('products')
+   564→                      }}
+   565→                    >
+   566→                      <div className="relative h-[250px] bg-white/[0.03] overflow-hidden">
+   567→                        <Image src="/images/product-shot.png" alt={product.name} fill className="object-cover group-hover:scale-105 transition-transform duration-500" />
+   568→                        <div className="absolute bottom-3 left-3 rounded-full bg-black/35 backdrop-blur-sm px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-white">
+   569→                          {isSecond ? 'Still' : 'Carbonated'}
+   570→                        </div>
+   571→                      </div>
+   572→                      <div className="px-4 py-3 border-t border-white/[0.08]">
+   573→                        <p className="text-[10px] font-semibold tracking-[0.28em] uppercase text-[#afb75d] mb-2">{product.type} Variant</p>
+   574→                        <div className="flex items-end justify-between gap-4">
+   575→                          <div className="min-w-0">
+   576→                            <h3 className="text-base font-medium text-white truncate">{product.name}</h3>
+   577→                            <p className="text-[11px] text-white/45 mt-1">NotJust</p>
+   578→                          </div>
+   579→                          <span className="text-[#afb75d] text-sm font-semibold flex-shrink-0">₹{product.price.toLocaleString()}</span>
+   580→                        </div>
+   581→                      </div>
+   582→                    </div>
+   583→                  )
+   584→                })}
+   585→              </div>
+   586→            </motion.div>          </div>
+   587→        </div>
+   588→
+   589→        {/* Scroll indicator */}
+   590→        <motion.div
+   591→          className="absolute bottom-8 left-1/2 -translate-x-1/2 cursor-pointer z-10"
+   592→          animate={{ y: [0, 10, 0] }}
+   593→          transition={{ repeat: Infinity, duration: 2 }}
+   594→          onClick={() => scrollToSection('brand-story')}
+   595→        >
+   596→          <ChevronDown className="w-6 h-6 text-white/40" />
+   597→        </motion.div>
+   598→      </section>
+   599→
+   600→      {/* ═══════════════════════════════════════════════════════════
+   601→          B. BRAND STORY SECTION — dark bg, two-column
+   602→          ═══════════════════════════════════════════════════════════ */}
+   603→      <AnimatedSection id="brand-story" className="py-20 md:py-28 bg-[#1f1e1c]">
+   604→        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+   605→          <div className="grid md:grid-cols-2 gap-12 lg:gap-20 items-center">
+   606→            <motion.div variants={slideInLeft} className="relative">
+   607→              <div className="relative aspect-[4/5] rounded-2xl overflow-hidden ring-1 ring-white/10">
+   608→                <Image src="/images/about-product.png" alt="NotJust Product" fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover" />
+   609→              </div>
+   610→              <div className="absolute -bottom-5 -right-5 bg-gradient-to-br from-[#48805b] to-[#3a6a4a] rounded-2xl px-6 py-5 text-white shadow-2xl shadow-black/30">
+   611→                <p className="font-heading text-3xl font-bold">40%</p>
+   612→                <p className="text-xs text-white/70 font-medium">Spike Reduction</p>
+   613→              </div>
+   614→            </motion.div>
+   615→            <motion.div variants={slideInRight}>
+   616→              <Badge className="mb-4 bg-[#afb75d]/15 text-[#afb75d] border-[#afb75d]/25 text-xs font-semibold tracking-wider uppercase">NOTJUST WATER(TM)</Badge>
+   617→              <h2 className="font-heading text-3xl sm:text-4xl lg:text-5xl font-extralight text-white mb-6 leading-[1.1] tracking-tight">
+   618→                Enjoy Your Favorite Foods<br />
+   619→                <span className="font-[family-name:var(--font-display)] italic font-light text-[#afb75d]">Smarter.</span>
+   620→              </h2>
+   621→              <p className="text-white/50 text-base sm:text-lg mb-8 leading-relaxed">
+   622→                A simple pre-meal wellness solution designed to support better glycemic management as
+   623→                part of a balanced lifestyle. Take one 50 ml shot before your meal to make carbohydrate-rich
+   624→                foods easier to manage as part of your daily routine.
+   625→              </p>
+   626→              <div className="grid gap-3">
+   627→                {[
+   628→                  { icon: CheckCircle, title: 'Helps Reduce GI Impact', desc: 'Designed for carbohydrate-rich meals' },
+   629→                  { icon: Heart, title: 'Blood Sugar Support', desc: 'Supports healthier post-meal response' },
+   630→                  { icon: Package, title: '14 x 50 ml Shots', desc: 'Ready-to-drink pack for daily use' },
+   631→                ].map((item) => (
+   632→                  <div key={item.title} className="flex items-start gap-4 p-4 rounded-xl bg-white/[0.04] border border-white/[0.08] hover:border-white/15 transition-colors duration-300">
+   633→                    <div className="w-10 h-10 rounded-lg bg-[#48805b]/20 flex items-center justify-center flex-shrink-0">
+   634→                      <item.icon className="w-5 h-5 text-[#afb75d]" />
+   635→                    </div>
+   636→                    <div>
+   637→                      <p className="font-heading font-semibold text-white text-sm">{item.title}</p>
+   638→                      <p className="text-xs text-white/50">{item.desc}</p>
+   639→                    </div>
+   640→                  </div>
+   641→                ))}
+   642→              </div>
+   643→            </motion.div>
+   644→          </div>
+   645→        </div>
+   646→      </AnimatedSection>
+   647→
+   648→      {/* ═══════════════════════════════════════════════════════════
+   649→          C. HOW IT WORKS SECTION — light bg, 4 steps
+   650→          ═══════════════════════════════════════════════════════════ */}
+   651→      <AnimatedSection id="how-it-works" className="py-20 md:py-28 bg-[#f4f3f0] overflow-hidden">
+   652→        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+   653→          <motion.div variants={fadeInUp} className="text-center mb-16">
+   654→            <Badge className="mb-4 bg-[#48805b]/10 text-[#48805b] border-[#48805b]/20 text-xs font-semibold tracking-wider uppercase">How It Works</Badge>
+   655→            <h2 className="font-heading text-3xl sm:text-4xl lg:text-5xl font-extralight text-[#1f1e1c] mb-4 leading-tight tracking-tight">
+   656→              Simple Pre-Meal{' '}
+   657→              <span className="font-[family-name:var(--font-display)] italic font-light text-[#48805b]">Wellness</span>
+   658→            </h2>
+   659→            <p className="text-[#88837b] text-base sm:text-lg max-w-2xl mx-auto">
+   660→              Easy to incorporate into your daily routine before carbohydrate-rich meals.
+   661→            </p>
+   662→          </motion.div>
+   663→
+   664→          {/* Steps Row with Animated Dashed Connector */}
+   665→          <div className="relative">
+   666→            {/* ── Animated dashed line (desktop) ── */}
+   667→            <div className="hidden lg:block absolute top-[48px] left-[14%] right-[14%]">
+   668→              {/* Background dashed line */}
+   669→              <div className="h-0 border-t-2 border-dashed border-[#c5c0b8]" />
+   670→              {/* Animated progress fill — travels from left to right */}
+   671→              <motion.div
+   672→                className="absolute top-0 left-0 h-0 border-t-2 border-[#48805b]"
+   673→                initial={{ width: '0%' }}
+   674→                whileInView={{ width: '100%' }}
+   675→                viewport={{ once: true }}
+   676→                transition={{ duration: 2.4, delay: 0.3, ease: 'easeInOut' }}
+   677→              />
+   678→              {/* Traveling dot on the line */}
+   679→              <motion.div
+   680→                className="absolute -top-[5px] w-[12px] h-[12px] rounded-full bg-[#48805b] shadow-lg shadow-[#48805b]/50"
+   681→                initial={{ left: '0%' }}
+   682→                whileInView={{ left: '100%' }}
+   683→                viewport={{ once: true }}
+   684→                transition={{ duration: 2.4, delay: 0.3, ease: 'easeInOut' }}
+   685→              />
+   686→            </div>
+   687→
+   688→            {/* Step Cards */}
+   689→            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-6">
+   690→              {[
+   691→                {
+   692→                  num: '01', icon: Package, title: 'Open',
+   693→                  desc: 'Keep your 14 x 50 ml shot pack ready before meals.',
+   694→                  color: '#48805b', badge: 'Pack of 14', badgeIcon: Package,
+   695→                },
+   696→                {
+   697→                  num: '02', icon: Clock, title: 'Take',
+   698→                  desc: 'Drink one 50 ml shot 10-15 minutes before your meal.',
+   699→                  color: '#48805b', badge: 'Pre-Meal', badgeIcon: Clock,
+   700→                },
+   701→                {
+   702→                  num: '03', icon: Utensils, title: 'Eat',
+   703→                  desc: 'Enjoy your carbohydrate-rich foods as part of a balanced lifestyle.',
+   704→                  color: '#48805b', badge: 'Daily Routine', badgeIcon: Utensils,
+   705→                },
+   706→                {
+   707→                  num: '04', icon: TrendingUp, title: 'Support',
+   708→                  desc: 'Help manage post-meal blood sugar spikes and glycemic response.',
+   709→                  color: '#48805b', badge: 'Smarter Meals', badgeIcon: TrendingUp,
+   710→                },
+   711→              ].map((step, idx) => (
+   712→                <motion.div
+   713→                  key={step.num}
+   714→                  initial={{ opacity: 0, y: 40 }}
+   715→                  whileInView={{ opacity: 1, y: 0 }}
+   716→                  viewport={{ once: true }}
+   717→                  transition={{ duration: 0.6, delay: 0.2 + idx * 0.25, ease: 'easeOut' }}
+   718→                  className="relative flex flex-col items-center text-center group"
+   719→                >
+   720→                  {/* ── Rounded Square Icon ── */}
+   721→                  <motion.div
+   722→                    className="relative z-10 mb-5"
+   723→                    initial={{ scale: 0, opacity: 0 }}
+   724→                    whileInView={{ scale: 1, opacity: 1 }}
+   725→                    viewport={{ once: true }}
+   726→                    transition={{ type: 'spring', stiffness: 260, damping: 20, delay: 0.1 + idx * 0.25 }}
+   727→                  >
+   728→                    <div
+   729→                      className="w-[88px] h-[88px] rounded-2xl text-white flex items-center justify-center shadow-lg transition-all duration-500 group-hover:scale-110 group-hover:shadow-xl group-hover:rounded-3xl"
+   730→                      style={{ backgroundColor: step.color, boxShadow: `0 8px 24px ${step.color}30` }}
+   731→                    >
+   732→                      <motion.div
+   733→                        animate={{ y: [0, -2, 0] }}
+   734→                        transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut', delay: idx * 0.3 }}
+   735→                      >
+   736→                        <step.icon className="w-8 h-8" />
+   737→                      </motion.div>
+   738→                    </div>
+   739→                    {/* Step number badge */}
+   740→                    <div
+   741→                      className="absolute -top-2 -right-2 w-7 h-7 rounded-full text-white text-xs font-bold flex items-center justify-center shadow-md"
+   742→                      style={{ backgroundColor: step.color }}
+   743→                    >
+   744→                      {step.num}
+   745→                    </div>
+   746→                  </motion.div>
+   747→
+   748→                  {/* ── Title ── */}
+   749→                  <motion.h3
+   750→                    className="font-heading text-lg font-bold text-[#1f1e1c] mb-1.5 transition-colors duration-300 group-hover:text-[#48805b]"
+   751→                    initial={{ opacity: 0, y: 8 }}
+   752→                    whileInView={{ opacity: 1, y: 0 }}
+   753→                    viewport={{ once: true }}
+   754→                    transition={{ duration: 0.4, delay: 0.3 + idx * 0.25 }}
+   755→                  >
+   756→                    {step.title}
+   757→                  </motion.h3>
+   758→
+   759→                  {/* ── Description ── */}
+   760→                  <motion.p
+   761→                    className="text-[#88837b] text-sm leading-relaxed max-w-[240px] min-h-[48px] mx-auto mb-3 transition-colors duration-300 group-hover:text-[#1f1e1c]/70"
+   762→                    initial={{ opacity: 0, y: 8 }}
+   763→                    whileInView={{ opacity: 1, y: 0 }}
+   764→                    viewport={{ once: true }}
+   765→                    transition={{ duration: 0.4, delay: 0.4 + idx * 0.25 }}
+   766→                  >
+   767→                    {step.desc}
+   768→                  </motion.p>
+   769→
+   770→                  {/* ── Benefit Badge ── */}
+   771→                  <motion.div
+   772→                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border transition-all duration-300"
+   773→                    style={{
+   774→                      backgroundColor: `${step.color}10`,
+   775→                      color: step.color,
+   776→                      borderColor: `${step.color}25`,
+   777→                    }}
+   778→                    initial={{ opacity: 0, scale: 0.8 }}
+   779→                    whileInView={{ opacity: 1, scale: 1 }}
+   780→                    viewport={{ once: true }}
+   781→                    transition={{ type: 'spring', stiffness: 300, damping: 20, delay: 0.5 + idx * 0.25 }}
+   782→                    whileHover={{ scale: 1.08 }}
+   783→                  >
+   784→                    <step.badgeIcon className="w-3 h-3" />
+   785→                    {step.badge}
+   786→                  </motion.div>
+   787→                </motion.div>
+   788→              ))}
+   789→            </div>
+   790→          </div>
+   791→        </div>
+   792→      </AnimatedSection>
+   793→
+   794→      {/* ═══════════════════════════════════════════════════════════
+   795→          D. SCIENCE SECTION — white bg, graph + stats
+   796→          ═══════════════════════════════════════════════════════════ */}
+   797→      <AnimatedSection className="py-20 md:py-28 bg-white">
+   798→        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+   799→          <div className="grid md:grid-cols-2 gap-12 items-center">
+   800→            <motion.div variants={slideInLeft}>
+   801→              <div className="bg-gradient-to-br from-[#48805b] to-[#3a6a4a] rounded-2xl p-8 md:p-10 text-white shadow-2xl shadow-[#48805b]/15">
+   802→                <h3 className="font-heading text-2xl font-bold mb-2">Glycemic Response</h3>
+   803→                <p className="text-white/60 text-sm mb-6">See how NOTJUST WATER(TM) supports a healthier post-meal response.</p>
+   804→                {/* SVG Graph */}
+   805→                <svg viewBox="0 0 400 200" className="w-full h-auto">
+   806→                  <defs>
+   807→                    <linearGradient id="greenGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+   808→                      <stop offset="0%" stopColor="#afb75d" stopOpacity="0.4"/>
+   809→                      <stop offset="100%" stopColor="#afb75d" stopOpacity="0"/>
+   810→                    </linearGradient>
+   811→                    <linearGradient id="redGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+   812→                      <stop offset="0%" stopColor="#ff6b6b" stopOpacity="0.3"/>
+   813→                      <stop offset="100%" stopColor="#ff6b6b" stopOpacity="0"/>
+   814→                    </linearGradient>
+   815→                  </defs>
+   816→                  <line x1="40" y1="20" x2="40" y2="170" stroke="rgba(255,255,255,0.15)" strokeWidth="1"/>
+   817→                  <line x1="40" y1="170" x2="380" y2="170" stroke="rgba(255,255,255,0.15)" strokeWidth="1"/>
+   818→                  <line x1="40" y1="95" x2="380" y2="95" stroke="rgba(255,255,255,0.1)" strokeWidth="1" strokeDasharray="4"/>
+   819→                  <text x="10" y="175" fill="rgba(255,255,255,0.5)" fontSize="9">0h</text>
+   820→                  <text x="10" y="100" fill="rgba(255,255,255,0.5)" fontSize="9">2h</text>
+   821→                  <text x="10" y="25" fill="rgba(255,255,255,0.5)" fontSize="9">4h</text>
+   822→                  <path d="M40,170 Q100,160 130,40 Q160,60 200,120 Q260,155 380,165" fill="url(#redGrad)" />
+   823→                  <path d="M40,170 Q100,160 130,40 Q160,60 200,120 Q260,155 380,165" fill="none" stroke="#ff6b6b" strokeWidth="2.5" />
+   824→                  <path d="M40,170 Q100,165 130,110 Q160,115 200,140 Q260,160 380,168" fill="url(#greenGrad)" />
+   825→                  <path d="M40,170 Q100,165 130,110 Q160,115 200,140 Q260,160 380,168" fill="none" stroke="#afb75d" strokeWidth="2.5" />
+   826→                  <circle cx="130" cy="40" r="3" fill="#ff6b6b"/>
+   827→                  <text x="140" y="38" fill="#ff6b6b" fontSize="10" fontWeight="bold">Without NotJust</text>
+   828→                  <circle cx="130" cy="110" r="3" fill="#afb75d"/>
+   829→                  <text x="140" y="108" fill="#afb75d" fontSize="10" fontWeight="bold">With NotJust</text>
+   830→                </svg>
+   831→              </div>
+   832→            </motion.div>
+   833→            <motion.div variants={slideInRight}>
+   834→              <Badge className="mb-4 bg-[#2e91b2]/10 text-[#2e91b2] border-[#2e91b2]/20 text-xs font-semibold tracking-wider uppercase">The Science</Badge>
+   835→              <h2 className="font-heading text-3xl sm:text-4xl font-extralight text-[#1f1e1c] mb-6 leading-tight tracking-tight">
+   836→                Key Benefits for<br />
+   837→                <span className="font-[family-name:var(--font-display)] italic font-light text-[#48805b]">Smarter Meals</span>
+   838→              </h2>
+   839→              <p className="text-[#88837b] text-base sm:text-lg mb-8 leading-relaxed">
+   840→                NOTJUST WATER(TM) helps reduce the GI impact of meals, supports healthy blood sugar
+   841→                management, and comes in a convenient ready-to-drink format.
+   842→              </p>
+   843→              <div className="grid grid-cols-2 gap-4">
+   844→                {[
+   845→                  { value: '50 ml', label: 'Per Shot' },
+   846→                  { value: '10-15', label: 'Minutes Before Meals' },
+   847→                  { value: '14', label: 'Shots Per Pack' },
+   848→                  { value: 'GI', label: 'Impact Support' },
+   849→                ].map(stat => (
+   850→                  <div key={stat.label} className="text-center p-4 rounded-xl bg-[#f4f3f0] border border-[#e3dfd8]">
+   851→                    <p className="font-heading text-2xl font-bold text-[#48805b]">{stat.value}</p>
+   852→                    <p className="text-xs text-[#88837b] font-medium">{stat.label}</p>
+   853→                  </div>
+   854→                ))}
+   855→              </div>
+   856→            </motion.div>
+   857→          </div>
+   858→        </div>
+   859→      </AnimatedSection>
+   860→
+   861→      {/* ═══════════════════════════════════════════════════════════
+   862→          E. PRODUCTS SECTION — light bg, full product cards
+   863→          ═══════════════════════════════════════════════════════════ */}
+   864→      <AnimatedSection className="py-20 md:py-28 bg-[#f4f3f0]">
+   865→        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+   866→          <motion.div variants={fadeInUp} className="text-center mb-16">
+   867→            <Badge className="mb-4 bg-[#48805b]/10 text-[#48805b] border-[#48805b]/20 text-xs font-semibold tracking-wider uppercase">Our Products</Badge>
+   868→            <h2 className="font-heading text-3xl sm:text-4xl lg:text-5xl font-extralight text-[#1f1e1c] mb-4 leading-tight tracking-tight">
+   869→              NOTJUST WATER(TM){' '}
+   870→              <span className="font-[family-name:var(--font-display)] italic font-light text-[#48805b]">Pre-Meal Wellness Shot</span>
+   871→            </h2>
+   872→            <p className="text-[#88837b] text-base sm:text-lg max-w-2xl mx-auto">
+   873→              Choose from NOTJUST Watr Fizz or NOTJUST Watr Still, with monthly and eco-friendly refill purchase options.
+   874→            </p>
+   875→          </motion.div>
+   876→
+   877→          <motion.div variants={fadeInUp} className="grid md:grid-cols-2 gap-5 max-w-3xl mx-auto mb-12">
+   878→            <div className="rounded-xl border border-[#e7b973]/40 bg-[#fff7ea] p-5 flex items-center gap-4">
+   879→              <div className="w-11 h-11 rounded-lg bg-[#e7b973]/20 flex items-center justify-center flex-shrink-0">
+   880→                <ClipboardList className="w-5 h-5 text-[#b56b20]" />
+   881→              </div>
+   882→              <div>
+   883→                <p className="font-heading font-bold text-sm text-[#1f1e1c]">Monthly Pack (60 Shots)</p>
+   884→                <p className="text-xs text-[#6b6560] mt-1">Daily use, 2 shots/day</p>
+   885→              </div>
+   886→            </div>
+   887→            <div className="rounded-xl border border-[#48805b]/25 bg-[#edf5ee] p-5 flex items-center gap-4">
+   888→              <div className="w-11 h-11 rounded-lg bg-[#48805b]/15 flex items-center justify-center flex-shrink-0">
+   889→                <Leaf className="w-5 h-5 text-[#48805b]" />
+   890→              </div>
+   891→              <div>
+   892→                <p className="font-heading font-bold text-sm text-[#1f1e1c]">Eco-Friendly Refill Pack</p>
+   893→                <p className="text-xs text-[#6b6560] mt-1">Sustainable and affordable</p>
+   894→              </div>
+   895→            </div>
+   896→          </motion.div>
+   897→
+   898→          <div className="grid gap-6 max-w-6xl mx-auto">
+   899→            {products.slice(0, 2).map((product, idx) => {
+   900→              const isStill = idx === 1
+   901→              return (
+   902→                <motion.div key={product.id} variants={scaleIn}>
+   903→                  <Card className="border-[#3c3a35] bg-[#262520] text-white overflow-hidden rounded-xl shadow-xl shadow-black/10">
+   904→                    <div className={`grid lg:grid-cols-2 min-h-[330px] ${isStill ? 'lg:[&>div:first-child]:order-2' : ''}`}>
+   905→                      <div className="relative min-h-[260px] lg:min-h-full overflow-hidden bg-[#1f1e1c]">
+   906→                        <Image src="/images/product-shot.png" alt={product.name} fill className="object-cover" />
+   907→                        <div className="absolute inset-0 bg-gradient-to-r from-transparent to-[#262520]/25" />
+   908→                        <div className="absolute bottom-5 left-5 rounded-full bg-white/15 backdrop-blur-md px-4 py-2 text-[11px] font-bold uppercase tracking-widest text-white">
+   909→                          {isStill ? 'Still Variant' : 'Fizz Variant'}
+   910→                        </div>
+   911→                      </div>
+   912→                      <div className="p-7 lg:p-10 flex flex-col justify-center">
+   913→                        <p className="text-[11px] font-semibold tracking-[0.35em] uppercase text-[#48805b] mb-4">{product.type} Variant</p>
+   914→                        <h3 className="font-heading text-3xl text-white mb-4 leading-tight">{product.name}</h3>
+   915→                        <p className="text-sm sm:text-base text-white/45 leading-relaxed max-w-xl">{product.description}</p>
+   916→                        <div className="grid grid-cols-3 gap-3 my-7 max-w-md">
+   917→                          {[
+   918→                            { value: '14 shots', label: 'Per pack' },
+   919→                            { value: '50 ml', label: 'Per shot' },
+   920→                            { value: '0 cal', label: 'Zero calorie' },
+   921→                          ].map(stat => (
+   922→                            <div key={stat.label} className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3">
+   923→                              <p className="text-lg font-bold text-white leading-none">{stat.value}</p>
+   924→                              <p className="text-[10px] uppercase tracking-wide text-white/30 mt-2">{stat.label}</p>
+   925→                            </div>
+   926→                          ))}
+   927→                        </div>
+   928→                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5">
+   929→                          <div>
+   930→                            <p className="font-heading text-4xl text-white">₹{product.price.toLocaleString()}</p>
+   931→                            <p className="text-xs text-white/35 mt-1">incl. tax</p>
+   932→                          </div>
+   933→                          {user?.learning_completed ? (
+   934→                            <Button className="bg-[#48805b] hover:bg-[#3a6a4a] text-white font-heading font-semibold rounded-full text-sm px-7" onClick={() => navigateTo('products')}>
+   935→                              View Details
+   936→                            </Button>
+   937→                          ) : (
+   938→                            <Button variant="outline" className="border-white/20 bg-white/10 text-white/70 font-heading font-semibold rounded-full text-sm px-7" disabled>
+   939→                              <Lock className="w-4 h-4 mr-2" /> Locked
+   940→                            </Button>
+   941→                          )}
+   942→                        </div>
+   943→                      </div>
+   944→                    </div>
+   945→                  </Card>
+   946→                </motion.div>
+   947→              )
+   948→            })}
+   949→          </div>        </div>
+   950→      </AnimatedSection>
+   951→      {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   952→          G. STATS / COUNTER SECTION â€” dark bg
+   953→          â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
+   954→      <AnimatedSection className="py-20 md:py-28 bg-[#1f1e1c]">
+   955→        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+   956→          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
+   957→            {[
+   958→              { value: 10000, suffix: '+', label: 'Users', icon: Users },
+   959→              { value: 50, suffix: '+', label: 'Partners', icon: Globe },
+   960→              { value: 98, suffix: '%', label: 'Satisfaction', icon: Star },
+   961→              { value: 40, suffix: '%', label: 'Spike Reduction', icon: TrendingUp },
+   962→            ].map((stat) => (
+   963→              <motion.div key={stat.label} variants={fadeInUp} className="text-center">
+   964→                <div className="w-12 h-12 rounded-xl bg-[#48805b]/15 flex items-center justify-center mx-auto mb-4">
+   965→                  <stat.icon className="w-5 h-5 text-[#48805b]" />
+   966→                </div>
+   967→                <p className="font-heading text-4xl sm:text-5xl font-extralight text-white mb-2 tracking-tight">
+   968→                  <AnimatedCounter end={stat.value} suffix={stat.suffix} />
+   969→                </p>
+   970→                <p className="text-white/40 text-xs font-medium uppercase tracking-widest">{stat.label}</p>
+   971→              </motion.div>
+   972→            ))}
+   973→          </div>
+   974→        </div>
+   975→      </AnimatedSection>
+   976→      {/* ═══════════════════════════════════════════════════════════
+   977→          H. CTA SECTION — dark with image overlay
+   978→          ═══════════════════════════════════════════════════════════ */}
+   979→      <AnimatedSection className="relative py-24 md:py-32 overflow-hidden">
+   980→        <div className="absolute inset-0">
+   981→          <Image src="/images/hero-bg.png" alt="" fill className="object-cover" />
+   982→          <div className="absolute inset-0 bg-[#1f1e1c]/90" />
+   983→        </div>
+   984→        <div className="relative z-10 max-w-3xl mx-auto px-4 text-center">
+   985→          <motion.div variants={fadeInUp}>
+   986→            <h2 className="font-heading text-3xl sm:text-4xl lg:text-5xl font-extralight text-white mb-6 leading-tight tracking-tight">
+   987→              Enjoy Your Favorite Foods<br />
+   988→              <span className="font-[family-name:var(--font-display)] italic font-light text-[#afb75d]">Smarter.</span>
+   989→            </h2>
+   990→            <p className="text-white/50 text-base sm:text-lg mb-10 max-w-xl mx-auto">
+   991→              NOTJUST WATER(TM) is a simple pre-meal wellness shot designed to support better
+   992→              glycemic management as part of a balanced lifestyle.
+   993→            </p>
+   994→            <Button
+   995→              size="lg"
+   996→              onClick={() => {
+   997→                if (!user) { navigateTo('auth-login'); toast.info('Please sign in to get started'); return }
+   998→                navigateTo('learning')
+   999→              }}
+  1000→              className="bg-[#e3dfd8] hover:bg-white text-[#1f1e1c] font-heading font-bold text-sm px-10 py-6 rounded-full shadow-xl shadow-black/20 hover:shadow-2xl transition-all duration-300"
+  1001→            >
+  1002→              Get Started Now <ArrowRight className="w-4 h-4 ml-2" />
+  1003→            </Button>
+  1004→          </motion.div>
+  1005→        </div>
+  1006→      </AnimatedSection>
+  1007→
+  1008→      {/* ═══════════════════════════════════════════════════════════
+  1009→          I. FOOTER — dark, 4-column
+  1010→          ═══════════════════════════════════════════════════════════ */}
+  1011→      <footer className="bg-[#1f1e1c] border-t border-white/[0.06]">
+  1012→        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+  1013→          <div className="grid md:grid-cols-4 gap-10">
+  1014→            <div className="md:col-span-1">
+  1015→              <div className="mb-4">
+  1016→                <Image src="/images/notjust-logo-clean.png" alt="NotJust" width={140} height={48} className="h-10 w-auto object-contain brightness-0 invert" />
+  1017→              </div>
+  1018→              <p className="text-white/40 text-sm leading-relaxed">
+  1019→                NOTJUST WATER(TM) is a 50 ml pre-meal wellness shot designed to help lower the glycemic impact of your meal.
+  1020→              </p>
+  1021→            </div>
+  1022→            <div>
+  1023→              <h4 className="font-heading font-semibold text-white text-sm mb-4">Quick Links</h4>
+  1024→              <ul className="space-y-2.5 text-sm text-white/40">
+  1025→                <li><button onClick={() => navigateTo('landing')} className="hover:text-white transition-colors duration-300">Home</button></li>
+  1026→                <li><button onClick={() => navigateTo('learning')} className="hover:text-white transition-colors duration-300">Learning</button></li>
+  1027→                <li><button onClick={() => navigateTo('products')} className="hover:text-white transition-colors duration-300">Products</button></li>
+  1028→              </ul>
+  1029→            </div>
+  1030→            <div>
+  1031→              <h4 className="font-heading font-semibold text-white text-sm mb-4">Contact</h4>
+  1032→              <ul className="space-y-2.5 text-sm text-white/40">
+  1033→                <li className="flex items-center gap-2"><Mail className="w-3.5 h-3.5" /> hello@notjust.health</li>
+  1034→                <li className="flex items-center gap-2"><PhoneIcon className="w-3.5 h-3.5" /> +91 98765 43210</li>
+  1035→                <li className="flex items-center gap-2"><MapPin className="w-3.5 h-3.5" /> Mumbai, India</li>
+  1036→              </ul>
+  1037→            </div>
+  1038→            <div>
+  1039→              <h4 className="font-heading font-semibold text-white text-sm mb-4">Follow Us</h4>
+  1040→              <div className="flex gap-2.5">
+  1041→                {[Instagram, Twitter, Linkedin, Youtube].map((Icon, i) => (
+  1042→                  <button key={i} className="w-9 h-9 rounded-lg bg-white/[0.05] flex items-center justify-center text-white/40 hover:bg-[#48805b] hover:text-white transition-all duration-300">
+  1043→                    <Icon className="w-4 h-4" />
+  1044→                  </button>
+  1045→                ))}
+  1046→              </div>
+  1047→            </div>
+  1048→          </div>
+  1049→          <Separator className="my-8 bg-white/[0.06]" />
+  1050→          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-white/30">
+  1051→            <p>&copy; 2026 NotJust Health. All rights reserved.</p>
+  1052→            <div className="flex gap-6">
+  1053→              <span className="hover:text-white/60 cursor-pointer transition-colors duration-300">Privacy Policy</span>
+  1054→              <span className="hover:text-white/60 cursor-pointer transition-colors duration-300">Terms of Service</span>
+  1055→            </div>
+  1056→          </div>
+  1057→        </div>
+  1058→      </footer>
+  1059→    </div>
+  1060→  )
+  1061→}
+  1062→
+  1063→// ============================================================
+  1064→// AUTH VIEWS
+  1065→// ============================================================
+  1066→function AuthLogin() {
+  1067→  const { navigateTo, setPendingOtp } = useAppStore()
+  1068→  const [loginType, setLoginType] = useState<'phone' | 'email'>('phone')
+  1069→  const [phone, setPhone] = useState('')
+  1070→  const [email, setEmail] = useState('')
+  1071→  const [loading, setLoading] = useState(false)
+  1072→
+  1073→  const handleSendOtp = async () => {
+  1074→    const contact = loginType === 'phone' ? phone : email
+  1075→    if (!contact) { toast.error('Please enter your ' + loginType); return }
+  1076→    setLoading(true)
+  1077→    try {
+  1078→      const result = loginType === 'phone'
+  1079→        ? await authService.loginWithPhone(contact)
+  1080→        : await authService.loginWithEmail(contact)
+  1081→      if (result.error) { toast.error(String(result.error)); return }
+  1082→      setPendingOtp(contact, loginType)
+  1083→      navigateTo('auth-otp')
+  1084→      toast.success('OTP sent! Use 123456 for demo')
+  1085→    } catch { toast.error('Something went wrong') }
+  1086→    finally { setLoading(false) }
+  1087→  }
+  1088→
+  1089→  return (
+  1090→    <div className="min-h-screen flex items-center justify-center bg-[#f4f3f0] pt-16 px-4">
+  1091→      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md">
+  1092→        <Card className="border-[#e3dfd8] shadow-xl">
+  1093→          <CardHeader className="text-center pb-2">
+  1094→            <div className="flex justify-center mb-4">
+  1095→              <Image src="/images/notjust-logo-clean.png" alt="NotJust" width={100} height={34} className="h-9 w-auto object-contain" />
+  1096→            </div>
+  1097→            <CardTitle className="font-heading text-2xl font-bold">Welcome Back</CardTitle>
+  1098→            <CardDescription>Sign in to continue your wellness journey</CardDescription>
+  1099→          </CardHeader>
+  1100→          <CardContent className="space-y-4 pt-4">
+  1101→            {/* Toggle */}
+  1102→            <div className="flex bg-[#e3dfd8] rounded-lg p-1">
+  1103→              <button
+  1104→                onClick={() => setLoginType('phone')}
+  1105→                className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${
+  1106→                  loginType === 'phone' ? 'bg-white shadow text-[#1f1e1c]' : 'text-[#88837b]'
+  1107→                }`}
+  1108→              >
+  1109→                Phone
+  1110→              </button>
+  1111→              <button
+  1112→                onClick={() => setLoginType('email')}
+  1113→                className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${
+  1114→                  loginType === 'email' ? 'bg-white shadow text-[#1f1e1c]' : 'text-[#88837b]'
+  1115→                }`}
+  1116→              >
+  1117→                Email
+  1118→              </button>
+  1119→            </div>
+  1120→
+  1121→            {loginType === 'phone' ? (
+  1122→              <div className="space-y-2">
+  1123→                <Label>Phone Number</Label>
+  1124→                <Input
+  1125→                  placeholder="+91 98765 43210"
+  1126→                  value={phone}
+  1127→                  onChange={(e) => setPhone(e.target.value)}
+  1128→                  className="h-12"
+  1129→                />
+  1130→              </div>
+  1131→            ) : (
+  1132→              <div className="space-y-2">
+  1133→                <Label>Email Address</Label>
+  1134→                <Input
+  1135→                  type="email"
+  1136→                  placeholder="you@example.com"
+  1137→                  value={email}
+  1138→                  onChange={(e) => setEmail(e.target.value)}
+  1139→                  className="h-12"
+  1140→                />
+  1141→              </div>
+  1142→            )}
+  1143→
+  1144→            <Button
+  1145→              onClick={handleSendOtp}
+  1146→              disabled={loading}
+  1147→              className="w-full h-12 bg-[#48805b] hover:bg-[#3a6a4a] text-white font-heading font-semibold text-base"
+  1148→            >
+  1149→              {loading ? 'Sending...' : 'Send OTP'}
+  1150→            </Button>
+  1151→
+  1152→            <div className="text-center text-sm text-[#88837b]">
+  1153→              <p>Demo: Use <strong>admin@notjust.com</strong> or <strong>+919876543210</strong></p>
+  1154→            </div>
+  1155→          </CardContent>
+  1156→          <CardFooter className="justify-center pb-6">
+  1157→            <p className="text-sm text-[#88837b]">
+  1158→              Don&apos;t have an account?{' '}
+  1159→              <button onClick={() => navigateTo('auth-register')} className="text-[#48805b] font-semibold hover:underline">
+  1160→                Register
+  1161→              </button>
+  1162→            </p>
+  1163→          </CardFooter>
+  1164→        </Card>
+  1165→      </motion.div>
+  1166→    </div>
+  1167→  )
+  1168→}
+  1169→
+  1170→function AuthRegister() {
+  1171→  const { navigateTo, setPendingOtp } = useAppStore()
+  1172→  const [form, setForm] = useState({ name: '', age: '', gender: '', phone: '', email: '', country: 'India', state: '' })
+  1173→  const [loading, setLoading] = useState(false)
+  1174→
+  1175→  const handleRegister = async () => {
+  1176→    if (!form.name || !form.phone) { toast.error('Name and phone are required'); return }
+  1177→    setLoading(true)
+  1178→    try {
+  1179→      const result = await authService.register({
+  1180→        name: form.name,
+  1181→        age: form.age ? parseInt(form.age) : undefined,
+  1182→        gender: form.gender || undefined,
+  1183→        phone: form.phone,
+  1184→        email: form.email || undefined,
+  1185→        country: form.country,
+  1186→        state: form.state || undefined,
+  1187→      })
+  1188→      if (result.error) { toast.error(typeof result.error === 'string' ? result.error : 'Registration failed'); return }
+  1189→      setPendingOtp(form.phone, 'phone')
+  1190→      navigateTo('auth-otp')
+  1191→      toast.success('Registration successful! OTP sent.')
+  1192→    } catch { toast.error('Something went wrong') }
+  1193→    finally { setLoading(false) }
+  1194→  }
+  1195→
+  1196→  const updateField = (field: string, value: string) => setForm(prev => ({ ...prev, [field]: value }))
+  1197→
+  1198→  return (
+  1199→    <div className="min-h-screen flex items-center justify-center bg-[#f4f3f0] pt-16 px-4 py-8">
+  1200→      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md">
+  1201→        <Card className="border-[#e3dfd8] shadow-xl">
+  1202→          <CardHeader className="text-center pb-2">
+  1203→            <div className="flex justify-center mb-4">
+  1204→              <Image src="/images/notjust-logo-clean.png" alt="NotJust" width={100} height={34} className="h-9 w-auto object-contain" />
+  1205→            </div>
+  1206→            <CardTitle className="font-heading text-2xl font-bold">Create Account</CardTitle>
+  1207→            <CardDescription>Join the NotJust wellness movement</CardDescription>
+  1208→          </CardHeader>
+  1209→          <CardContent className="space-y-3 pt-2">
+  1210→            <div className="grid grid-cols-2 gap-3">
+  1211→              <div className="space-y-1.5">
+  1212→                <Label className="text-xs">Full Name *</Label>
+  1213→                <Input placeholder="Your name" value={form.name} onChange={e => updateField('name', e.target.value)} className="h-10" />
+  1214→              </div>
+  1215→              <div className="space-y-1.5">
+  1216→                <Label className="text-xs">Age</Label>
+  1217→                <Input placeholder="Age" type="number" value={form.age} onChange={e => updateField('age', e.target.value)} className="h-10" />
+  1218→              </div>
+  1219→            </div>
+  1220→            <div className="space-y-1.5">
+  1221→              <Label className="text-xs">Gender</Label>
+  1222→              <Select value={form.gender} onValueChange={v => updateField('gender', v)}>
+  1223→                <SelectTrigger className="h-10"><SelectValue placeholder="Select" /></SelectTrigger>
+  1224→                <SelectContent>
+  1225→                  <SelectItem value="male">Male</SelectItem>
+  1226→                  <SelectItem value="female">Female</SelectItem>
+  1227→                  <SelectItem value="other">Other</SelectItem>
+  1228→                </SelectContent>
+  1229→              </Select>
+  1230→            </div>
+  1231→            <div className="space-y-1.5">
+  1232→              <Label className="text-xs">Phone Number *</Label>
+  1233→              <Input placeholder="+91 98765 43210" value={form.phone} onChange={e => updateField('phone', e.target.value)} className="h-10" />
+  1234→            </div>
+  1235→            <div className="space-y-1.5">
+  1236→              <Label className="text-xs">Email</Label>
+  1237→              <Input type="email" placeholder="you@example.com" value={form.email} onChange={e => updateField('email', e.target.value)} className="h-10" />
+  1238→            </div>
+  1239→            <div className="grid grid-cols-2 gap-3">
+  1240→              <div className="space-y-1.5">
+  1241→                <Label className="text-xs">Country</Label>
+  1242→                <Input value={form.country} onChange={e => updateField('country', e.target.value)} className="h-10" />
+  1243→              </div>
+  1244→              <div className="space-y-1.5">
+  1245→                <Label className="text-xs">State</Label>
+  1246→                <Input placeholder="State" value={form.state} onChange={e => updateField('state', e.target.value)} className="h-10" />
+  1247→              </div>
+  1248→            </div>
+  1249→            <Button onClick={handleRegister} disabled={loading} className="w-full h-11 bg-[#48805b] hover:bg-[#3a6a4a] text-white font-heading font-semibold">
+  1250→              {loading ? 'Creating...' : 'Register'}
+  1251→            </Button>
+  1252→          </CardContent>
+  1253→          <CardFooter className="justify-center pb-6">
+  1254→            <p className="text-sm text-[#88837b]">
+  1255→              Already have an account?{' '}
+  1256→              <button onClick={() => navigateTo('auth-login')} className="text-[#48805b] font-semibold hover:underline">
+  1257→                Sign In
+  1258→              </button>
+  1259→            </p>
+  1260→          </CardFooter>
+  1261→        </Card>
+  1262→      </motion.div>
+  1263→    </div>
+  1264→  )
+  1265→}
+  1266→
+  1267→function AuthOTP() {
+  1268→  const { navigateTo, setUser, pendingOtpContact, pendingOtpType } = useAppStore()
+  1269→  const [otp, setOtp] = useState('')
+  1270→  const [loading, setLoading] = useState(false)
+  1271→
+  1272→  const handleVerify = async () => {
+  1273→    if (otp.length !== 6) { toast.error('Please enter 6-digit OTP'); return }
+  1274→    setLoading(true)
+  1275→    try {
+  1276→      const result = await authService.verifyOtp(pendingOtpContact || '', otp, pendingOtpType)
+  1277→      if (result.error) { toast.error(typeof result.error === 'string' ? result.error : 'Verification failed'); return }
+  1278→      const userData = result.data as UserProfile
+  1279→      setUser(userData)
+  1280→      toast.success(`Welcome, ${userData.name}!`)
+  1281→      navigateTo(userData.is_admin ? 'admin-dashboard' : 'landing')
+  1282→    } catch { toast.error('Verification failed') }
+  1283→    finally { setLoading(false) }
+  1284→  }
+  1285→
+  1286→  return (
+  1287→    <div className="min-h-screen flex items-center justify-center bg-[#f4f3f0] pt-16 px-4">
+  1288→      <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="w-full max-w-md">
+  1289→        <Card className="border-[#e3dfd8] shadow-xl">
+  1290→          <CardHeader className="text-center pb-2">
+  1291→            <div className="w-16 h-16 rounded-full bg-[#48805b]/10 flex items-center justify-center mx-auto mb-4">
+  1292→              <Shield className="w-8 h-8 text-[#48805b]" />
+  1293→            </div>
+  1294→            <CardTitle className="font-heading text-2xl font-bold">Verify OTP</CardTitle>
+  1295→            <CardDescription>
+  1296→              Enter the 6-digit code sent to<br />
+  1297→              <span className="font-medium text-[#1f1e1c]">{pendingOtpContact}</span>
+  1298→            </CardDescription>
+  1299→          </CardHeader>
+  1300→          <CardContent className="space-y-6 pt-4">
+  1301→            <div className="flex justify-center">
+  1302→              <InputOTP maxLength={6} value={otp} onChange={setOtp}>
+  1303→                <InputOTPGroup>
+  1304→                  <InputOTPSlot index={0} />
+  1305→                  <InputOTPSlot index={1} />
+  1306→                  <InputOTPSlot index={2} />
+  1307→                  <InputOTPSlot index={3} />
+  1308→                  <InputOTPSlot index={4} />
+  1309→                  <InputOTPSlot index={5} />
+  1310→                </InputOTPGroup>
+  1311→              </InputOTP>
+  1312→            </div>
+  1313→            <Button onClick={handleVerify} disabled={loading || otp.length !== 6} className="w-full h-12 bg-[#48805b] hover:bg-[#3a6a4a] text-white font-heading font-semibold text-base">
+  1314→              {loading ? 'Verifying...' : 'Verify'}
+  1315→            </Button>
+  1316→            <div className="text-center">
+  1317→              <p className="text-sm text-[#88837b]">
+  1318→                Demo OTP: <strong className="text-[#48805b]">123456</strong>
+  1319→              </p>
+  1320→            </div>
+  1321→          </CardContent>
+  1322→        </Card>
+  1323→      </motion.div>
+  1324→    </div>
+  1325→  )
+  1326→}
+  1327→
+  1328→// ============================================================
+  1329→// LEARNING MODULE
+  1330→// ============================================================
+  1331→const VIDEO_MODULES = [
+  1332→  { id: 'intro', title: 'Introduction to NotJust', duration: '5:30', desc: 'Learn about our mission and the science behind glycemic control.' },
+  1333→  { id: 'usage', title: 'How to Use NotJust', duration: '4:15', desc: 'Proper usage instructions for maximum effectiveness.' },
+  1334→  { id: 'science', title: 'The Science of Glycemic Control', duration: '6:45', desc: 'Deep dive into the clinical research and evidence.' },
+  1335→]
+  1336→
+  1337→function LearningModule() {
+  1338→  const { user, navigateTo, setUser } = useAppStore()
+  1339→  const [progress, setProgress] = useState<Record<string, number>>({})
+  1340→  const [activeVideo, setActiveVideo] = useState(0)
+  1341→  const [playing, setPlaying] = useState(false)
+  1342→  const intervalRef = useRef<NodeJS.Timeout | null>(null)
+  1343→
+  1344→  const allComplete = VIDEO_MODULES.every(v => (progress[v.id] || 0) >= 100)
+  1345→
+  1346→  useEffect(() => {
+  1347→    if (!user) return
+  1348→    learningService.getProgress(user.user_id).then(r => {
+  1349→      if (r.data?.video_progress) setProgress(r.data.video_progress)
+  1350→    })
+  1351→  }, [user])
+  1352→
+  1353→  const simulatePlay = (videoId: string) => {
+  1354→    if (playing) {
+  1355→      setPlaying(false)
+  1356→      if (intervalRef.current) clearInterval(intervalRef.current)
+  1357→      return
+  1358→    }
+  1359→    setPlaying(true)
+  1360→    intervalRef.current = setInterval(() => {
+  1361→      setProgress(prev => {
+  1362→        const current = prev[videoId] || 0
+  1363→        if (current >= 100) {
+  1364→          setPlaying(false)
+  1365→          if (intervalRef.current) clearInterval(intervalRef.current)
+  1366→          return prev
+  1367→        }
+  1368→        const updated = { ...prev, [videoId]: Math.min(100, current + 2) }
+  1369→        if (user) learningService.updateVideoProgress(user.user_id, updated)
+  1370→        return updated
+  1371→      })
+  1372→    }, 100)
+  1373→  }
+  1374→
+  1375→  const handleTakeQuiz = () => navigateTo('quiz')
+  1376→
+  1377→  const currentVideo = VIDEO_MODULES[activeVideo]
+  1378→  const currentProgress = progress[currentVideo?.id] || 0
+  1379→
+  1380→  return (
+  1381→    <div className="min-h-screen bg-[#f4f3f0] pt-20 pb-12">
+  1382→      <div className="max-w-5xl mx-auto px-4 sm:px-6">
+  1383→        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+  1384→          <div className="mb-8">
+  1385→            <h1 className="font-heading text-3xl sm:text-4xl font-bold text-[#1f1e1c]">Learning Module</h1>
+  1386→            <p className="text-[#88837b] mt-2">Complete all videos to unlock the quiz and purchase access.</p>
+  1387→          </div>
+  1388→
+  1389→          <div className="grid lg:grid-cols-3 gap-8">
+  1390→            {/* Video Player */}
+  1391→            <div className="lg:col-span-2">
+  1392→              <div className="bg-black rounded-2xl overflow-hidden shadow-xl">
+  1393→                <div className="relative aspect-video flex items-center justify-center">
+  1394→                  <div className="absolute inset-0 bg-gradient-to-br from-[#48805b]/30 to-[#1f1e1c]/60" />
+  1395→                  <div className="relative text-center text-white z-10">
+  1396→                    <div className="w-20 h-20 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center mx-auto mb-4 cursor-pointer hover:bg-white/30 transition-colors" onClick={() => simulatePlay(currentVideo.id)}>
+  1397→                      {playing ? <div className="w-6 h-6 flex gap-1"><div className="w-2 h-6 bg-white rounded-sm" /><div className="w-2 h-6 bg-white rounded-sm" /></div> : <Play className="w-8 h-8 ml-1" />}
+  1398→                    </div>
+  1399→                    <h3 className="font-heading font-bold text-xl">{currentVideo.title}</h3>
+  1400→                    <p className="text-white/60 text-sm mt-1">{currentVideo.duration}</p>
+  1401→                  </div>
+  1402→                </div>
+  1403→                <div className="p-4">
+  1404→                  <div className="flex items-center justify-between text-white/60 text-sm mb-2">
+  1405→                    <span>Progress</span>
+  1406→                    <span>{Math.round(currentProgress)}%</span>
+  1407→                  </div>
+  1408→                  <Progress value={currentProgress} className="h-2" />
+  1409→                </div>
+  1410→              </div>
+  1411→              <div className="mt-4 p-4 bg-white rounded-xl border border-[#e3dfd8]">
+  1412→                <h4 className="font-heading font-semibold text-[#1f1e1c] mb-1">{currentVideo.title}</h4>
+  1413→                <p className="text-sm text-[#88837b]">{currentVideo.desc}</p>
+  1414→              </div>
+  1415→            </div>
+  1416→
+  1417→            {/* Video List */}
+  1418→            <div className="space-y-3">
+  1419→              <h3 className="font-heading font-semibold text-[#1f1e1c] mb-4">Modules</h3>
+  1420→              {VIDEO_MODULES.map((video, i) => {
+  1421→                const p = progress[video.id] || 0
+  1422→                const isActive = i === activeVideo
+  1423→                return (
+  1424→                  <button
+  1425→                    key={video.id}
+  1426→                    onClick={() => { setActiveVideo(i); setPlaying(false); if (intervalRef.current) clearInterval(intervalRef.current) }}
+  1427→                    className={`w-full text-left p-4 rounded-xl border transition-all ${
+  1428→                      isActive ? 'bg-[#48805b]/10 border-[#48805b]/30' : 'bg-white border-[#e3dfd8] hover:border-[#48805b]/20'
+  1429→                    }`}
+  1430→                  >
+  1431→                    <div className="flex items-center gap-3">
+  1432→                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+  1433→                        p >= 100 ? 'bg-[#48805b] text-white' : 'bg-[#e3dfd8] text-[#88837b]'
+  1434→                      }`}>
+  1435→                        {p >= 100 ? <CheckCircle className="w-4 h-4" /> : i + 1}
+  1436→                      </div>
+  1437→                      <div className="flex-1 min-w-0">
+  1438→                        <p className="font-medium text-sm text-[#1f1e1c] truncate">{video.title}</p>
+  1439→                        <p className="text-xs text-[#88837b]">{video.duration}</p>
+  1440→                      </div>
+  1441→                    </div>
+  1442→                    <Progress value={p} className="h-1.5 mt-3" />
+  1443→                  </button>
+  1444→                )
+  1445→              })}
+  1446→
+  1447→              {allComplete && (
+  1448→                <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}>
+  1449→                  <Button onClick={handleTakeQuiz} className="w-full bg-[#48805b] hover:bg-[#3a6a4a] text-white font-heading font-semibold h-12 mt-4">
+  1450→                    Take Quiz <ArrowRight className="w-4 h-4 ml-2" />
+  1451→                  </Button>
+  1452→                </motion.div>
+  1453→              )}
+  1454→            </div>
+  1455→          </div>
+  1456→        </motion.div>
+  1457→      </div>
+  1458→    </div>
+  1459→  )
+  1460→}
+  1461→
+  1462→// ============================================================
+  1463→// QUIZ MODULE
+  1464→// ============================================================
+  1465→function QuizModule() {
+  1466→  const { user, navigateTo, setUser } = useAppStore()
+  1467→  const [questions, setQuestions] = useState<QuizQuestion[]>([])
+  1468→  const [current, setCurrent] = useState(0)
+  1469→  const [answers, setAnswers] = useState<Record<number, number>>({})
+  1470→  const [showResult, setShowResult] = useState(false)
+  1471→  const [loading, setLoading] = useState(true)
+  1472→  const [submitting, setSubmitting] = useState(false)
+  1473→
+  1474→  useEffect(() => {
+  1475→    quizService.getQuestions(5).then(r => {
+  1476→      if (r.data && r.data.length > 0) setQuestions(r.data)
+  1477→      else {
+  1478→        toast.error('Failed to load quiz questions')
+  1479→      }
+  1480→      setLoading(false)
+  1481→    })
+  1482→  }, [])
+  1483→
+  1484→  const score = Object.entries(answers).reduce((s, [qi, ai]) => {
+  1485→    const q = questions[parseInt(qi)]
+  1486→    return q && q.answer === ai ? s + 1 : s
+  1487→  }, 0)
+  1488→  const passed = score >= 3 // 60% of 5
+  1489→  const answeredCount = Object.keys(answers).length
+  1490→  const allAnswered = answeredCount >= questions.length
+  1491→
+  1492→  const handleSubmit = async () => {
+  1493→    if (!allAnswered) {
+  1494→      toast.error(`Please answer all questions. ${questions.length - answeredCount} remaining.`)
+  1495→      return
+  1496→    }
+  1497→    setSubmitting(true)
+  1498→    try {
+  1499→      if (passed && user) {
+  1500→        const result = await learningService.completeQuiz(user.user_id, (score / questions.length) * 100)
+  1501→        if (result.error) {
+  1502→          toast.error('Failed to save quiz results. Please try again.')
+  1503→          setSubmitting(false)
+  1504→          return
+  1505→        }
+  1506→        const updated = { ...user, learning_completed: true }
+  1507→        setUser(updated)
+  1508→        toast.success('Quiz completed! You can now browse products.')
+  1509→      } else if (!passed) {
+  1510→        toast.error(`You scored ${score}/${questions.length}. You need 60% to pass.`)
+  1511→      }
+  1512→      setShowResult(true)
+  1513→    } catch (err) {
+  1514→      console.error('Quiz submission error:', err)
+  1515→      toast.error('Something went wrong. Please try again.')
+  1516→    }
+  1517→    finally { setSubmitting(false) }
+  1518→  }
+  1519→
+  1520→  if (loading) return <div className="min-h-screen flex items-center justify-center pt-16"><RefreshCw className="w-8 h-8 animate-spin text-[#48805b]" /></div>
+  1521→
+  1522→  if (showResult) {
+  1523→    return (
+  1524→      <div className="min-h-screen flex items-center justify-center bg-[#f4f3f0] pt-16 px-4">
+  1525→        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="w-full max-w-md text-center">
+  1526→          <div className={`w-24 h-24 rounded-full mx-auto mb-6 flex items-center justify-center ${passed ? 'bg-[#48805b]/10' : 'bg-red-50'}`}>
+  1527→            {passed ? <CheckCircle className="w-12 h-12 text-[#48805b]" /> : <AlertCircle className="w-12 h-12 text-red-500" />}
+  1528→          </div>
+  1529→          <h2 className="font-heading text-3xl font-bold text-[#1f1e1c] mb-2">
+  1530→            {passed ? 'Congratulations!' : 'Keep Learning!'}
+  1531→          </h2>
+  1532→          <p className="text-[#88837b] mb-2">
+  1533→            You scored {score}/{questions.length} ({Math.round((score / questions.length) * 100)}%)
+  1534→          </p>
+  1535→          <p className="text-sm text-[#88837b] mb-8">
+  1536→            {passed ? 'You\'ve unlocked purchase access!' : 'You need 60% to pass. Review the learning modules and try again.'}
+  1537→          </p>
+  1538→          <div className="flex gap-3 justify-center">
+  1539→            {passed ? (
+  1540→              <Button onClick={() => navigateTo('products')} className="bg-[#48805b] hover:bg-[#3a6a4a] text-white font-heading font-semibold">
+  1541→                Browse Products <ArrowRight className="w-4 h-4 ml-2" />
+  1542→              </Button>
+  1543→            ) : (
+  1544→              <Button onClick={() => { setShowResult(false); setAnswers({}); setCurrent(0) }} className="bg-[#48805b] hover:bg-[#3a6a4a] text-white font-heading font-semibold">
+  1545→                <RefreshCw className="w-4 h-4 mr-2" /> Retry Quiz
+  1546→              </Button>
+  1547→            )}
+  1548→            <Button variant="outline" onClick={() => navigateTo('learning')}>Back to Learning</Button>
+  1549→          </div>
+  1550→        </motion.div>
+  1551→      </div>
+  1552→    )
+  1553→  }
+  1554→
+  1555→  const q = questions[current]
+  1556→  if (!q) return null
+  1557→
+  1558→  return (
+  1559→    <div className="min-h-screen bg-[#f4f3f0] pt-20 pb-12">
+  1560→      <div className="max-w-2xl mx-auto px-4 sm:px-6">
+  1561→        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+  1562→          <div className="flex items-center justify-between mb-4">
+  1563→            <h1 className="font-heading text-2xl font-bold text-[#1f1e1c]">Knowledge Quiz</h1>
+  1564→            <Badge className="bg-[#48805b]/10 text-[#48805b]">{answeredCount}/{questions.length} answered</Badge>
+  1565→          </div>
+  1566→          <Progress value={((current + 1) / questions.length) * 100} className="h-2 mb-4" />
+  1567→
+  1568→          {/* Question navigation dots */}
+  1569→          <div className="flex items-center justify-center gap-2 mb-6">
+  1570→            {questions.map((_, i) => (
+  1571→              <button
+  1572→                key={i}
+  1573→                onClick={() => setCurrent(i)}
+  1574→                className={`w-8 h-8 rounded-full text-xs font-semibold transition-all ${
+  1575→                  i === current
+  1576→                    ? 'bg-[#48805b] text-white scale-110'
+  1577→                    : answers[i] !== undefined
+  1578→                      ? 'bg-[#48805b]/20 text-[#48805b] border border-[#48805b]/40'
+  1579→                      : 'bg-white border border-[#e3dfd8] text-[#88837b] hover:border-[#48805b]/30'
+  1580→                }`}
+  1581→              >
+  1582→                {i + 1}
+  1583→              </button>
+  1584→            ))}
+  1585→          </div>
+  1586→
+  1587→          <Card className="border-[#e3dfd8]">
+  1588→            <CardHeader>
+  1589→              <CardTitle className="font-heading text-lg">{q.question}</CardTitle>
+  1590→              {q.category && <CardDescription className="capitalize">{q.category} • {q.difficulty}</CardDescription>}
+  1591→            </CardHeader>
+  1592→            <CardContent>
+  1593→              <RadioGroup
+  1594→                value={answers[current] !== undefined ? answers[current].toString() : ""}
+  1595→                onValueChange={v => setAnswers(prev => ({ ...prev, [current]: parseInt(v) }))}
+  1596→                className="space-y-3"
+  1597→              >
+  1598→                {q.options.map((opt, i) => {
+  1599→                  const isSelected = answers[current] === i
+  1600→                  return (
+  1601→                    <label
+  1602→                      key={i}
+  1603→                      className={`flex items-center gap-3 p-4 rounded-xl border cursor-pointer transition-all ${
+  1604→                        isSelected
+  1605→                          ? 'bg-[#48805b]/5 border-[#48805b]/30 ring-1 ring-[#48805b]/20'
+  1606→                          : 'border-[#e3dfd8] hover:border-[#48805b]/20 hover:bg-[#48805b]/[0.02]'
+  1607→                      }`}
+  1608→                    >
+  1609→                      <RadioGroupItem value={i.toString()} id={`opt-${current}-${i}`} />
+  1610→                      <Label htmlFor={`opt-${current}-${i}`} className="cursor-pointer flex-1">{opt}</Label>
+  1611→                    </label>
+  1612→                  )
+  1613→                })}
+  1614→              </RadioGroup>
+  1615→            </CardContent>
+  1616→            <CardFooter className="flex justify-between">
+  1617→              <Button variant="outline" onClick={() => setCurrent(c => Math.max(0, c - 1))} disabled={current === 0}>
+  1618→                <ArrowLeft className="w-4 h-4 mr-2" /> Previous
+  1619→              </Button>
+  1620→              {current < questions.length - 1 ? (
+  1621→                <Button onClick={() => setCurrent(c => c + 1)} className="bg-[#48805b] hover:bg-[#3a6a4a] text-white">
+  1622→                  Next <ArrowRight className="w-4 h-4 ml-2" />
+  1623→                </Button>
+  1624→              ) : (
+  1625→                <Button
+  1626→                  onClick={handleSubmit}
+  1627→                  disabled={submitting}
+  1628→                  className="bg-[#48805b] hover:bg-[#3a6a4a] text-white font-heading font-semibold"
+  1629→                >
+  1630→                  {submitting ? 'Submitting...' : allAnswered ? 'Submit Quiz' : `Submit (${answeredCount}/${questions.length})`}
+  1631→                </Button>
+  1632→              )}
+  1633→            </CardFooter>
+  1634→          </Card>
+  1635→
+  1636→          {!allAnswered && current === questions.length - 1 && (
+  1637→            <p className="text-center text-sm text-[#88837b] mt-4">
+  1638→              Please answer all questions before submitting. Click on the question numbers above to review your answers.
+  1639→            </p>
+  1640→          )}
+  1641→        </motion.div>
+  1642→      </div>
+  1643→    </div>
+  1644→  )
+  1645→}
+  1646→
+  1647→// ============================================================
+  1648→// PRODUCTS & COMMERCE
+  1649→// ============================================================
+  1650→function ProductsCatalog() {
+  1651→  const { user, navigateTo, addToCart } = useAppStore()
+  1652→  const [products, setProducts] = useState<Product[]>([])
+  1653→  const [loading, setLoading] = useState(true)
+  1654→  const [selectedType, setSelectedType] = useState<string>('ALL')
+  1655→
+  1656→  useEffect(() => {
+  1657→    productService.getAll().then(r => {
+  1658→      if (r.data) setProducts(r.data)
+  1659→      setLoading(false)
+  1660→    })
+  1661→  }, [])
+  1662→
+  1663→  if (loading) return <div className="min-h-screen flex items-center justify-center pt-16"><RefreshCw className="w-8 h-8 animate-spin text-[#48805b]" /></div>
+  1664→
+  1665→  const types = ['ALL', ...Array.from(new Set(products.map(p => p.type)))]
+  1666→  const filtered = selectedType === 'ALL' ? products : products.filter(p => p.type === selectedType)
+  1667→
+  1668→  return (
+  1669→    <div className="min-h-screen bg-[#f4f3f0] pt-20 pb-12">
+  1670→      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+  1671→        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+  1672→          {/* Hero Header */}
+  1673→          <div className="mb-10">
+  1674→            <div className="flex items-center gap-3 mb-2">
+  1675→              <div className="w-10 h-10 rounded-xl bg-[#48805b]/10 flex items-center justify-center">
+  1676→                <Store className="w-5 h-5 text-[#48805b]" />
+  1677→              </div>
+  1678→              <div>
+  1679→                <h1 className="font-heading text-3xl sm:text-4xl font-bold text-[#1f1e1c]">NOTJUST Watr Products</h1>
+  1680→                <p className="text-[#88837b] mt-0.5">Choose Fizz or Still, then pick the purchase option that fits your routine.</p>
+  1681→              </div>
+  1682→            </div>
+  1683→          </div>
+  1684→
+  1685→          {!user?.learning_completed && (
+  1686→            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mb-8 p-5 rounded-2xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+  1687→              <div className="w-12 h-12 rounded-xl bg-amber-100 flex items-center justify-center flex-shrink-0">
+  1688→                <Lock className="w-6 h-6 text-amber-600" />
+  1689→              </div>
+  1690→              <div className="flex-1">
+  1691→                <p className="font-heading font-semibold text-amber-900">Complete Learning to Unlock</p>
+  1692→                <p className="text-sm text-amber-700 mt-0.5">Finish the learning module and quiz to gain purchase access.</p>
+  1693→              </div>
+  1694→              <Button size="sm" onClick={() => navigateTo('learning')} className="bg-[#48805b] text-white flex-shrink-0 rounded-lg">
+  1695→                Start Learning <ArrowRight className="w-4 h-4 ml-1" />
+  1696→              </Button>
+  1697→            </motion.div>
+  1698→          )}
+  1699→
+  1700→          {/* Type Filter */}
+  1701→          <div className="mb-8 flex gap-2 flex-wrap">
+  1702→            {types.map(type => (
+  1703→              <button
+  1704→                key={type}
+  1705→                onClick={() => setSelectedType(type)}
+  1706→                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${selectedType === type ? 'bg-[#48805b] text-white shadow-md' : 'bg-white text-[#88837b] border border-[#e3dfd8] hover:border-[#48805b]/30'}`}
+  1707→              >
+  1708→                {type === 'ALL' ? 'All Products' : type}
+  1709→              </button>
+  1710→            ))}
+  1711→          </div>
+  1712→
+  1713→          <div className="grid md:grid-cols-2 gap-5 mb-8">
+  1714→            <div className="rounded-xl border border-[#e7b973]/40 bg-[#fff7ea] p-5 flex items-center gap-4">
+  1715→              <div className="w-11 h-11 rounded-lg bg-[#e7b973]/20 flex items-center justify-center flex-shrink-0">
+  1716→                <ClipboardList className="w-5 h-5 text-[#b56b20]" />
+  1717→              </div>
+  1718→              <div>
+  1719→                <p className="font-heading font-bold text-sm text-[#1f1e1c]">Monthly Pack (60 Shots)</p>
+  1720→                <p className="text-xs text-[#6b6560] mt-1">Daily use, 2 shots/day</p>
+  1721→              </div>
+  1722→            </div>
+  1723→            <div className="rounded-xl border border-[#48805b]/25 bg-[#edf5ee] p-5 flex items-center gap-4">
+  1724→              <div className="w-11 h-11 rounded-lg bg-[#48805b]/15 flex items-center justify-center flex-shrink-0">
+  1725→                <Leaf className="w-5 h-5 text-[#48805b]" />
+  1726→              </div>
+  1727→              <div>
+  1728→                <p className="font-heading font-bold text-sm text-[#1f1e1c]">Eco-Friendly Refill Pack</p>
+  1729→                <p className="text-xs text-[#6b6560] mt-1">Sustainable and affordable</p>
+  1730→              </div>
+  1731→            </div>
+  1732→          </div>
+  1733→
+  1734→          <div className="grid sm:grid-cols-2 gap-6 max-w-3xl">
+  1735→            {filtered.map((product, idx) => (
+  1736→              <motion.div
+  1737→                key={product.id}
+  1738→                initial={{ opacity: 0, y: 20 }}
+  1739→                animate={{ opacity: 1, y: 0 }}
+  1740→                transition={{ delay: idx * 0.05 }}
+  1741→              >
+  1742→                <Card className="card-lift border-[#e3dfd8] overflow-hidden group h-full flex flex-col">
+  1743→                  <div className="relative aspect-[4/3] bg-gradient-to-br from-[#e3dfd8]/50 to-[#f4f3f0] flex items-center justify-center overflow-hidden">
+  1744→                    <Image src="/images/product-shot.png" alt={product.name} fill className="object-cover group-hover:scale-105 transition-transform duration-500" />
+  1745→                    <Badge className="absolute top-3 right-3 bg-[#48805b] text-white text-[10px] shadow-sm">{product.type}</Badge>
+  1746→                    {product.stock < 50 && (
+  1747→                      <Badge variant="destructive" className="absolute top-3 left-3 text-[10px]">Low Stock</Badge>
+  1748→                    )}
+  1749→                  </div>
+  1750→                  <CardContent className="p-5 flex-1 flex flex-col">
+  1751→                    <h3 className="font-heading font-bold text-[#1f1e1c] mb-1">{product.name}</h3>
+  1752→                    <p className="text-sm text-[#88837b] line-clamp-2 mb-4 flex-1">{product.description}</p>
+  1753→                    <div className="flex items-end justify-between">
+  1754→                      <div>
+  1755→                        <p className="font-heading text-2xl font-bold text-[#48805b]">₹{product.price.toLocaleString()}</p>
+  1756→                        <p className="text-xs text-[#88837b] mt-0.5">{product.stock} in stock</p>
+  1757→                      </div>
+  1758→                    </div>
+  1759→                  </CardContent>
+  1760→                  <CardFooter className="px-5 pb-5 pt-0">
+  1761→                    {user?.learning_completed ? (
+  1762→                      <Button
+  1763→                        className="w-full bg-[#48805b] hover:bg-[#3a6a4a] text-white font-heading font-semibold rounded-xl h-11"
+  1764→                        onClick={() => {
+  1765→                          addToCart({
+  1766→                            productId: product.id,
+  1767→                            name: product.name,
+  1768→                            price: product.price,
+  1769→                            quantity: 1,
+  1770→                            type: product.type,
+  1771→                          })
+  1772→                          toast.success(`${product.name} added to cart`)
+  1773→                        }}
+  1774→                      >
+  1775→                        <ShoppingCart className="w-4 h-4 mr-2" /> Add to Cart
+  1776→                      </Button>
+  1777→                    ) : (
+  1778→                      <Button variant="outline" className="w-full rounded-xl h-11" disabled>
+  1779→                        <Lock className="w-4 h-4 mr-2" /> Locked
+  1780→                      </Button>
+  1781→                    )}
+  1782→                  </CardFooter>
+  1783→                </Card>
+  1784→              </motion.div>
+  1785→            ))}
+  1786→          </div>
+  1787→        </motion.div>
+  1788→      </div>
+  1789→    </div>
+  1790→  )
+  1791→}
+  1792→
+  1793→function CartView() {
+  1794→  const { cart, removeFromCart, updateCartQuantity, cartTotal, navigateTo, clearCart } = useAppStore()
+  1795→  const total = cartTotal()
+  1796→  const tax = Math.round(total * 0.18)
+  1797→  const [coupon, setCoupon] = useState('')
+  1798→  const [couponApplied, setCouponApplied] = useState(false)
+  1799→
+  1800→  return (
+  1801→    <div className="min-h-screen bg-[#f4f3f0] pt-20 pb-12">
+  1802→      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+  1803→        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+  1804→          {/* Breadcrumb */}
+  1805→          <div className="flex items-center gap-2 text-sm text-[#88837b] mb-6">
+  1806→            <button onClick={() => navigateTo('products')} className="hover:text-[#48805b] transition-colors">Products</button>
+  1807→            <ChevronRight className="w-3.5 h-3.5" />
+  1808→            <span className="text-[#1f1e1c] font-medium">Cart ({cart.length})</span>
+  1809→          </div>
+  1810→
+  1811→          <h1 className="font-heading text-3xl sm:text-4xl font-bold text-[#1f1e1c] mb-8">Your Cart</h1>
+  1812→
+  1813→          {cart.length === 0 ? (
+  1814→            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="text-center py-24">
+  1815→              <div className="w-24 h-24 rounded-full bg-[#e3dfd8]/50 flex items-center justify-center mx-auto mb-6">
+  1816→                <ShoppingCart className="w-10 h-10 text-[#88837b]" />
+  1817→              </div>
+  1818→              <h3 className="font-heading text-xl font-bold text-[#1f1e1c] mb-2">Your cart is empty</h3>
+  1819→              <p className="text-[#88837b] mb-8">Looks like you haven&apos;t added anything yet.</p>
+  1820→              <Button onClick={() => navigateTo('products')} className="bg-[#48805b] hover:bg-[#3a6a4a] text-white font-heading font-semibold rounded-xl px-8 h-12">
+  1821→                Browse Products <ArrowRight className="w-4 h-4 ml-2" />
+  1822→              </Button>
+  1823→            </motion.div>
+  1824→          ) : (
+  1825→            <div className="grid lg:grid-cols-3 gap-8">
+  1826→              {/* Cart Items */}
+  1827→              <div className="lg:col-span-2 space-y-4">
+  1828→                {cart.map((item, idx) => (
+  1829→                  <motion.div
+  1830→                    key={item.productId}
+  1831→                    initial={{ opacity: 0, x: -20 }}
+  1832→                    animate={{ opacity: 1, x: 0 }}
+  1833→                    transition={{ delay: idx * 0.05 }}
+  1834→                    layout
+  1835→                  >
+  1836→                    <Card className="border-[#e3dfd8] overflow-hidden hover:shadow-md transition-shadow">
+  1837→                      <CardContent className="p-0">
+  1838→                        <div className="flex items-stretch">
+  1839→                          {/* Product Thumbnail */}
+  1840→                          <div className="w-28 sm:w-36 bg-gradient-to-br from-[#e3dfd8]/40 to-[#f4f3f0] flex items-center justify-center flex-shrink-0 p-4">
+  1841→                            <div className="relative w-full h-full min-h-[80px]">
+  1842→                              <Image src="/images/product-shot.png" alt={item.name} fill className="object-contain" />
+  1843→                            </div>
+  1844→                          </div>
+  1845→                          {/* Details */}
+  1846→                          <div className="flex-1 p-5 flex flex-col sm:flex-row sm:items-center gap-4">
+  1847→                            <div className="flex-1 min-w-0">
+  1848→                              <h3 className="font-heading font-bold text-[#1f1e1c] truncate">{item.name}</h3>
+  1849→                              <p className="text-sm text-[#88837b] mt-0.5">{item.type}</p>
+  1850→                              <p className="font-heading text-lg font-bold text-[#48805b] mt-1 sm:hidden">₹{(item.price * item.quantity).toLocaleString()}</p>
+  1851→                            </div>
+  1852→                            {/* Quantity Stepper */}
+  1853→                            <div className="flex items-center gap-1">
+  1854→                              <button
+  1855→                                onClick={() => updateCartQuantity(item.productId, item.quantity - 1)}
+  1856→                                className="w-9 h-9 rounded-lg border border-[#e3dfd8] flex items-center justify-center hover:bg-[#e3dfd8]/50 transition-colors"
+  1857→                              >
+  1858→                                <Minus className="w-3.5 h-3.5" />
+  1859→                              </button>
+  1860→                              <span className="w-10 text-center font-heading font-semibold text-[#1f1e1c]">{item.quantity}</span>
+  1861→                              <button
+  1862→                                onClick={() => updateCartQuantity(item.productId, item.quantity + 1)}
+  1863→                                className="w-9 h-9 rounded-lg border border-[#e3dfd8] flex items-center justify-center hover:bg-[#e3dfd8]/50 transition-colors"
+  1864→                              >
+  1865→                                <Plus className="w-3.5 h-3.5" />
+  1866→                              </button>
+  1867→                            </div>
+  1868→                            {/* Price & Remove */}
+  1869→                            <div className="hidden sm:flex flex-col items-end gap-2">
+  1870→                              <p className="font-heading text-lg font-bold text-[#48805b]">₹{(item.price * item.quantity).toLocaleString()}</p>
+  1871→                              <button
+  1872→                                onClick={() => { removeFromCart(item.productId); toast.info(`${item.name} removed`) }}
+  1873→                                className="text-xs text-red-400 hover:text-red-600 flex items-center gap-1 transition-colors"
+  1874→                              >
+  1875→                                <Trash2 className="w-3.5 h-3.5" /> Remove
+  1876→                              </button>
+  1877→                            </div>
+  1878→                          </div>
+  1879→                        </div>
+  1880→                      </CardContent>
+  1881→                    </Card>
+  1882→                  </motion.div>
+  1883→                ))}
+  1884→
+  1885→                {/* Clear Cart */}
+  1886→                <div className="flex justify-end">
+  1887→                  <Button variant="ghost" size="sm" onClick={() => { clearCart(); toast.info('Cart cleared') }} className="text-red-400 hover:text-red-600">
+  1888→                    <Trash2 className="w-4 h-4 mr-2" /> Clear Cart
+  1889→                  </Button>
+  1890→                </div>
+  1891→              </div>
+  1892→
+  1893→              {/* Order Summary */}
+  1894→              <div className="lg:col-span-1">
+  1895→                <div className="sticky top-24">
+  1896→                  <Card className="border-[#e3dfd8] shadow-lg">
+  1897→                    <CardHeader className="pb-4">
+  1898→                      <CardTitle className="font-heading text-lg">Order Summary</CardTitle>
+  1899→                    </CardHeader>
+  1900→                    <CardContent className="space-y-4">
+  1901→                      {cart.map(item => (
+  1902→                        <div key={item.productId} className="flex justify-between text-sm">
+  1903→                          <span className="text-[#88837b] truncate mr-2">{item.name} <span className="text-[#88837b]/60">× {item.quantity}</span></span>
+  1904→                          <span className="font-medium text-[#1f1e1c] flex-shrink-0">₹{(item.price * item.quantity).toLocaleString()}</span>
+  1905→                        </div>
+  1906→                      ))}
+  1907→
+  1908→                      <Separator />
+  1909→
+  1910→                      {/* Coupon Code */}
+  1911→                      <div>
+  1912→                        <Label className="text-xs text-[#88837b] mb-1.5 block">Coupon Code</Label>
+  1913→                        <div className="flex gap-2">
+  1914→                          <Input
+  1915→                            placeholder="Enter code"
+  1916→                            value={coupon}
+  1917→                            onChange={e => setCoupon(e.target.value)}
+  1918→                            className="h-9 text-sm rounded-lg"
+  1919→                          />
+  1920→                          <Button
+  1921→                            variant="outline"
+  1922→                            size="sm"
+  1923→                            className="h-9 px-3 rounded-lg flex-shrink-0"
+  1924→                            onClick={() => { if (coupon) { setCouponApplied(true); toast.success('Coupon applied! (demo)') } }}
+  1925→                          >
+  1926→                            Apply
+  1927→                          </Button>
+  1928→                        </div>
+  1929→                        {couponApplied && (
+  1930→                          <p className="text-xs text-[#48805b] mt-1 flex items-center gap-1">
+  1931→                            <CheckCircle className="w-3 h-3" /> Discount applied
+  1932→                          </p>
+  1933→                        )}
+  1934→                      </div>
+  1935→
+  1936→                      <Separator />
+  1937→
+  1938→                      <div className="space-y-2">
+  1939→                        <div className="flex justify-between text-sm">
+  1940→                          <span className="text-[#88837b]">Subtotal</span>
+  1941→                          <span className="font-medium">₹{total.toLocaleString()}</span>
+  1942→                        </div>
+  1943→                        <div className="flex justify-between text-sm">
+  1944→                          <span className="text-[#88837b]">Shipping</span>
+  1945→                          <span className="text-[#48805b] font-medium">Free</span>
+  1946→                        </div>
+  1947→                        <div className="flex justify-between text-sm">
+  1948→                          <span className="text-[#88837b]">Tax (18% GST)</span>
+  1949→                          <span className="font-medium">₹{tax.toLocaleString()}</span>
+  1950→                        </div>
+  1951→                      </div>
+  1952→
+  1953→                      <Separator />
+  1954→
+  1955→                      <div className="flex justify-between items-center">
+  1956→                        <span className="font-heading font-bold text-lg text-[#1f1e1c]">Total</span>
+  1957→                        <span className="font-heading font-bold text-2xl text-[#48805b]">₹{(total + tax).toLocaleString()}</span>
+  1958→                      </div>
+  1959→
+  1960→                      <Button
+  1961→                        onClick={() => navigateTo('checkout')}
+  1962→                        className="w-full h-12 bg-[#48805b] hover:bg-[#3a6a4a] text-white font-heading font-semibold text-base rounded-xl mt-2"
+  1963→                      >
+  1964→                        Proceed to Payment <ArrowRight className="w-4 h-4 ml-2" />
+  1965→                      </Button>
+  1966→
+  1967→                      <Button variant="ghost" className="w-full text-[#88837b]" onClick={() => navigateTo('products')}>
+  1968→                        Continue Shopping
+  1969→                      </Button>
+  1970→                    </CardContent>
+  1971→                  </Card>
+  1972→                </div>
+  1973→              </div>
+  1974→            </div>
+  1975→          )}
+  1976→        </motion.div>
+  1977→      </div>
+  1978→    </div>
+  1979→  )
+  1980→}
+  1981→
+  1982→function CheckoutView() {
+  1983→  const { user, cart, cartTotal, navigateTo, clearCart, setLastOrderId } = useAppStore()
+  1984→  const [step, setStep] = useState(1) // 1=Address, 2=Payment, 3=Confirm
+  1985→  const [address, setAddress] = useState({ name: user?.name || '', line1: '', city: '', state: '', pincode: '' })
+  1986→  const [paymentMethod, setPaymentMethod] = useState<'razorpay' | 'cod'>('razorpay')
+  1987→  const [loading, setLoading] = useState(false)
+  1988→  const [paymentId, setPaymentId] = useState<string | null>(null)
+  1989→  const total = cartTotal()
+  1990→  const tax = Math.round(total * 0.18)
+  1991→  const grandTotal = total + tax
+  1992→
+  1993→  const handlePlaceOrder = async (payId?: string) => {
+  1994→    setLoading(true)
+  1995→    try {
+  1996→      const result = await orderService.create(
+  1997→        user!.user_id,
+  1998→        cart.map(i => ({ productId: i.productId, quantity: i.quantity })),
+  1999→        address,
+  2000→        paymentMethod === 'razorpay' ? 'RAZORPAY' : 'COD'
+
+[showing lines 1-2000 of 3657; use offset=2001 with limit to continue reading]

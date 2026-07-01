@@ -28,9 +28,12 @@ export interface CartItem {
   productId: string
   name: string
   price: number
+  subscriptionPrice?: number
   quantity: number
   imageUrl?: string
   type: string
+  purchaseType: 'one-time' | 'subscription'
+  subscriptionInterval?: string
 }
 
 interface AppState {
@@ -131,7 +134,10 @@ export const useAppStore = create<AppState>()(
             : state.cart.map((i) => i.productId === productId ? { ...i, quantity } : i),
         })),
       clearCart: () => set({ cart: [] }),
-      cartTotal: () => get().cart.reduce((sum, i) => sum + i.price * i.quantity, 0),
+      cartTotal: () => get().cart.reduce((sum, i) => {
+        const price = i.purchaseType === 'subscription' && i.subscriptionPrice ? i.subscriptionPrice : i.price
+        return sum + price * i.quantity
+      }, 0),
 
       // Product detail
       selectedProductId: null,

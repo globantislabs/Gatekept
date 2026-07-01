@@ -1,0 +1,502 @@
+  2100→                <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
+  2101→                  <Card className="border-[#e3dfd8]">
+  2102→                    <CardHeader>
+  2103→                      <div className="flex items-center gap-3">
+  2104→                        <div className="w-10 h-10 rounded-xl bg-[#48805b]/10 flex items-center justify-center">
+  2105→                          <MapPin className="w-5 h-5 text-[#48805b]" />
+  2106→                        </div>
+  2107→                        <div>
+  2108→                          <CardTitle className="font-heading">Shipping Address</CardTitle>
+  2109→                          <p className="text-xs text-[#88837b] mt-0.5">Where should we deliver your order?</p>
+  2110→                        </div>
+  2111→                      </div>
+  2112→                    </CardHeader>
+  2113→                    <CardContent className="space-y-4">
+  2114→                      <div className="space-y-1.5">
+  2115→                        <Label>Full Name</Label>
+  2116→                        <Input value={address.name} onChange={e => setAddress(p => ({ ...p, name: e.target.value }))} placeholder="Your full name" className="rounded-lg" />
+  2117→                      </div>
+  2118→                      <div className="space-y-1.5">
+  2119→                        <Label>Address Line 1</Label>
+  2120→                        <Input value={address.line1} onChange={e => setAddress(p => ({ ...p, line1: e.target.value }))} placeholder="Street address, house no." className="rounded-lg" />
+  2121→                      </div>
+  2122→                      <div className="grid grid-cols-3 gap-3">
+  2123→                        <div className="space-y-1.5">
+  2124→                          <Label>City</Label>
+  2125→                          <Input value={address.city} onChange={e => setAddress(p => ({ ...p, city: e.target.value }))} className="rounded-lg" />
+  2126→                        </div>
+  2127→                        <div className="space-y-1.5">
+  2128→                          <Label>State</Label>
+  2129→                          <Input value={address.state} onChange={e => setAddress(p => ({ ...p, state: e.target.value }))} className="rounded-lg" />
+  2130→                        </div>
+  2131→                        <div className="space-y-1.5">
+  2132→                          <Label>PIN Code</Label>
+  2133→                          <Input value={address.pincode} onChange={e => setAddress(p => ({ ...p, pincode: e.target.value }))} className="rounded-lg" />
+  2134→                        </div>
+  2135→                      </div>
+  2136→                    </CardContent>
+  2137→                    <CardFooter className="flex justify-end px-6 pb-6">
+  2138→                      <Button
+  2139→                        onClick={() => { if (!addressValid) { toast.error('Please fill all address fields'); return }; setStep(2) }}
+  2140→                        className="bg-[#48805b] hover:bg-[#3a6a4a] text-white font-heading font-semibold rounded-xl px-8 h-11"
+  2141→                      >
+  2142→                        Continue to Payment <ArrowRight className="w-4 h-4 ml-2" />
+  2143→                      </Button>
+  2144→                    </CardFooter>
+  2145→                  </Card>
+  2146→                </motion.div>
+  2147→              )}
+  2148→
+  2149→              {/* Step 2: Payment */}
+  2150→              {step === 2 && (
+  2151→                <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
+  2152→                  <Card className="border-[#e3dfd8]">
+  2153→                    <CardHeader>
+  2154→                      <div className="flex items-center gap-3">
+  2155→                        <div className="w-10 h-10 rounded-xl bg-[#48805b]/10 flex items-center justify-center">
+  2156→                          <CreditCard className="w-5 h-5 text-[#48805b]" />
+  2157→                        </div>
+  2158→                        <div>
+  2159→                          <CardTitle className="font-heading">Payment Method</CardTitle>
+  2160→                          <p className="text-xs text-[#88837b] mt-0.5">Choose how you want to pay</p>
+  2161→                        </div>
+  2162→                      </div>
+  2163→                    </CardHeader>
+  2164→                    <CardContent className="space-y-4">
+  2165→                      {/* Razorpay Option */}
+  2166→                      <button
+  2167→                        onClick={() => setPaymentMethod('razorpay')}
+  2168→                        className={`w-full p-4 rounded-xl border-2 transition-all text-left ${
+  2169→                          paymentMethod === 'razorpay' ? 'border-[#48805b] bg-[#48805b]/5' : 'border-[#e3dfd8] hover:border-[#48805b]/30'
+  2170→                        }`}
+  2171→                      >
+  2172→                        <div className="flex items-center gap-3">
+  2173→                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+  2174→                            paymentMethod === 'razorpay' ? 'border-[#48805b]' : 'border-[#e3dfd8]'
+  2175→                          }`}>
+  2176→                            {paymentMethod === 'razorpay' && <div className="w-2.5 h-2.5 rounded-full bg-[#48805b]" />}
+  2177→                          </div>
+  2178→                          <div className="flex-1">
+  2179→                            <div className="flex items-center gap-2">
+  2180→                              <span className="font-heading font-semibold text-[#1f1e1c]">Online Payment</span>
+  2181→                              <Badge className="bg-[#2e91b2]/10 text-[#2e91b2] text-[10px]">Razorpay</Badge>
+  2182→                            </div>
+  2183→                            <p className="text-xs text-[#88837b] mt-0.5">Pay securely with UPI, Cards, Net Banking & Wallets</p>
+  2184→                          </div>
+  2185→                          <div className="flex items-center gap-1 text-[#88837b]">
+  2186→                            <Shield className="w-4 h-4" />
+  2187→                            <span className="text-[10px]">Secure</span>
+  2188→                          </div>
+  2189→                        </div>
+  2190→                      </button>
+  2191→
+  2192→                      {/* COD Option */}
+  2193→                      <button
+  2194→                        onClick={() => setPaymentMethod('cod')}
+  2195→                        className={`w-full p-4 rounded-xl border-2 transition-all text-left ${
+  2196→                          paymentMethod === 'cod' ? 'border-[#48805b] bg-[#48805b]/5' : 'border-[#e3dfd8] hover:border-[#48805b]/30'
+  2197→                        }`}
+  2198→                      >
+  2199→                        <div className="flex items-center gap-3">
+  2200→                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+  2201→                            paymentMethod === 'cod' ? 'border-[#48805b]' : 'border-[#e3dfd8]'
+  2202→                          }`}>
+  2203→                            {paymentMethod === 'cod' && <div className="w-2.5 h-2.5 rounded-full bg-[#48805b]" />}
+  2204→                          </div>
+  2205→                          <div className="flex-1">
+  2206→                            <span className="font-heading font-semibold text-[#1f1e1c]">Cash on Delivery</span>
+  2207→                            <p className="text-xs text-[#88837b] mt-0.5">Pay when your order arrives at your doorstep</p>
+  2208→                          </div>
+  2209→                          <Truck className="w-5 h-5 text-[#88837b]" />
+  2210→                        </div>
+  2211→                      </button>
+  2212→                    </CardContent>
+  2213→                    <CardFooter className="flex justify-between px-6 pb-6">
+  2214→                      <Button variant="outline" onClick={() => setStep(1)} className="rounded-xl">
+  2215→                        <ArrowLeft className="w-4 h-4 mr-2" /> Back
+  2216→                      </Button>
+  2217→                      <Button
+  2218→                        onClick={() => {
+  2219→                          if (paymentMethod === 'cod') {
+  2220→                            handlePlaceOrder()
+  2221→                          } else {
+  2222→                            handleRazorpayPayment()
+  2223→                          }
+  2224→                        }}
+  2225→                        disabled={loading}
+  2226→                        className="bg-[#48805b] hover:bg-[#3a6a4a] text-white font-heading font-semibold rounded-xl px-8 h-11"
+  2227→                      >
+  2228→                        {loading ? (
+  2229→                          <><RefreshCw className="w-4 h-4 mr-2 animate-spin" /> Processing...</>
+  2230→                        ) : paymentMethod === 'razorpay' ? (
+  2231→                          <><CreditCard className="w-4 h-4 mr-2" /> Pay ₹{grandTotal.toLocaleString()}</>
+  2232→                        ) : (
+  2233→                          <><Truck className="w-4 h-4 mr-2" /> Place Order (COD)</>
+  2234→                        )}
+  2235→                      </Button>
+  2236→                    </CardFooter>
+  2237→                  </Card>
+  2238→                </motion.div>
+  2239→              )}
+  2240→            </div>
+  2241→
+  2242→            {/* Order Summary Sidebar */}
+  2243→            <div className="md:col-span-2">
+  2244→              <Card className="border-[#e3dfd8] sticky top-24">
+  2245→                <CardHeader className="pb-3">
+  2246→                  <CardTitle className="font-heading text-base">Order Summary</CardTitle>
+  2247→                </CardHeader>
+  2248→                <CardContent className="space-y-3">
+  2249→                  {cart.map(item => (
+  2250→                    <div key={item.productId} className="flex gap-3 items-start">
+  2251→                      <div className="w-12 h-12 rounded-lg bg-[#e3dfd8]/50 flex items-center justify-center flex-shrink-0">
+  2252→                        <Package className="w-5 h-5 text-[#88837b]" />
+  2253→                      </div>
+  2254→                      <div className="flex-1 min-w-0">
+  2255→                        <p className="text-sm font-medium text-[#1f1e1c] truncate">{item.name}</p>
+  2256→                        <p className="text-xs text-[#88837b]">Qty: {item.quantity}</p>
+  2257→                      </div>
+  2258→                      <p className="text-sm font-semibold text-[#1f1e1c]">₹{(item.price * item.quantity).toLocaleString()}</p>
+  2259→                    </div>
+  2260→                  ))}
+  2261→                  <Separator />
+  2262→                  <div className="space-y-1.5 text-sm">
+  2263→                    <div className="flex justify-between"><span className="text-[#88837b]">Subtotal</span><span>₹{total.toLocaleString()}</span></div>
+  2264→                    <div className="flex justify-between"><span className="text-[#88837b]">Shipping</span><span className="text-[#48805b]">Free</span></div>
+  2265→                    <div className="flex justify-between"><span className="text-[#88837b]">Tax (18% GST)</span><span>₹{tax.toLocaleString()}</span></div>
+  2266→                  </div>
+  2267→                  <Separator />
+  2268→                  <div className="flex justify-between font-heading font-bold">
+  2269→                    <span className="text-lg">Total</span>
+  2270→                    <span className="text-lg text-[#48805b]">₹{grandTotal.toLocaleString()}</span>
+  2271→                  </div>
+  2272→
+  2273→                  {/* Address Preview */}
+  2274→                  {step >= 2 && addressValid && (
+  2275→                    <>
+  2276→                      <Separator />
+  2277→                      <div className="text-xs">
+  2278→                        <p className="text-[#88837b] mb-1">Delivering to:</p>
+  2279→                        <p className="text-[#1f1e1c] font-medium">{address.name}</p>
+  2280→                        <p className="text-[#88837b]">{address.line1}, {address.city}, {address.state} - {address.pincode}</p>
+  2281→                      </div>
+  2282→                    </>
+  2283→                  )}
+  2284→                </CardContent>
+  2285→              </Card>
+  2286→            </div>
+  2287→          </div>
+  2288→        </motion.div>
+  2289→      </div>
+  2290→    </div>
+  2291→  )
+  2292→}
+  2293→
+  2294→function OrderSuccess() {
+  2295→  const { lastOrderId, navigateTo } = useAppStore()
+  2296→  return (
+  2297→    <div className="min-h-screen flex items-center justify-center bg-[#f4f3f0] pt-16 px-4">
+  2298→      <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="w-full max-w-md">
+  2299→        <Card className="border-[#e3dfd8] shadow-xl text-center overflow-hidden">
+  2300→          {/* Green header accent */}
+  2301→          <div className="h-2 bg-gradient-to-r from-[#48805b] to-[#afb75d]" />
+  2302→          <CardContent className="p-8">
+  2303→            <motion.div
+  2304→              initial={{ scale: 0 }}
+  2305→              animate={{ scale: 1 }}
+  2306→              transition={{ type: 'spring', stiffness: 200, delay: 0.2 }}
+  2307→              className="w-20 h-20 rounded-full bg-[#48805b]/10 flex items-center justify-center mx-auto mb-6"
+  2308→            >
+  2309→              <CheckCircle className="w-10 h-10 text-[#48805b]" />
+  2310→            </motion.div>
+  2311→            <h2 className="font-heading text-2xl font-bold text-[#1f1e1c] mb-2">Order Placed!</h2>
+  2312→            <p className="text-[#88837b] mb-6">Thank you for your purchase. Your wellness journey begins now.</p>
+  2313→            {lastOrderId && (
+  2314→              <div className="p-3 rounded-xl bg-[#f4f3f0] border border-[#e3dfd8] mb-6">
+  2315→                <p className="text-xs text-[#88837b] mb-1">Order ID</p>
+  2316→                <p className="font-mono text-[#48805b] font-semibold">{lastOrderId}</p>
+  2317→              </div>
+  2318→            )}
+  2319→            <div className="flex flex-col gap-3">
+  2320→              <Button onClick={() => navigateTo('products')} className="bg-[#48805b] hover:bg-[#3a6a4a] text-white font-heading font-semibold rounded-xl h-11">
+  2321→                Continue Shopping
+  2322→              </Button>
+  2323→              <Button variant="outline" onClick={() => navigateTo('landing')} className="rounded-xl h-11">Go Home</Button>
+  2324→            </div>
+  2325→          </CardContent>
+  2326→        </Card>
+  2327→      </motion.div>
+  2328→    </div>
+  2329→  )
+  2330→}
+  2331→
+  2332→// ============================================================
+  2333→// ADMIN DASHBOARD — Jira/Huly Executive Style
+  2334→// ============================================================
+  2335→// CSV Export helper
+  2336→function exportToCSV(data: any[], filename: string, columns: { key: string; label: string }[]) {
+  2337→  const header = columns.map(c => c.label).join(',')
+  2338→  const rows = data.map(row => columns.map(c => {
+  2339→    const val = row[c.key]
+  2340→    const str = val === null || val === undefined ? '' : String(val)
+  2341→    return `"${str.replace(/"/g, '""')}"`
+  2342→  }).join(','))
+  2343→  const csv = [header, ...rows].join('\n')
+  2344→  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+  2345→  const url = URL.createObjectURL(blob)
+  2346→  const a = document.createElement('a')
+  2347→  a.href = url; a.download = `${filename}.csv`; a.click()
+  2348→  URL.revokeObjectURL(url)
+  2349→  toast.success(`Exported ${data.length} rows as CSV`)
+  2350→}
+  2351→
+  2352→// PDF Export helper (simple HTML-to-print)
+  2353→function exportToPDF(title: string) {
+  2354→  const printWindow = window.open('', '_blank')
+  2355→  if (!printWindow) return
+  2356→  printWindow.document.write(`
+  2357→    <html><head><title>${title}</title>
+  2358→    <style>body{font-family:system-ui;margin:40px;}table{width:100%;border-collapse:collapse;margin-top:20px;}th,td{border:1px solid #ddd;padding:8px 12px;text-align:left;font-size:13px;}th{background:#f5f5f5;font-weight:600;}</style>
+  2359→    </head><body><h1>${title}</h1><p>Generated: ${new Date().toLocaleString()}</p>`)
+  2360→  const mainContent = document.querySelector('[data-admin-content]')
+  2361→  if (mainContent) {
+  2362→    const table = mainContent.querySelector('table')
+  2363→    if (table) printWindow.document.write(table.outerHTML)
+  2364→    else printWindow.document.write(mainContent.innerHTML)
+  2365→  }
+  2366→  printWindow.document.write('</body></html>')
+  2367→  printWindow.document.close()
+  2368→  printWindow.print()
+  2369→}
+  2370→
+  2371→
+  2372→// ============================================================
+  2373→// ADMIN DASHBOARD — Jira/Huly Style Light Theme
+  2374→// ============================================================
+  2375→
+  2376→// Admin theme constants
+  2377→const A = {
+  2378→  bg: '#f4f3f0',
+  2379→  surface: '#ffffff',
+  2380→  border: '#e3dfd8',
+  2381→  borderLight: '#eeebe5',
+  2382→  text: '#1f1e1c',
+  2383→  textSecondary: '#6b6560',
+  2384→  textMuted: '#99948d',
+  2385→  green: '#48805b',
+  2386→  greenLight: '#e8f0eb',
+  2387→  lime: '#afb75d',
+  2388→  limeLight: '#f4f5e8',
+  2389→  blue: '#2e91b2',
+  2390→  blueLight: '#e6f2f7',
+  2391→  amber: '#c4880e',
+  2392→  amberLight: '#fdf5e6',
+  2393→  red: '#c44530',
+  2394→  redLight: '#fceeed',
+  2395→  sidebarBg: '#1f1e1c',
+  2396→  sidebarText: '#c8c3bb',
+  2397→  sidebarActive: '#48805b',
+  2398→  sidebarHover: '#2a2926',
+  2399→}
+  2400→
+  2401→function AdminDashboard() {
+  2402→  const { adminTab, setAdminTab, user, navigateTo } = useAppStore()
+  2403→  const [stats, setStats] = useState<any>(null)
+  2404→  const [users, setUsers] = useState<any[]>([])
+  2405→  const [campaigns, setCampaigns] = useState<Campaign[]>([])
+  2406→  const [scans, setScans] = useState<QrScan[]>([])
+  2407→  const [orders, setOrders] = useState<any[]>([])
+  2408→  const [questions, setQuestions] = useState<QuizQuestion[]>([])
+  2409→  const [guarantees, setGuarantees] = useState<GuaranteePlan[]>([])
+  2410→  const [loading, setLoading] = useState(true)
+  2411→  const [userSearch, setUserSearch] = useState('')
+  2412→  const [selectedOrder, setSelectedOrder] = useState<any>(null)
+  2413→  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  2414→  const [orderView, setOrderView] = useState<'kanban' | 'table'>('table')
+  2415→
+  2416→  useEffect(() => {
+  2417→    if (!user?.is_admin) { navigateTo('landing'); return }
+  2418→    const load = async () => {
+  2419→      const [statsR, usersR, campsR, scansR, ordersR, questionsR, guaranteesR] = await Promise.all([
+  2420→        adminStatsService.getDashboardStats(),
+  2421→        userService.getAll(),
+  2422→        campaignService.getAll(),
+  2423→        qrScanService.getAll(),
+  2424→        orderService.getAll(),
+  2425→        quizService.getQuestions(20),
+  2426→        guaranteeService.getAll(),
+  2427→      ])
+  2428→      if (statsR.data) setStats(statsR.data)
+  2429→      if (usersR.data) setUsers(usersR.data)
+  2430→      if (campsR.data) setCampaigns(campsR.data)
+  2431→      if (scansR.data) setScans(scansR.data)
+  2432→      if (ordersR.data) setOrders(ordersR.data)
+  2433→      if (questionsR.data) setQuestions(questionsR.data)
+  2434→      if (guaranteesR.data) setGuarantees(guaranteesR.data)
+  2435→      setLoading(false)
+  2436→    }
+  2437→    load()
+  2438→  }, [user, navigateTo])
+  2439→
+  2440→  const refreshData = async () => {
+  2441→    setLoading(true)
+  2442→    const [statsR, usersR, campsR, scansR, ordersR] = await Promise.all([
+  2443→      adminStatsService.getDashboardStats(),
+  2444→      userService.getAll(),
+  2445→      campaignService.getAll(),
+  2446→      qrScanService.getAll(),
+  2447→      orderService.getAll(),
+  2448→    ])
+  2449→    if (statsR.data) setStats(statsR.data)
+  2450→    if (usersR.data) setUsers(usersR.data)
+  2451→    if (campsR.data) setCampaigns(campsR.data)
+  2452→    if (scansR.data) setScans(scansR.data)
+  2453→    if (ordersR.data) setOrders(ordersR.data)
+  2454→    setLoading(false)
+  2455→  }
+  2456→
+  2457→  if (loading) return (
+  2458→    <div className="min-h-screen flex items-center justify-center font-[family-name:var(--font-admin)]" style={{ background: A.bg }}>
+  2459→      <div className="flex flex-col items-center gap-3">
+  2460→        <div className="w-10 h-10 rounded-lg flex items-center justify-center animate-pulse" style={{ background: A.greenLight }}>
+  2461→          <Leaf className="w-5 h-5" style={{ color: A.green }} />
+  2462→        </div>
+  2463→        <span className="text-sm" style={{ color: A.textMuted }}>Loading dashboard...</span>
+  2464→      </div>
+  2465→    </div>
+  2466→  )
+  2467→  if (!stats) return null
+  2468→
+  2469→  const ordersByStatus = Object.entries(stats.ordersByStatus || {}).map(([name, value]) => ({ name, value: value as number }))
+  2470→  const scansByCampaign = Object.entries(stats.scansByCampaign || {}).map(([name, value]) => ({ name: name.slice(0, 15), value: value as number }))
+  2471→  const campaignsByChannel = Object.entries(stats.campaignsByChannel || {}).map(([name, value]) => ({ name, value: value as number }))
+  2472→
+  2473→  const revenueTrend = [
+  2474→    { month: 'Jan', revenue: Math.round(stats.totalRevenue * 0.1), orders: Math.round(stats.totalOrders * 0.08) },
+  2475→    { month: 'Feb', revenue: Math.round(stats.totalRevenue * 0.12), orders: Math.round(stats.totalOrders * 0.1) },
+  2476→    { month: 'Mar', revenue: Math.round(stats.totalRevenue * 0.18), orders: Math.round(stats.totalOrders * 0.15) },
+  2477→    { month: 'Apr', revenue: Math.round(stats.totalRevenue * 0.22), orders: Math.round(stats.totalOrders * 0.18) },
+  2478→    { month: 'May', revenue: Math.round(stats.totalRevenue * 0.28), orders: Math.round(stats.totalOrders * 0.22) },
+  2479→    { month: 'Jun', revenue: Math.round(stats.totalRevenue * 0.32), orders: Math.round(stats.totalOrders * 0.27) },
+  2480→  ]
+  2481→
+  2482→  const sidebarItems = [
+  2483→    { value: 'dashboard', label: 'Overview', icon: LayoutDashboard, badge: null },
+  2484→    { value: 'users', label: 'Users', icon: Users, badge: users.length },
+  2485→    { value: 'campaigns', label: 'Campaigns', icon: MegaphoneIcon, badge: campaigns.length },
+  2486→    { value: 'qr', label: 'QR Codes', icon: QrCode, badge: campaigns.filter(c => c.status === 'ACTIVE').length },
+  2487→    { value: 'orders', label: 'Orders', icon: Package, badge: orders.length },
+  2488→    { value: 'analytics', label: 'Analytics', icon: TrendingUp, badge: null },
+  2489→    { value: 'content', label: 'Content', icon: FileText, badge: questions.length },
+  2490→    { value: 'guarantees', label: 'Guarantees', icon: Shield, badge: guarantees.length },
+  2491→  ]
+  2492→
+  2493→  const filteredUsers = userSearch
+  2494→    ? users.filter((u: any) => u.name?.toLowerCase().includes(userSearch.toLowerCase()) || u.email?.toLowerCase().includes(userSearch.toLowerCase()))
+  2495→    : users
+  2496→
+  2497→  const orderStatuses = ['PENDING', 'CONFIRMED', 'SHIPPED', 'DELIVERED'] as const
+  2498→  const ordersByKanbanStatus = (status: string) => orders.filter((o: any) => o.status === status)
+  2499→
+  2500→  const statusColors: Record<string, { text: string; bg: string; dot: string }> = {
+  2501→    PENDING: { text: A.amber, bg: A.amberLight, dot: A.amber },
+  2502→    CONFIRMED: { text: A.blue, bg: A.blueLight, dot: A.blue },
+  2503→    SHIPPED: { text: '#7c3aed', bg: '#f3f0ff', dot: '#7c3aed' },
+  2504→    DELIVERED: { text: A.green, bg: A.greenLight, dot: A.green },
+  2505→    CANCELLED: { text: A.red, bg: A.redLight, dot: A.red },
+  2506→  }
+  2507→
+  2508→  const StatusBadge = ({ status }: { status: string }) => {
+  2509→    const c = statusColors[status] || { text: A.textMuted, bg: A.borderLight, dot: A.textMuted }
+  2510→    return (
+  2511→      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-medium" style={{ color: c.text, background: c.bg }}>
+  2512→        <span className="w-1.5 h-1.5 rounded-full" style={{ background: c.dot }} />
+  2513→        {status}
+  2514→      </span>
+  2515→    )
+  2516→  }
+  2517→
+  2518→  const renderContent = () => {
+  2519→    switch (adminTab) {
+  2520→      case 'dashboard':
+  2521→        return (
+  2522→          <div className="space-y-5">
+  2523→            {/* Stat Cards */}
+  2524→            <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+  2525→              {[
+  2526→                { label: 'Total Users', value: stats.totalUsers, icon: Users, color: A.green, bgColor: A.greenLight, trend: '+12%', sub: `${stats.learningCompleted} completed learning` },
+  2527→                { label: 'QR Scans', value: stats.totalScans, icon: QrCode, color: A.blue, bgColor: A.blueLight, trend: '+8%', sub: `${campaigns.filter(c => c.status === 'ACTIVE').length} active campaigns` },
+  2528→                { label: 'Total Orders', value: stats.totalOrders, icon: Package, color: A.lime, bgColor: A.limeLight, trend: '+23%', sub: `${orders.filter((o: any) => o.status === 'DELIVERED').length} delivered` },
+  2529→                { label: 'Revenue', value: `₹${stats.totalRevenue?.toLocaleString()}`, icon: DollarSign, color: A.green, bgColor: A.greenLight, trend: '+15%', sub: `₹${stats.totalRevenue ? Math.round(stats.totalRevenue * 0.3).toLocaleString() : 0} this month` },
+  2530→              ].map(card => (
+  2531→                <div key={card.label} className="bg-white border rounded-lg p-4 hover:shadow-sm transition-shadow" style={{ borderColor: A.border }}>
+  2532→                  <div className="flex items-center justify-between mb-3">
+  2533→                    <div className="w-8 h-8 rounded-md flex items-center justify-center" style={{ backgroundColor: card.bgColor }}>
+  2534→                      <card.icon className="w-4 h-4" style={{ color: card.color }} />
+  2535→                    </div>
+  2536→                    <span className="text-[11px] font-medium px-1.5 py-0.5 rounded" style={{ color: A.green, background: A.greenLight }}>{card.trend}</span>
+  2537→                  </div>
+  2538→                  <p className="text-xl font-bold" style={{ color: A.text }}>{card.value}</p>
+  2539→                  <p className="text-[12px] mt-0.5" style={{ color: A.textSecondary }}>{card.label}</p>
+  2540→                  <p className="text-[11px] mt-1" style={{ color: A.textMuted }}>{card.sub}</p>
+  2541→                </div>
+  2542→              ))}
+  2543→            </div>
+  2544→
+  2545→            {/* Charts Row */}
+  2546→            <div className="grid lg:grid-cols-2 gap-4">
+  2547→              <div className="bg-white border rounded-lg p-5" style={{ borderColor: A.border }}>
+  2548→                <div className="flex items-center justify-between mb-4">
+  2549→                  <h3 className="text-sm font-semibold" style={{ color: A.text }}>Revenue Trend</h3>
+  2550→                  <span className="text-[11px] px-2 py-0.5 rounded" style={{ background: A.greenLight, color: A.green }}>6 months</span>
+  2551→                </div>
+  2552→                <ResponsiveContainer width="100%" height={220}>
+  2553→                  <LineChart data={revenueTrend}>
+  2554→                    <CartesianGrid strokeDasharray="3 3" stroke="#eeebe5" />
+  2555→                    <XAxis dataKey="month" tick={{ fontSize: 11, fill: A.textMuted }} axisLine={{ stroke: A.border }} />
+  2556→                    <YAxis tick={{ fontSize: 11, fill: A.textMuted }} axisLine={{ stroke: A.border }} />
+  2557→                    <Tooltip contentStyle={{ backgroundColor: '#fff', border: `1px solid ${A.border}`, borderRadius: 8, color: A.text, fontSize: 12 }} />
+  2558→                    <Line type="monotone" dataKey="revenue" stroke={A.green} strokeWidth={2} dot={{ r: 3, fill: A.green }} />
+  2559→                    <Line type="monotone" dataKey="orders" stroke={A.lime} strokeWidth={2} dot={{ r: 3, fill: A.lime }} strokeDasharray="5 5" />
+  2560→                  </LineChart>
+  2561→                </ResponsiveContainer>
+  2562→              </div>
+  2563→              <div className="bg-white border rounded-lg p-5" style={{ borderColor: A.border }}>
+  2564→                <div className="flex items-center justify-between mb-4">
+  2565→                  <h3 className="text-sm font-semibold" style={{ color: A.text }}>Orders by Status</h3>
+  2566→                  <span className="text-[11px] px-2 py-0.5 rounded" style={{ background: A.blueLight, color: A.blue }}>{orders.length} total</span>
+  2567→                </div>
+  2568→                <ResponsiveContainer width="100%" height={220}>
+  2569→                  <RechartsPieChart>
+  2570→                    <Pie data={ordersByStatus} cx="50%" cy="50%" innerRadius={55} outerRadius={85} dataKey="value" strokeWidth={0}>
+  2571→                      {ordersByStatus.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
+  2572→                    </Pie>
+  2573→                    <Tooltip contentStyle={{ backgroundColor: '#fff', border: `1px solid ${A.border}`, borderRadius: 8, color: A.text, fontSize: 12 }} />
+  2574→                    <Legend formatter={(value: string) => <span style={{ color: A.textSecondary, fontSize: 12 }}>{value}</span>} />
+  2575→                  </RechartsPieChart>
+  2576→                </ResponsiveContainer>
+  2577→              </div>
+  2578→            </div>
+  2579→
+  2580→            {/* Activity + Quick Stats */}
+  2581→            <div className="grid lg:grid-cols-3 gap-4">
+  2582→              <div className="lg:col-span-2 bg-white border rounded-lg p-5" style={{ borderColor: A.border }}>
+  2583→                <h3 className="text-sm font-semibold mb-4" style={{ color: A.text }}>Recent Activity</h3>
+  2584→                <div className="space-y-1">
+  2585→                  {(stats.recentUsers || []).slice(0, 4).map((u: UserProfile) => (
+  2586→                    <div key={u.id} className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-[#f8f7f5] transition-colors">
+  2587→                      <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: A.greenLight }}>
+  2588→                        <span className="text-[11px] font-bold" style={{ color: A.green }}>{u.name.charAt(0)}</span>
+  2589→                      </div>
+  2590→                      <div className="flex-1 min-w-0">
+  2591→                        <p className="text-sm truncate" style={{ color: A.text }}>{u.name} <span style={{ color: A.textMuted }}>registered</span></p>
+  2592→                        <p className="text-[11px]" style={{ color: A.textMuted }}>{new Date(u.created_at).toLocaleDateString()}</p>
+  2593→                      </div>
+  2594→                      <StatusBadge status={u.learning_completed ? 'DELIVERED' : 'PENDING'} />
+  2595→                    </div>
+  2596→                  ))}
+  2597→                  {orders.slice(0, 3).map((o: any) => (
+  2598→                    <div key={o.id} className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-[#f8f7f5] transition-colors">
+  2599→                      <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: A.blueLight }}>
+
+[showing lines 2100-2599 of 3657; use offset=2600 with limit to continue reading]

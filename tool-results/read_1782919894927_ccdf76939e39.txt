@@ -1,0 +1,502 @@
+     1→     1→'use client'
+     2→     2→
+     3→     3→import React, { useState, useEffect, useCallback, useRef } from 'react'
+     4→     4→import Image from 'next/image'
+     5→     5→import Link from 'next/link'
+     6→     6→import { motion, AnimatePresence, useInView } from 'framer-motion'
+     7→     7→import {
+     8→     8→  ChevronDown, ChevronLeft, Menu, X, ShoppingCart, User, LogOut, Shield, Play,
+     9→     9→  CheckCircle, Lock, ArrowRight, ArrowLeft, Minus, Plus, Trash2,
+    10→    10→  QrCode, BookOpen, Users, BarChart3, Settings, FileText, Package,
+    11→    11→  TrendingUp, Eye, Clock, MapPin, Smartphone, Star, Award,
+    12→    12→  Heart, Zap, Leaf, ChevronRight, Home, Scan, GraduationCap,
+    13→    13→  Store, ClipboardList, MessageSquare, RefreshCw, Search,
+    14→    14→  Filter, Download, MoreVertical, AlertCircle, Info, ChevronUp,
+    15→    15→  DollarSign, Activity, PieChart, BarChart, Globe, Mail, Phone as PhoneIcon,
+    16→    16→  Facebook, Twitter, Instagram, Linkedin, Youtube, Send,
+    17→    17→  LayoutDashboard, CreditCard, Truck, Kanban, Columns3, Tag, Copy, ExternalLink, Utensils
+    18→    18→} from 'lucide-react'
+    19→    19→import { useAppStore, type AppView, type CartItem } from '@/store/app-store'
+    20→    20→import {
+    21→    21→  authService, campaignService, learningService, quizService,
+    22→    22→  productService, orderService, adminStatsService, userService,
+    23→    23→  guaranteeService, qrScanService, initDataService, isUsingRealSupabase
+    24→    24→} from '@/lib/data-service'
+    25→    25→import type {
+    26→    26→  UserProfile, Campaign, QrScan, LearningProgress, QuizQuestion,
+    27→    27→  Product, Order, OrderItem, GuaranteePlan
+    28→    28→} from '@/lib/data-service'
+    29→    29→import { Button } from '@/components/ui/button'
+    30→    30→import { Input } from '@/components/ui/input'
+    31→    31→import { Label } from '@/components/ui/label'
+    32→    32→import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+    33→    33→import { Badge } from '@/components/ui/badge'
+    34→    34→import { Separator } from '@/components/ui/separator'
+    35→    35→import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+    36→    36→import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+    37→    37→import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+    38→    38→import { Progress } from '@/components/ui/progress'
+    39→    39→import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+    40→    40→import { Switch } from '@/components/ui/switch'
+    41→    41→import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+    42→    42→import { Textarea } from '@/components/ui/textarea'
+    43→    43→import {
+    44→    44→  PieChart as RechartsPieChart, Pie, Cell, BarChart as RechartsBarChart, Bar,
+    45→    45→  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line
+    46→    46→} from 'recharts'
+    47→    47→import { toast } from 'sonner'
+    48→    48→import { QRCodeSVG } from 'qrcode.react'
+    49→    49→import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp'
+    50→    50→import { ScrollArea } from '@/components/ui/scroll-area'
+    51→    51→import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '@/components/ui/sheet'
+    52→    52→import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu'
+    53→    53→
+    54→    54→// ============================================================
+    55→    55→// BRAND CONSTANTS
+    56→    56→// ============================================================
+    57→    57→const BRAND = {
+    58→    58→  green: '#48805b',
+    59→    59→  lime: '#afb75d',
+    60→    60→  dark: '#1f1e1c',
+    61→    61→  muted: '#88837b',
+    62→    62→  surface: '#e3dfd8',
+    63→    63→  bg: '#f4f3f0',
+    64→    64→  blue: '#2e91b2',
+    65→    65→}
+    66→    66→
+    67→    67→const CHART_COLORS = [BRAND.green, BRAND.lime, BRAND.blue, BRAND.muted, BRAND.dark]
+    68→    68→
+    69→    69→// ============================================================
+    70→    70→// ANIMATION VARIANTS
+    71→    71→// ============================================================
+    72→    72→const fadeInUp = {
+    73→    73→  hidden: { opacity: 0, y: 40 },
+    74→    74→  visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease: 'easeOut' } }
+    75→    75→}
+    76→    76→const fadeIn = {
+    77→    77→  hidden: { opacity: 0 },
+    78→    78→  visible: { opacity: 1, transition: { duration: 0.6 } }
+    79→    79→}
+    80→    80→const slideInLeft = {
+    81→    81→  hidden: { opacity: 0, x: -60 },
+    82→    82→  visible: { opacity: 1, x: 0, transition: { duration: 0.7, ease: 'easeOut' } }
+    83→    83→}
+    84→    84→const slideInRight = {
+    85→    85→  hidden: { opacity: 0, x: 60 },
+    86→    86→  visible: { opacity: 1, x: 0, transition: { duration: 0.7, ease: 'easeOut' } }
+    87→    87→}
+    88→    88→const staggerContainer = {
+    89→    89→  hidden: { opacity: 0 },
+    90→    90→  visible: { opacity: 1, transition: { staggerChildren: 0.15 } }
+    91→    91→}
+    92→    92→const scaleIn = {
+    93→    93→  hidden: { opacity: 0, scale: 0.85 },
+    94→    94→  visible: { opacity: 1, scale: 1, transition: { duration: 0.5, ease: 'easeOut' } }
+    95→    95→}
+    96→    96→
+    97→    97→// ============================================================
+    98→    98→// SECTION WRAPPER WITH SCROLL ANIMATION
+    99→    99→// ============================================================
+   100→   100→function AnimatedSection({ children, className = '', id }: { children: React.ReactNode; className?: string; id?: string }) {
+   101→   101→  const ref = useRef(null)
+   102→   102→  const isInView = useInView(ref, { once: true, margin: '-80px' })
+   103→   103→  return (
+   104→   104→    <motion.section
+   105→   105→      ref={ref}
+   106→   106→      id={id}
+   107→   107→      initial="hidden"
+   108→   108→      animate={isInView ? 'visible' : 'hidden'}
+   109→   109→      variants={staggerContainer}
+   110→   110→      className={className}
+   111→   111→    >
+   112→   112→      {children}
+   113→   113→    </motion.section>
+   114→   114→  )
+   115→   115→}
+   116→   116→
+   117→   117→// ============================================================
+   118→   118→// COUNTER ANIMATION COMPONENT
+   119→   119→// ============================================================
+   120→   120→function AnimatedCounter({ end, suffix = '', prefix = '' }: { end: number; suffix?: string; prefix?: string }) {
+   121→   121→  const [count, setCount] = useState(0)
+   122→   122→  const ref = useRef(null)
+   123→   123→  const isInView = useInView(ref, { once: true })
+   124→   124→  useEffect(() => {
+   125→   125→    if (!isInView) return
+   126→   126→    let start = 0
+   127→   127→    const duration = 2000
+   128→   128→    const increment = end / (duration / 16)
+   129→   129→    const timer = setInterval(() => {
+   130→   130→      start += increment
+   131→   131→      if (start >= end) { setCount(end); clearInterval(timer) }
+   132→   132→      else setCount(Math.floor(start))
+   133→   133→    }, 16)
+   134→   134→    return () => clearInterval(timer)
+   135→   135→  }, [isInView, end])
+   136→   136→  return <span ref={ref}>{prefix}{count.toLocaleString()}{suffix}</span>
+   137→   137→}
+   138→   138→
+   139→   139→// ============================================================
+   140→   140→// DATABASE STATUS BADGE
+   141→   141→// ============================================================
+   142→   142→function DbStatusBadge({ isHero }: { isHero: boolean }) {
+   143→   143→  const [status, setStatus] = useState<'checking' | 'connected' | 'mock'>('checking')
+   144→   144→
+   145→   145→  useEffect(() => {
+   146→   146→    initDataService().then((connected) => {
+   147→   147→      setStatus(connected ? 'connected' : 'mock')
+   148→   148→    })
+   149→   149→  }, [])
+   150→   150→
+   151→   151→  return (
+   152→   152→    <div className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold tracking-wide transition-all duration-300 ${
+   153→   153→      isHero
+   154→   154→        ? status === 'connected' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-amber-500/20 text-amber-300'
+   155→   155→        : status === 'connected' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'
+   156→   156→    }`}>
+   157→   157→      <div className={`w-1.5 h-1.5 rounded-full ${
+   158→   158→        status === 'checking' ? 'bg-gray-400 animate-pulse' : status === 'connected' ? 'bg-emerald-400' : 'bg-amber-400'
+   159→   159→      }`} />
+   160→   160→      {status === 'checking' ? 'DB...' : status === 'connected' ? 'Supabase' : 'Mock DB'}
+   161→   161→    </div>
+   162→   162→  )
+   163→   163→}
+   164→   164→
+   165→   165→// ============================================================
+   166→   166→// NAVBAR
+   167→   167→// ============================================================
+   168→   168→function Navbar() {
+   169→   169→  const { currentView, navigateTo, user, setUser, cart, goBack } = useAppStore()
+   170→   170→  const [scrolled, setScrolled] = useState(false)
+   171→   171→  const [mobileOpen, setMobileOpen] = useState(false)
+   172→   172→  const isLanding = currentView === 'landing'
+   173→   173→  const isHero = isLanding && !scrolled
+   174→   174→
+   175→   175→  useEffect(() => {
+   176→   176→    const handler = () => setScrolled(window.scrollY > 40)
+   177→   177→    window.addEventListener('scroll', handler, { passive: true })
+   178→   178→    return () => window.removeEventListener('scroll', handler)
+   179→   179→  }, [])
+   180→   180→
+   181→   181→  const handleLogout = () => {
+   182→   182→    setUser(null)
+   183→   183→    navigateTo('landing')
+   184→   184→    toast.success('Logged out successfully')
+   185→   185→  }
+   186→   186→
+   187→   187→  const navLinks = [
+   188→   188→    { label: 'Home', view: 'landing' as AppView, icon: Home },
+   189→   189→    { label: 'Learn', view: 'learning' as AppView, icon: GraduationCap },
+   190→   190→    { label: 'Products', view: 'products' as AppView, icon: Store },
+   191→   191→  ]
+   192→   192→
+   193→   193→  const adminLinks = [
+   194→   194→    { label: 'Dashboard', view: 'admin-dashboard' as AppView, icon: BarChart3 },
+   195→   195→    { label: 'Users', view: 'admin-users' as AppView, icon: Users },
+   196→   196→    { label: 'Campaigns', view: 'admin-campaigns' as AppView, icon: MegaphoneIcon },
+   197→   197→    { label: 'Orders', view: 'admin-orders' as AppView, icon: Package },
+   198→   198→    { label: 'Analytics', view: 'admin-analytics' as AppView, icon: TrendingUp },
+   199→   199→    { label: 'Content', view: 'admin-content' as AppView, icon: FileText },
+   200→   200→  ]
+   201→   201→
+   202→   202→  const cartCount = cart.reduce((s, i) => s + i.quantity, 0)
+   203→   203→
+   204→   204→  return (
+   205→   205→    <nav
+   206→   206→      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ease-out ${
+   207→   207→        isHero
+   208→   208→          ? 'bg-transparent'
+   209→   209→          : isLanding && scrolled
+   210→   210→            ? 'bg-white/95 backdrop-blur-xl shadow-[0_1px_0_0_rgba(0,0,0,0.06)]'
+   211→   211→            : 'bg-white/95 backdrop-blur-xl shadow-[0_1px_0_0_rgba(0,0,0,0.06)]'
+   212→   212→      }`}
+   213→   213→    >
+   214→   214→      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+   215→   215→        <div className="flex items-center justify-between h-[72px]">
+   216→   216→          {/* Logo */}
+   217→   217→          <button onClick={() => navigateTo('landing')} className="flex items-center gap-2 cursor-pointer group">
+   218→   218→            <Image src="/images/notjust-logo-clean.png" alt="NotJust" width={120} height={40} className="h-9 w-auto object-contain transition-transform duration-300 group-hover:scale-105" />
+   219→   219→          </button>
+   220→   220→
+   221→   221→          {/* Center Nav Links - Desktop */}
+   222→   222→          <div className="hidden md:flex items-center gap-1">
+   223→   223→            {navLinks.map(link => (
+   224→   224→              <button
+   225→   225→                key={link.view}
+   226→   226→                onClick={() => {
+   227→   227→                  if (!user && link.view !== 'landing') {
+   228→   228→                    navigateTo('auth-login')
+   229→   229→                    toast.info('Please login first')
+   230→   230→                    return
+   231→   231→                  }
+   232→   232→                  navigateTo(link.view)
+   233→   233→                }}
+   234→   234→                className={`relative px-4 py-2 rounded-full text-[13px] font-medium tracking-wide transition-all duration-300 ${
+   235→   235→                  currentView === link.view
+   236→   236→                    ? isHero
+   237→   237→                      ? 'bg-white/15 text-white'
+   238→   238→                      : 'bg-[#48805b]/10 text-[#48805b]'
+   239→   239→                    : isHero
+   240→   240→                      ? 'text-white/70 hover:text-white hover:bg-white/10'
+   241→   241→                      : 'text-[#88837b] hover:text-[#1f1e1c] hover:bg-[#e3dfd8]/60'
+   242→   242→                }`}
+   243→   243→              >
+   244→   244→                {link.label}
+   245→   245→              </button>
+   246→   246→            ))}
+   247→   247→            {user?.is_admin && (
+   248→   248→              <DropdownMenu>
+   249→   249→                <DropdownMenuTrigger asChild>
+   250→   250→                  <button className={`px-4 py-2 rounded-full text-[13px] font-medium tracking-wide transition-all duration-300 flex items-center gap-1.5 ${
+   251→   251→                    currentView.startsWith('admin')
+   252→   252→                      ? isHero
+   253→   253→                        ? 'bg-white/15 text-white'
+   254→   254→                        : 'bg-[#48805b]/10 text-[#48805b]'
+   255→   255→                      : isHero
+   256→   256→                        ? 'text-white/70 hover:text-white hover:bg-white/10'
+   257→   257→                        : 'text-[#88837b] hover:text-[#1f1e1c] hover:bg-[#e3dfd8]/60'
+   258→   258→                  }`}>
+   259→   259→                    Admin <ChevronDown className="w-3 h-3" />
+   260→   260→                  </button>
+   261→   261→                </DropdownMenuTrigger>
+   262→   262→                <DropdownMenuContent align="end" className="rounded-xl shadow-xl border-[#e3dfd8]/80">
+   263→   263→                  {adminLinks.map(link => (
+   264→   264→                    <DropdownMenuItem key={link.view} onClick={() => navigateTo(link.view)} className="rounded-lg">
+   265→   265→                      <link.icon className="w-4 h-4 mr-2 text-[#88837b]" />
+   266→   266→                      {link.label}
+   267→   267→                    </DropdownMenuItem>
+   268→   268→                  ))}
+   269→   269→                </DropdownMenuContent>
+   270→   270→              </DropdownMenu>
+   271→   271→            )}
+   272→   272→          </div>
+   273→   273→
+   274→   274→          {/* Right Side */}
+   275→   275→          <div className="flex items-center gap-3">
+   276→   276→            {/* Supabase Status Indicator */}
+   277→   277→            <DbStatusBadge isHero={isHero} />
+   278→   278→
+   279→   279→            {user ? (
+   280→   280→              <>
+   281→   281→                {/* Cart */}
+   282→   282→                <button
+   283→   283→                  onClick={() => navigateTo('cart')}
+   284→   284→                  className={`relative p-2.5 rounded-full transition-all duration-300 ${
+   285→   285→                    isHero
+   286→   286→                      ? 'text-white/80 hover:text-white hover:bg-white/10'
+   287→   287→                      : 'text-[#88837b] hover:text-[#1f1e1c] hover:bg-[#e3dfd8]/60'
+   288→   288→                  }`}
+   289→   289→                >
+   290→   290→                  <ShoppingCart className="w-[18px] h-[18px]" />
+   291→   291→                  {cartCount > 0 && (
+   292→   292→                    <span className="absolute -top-0.5 -right-0.5 bg-[#afb75d] text-[#1f1e1c] text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center ring-2 ring-white">
+   293→   293→                      {cartCount}
+   294→   294→                    </span>
+   295→   295→                  )}
+   296→   296→                </button>
+   297→   297→
+   298→   298→                {/* User Dropdown */}
+   299→   299→                <DropdownMenu>
+   300→   300→                  <DropdownMenuTrigger asChild>
+   301→   301→                    <button className={`flex items-center gap-2 pl-1 pr-3 py-1 rounded-full transition-all duration-300 ${
+   302→   302→                      isHero ? 'hover:bg-white/10' : 'hover:bg-[#e3dfd8]/60'
+   303→   303→                    }`}>
+   304→   304→                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#48805b] to-[#afb75d] flex items-center justify-center text-white text-xs font-bold ring-2 ring-white/20">
+   305→   305→                        {user.name.charAt(0).toUpperCase()}
+   306→   306→                      </div>
+   307→   307→                      <span className={`hidden sm:block text-sm font-medium transition-colors duration-500 ${isHero ? 'text-white/90' : 'text-[#1f1e1c]'}`}>
+   308→   308→                        {user.name.split(' ')[0]}
+   309→   309→                      </span>
+   310→   310→                      <ChevronDown className={`w-3 h-3 transition-colors duration-500 ${isHero ? 'text-white/50' : 'text-[#88837b]'}`} />
+   311→   311→                    </button>
+   312→   312→                  </DropdownMenuTrigger>
+   313→   313→                  <DropdownMenuContent align="end" className="w-52 rounded-xl shadow-xl border-[#e3dfd8]/80">
+   314→   314→                    <DropdownMenuItem onClick={() => navigateTo('profile')} className="rounded-lg">
+   315→   315→                      <User className="w-4 h-4 mr-2 text-[#88837b]" /> Profile
+   316→   316→                    </DropdownMenuItem>
+   317→   317→                    {user.is_admin && (
+   318→   318→                      <DropdownMenuItem onClick={() => navigateTo('admin-dashboard')} className="rounded-lg">
+   319→   319→                        <Shield className="w-4 h-4 mr-2 text-[#88837b]" /> Admin Dashboard
+   320→   320→                      </DropdownMenuItem>
+   321→   321→                    )}
+   322→   322→                    <DropdownMenuSeparator />
+   323→   323→                    <DropdownMenuItem onClick={handleLogout} className="text-red-600 rounded-lg">
+   324→   324→                      <LogOut className="w-4 h-4 mr-2" /> Logout
+   325→   325→                    </DropdownMenuItem>
+   326→   326→                  </DropdownMenuContent>
+   327→   327→                </DropdownMenu>
+   328→   328→              </>
+   329→   329→            ) : (
+   330→   330→              <Button
+   331→   331→                onClick={() => navigateTo('auth-login')}
+   332→   332→                className={`font-heading font-semibold text-[13px] tracking-wide rounded-full px-5 h-10 transition-all duration-300 ${
+   333→   333→                  isHero
+   334→   334→                    ? 'bg-[#e3dfd8] text-[#1f1e1c] hover:bg-white hover:shadow-lg hover:shadow-white/10'
+   335→   335→                    : 'bg-[#48805b] text-white hover:bg-[#3a6a4a] shadow-sm'
+   336→   336→                }`}
+   337→   337→              >
+   338→   338→                Sign In
+   339→   339→              </Button>
+   340→   340→            )}
+   341→   341→
+   342→   342→            {/* Mobile Menu */}
+   343→   343→            <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+   344→   344→              <SheetTrigger asChild>
+   345→   345→                <button className={`md:hidden p-2.5 rounded-full transition-all duration-300 ${
+   346→   346→                  isHero ? 'text-white hover:bg-white/10' : 'text-[#1f1e1c] hover:bg-[#e3dfd8]/60'
+   347→   347→                }`}>
+   348→   348→                  <Menu className="w-5 h-5" />
+   349→   349→                </button>
+   350→   350→              </SheetTrigger>
+   351→   351→              <SheetContent side="right" className="w-80 p-0">
+   352→   352→                <div className="flex flex-col h-full">
+   353→   353→                  {/* Mobile Header */}
+   354→   354→                  <div className="flex items-center gap-3 px-6 py-5 border-b border-[#e3dfd8]/60">
+   355→   355→                    <Image src="/images/notjust-logo-clean.png" alt="NotJust" width={100} height={34} className="h-8 w-auto object-contain" />
+   356→   356→                  </div>
+   357→   357→
+   358→   358→                  {/* Mobile Nav */}
+   359→   359→                  <div className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
+   360→   360→                    {navLinks.map(link => (
+   361→   361→                      <button
+   362→   362→                        key={link.view}
+   363→   363→                        onClick={() => {
+   364→   364→                          if (!user && link.view !== 'landing') { navigateTo('auth-login'); toast.info('Please login first'); }
+   365→   365→                          else navigateTo(link.view)
+   366→   366→                          setMobileOpen(false)
+   367→   367→                        }}
+   368→   368→                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors ${
+   369→   369→                          currentView === link.view
+   370→   370→                            ? 'bg-[#48805b]/10 text-[#48805b]'
+   371→   371→                            : 'text-[#1f1e1c] hover:bg-[#e3dfd8]/50'
+   372→   372→                        }`}
+   373→   373→                      >
+   374→   374→                        <link.icon className="w-4 h-4" /> {link.label}
+   375→   375→                      </button>
+   376→   376→                    ))}
+   377→   377→                    {user?.is_admin && (
+   378→   378→                      <>
+   379→   379→                        <Separator className="my-3" />
+   380→   380→                        <p className="px-4 py-1 text-[10px] font-semibold text-[#88837b] uppercase tracking-widest">Admin</p>
+   381→   381→                        {adminLinks.map(link => (
+   382→   382→                          <button
+   383→   383→                            key={link.view}
+   384→   384→                            onClick={() => { navigateTo(link.view); setMobileOpen(false) }}
+   385→   385→                            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-[#1f1e1c] hover:bg-[#e3dfd8]/50 transition-colors"
+   386→   386→                          >
+   387→   387→                            <link.icon className="w-4 h-4 text-[#88837b]" /> {link.label}
+   388→   388→                          </button>
+   389→   389→                        ))}
+   390→   390→                      </>
+   391→   391→                    )}
+   392→   392→                  </div>
+   393→   393→
+   394→   394→                  {/* Mobile Footer */}
+   395→   395→                  <div className="px-4 py-4 border-t border-[#e3dfd8]/60 space-y-1">
+   396→   396→                    {user ? (
+   397→   397→                      <>
+   398→   398→                        <button onClick={() => { navigateTo('cart'); setMobileOpen(false) }} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-[#1f1e1c] hover:bg-[#e3dfd8]/50">
+   399→   399→                          <ShoppingCart className="w-4 h-4" /> Cart {cartCount > 0 && <Badge className="bg-[#afb75d] text-[#1f1e1c] text-[10px] ml-auto">{cartCount}</Badge>}
+   400→   400→                        </button>
+   401→   401→                        <button onClick={() => { navigateTo('profile'); setMobileOpen(false) }} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-[#1f1e1c] hover:bg-[#e3dfd8]/50">
+   402→   402→                          <User className="w-4 h-4" /> Profile
+   403→   403→                        </button>
+   404→   404→                        <button onClick={() => { handleLogout(); setMobileOpen(false) }} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-red-600 hover:bg-red-50">
+   405→   405→                          <LogOut className="w-4 h-4" /> Logout
+   406→   406→                        </button>
+   407→   407→                      </>
+   408→   408→                    ) : (
+   409→   409→                      <Button onClick={() => { navigateTo('auth-login'); setMobileOpen(false) }} className="w-full bg-[#48805b] hover:bg-[#3a6a4a] text-white font-heading font-semibold rounded-xl h-12">
+   410→   410→                        Sign In
+   411→   411→                      </Button>
+   412→   412→                    )}
+   413→   413→                  </div>
+   414→   414→                </div>
+   415→   415→              </SheetContent>
+   416→   416→            </Sheet>
+   417→   417→          </div>
+   418→   418→        </div>
+   419→   419→      </div>
+   420→   420→    </nav>
+   421→   421→  )
+   422→   422→}
+   423→   423→
+   424→   424→function MegaphoneIcon({ className }: { className?: string }) {
+   425→   425→  return <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m3 11 18-5v12L3 13v-2Z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>
+   426→   426→}
+   427→   427→
+   428→   428→// ============================================================
+   429→   429→// LANDING PAGE
+   430→   430→// ============================================================
+   431→   431→function LandingPage() {
+   432→   432→  const { navigateTo, user } = useAppStore()
+   433→   433→  const [products, setProducts] = useState<Product[]>([])
+   434→   434→
+   435→   435→  useEffect(() => {
+   436→   436→    productService.getAll().then(r => r.data && setProducts(r.data))
+   437→   437→  }, [])
+   438→   438→
+   439→   439→  const scrollToSection = (id: string) => {
+   440→   440→    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
+   441→   441→  }
+   442→   442→
+   443→   443→  const heroProducts = products.slice(0, 4)
+   444→   444→
+   445→   445→  return (
+   446→   446→    <div className="min-h-screen">
+   447→   447→      {/* ═══════════════════════════════════════════════════════════
+   448→   448→          A. HERO SECTION — housewine.nl style dark hero with gradient blobs
+   449→   449→          ═══════════════════════════════════════════════════════════ */}
+   450→   450→      <section className="relative min-h-screen flex items-center overflow-hidden bg-[#1f1e1c]">
+   451→   451→        {/* Animated gradient blobs */}
+   452→   452→        <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
+   453→   453→          <div
+   454→   454→            className="absolute mix-blend-screen opacity-25 animate-hero-drift-1"
+   455→   455→            style={{
+   456→   456→              width: '880px', height: '520px', left: '-5%', top: '0%',
+   457→   457→              backgroundImage: 'radial-gradient(ellipse closest-side, oklch(55% 0.09 155) 0%, transparent 75%)',
+   458→   458→              filter: 'blur(60px)'
+   459→   459→            }}
+   460→   460→          />
+   461→   461→          <div
+   462→   462→            className="absolute mix-blend-multiply opacity-20 animate-hero-drift-2"
+   463→   463→            style={{
+   464→   464→              width: '720px', height: '480px', right: '-8%', top: '10%',
+   465→   465→              backgroundImage: 'radial-gradient(ellipse closest-side, oklch(75% 0.1 95) 0%, transparent 75%)',
+   466→   466→              filter: 'blur(70px)'
+   467→   467→            }}
+   468→   468→          />
+   469→   469→          <div
+   470→   470→            className="absolute mix-blend-screen opacity-15 animate-hero-drift-3"
+   471→   471→            style={{
+   472→   472→              width: '600px', height: '400px', left: '30%', bottom: '5%',
+   473→   473→              backgroundImage: 'radial-gradient(ellipse closest-side, oklch(65% 0.08 170) 0%, transparent 75%)',
+   474→   474→              filter: 'blur(80px)'
+   475→   475→            }}
+   476→   476→          />
+   477→   477→          <div
+   478→   478→            className="absolute mix-blend-multiply opacity-18 animate-hero-drift-4"
+   479→   479→            style={{
+   480→   480→              width: '500px', height: '350px', right: '20%', top: '50%',
+   481→   481→              backgroundImage: 'radial-gradient(ellipse closest-side, oklch(78% 0.06 145) 0%, transparent 75%)',
+   482→   482→              filter: 'blur(90px)'
+   483→   483→            }}
+   484→   484→          />
+   485→   485→          <div
+   486→   486→            className="absolute mix-blend-screen opacity-12 animate-hero-drift-5"
+   487→   487→            style={{
+   488→   488→              width: '700px', height: '450px', left: '10%', top: '60%',
+   489→   489→              backgroundImage: 'radial-gradient(ellipse closest-side, oklch(70% 0.07 160) 0%, transparent 75%)',
+   490→   490→              filter: 'blur(75px)'
+   491→   491→            }}
+   492→   492→          />
+   493→   493→        </div>
+   494→   494→
+   495→   495→        {/* Content */}
+   496→   496→        <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-16 lg:pt-32 lg:pb-24">
+   497→   497→          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+   498→   498→            {/* LEFT — Headline & CTA */}
+   499→   499→            <motion.div initial="hidden" animate="visible" variants={staggerContainer}>
+   500→   500→              <motion.div variants={fadeInUp}>
+
+[showing lines 1-500 of 2002; use offset=501 with limit to continue reading]

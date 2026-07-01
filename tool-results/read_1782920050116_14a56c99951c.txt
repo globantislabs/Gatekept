@@ -1,0 +1,502 @@
+  2600→                        <Package className="w-3.5 h-3.5" style={{ color: A.blue }} />
+  2601→                      </div>
+  2602→                      <div className="flex-1 min-w-0">
+  2603→                        <p className="text-sm truncate" style={{ color: A.text }}>Order ₹{o.amount?.toLocaleString()} <span style={{ color: A.textMuted }}>by {o.user?.name || 'Customer'}</span></p>
+  2604→                        <p className="text-[11px]" style={{ color: A.textMuted }}>{new Date(o.created_at).toLocaleDateString()}</p>
+  2605→                      </div>
+  2606→                      <StatusBadge status={o.status} />
+  2607→                    </div>
+  2608→                  ))}
+  2609→                </div>
+  2610→              </div>
+  2611→
+  2612→              <div className="bg-white border rounded-lg p-5" style={{ borderColor: A.border }}>
+  2613→                <h3 className="text-sm font-semibold mb-4" style={{ color: A.text }}>Quick Stats</h3>
+  2614→                <div className="space-y-4">
+  2615→                  <div>
+  2616→                    <div className="flex items-center justify-between mb-1.5">
+  2617→                      <span className="text-[12px]" style={{ color: A.textSecondary }}>Conversion Rate</span>
+  2618→                      <span className="text-[12px] font-semibold" style={{ color: A.green }}>{stats.conversionRate}%</span>
+  2619→                    </div>
+  2620→                    <div className="h-1.5 rounded-full overflow-hidden" style={{ background: A.borderLight }}>
+  2621→                      <div className="h-full rounded-full" style={{ width: `${stats.conversionRate}%`, background: A.green }} />
+  2622→                    </div>
+  2623→                  </div>
+  2624→                  <div>
+  2625→                    <div className="flex items-center justify-between mb-1.5">
+  2626→                      <span className="text-[12px]" style={{ color: A.textSecondary }}>Learning Completion</span>
+  2627→                      <span className="text-[12px] font-semibold" style={{ color: A.blue }}>{stats.totalUsers ? Math.round(stats.learningCompleted / stats.totalUsers * 100) : 0}%</span>
+  2628→                    </div>
+  2629→                    <div className="h-1.5 rounded-full overflow-hidden" style={{ background: A.borderLight }}>
+  2630→                      <div className="h-full rounded-full" style={{ width: `${stats.totalUsers ? Math.round(stats.learningCompleted / stats.totalUsers * 100) : 0}%`, background: A.blue }} />
+  2631→                    </div>
+  2632→                  </div>
+  2633→                  <div>
+  2634→                    <div className="flex items-center justify-between mb-1.5">
+  2635→                      <span className="text-[12px]" style={{ color: A.textSecondary }}>Order Fulfillment</span>
+  2636→                      <span className="text-[12px] font-semibold" style={{ color: A.lime }}>{stats.totalOrders ? Math.round((orders.filter((o: any) => o.status === 'DELIVERED').length / stats.totalOrders) * 100) : 0}%</span>
+  2637→                    </div>
+  2638→                    <div className="h-1.5 rounded-full overflow-hidden" style={{ background: A.borderLight }}>
+  2639→                      <div className="h-full rounded-full" style={{ width: `${stats.totalOrders ? Math.round((orders.filter((o: any) => o.status === 'DELIVERED').length / stats.totalOrders) * 100) : 0}%`, background: A.lime }} />
+  2640→                    </div>
+  2641→                  </div>
+  2642→                  <Separator style={{ background: A.border }} />
+  2643→                  <div className="grid grid-cols-2 gap-3">
+  2644→                    <div className="rounded-lg p-3 text-center" style={{ background: A.bg }}>
+  2645→                      <p className="font-bold text-lg" style={{ color: A.text }}>{stats.learningCompleted}</p>
+  2646→                      <p className="text-[10px]" style={{ color: A.textMuted }}>Completed</p>
+  2647→                    </div>
+  2648→                    <div className="rounded-lg p-3 text-center" style={{ background: A.bg }}>
+  2649→                      <p className="font-bold text-lg" style={{ color: A.text }}>{stats.totalUsers - stats.learningCompleted}</p>
+  2650→                      <p className="text-[10px]" style={{ color: A.textMuted }}>Pending</p>
+  2651→                    </div>
+  2652→                  </div>
+  2653→                </div>
+  2654→              </div>
+  2655→            </div>
+  2656→          </div>
+  2657→        )
+  2658→
+  2659→      case 'users':
+  2660→        return (
+  2661→          <div className="space-y-4">
+  2662→            <div className="flex items-center justify-between">
+  2663→              <div>
+  2664→                <h2 className="text-base font-semibold" style={{ color: A.text }}>Users</h2>
+  2665→                <p className="text-[12px]" style={{ color: A.textMuted }}>{users.length} registered users</p>
+  2666→              </div>
+  2667→              <div className="relative">
+  2668→                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2" style={{ color: A.textMuted }} />
+  2669→                <Input placeholder="Search users..." value={userSearch} onChange={e => setUserSearch(e.target.value)} className="pl-9 w-64 h-8 text-sm" style={{ background: '#fff', borderColor: A.border, color: A.text }} />
+  2670→              </div>
+  2671→            </div>
+  2672→            <div className="bg-white border rounded-lg overflow-hidden" style={{ borderColor: A.border }}>
+  2673→              <Table>
+  2674→                <TableHeader>
+  2675→                  <TableRow style={{ borderColor: A.borderLight }} className="hover:bg-transparent">
+  2676→                    <TableHead className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: A.textMuted }}>User</TableHead>
+  2677→                    <TableHead className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: A.textMuted }}>Contact</TableHead>
+  2678→                    <TableHead className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: A.textMuted }}>Learning</TableHead>
+  2679→                    <TableHead className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: A.textMuted }}>Status</TableHead>
+  2680→                    <TableHead className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: A.textMuted }}>Joined</TableHead>
+  2681→                    <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-right" style={{ color: A.textMuted }}>Actions</TableHead>
+  2682→                  </TableRow>
+  2683→                </TableHeader>
+  2684→                <TableBody>
+  2685→                  {filteredUsers.map((u: any) => (
+  2686→                    <TableRow key={u.id} className="hover:bg-[#f8f7f5]" style={{ borderColor: A.borderLight }}>
+  2687→                      <TableCell>
+  2688→                        <div className="flex items-center gap-3">
+  2689→                          <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: A.greenLight }}>
+  2690→                            <span className="text-[11px] font-bold" style={{ color: A.green }}>{u.name?.charAt(0) || '?'}</span>
+  2691→                          </div>
+  2692→                          <div>
+  2693→                            <p className="text-sm font-medium" style={{ color: A.text }}>{u.name}</p>
+  2694→                            {u.is_admin && <span className="text-[9px] font-medium px-1.5 py-0.5 rounded" style={{ color: A.green, background: A.greenLight }}>Admin</span>}
+  2695→                          </div>
+  2696→                        </div>
+  2697→                      </TableCell>
+  2698→                      <TableCell className="text-[12px]" style={{ color: A.textSecondary }}>{u.email || u.phone || '-'}</TableCell>
+  2699→                      <TableCell>
+  2700→                        <div className="flex items-center gap-2">
+  2701→                          <div className="w-16 h-1.5 rounded-full overflow-hidden" style={{ background: A.borderLight }}>
+  2702→                            <div className="h-full rounded-full" style={{ width: u.learning_completed ? '100%' : '0%', background: u.learning_completed ? A.green : A.amber }} />
+  2703→                          </div>
+  2704→                          <span className="text-[11px]" style={{ color: A.textMuted }}>{u.learning_completed ? '100%' : '0%'}</span>
+  2705→                        </div>
+  2706→                      </TableCell>
+  2707→                      <TableCell>
+  2708→                        <StatusBadge status={u.learning_completed ? 'DELIVERED' : 'PENDING'} />
+  2709→                      </TableCell>
+  2710→                      <TableCell className="text-[11px]" style={{ color: A.textMuted }}>{new Date(u.created_at).toLocaleDateString()}</TableCell>
+  2711→                      <TableCell className="text-right">
+  2712→                        <Switch checked={u.learning_completed} onCheckedChange={async (checked) => { await userService.updateLearningCompleted(u.user_id, checked); setUsers(prev => prev.map(p => p.user_id === u.user_id ? { ...p, learning_completed: checked } : p)); toast.success(`Learning ${checked ? 'completed' : 'reset'}`) }} />
+  2713→                      </TableCell>
+  2714→                    </TableRow>
+  2715→                  ))}
+  2716→                </TableBody>
+  2717→              </Table>
+  2718→            </div>
+  2719→          </div>
+  2720→        )
+  2721→
+  2722→      case 'campaigns':
+  2723→        return <CampaignManager campaigns={campaigns} setCampaigns={setCampaigns} scans={scans} orders={orders} />
+  2724→
+  2725→      case 'qr':
+  2726→        return (
+  2727→          <div className="space-y-4">
+  2728→            <div className="flex items-center justify-between">
+  2729→              <div>
+  2730→                <h2 className="text-base font-semibold" style={{ color: A.text }}>QR Codes</h2>
+  2731→                <p className="text-[12px]" style={{ color: A.textMuted }}>Generate and manage QR codes for campaigns</p>
+  2732→              </div>
+  2733→            </div>
+  2734→            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+  2735→              {campaigns.filter(c => c.status === 'ACTIVE').map(campaign => {
+  2736→                const campaignScans = scans.filter(s => s.campaign_id === campaign.id)
+  2737→                const qrUrl = `https://notjust.health/scan/${campaign.id}`
+  2738→                return (
+  2739→                  <div key={campaign.id} className="bg-white border rounded-lg p-5 text-center hover:shadow-sm transition-shadow" style={{ borderColor: A.border }}>
+  2740→                    <div className="mb-4 inline-block p-3 bg-white rounded-lg border" style={{ borderColor: A.borderLight }}>
+  2741→                      <QRCodeSVG value={qrUrl} size={120} bgColor="#ffffff" fgColor="#1f1e1c" level="M" />
+  2742→                    </div>
+  2743→                    <h3 className="font-semibold text-sm mb-1" style={{ color: A.text }}>{campaign.name}</h3>
+  2744→                    <span className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded mb-3" style={{ color: A.blue, background: A.blueLight }}>{campaign.channel}</span>
+  2745→                    <div className="flex items-center justify-center gap-4 text-[11px] mb-4" style={{ color: A.textSecondary }}>
+  2746→                      <span className="flex items-center gap-1"><Scan className="w-3 h-3" /> {campaignScans.length} scans</span>
+  2747→                    </div>
+  2748→                    <div className="flex gap-2">
+  2749→                      <Button variant="outline" size="sm" className="flex-1 rounded-md text-[11px] h-8" style={{ borderColor: A.border, color: A.text }} onClick={() => { const svgEl = document.querySelector('svg'); if (svgEl) { const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d'); const data = new XMLSerializer().serializeToString(svgEl); const img = document.createElement('img'); img.onload = () => { canvas.width = img.width; canvas.height = img.height; ctx?.drawImage(img, 0, 0); const a = document.createElement('a'); a.download = `qr-${campaign.name}.png`; a.href = canvas.toDataURL('image/png'); a.click(); }; img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(data))); } else { toast.info('Right-click QR to save'); } }}>
+  2750→                        <Download className="w-3 h-3 mr-1" /> Download
+  2751→                      </Button>
+  2752→                      <Button variant="outline" size="sm" className="flex-1 rounded-md text-[11px] h-8" style={{ borderColor: A.border, color: A.text }} onClick={() => { navigator.clipboard.writeText(qrUrl); toast.success('QR URL copied!') }}>
+  2753→                        <Copy className="w-3 h-3 mr-1" /> Copy URL
+  2754→                      </Button>
+  2755→                    </div>
+  2756→                  </div>
+  2757→                )
+  2758→              })}
+  2759→              {campaigns.filter(c => c.status === 'ACTIVE').length === 0 && (
+  2760→                <div className="col-span-full bg-white border rounded-lg py-16 text-center" style={{ borderColor: A.border }}>
+  2761→                  <QrCode className="w-10 h-10 mx-auto mb-3" style={{ color: A.border }} />
+  2762→                  <p className="text-sm" style={{ color: A.textMuted }}>No active campaigns. Create one to generate QR codes.</p>
+  2763→                </div>
+  2764→              )}
+  2765→            </div>
+  2766→            <div className="bg-white border rounded-lg overflow-hidden" style={{ borderColor: A.border }}>
+  2767→              <div className="px-5 py-3 flex items-center justify-between" style={{ borderBottom: `1px solid ${A.borderLight}` }}>
+  2768→                <h3 className="text-sm font-semibold" style={{ color: A.text }}>Scan History</h3>
+  2769→                <span className="text-[11px] px-2 py-0.5 rounded" style={{ color: A.textSecondary, background: A.bg }}>{scans.length} scans</span>
+  2770→              </div>
+  2771→              <Table>
+  2772→                <TableHeader>
+  2773→                  <TableRow className="hover:bg-transparent" style={{ borderColor: A.borderLight }}>
+  2774→                    <TableHead className="text-[11px]" style={{ color: A.textMuted }}>ID</TableHead>
+  2775→                    <TableHead className="text-[11px]" style={{ color: A.textMuted }}>Campaign</TableHead>
+  2776→                    <TableHead className="text-[11px]" style={{ color: A.textMuted }}>Device</TableHead>
+  2777→                    <TableHead className="text-[11px]" style={{ color: A.textMuted }}>Location</TableHead>
+  2778→                    <TableHead className="text-[11px]" style={{ color: A.textMuted }}>Date</TableHead>
+  2779→                  </TableRow>
+  2780→                </TableHeader>
+  2781→                <TableBody>
+  2782→                  {scans.slice(0, 20).map(s => (
+  2783→                    <TableRow key={s.id} className="hover:bg-[#f8f7f5]" style={{ borderColor: A.borderLight }}>
+  2784→                      <TableCell className="font-mono text-[11px]" style={{ color: A.textMuted }}>{s.id.slice(0, 8)}</TableCell>
+  2785→                      <TableCell className="text-[12px]" style={{ color: A.text }}>{s.campaign_id ? s.campaign_id.slice(0, 8) : '-'}</TableCell>
+  2786→                      <TableCell className="text-[11px]" style={{ color: A.textSecondary }}>{s.device || '-'}</TableCell>
+  2787→                      <TableCell className="text-[11px]" style={{ color: A.textSecondary }}>{s.location || '-'}</TableCell>
+  2788→                      <TableCell className="text-[11px]" style={{ color: A.textMuted }}>{new Date(s.created_at).toLocaleDateString()}</TableCell>
+  2789→                    </TableRow>
+  2790→                  ))}
+  2791→                </TableBody>
+  2792→              </Table>
+  2793→            </div>
+  2794→          </div>
+  2795→        )
+  2796→
+  2797→      case 'orders':
+  2798→        return (
+  2799→          <div className="space-y-4">
+  2800→            <div className="flex items-center justify-between">
+  2801→              <div>
+  2802→                <h2 className="text-base font-semibold" style={{ color: A.text }}>Orders</h2>
+  2803→                <p className="text-[12px]" style={{ color: A.textMuted }}>{orders.length} total orders</p>
+  2804→              </div>
+  2805→              <div className="flex items-center gap-1 p-1 rounded-md border" style={{ borderColor: A.border, background: '#fff' }}>
+  2806→                <button onClick={() => setOrderView('table')} className={`px-3 py-1.5 rounded text-[11px] font-medium transition-colors ${orderView === 'table' ? 'text-white' : ''}`} style={orderView === 'table' ? { background: A.green, color: '#fff' } : { color: A.textSecondary }}>
+  2807→                  <ClipboardList className="w-3.5 h-3.5 inline mr-1" /> Table
+  2808→                </button>
+  2809→                <button onClick={() => setOrderView('kanban')} className={`px-3 py-1.5 rounded text-[11px] font-medium transition-colors ${orderView === 'kanban' ? 'text-white' : ''}`} style={orderView === 'kanban' ? { background: A.green, color: '#fff' } : { color: A.textSecondary }}>
+  2810→                  <Columns3 className="w-3.5 h-3.5 inline mr-1" /> Board
+  2811→                </button>
+  2812→              </div>
+  2813→            </div>
+  2814→
+  2815→            {orderView === 'kanban' ? (
+  2816→              <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
+  2817→                {orderStatuses.map(status => {
+  2818→                  const statusOrders = ordersByKanbanStatus(status)
+  2819→                  const c = statusColors[status] || { text: A.textMuted, bg: A.bg, dot: A.textMuted }
+  2820→                  return (
+  2821→                    <div key={status} className="rounded-lg p-3" style={{ background: A.bg, border: `1px solid ${A.border}` }}>
+  2822→                      <div className="flex items-center justify-between mb-3">
+  2823→                        <div className="flex items-center gap-2">
+  2824→                          <div className="w-2 h-2 rounded-full" style={{ background: c.dot }} />
+  2825→                          <h3 className="text-xs font-semibold" style={{ color: c.text }}>{status}</h3>
+  2826→                        </div>
+  2827→                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded" style={{ color: c.text, background: c.bg }}>{statusOrders.length}</span>
+  2828→                      </div>
+  2829→                      <div className="space-y-2 max-h-[420px] overflow-y-auto">
+  2830→                        {statusOrders.map((o: any) => (
+  2831→                          <div key={o.id} className="bg-white border rounded-lg p-3 cursor-pointer hover:shadow-sm transition-shadow" style={{ borderColor: A.border }} onClick={() => setSelectedOrder(o)}>
+  2832→                            <p className="font-mono text-[9px] mb-1" style={{ color: A.textMuted }}>{o.id.slice(0, 10)}</p>
+  2833→                            <p className="text-[12px] font-medium truncate" style={{ color: A.text }}>{o.user?.name || 'Customer'}</p>
+  2834→                            <div className="flex items-center justify-between mt-2">
+  2835→                              <p className="font-semibold text-[12px]" style={{ color: A.green }}>₹{o.amount?.toLocaleString()}</p>
+  2836→                              <Select value={o.status} onValueChange={async (newStatus) => { await orderService.updateStatus(o.id, newStatus); setOrders(prev => prev.map(p => p.id === o.id ? { ...p, status: newStatus } : p)); toast.success('Status updated') }}>
+  2837→                                <SelectTrigger className="h-5 text-[9px] w-[70px]" style={{ background: A.bg, borderColor: A.border, color: A.textSecondary }} onClick={e => e.stopPropagation()}><SelectValue /></SelectTrigger>
+  2838→                                <SelectContent style={{ background: '#fff', borderColor: A.border }}>
+  2839→                                  <SelectItem value="PENDING" style={{ color: A.text }}>Pending</SelectItem>
+  2840→                                  <SelectItem value="CONFIRMED" style={{ color: A.text }}>Confirmed</SelectItem>
+  2841→                                  <SelectItem value="SHIPPED" style={{ color: A.text }}>Shipped</SelectItem>
+  2842→                                  <SelectItem value="DELIVERED" style={{ color: A.text }}>Delivered</SelectItem>
+  2843→                                  <SelectItem value="CANCELLED" style={{ color: A.text }}>Cancelled</SelectItem>
+  2844→                                </SelectContent>
+  2845→                              </Select>
+  2846→                            </div>
+  2847→                            <p className="text-[9px] mt-1" style={{ color: A.textMuted }}>{new Date(o.created_at).toLocaleDateString()}</p>
+  2848→                          </div>
+  2849→                        ))}
+  2850→                        {statusOrders.length === 0 && <p className="text-[10px] text-center py-6" style={{ color: A.textMuted }}>No orders</p>}
+  2851→                      </div>
+  2852→                    </div>
+  2853→                  )
+  2854→                })}
+  2855→              </div>
+  2856→            ) : (
+  2857→              <div className="bg-white border rounded-lg overflow-hidden" style={{ borderColor: A.border }}>
+  2858→                <Table>
+  2859→                  <TableHeader>
+  2860→                    <TableRow className="hover:bg-transparent" style={{ borderColor: A.borderLight }}>
+  2861→                      <TableHead className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: A.textMuted }}>Order ID</TableHead>
+  2862→                      <TableHead className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: A.textMuted }}>Customer</TableHead>
+  2863→                      <TableHead className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: A.textMuted }}>Amount</TableHead>
+  2864→                      <TableHead className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: A.textMuted }}>Status</TableHead>
+  2865→                      <TableHead className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: A.textMuted }}>Payment</TableHead>
+  2866→                      <TableHead className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: A.textMuted }}>Date</TableHead>
+  2867→                    </TableRow>
+  2868→                  </TableHeader>
+  2869→                  <TableBody>
+  2870→                    {orders.map((o: any) => (
+  2871→                      <TableRow key={o.id} className="hover:bg-[#f8f7f5] cursor-pointer" style={{ borderColor: A.borderLight }} onClick={() => setSelectedOrder(o)}>
+  2872→                        <TableCell className="font-mono text-[11px]" style={{ color: A.textMuted }}>{o.id.slice(0, 10)}</TableCell>
+  2873→                        <TableCell className="text-[12px]" style={{ color: A.text }}>{o.user?.name || 'Customer'}</TableCell>
+  2874→                        <TableCell className="font-semibold text-[12px]" style={{ color: A.green }}>₹{o.amount?.toLocaleString()}</TableCell>
+  2875→                        <TableCell><StatusBadge status={o.status} /></TableCell>
+  2876→                        <TableCell className="text-[11px]" style={{ color: A.textSecondary }}>{o.payment_method || 'N/A'}</TableCell>
+  2877→                        <TableCell className="text-[11px]" style={{ color: A.textMuted }}>{new Date(o.created_at).toLocaleDateString()}</TableCell>
+  2878→                      </TableRow>
+  2879→                    ))}
+  2880→                  </TableBody>
+  2881→                </Table>
+  2882→              </div>
+  2883→            )}
+  2884→
+  2885→            <Dialog open={!!selectedOrder} onOpenChange={() => setSelectedOrder(null)}>
+  2886→              <DialogContent className="max-w-md" style={{ background: '#fff', borderColor: A.border, color: A.text }}>
+  2887→                <DialogHeader><DialogTitle style={{ color: A.text }}>Order Details</DialogTitle></DialogHeader>
+  2888→                {selectedOrder && (
+  2889→                  <div className="space-y-4">
+  2890→                    <div className="grid grid-cols-2 gap-3 text-sm">
+  2891→                      <div><span className="text-[11px]" style={{ color: A.textMuted }}>Order ID</span><p className="font-mono text-[11px]" style={{ color: A.text }}>{selectedOrder.id}</p></div>
+  2892→                      <div><span className="text-[11px]" style={{ color: A.textMuted }}>Customer</span><p className="font-medium" style={{ color: A.text }}>{selectedOrder.user?.name || selectedOrder.user_id}</p></div>
+  2893→                      <div><span className="text-[11px]" style={{ color: A.textMuted }}>Amount</span><p className="font-bold" style={{ color: A.green }}>₹{selectedOrder.amount?.toLocaleString()}</p></div>
+  2894→                      <div><span className="text-[11px]" style={{ color: A.textMuted }}>Status</span><StatusBadge status={selectedOrder.status} /></div>
+  2895→                      <div><span className="text-[11px]" style={{ color: A.textMuted }}>Payment</span><p className="text-[11px]" style={{ color: A.text }}>{selectedOrder.payment_method || 'N/A'}</p></div>
+  2896→                      <div><span className="text-[11px]" style={{ color: A.textMuted }}>Date</span><p className="text-[11px]" style={{ color: A.text }}>{new Date(selectedOrder.created_at).toLocaleDateString()}</p></div>
+  2897→                    </div>
+  2898→                    <Separator style={{ background: A.border }} />
+  2899→                    <Select value={selectedOrder.status} onValueChange={async (newStatus) => { await orderService.updateStatus(selectedOrder.id, newStatus); setOrders(prev => prev.map(p => p.id === selectedOrder.id ? { ...p, status: newStatus } : p)); setSelectedOrder({ ...selectedOrder, status: newStatus }); toast.success('Status updated') }}>
+  2900→                      <SelectTrigger className="rounded-md" style={{ borderColor: A.border, color: A.text }}><SelectValue /></SelectTrigger>
+  2901→                      <SelectContent style={{ background: '#fff', borderColor: A.border }}>
+  2902→                        <SelectItem value="PENDING" style={{ color: A.text }}>Pending</SelectItem>
+  2903→                        <SelectItem value="CONFIRMED" style={{ color: A.text }}>Confirmed</SelectItem>
+  2904→                        <SelectItem value="SHIPPED" style={{ color: A.text }}>Shipped</SelectItem>
+  2905→                        <SelectItem value="DELIVERED" style={{ color: A.text }}>Delivered</SelectItem>
+  2906→                        <SelectItem value="CANCELLED" style={{ color: A.text }}>Cancelled</SelectItem>
+  2907→                      </SelectContent>
+  2908→                    </Select>
+  2909→                  </div>
+  2910→                )}
+  2911→              </DialogContent>
+  2912→            </Dialog>
+  2913→          </div>
+  2914→        )
+  2915→
+  2916→      case 'analytics':
+  2917→        return (
+  2918→          <div className="space-y-4">
+  2919→            <h2 className="text-base font-semibold" style={{ color: A.text }}>Analytics</h2>
+  2920→            <div className="grid lg:grid-cols-2 gap-4">
+  2921→              <div className="bg-white border rounded-lg p-5" style={{ borderColor: A.border }}>
+  2922→                <h3 className="text-sm font-semibold mb-4" style={{ color: A.text }}>Campaigns by Channel</h3>
+  2923→                <ResponsiveContainer width="100%" height={280}>
+  2924→                  <RechartsBarChart data={campaignsByChannel}>
+  2925→                    <CartesianGrid strokeDasharray="3 3" stroke="#eeebe5" />
+  2926→                    <XAxis dataKey="name" tick={{ fontSize: 10, fill: A.textMuted }} axisLine={{ stroke: A.border }} />
+  2927→                    <YAxis tick={{ fontSize: 10, fill: A.textMuted }} axisLine={{ stroke: A.border }} />
+  2928→                    <Tooltip contentStyle={{ backgroundColor: '#fff', border: `1px solid ${A.border}`, borderRadius: 8, color: A.text, fontSize: 12 }} />
+  2929→                    <Bar dataKey="value" fill={A.lime} radius={[4, 4, 0, 0]} />
+  2930→                  </RechartsBarChart>
+  2931→                </ResponsiveContainer>
+  2932→              </div>
+  2933→              <div className="bg-white border rounded-lg p-5" style={{ borderColor: A.border }}>
+  2934→                <h3 className="text-sm font-semibold mb-4" style={{ color: A.text }}>Scans by Campaign</h3>
+  2935→                <ResponsiveContainer width="100%" height={280}>
+  2936→                  <RechartsBarChart data={scansByCampaign}>
+  2937→                    <CartesianGrid strokeDasharray="3 3" stroke="#eeebe5" />
+  2938→                    <XAxis dataKey="name" tick={{ fontSize: 10, fill: A.textMuted }} axisLine={{ stroke: A.border }} />
+  2939→                    <YAxis tick={{ fontSize: 10, fill: A.textMuted }} axisLine={{ stroke: A.border }} />
+  2940→                    <Tooltip contentStyle={{ backgroundColor: '#fff', border: `1px solid ${A.border}`, borderRadius: 8, color: A.text, fontSize: 12 }} />
+  2941→                    <Bar dataKey="value" fill={A.green} radius={[4, 4, 0, 0]} />
+  2942→                  </RechartsBarChart>
+  2943→                </ResponsiveContainer>
+  2944→              </div>
+  2945→              <div className="bg-white border rounded-lg p-5" style={{ borderColor: A.border }}>
+  2946→                <h3 className="text-sm font-semibold mb-4" style={{ color: A.text }}>Conversion Funnel</h3>
+  2947→                <div className="flex items-center justify-center h-[280px]">
+  2948→                  <div className="text-center">
+  2949→                    <p className="text-5xl font-bold" style={{ color: A.green }}>{stats.conversionRate}%</p>
+  2950→                    <p className="mt-2 text-sm" style={{ color: A.textSecondary }}>Learning Completion Rate</p>
+  2951→                    <div className="mt-6 grid grid-cols-2 gap-6">
+  2952→                      <div className="rounded-lg p-4" style={{ background: A.bg }}><p className="font-bold text-xl" style={{ color: A.green }}>{stats.learningCompleted}</p><p className="text-[11px]" style={{ color: A.textMuted }}>Completed</p></div>
+  2953→                      <div className="rounded-lg p-4" style={{ background: A.bg }}><p className="font-bold text-xl" style={{ color: A.amber }}>{stats.totalUsers - stats.learningCompleted}</p><p className="text-[11px]" style={{ color: A.textMuted }}>Pending</p></div>
+  2954→                    </div>
+  2955→                  </div>
+  2956→                </div>
+  2957→              </div>
+  2958→              <div className="bg-white border rounded-lg p-5" style={{ borderColor: A.border }}>
+  2959→                <h3 className="text-sm font-semibold mb-4" style={{ color: A.text }}>Revenue Trend</h3>
+  2960→                <ResponsiveContainer width="100%" height={280}>
+  2961→                  <LineChart data={revenueTrend}>
+  2962→                    <CartesianGrid strokeDasharray="3 3" stroke="#eeebe5" />
+  2963→                    <XAxis dataKey="month" tick={{ fontSize: 10, fill: A.textMuted }} axisLine={{ stroke: A.border }} />
+  2964→                    <YAxis tick={{ fontSize: 10, fill: A.textMuted }} axisLine={{ stroke: A.border }} />
+  2965→                    <Tooltip contentStyle={{ backgroundColor: '#fff', border: `1px solid ${A.border}`, borderRadius: 8, color: A.text, fontSize: 12 }} />
+  2966→                    <Line type="monotone" dataKey="revenue" stroke={A.green} strokeWidth={2.5} dot={{ r: 4, fill: A.green }} />
+  2967→                  </LineChart>
+  2968→                </ResponsiveContainer>
+  2969→              </div>
+  2970→            </div>
+  2971→          </div>
+  2972→        )
+  2973→
+  2974→      case 'content':
+  2975→        return <QuizManager questions={questions} setQuestions={setQuestions} />
+  2976→
+  2977→      case 'guarantees':
+  2978→        return (
+  2979→          <div className="space-y-4">
+  2980→            <h2 className="text-base font-semibold" style={{ color: A.text }}>Guarantee Plans</h2>
+  2981→            <div className="grid md:grid-cols-2 gap-4">
+  2982→              {guarantees.map(plan => (
+  2983→                <div key={plan.id} className="bg-white border rounded-lg p-5 hover:shadow-sm transition-shadow" style={{ borderColor: A.border }}>
+  2984→                  <div className="flex items-center gap-3 mb-4">
+  2985→                    <div className="w-9 h-9 rounded-md flex items-center justify-center" style={{ background: A.greenLight }}><Shield className="w-4 h-4" style={{ color: A.green }} /></div>
+  2986→                    <div><h3 className="font-semibold text-sm" style={{ color: A.text }}>{plan.name}</h3><p className="text-[11px]" style={{ color: A.textMuted }}>{plan.duration}</p></div>
+  2987→                  </div>
+  2988→                  <p className="text-[12px] mb-4 leading-relaxed" style={{ color: A.textSecondary }}>{plan.description}</p>
+  2989→                  <ul className="space-y-2">
+  2990→                    {plan.features.map((f, i) => (<li key={i} className="flex items-center gap-2 text-[12px]" style={{ color: A.text }}><CheckCircle className="w-3.5 h-3.5 flex-shrink-0" style={{ color: A.green }} /> {f}</li>))}
+  2991→                  </ul>
+  2992→                </div>
+  2993→              ))}
+  2994→            </div>
+  2995→          </div>
+  2996→        )
+  2997→
+  2998→      default: return null
+  2999→    }
+  3000→  }
+  3001→
+  3002→  return (
+  3003→    <div className="min-h-screen flex font-[family-name:var(--font-admin)]" style={{ background: A.bg }}>
+  3004→      {/* Sidebar — Dark */}
+  3005→      <aside className={`${sidebarCollapsed ? 'w-[56px]' : 'w-[220px]'} flex flex-col flex-shrink-0 sticky top-0 h-screen transition-all duration-200`} style={{ background: A.sidebarBg, borderRight: '1px solid #2a2926' }}>
+  3006→        <div className="px-3 py-3 flex items-center gap-2.5 h-[52px]" style={{ borderBottom: '1px solid #2a2926' }}>
+  3007→          <div className="w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0" style={{ background: A.green }}>
+  3008→            <Leaf className="w-3.5 h-3.5 text-white" />
+  3009→          </div>
+  3010→          {!sidebarCollapsed && (
+  3011→            <div className="flex-1 min-w-0">
+  3012→              <p className="font-semibold text-[12px] text-white truncate">NotJust</p>
+  3013→              <p className="text-[8px]" style={{ color: '#6b6560' }}>Admin Console</p>
+  3014→            </div>
+  3015→          )}
+  3016→          <button onClick={() => setSidebarCollapsed(!sidebarCollapsed)} className="w-5 h-5 rounded flex items-center justify-center hover:bg-[#2a2926] transition-colors flex-shrink-0" style={{ color: '#6b6560' }}>
+  3017→            <ChevronLeft className={`w-3 h-3 transition-transform ${sidebarCollapsed ? 'rotate-180' : ''}`} />
+  3018→          </button>
+  3019→        </div>
+  3020→        <nav className="flex-1 px-2 py-2 space-y-0.5 overflow-y-auto">
+  3021→          {sidebarItems.map(item => (
+  3022→            <button key={item.value} onClick={() => setAdminTab(item.value)} className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md text-[11px] font-medium transition-all`} style={adminTab === item.value ? { background: A.green, color: '#fff' } : { color: A.sidebarText, background: 'transparent' }} onMouseEnter={e => { if (adminTab !== item.value) (e.currentTarget as HTMLElement).style.background = A.sidebarHover }} onMouseLeave={e => { if (adminTab !== item.value) (e.currentTarget as HTMLElement).style.background = 'transparent' }} title={sidebarCollapsed ? item.label : undefined}>
+  3023→              <item.icon className="w-4 h-4 flex-shrink-0" />
+  3024→              {!sidebarCollapsed && (<><span className="flex-1 text-left">{item.label}</span>{item.badge !== null && (<span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded`} style={adminTab === item.value ? { background: 'rgba(255,255,255,0.2)', color: '#fff' } : { background: '#2a2926', color: '#6b6560' }}>{item.badge}</span>)}</>)}
+  3025→            </button>
+  3026→          ))}
+  3027→        </nav>
+  3028→        <div className="px-3 py-3" style={{ borderTop: '1px solid #2a2926' }}>
+  3029→          <div className="flex items-center gap-2">
+  3030→            <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: A.greenLight }}>
+  3031→              <span className="font-bold text-[10px]" style={{ color: A.green }}>{user?.name?.charAt(0) || 'A'}</span>
+  3032→            </div>
+  3033→            {!sidebarCollapsed && (<div className="flex-1 min-w-0"><p className="text-[11px] font-medium text-white truncate">{user?.name || 'Admin'}</p><p className="text-[9px]" style={{ color: '#6b6560' }}>Administrator</p></div>)}
+  3034→          </div>
+  3035→        </div>
+  3036→      </aside>
+  3037→
+  3038→      {/* Main Area — Light */}
+  3039→      <main className="flex-1 min-h-screen">
+  3040→        {/* Top Bar */}
+  3041→        <div className="bg-white border-b px-5 h-[52px] flex items-center justify-between sticky top-0 z-10" style={{ borderColor: A.border }}>
+  3042→          <div className="flex items-center gap-3">
+  3043→            <div className="flex items-center gap-2">
+  3044→              <div className="w-5 h-5 rounded flex items-center justify-center" style={{ background: A.greenLight }}>
+  3045→                {(() => { const Item = sidebarItems.find(i => i.value === adminTab); return Item ? <Item.icon className="w-3 h-3" style={{ color: A.green }} /> : null })()}
+  3046→              </div>
+  3047→              <span className="font-semibold text-[13px]" style={{ color: A.text }}>{sidebarItems.find(i => i.value === adminTab)?.label || 'Overview'}</span>
+  3048→            </div>
+  3049→            <div className="h-4 w-px" style={{ background: A.border }} />
+  3050→            <span className="text-[11px]" style={{ color: A.textMuted }}>
+  3051→              {adminTab === 'dashboard' && `${stats.totalUsers} users · ${stats.totalOrders} orders · ₹${stats.totalRevenue?.toLocaleString()} revenue`}
+  3052→              {adminTab === 'users' && `${filteredUsers.length} shown`}
+  3053→              {adminTab === 'campaigns' && `${campaigns.length} campaigns`}
+  3054→              {adminTab === 'qr' && `${campaigns.filter(c => c.status === 'ACTIVE').length} QR codes`}
+  3055→              {adminTab === 'orders' && `${orders.length} orders`}
+  3056→              {adminTab === 'analytics' && 'Real-time analytics'}
+  3057→              {adminTab === 'content' && `${questions.length} questions`}
+  3058→              {adminTab === 'guarantees' && `${guarantees.length} plans`}
+  3059→            </span>
+  3060→          </div>
+  3061→          <div className="flex items-center gap-1.5">
+  3062→            {adminTab !== 'dashboard' && adminTab !== 'guarantees' && (
+  3063→              <>
+  3064→                <button onClick={() => {
+  3065→                  if (adminTab === 'users') exportToCSV(filteredUsers, 'notjust-users', [{ key: 'name', label: 'Name' }, { key: 'email', label: 'Email' }, { key: 'phone', label: 'Phone' }, { key: 'country', label: 'Country' }, { key: 'state', label: 'State' }, { key: 'learning_completed', label: 'Learning Completed' }, { key: 'created_at', label: 'Joined' }])
+  3066→                  else if (adminTab === 'orders') exportToCSV(orders, 'notjust-orders', [{ key: 'id', label: 'Order ID' }, { key: 'user_id', label: 'User ID' }, { key: 'status', label: 'Status' }, { key: 'amount', label: 'Amount' }, { key: 'payment_gateway', label: 'Payment Gateway' }, { key: 'created_at', label: 'Date' }])
+  3067→                  else if (adminTab === 'campaigns') exportToCSV(campaigns, 'notjust-campaigns', [{ key: 'name', label: 'Name' }, { key: 'channel', label: 'Channel' }, { key: 'partner_name', label: 'Partner' }, { key: 'location', label: 'Location' }, { key: 'status', label: 'Status' }, { key: 'created_at', label: 'Created' }])
+  3068→                  else if (adminTab === 'qr') exportToCSV(scans, 'notjust-qr-scans', [{ key: 'id', label: 'Scan ID' }, { key: 'campaign_id', label: 'Campaign ID' }, { key: 'device', label: 'Device' }, { key: 'location', label: 'Location' }, { key: 'created_at', label: 'Date' }])
+  3069→                  else if (adminTab === 'analytics') exportToCSV([...orders.map(o => ({ month: new Date(o.created_at).toLocaleDateString('en', { month: 'short' }), revenue: o.amount, status: o.status }))], 'notjust-analytics', [{ key: 'month', label: 'Month' }, { key: 'revenue', label: 'Revenue' }, { key: 'status', label: 'Status' }])
+  3070→                  else if (adminTab === 'content') exportToCSV(questions, 'notjust-quiz-questions', [{ key: 'question', label: 'Question' }, { key: 'category', label: 'Category' }, { key: 'difficulty', label: 'Difficulty' }, { key: 'answer', label: 'Answer Index' }])
+  3071→                }} className="h-7 px-2.5 rounded-md flex items-center gap-1.5 text-[11px] font-medium border transition-colors hover:bg-[#f8f7f5]" style={{ borderColor: A.border, color: A.textSecondary }} title="Export CSV">
+  3072→                  <Download className="w-3 h-3" /> CSV
+  3073→                </button>
+  3074→                <button onClick={() => exportToPDF(sidebarItems.find(i => i.value === adminTab)?.label || 'Report')} className="h-7 px-2.5 rounded-md flex items-center gap-1.5 text-[11px] font-medium border transition-colors hover:bg-[#f8f7f5]" style={{ borderColor: A.border, color: A.textSecondary }} title="Export PDF">
+  3075→                  <FileText className="w-3 h-3" /> PDF
+  3076→                </button>
+  3077→              </>
+  3078→            )}
+  3079→            <button onClick={() => navigateTo('landing')} className="w-7 h-7 rounded-md flex items-center justify-center border transition-colors hover:bg-[#f8f7f5]" style={{ borderColor: A.border, color: A.textMuted }} title="Back to site"><ExternalLink className="w-3.5 h-3.5" /></button>
+  3080→            <button onClick={refreshData} className="w-7 h-7 rounded-md flex items-center justify-center border transition-colors hover:bg-[#f8f7f5]" style={{ borderColor: A.border, color: A.textMuted }} title="Refresh data"><RefreshCw className="w-3.5 h-3.5" /></button>
+  3081→          </div>
+  3082→        </div>
+  3083→        <div className="p-5" data-admin-content>{renderContent()}</div>
+  3084→      </main>
+  3085→    </div>
+  3086→  )
+  3087→}
+  3088→
+  3089→// ============================================================
+  3090→// CAMPAIGN MANAGER — Light Theme
+  3091→// ============================================================
+  3092→function CampaignManager({ campaigns, setCampaigns, scans, orders }: { campaigns: Campaign[]; setCampaigns: React.Dispatch<React.SetStateAction<Campaign[]>>; scans: QrScan[]; orders: any[] }) {
+  3093→  const [dialogOpen, setDialogOpen] = useState(false)
+  3094→  const [detailCampaign, setDetailCampaign] = useState<Campaign | null>(null)
+  3095→  const [form, setForm] = useState({ name: '', channel: 'HOTEL', partner_name: '', location: '' })
+  3096→  const [campaignSales, setCampaignSales] = useState<Record<string, { orderCount: number; revenue: number }>>({})
+  3097→
+  3098→  // Fetch campaign sales data
+  3099→  useEffect(() => {
+
+[showing lines 2600-3099 of 3657; use offset=3100 with limit to continue reading]

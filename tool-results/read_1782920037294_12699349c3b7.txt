@@ -1,0 +1,702 @@
+  1600→                  return (
+  1601→                    <label
+  1602→                      key={i}
+  1603→                      className={`flex items-center gap-3 p-4 rounded-xl border cursor-pointer transition-all ${
+  1604→                        isSelected
+  1605→                          ? 'bg-[#48805b]/5 border-[#48805b]/30 ring-1 ring-[#48805b]/20'
+  1606→                          : 'border-[#e3dfd8] hover:border-[#48805b]/20 hover:bg-[#48805b]/[0.02]'
+  1607→                      }`}
+  1608→                    >
+  1609→                      <RadioGroupItem value={i.toString()} id={`opt-${current}-${i}`} />
+  1610→                      <Label htmlFor={`opt-${current}-${i}`} className="cursor-pointer flex-1">{opt}</Label>
+  1611→                    </label>
+  1612→                  )
+  1613→                })}
+  1614→              </RadioGroup>
+  1615→            </CardContent>
+  1616→            <CardFooter className="flex justify-between">
+  1617→              <Button variant="outline" onClick={() => setCurrent(c => Math.max(0, c - 1))} disabled={current === 0}>
+  1618→                <ArrowLeft className="w-4 h-4 mr-2" /> Previous
+  1619→              </Button>
+  1620→              {current < questions.length - 1 ? (
+  1621→                <Button onClick={() => setCurrent(c => c + 1)} className="bg-[#48805b] hover:bg-[#3a6a4a] text-white">
+  1622→                  Next <ArrowRight className="w-4 h-4 ml-2" />
+  1623→                </Button>
+  1624→              ) : (
+  1625→                <Button
+  1626→                  onClick={handleSubmit}
+  1627→                  disabled={submitting}
+  1628→                  className="bg-[#48805b] hover:bg-[#3a6a4a] text-white font-heading font-semibold"
+  1629→                >
+  1630→                  {submitting ? 'Submitting...' : allAnswered ? 'Submit Quiz' : `Submit (${answeredCount}/${questions.length})`}
+  1631→                </Button>
+  1632→              )}
+  1633→            </CardFooter>
+  1634→          </Card>
+  1635→
+  1636→          {!allAnswered && current === questions.length - 1 && (
+  1637→            <p className="text-center text-sm text-[#88837b] mt-4">
+  1638→              Please answer all questions before submitting. Click on the question numbers above to review your answers.
+  1639→            </p>
+  1640→          )}
+  1641→        </motion.div>
+  1642→      </div>
+  1643→    </div>
+  1644→  )
+  1645→}
+  1646→
+  1647→// ============================================================
+  1648→// PRODUCTS & COMMERCE
+  1649→// ============================================================
+  1650→function ProductsCatalog() {
+  1651→  const { user, navigateTo, addToCart } = useAppStore()
+  1652→  const [products, setProducts] = useState<Product[]>([])
+  1653→  const [loading, setLoading] = useState(true)
+  1654→  const [selectedType, setSelectedType] = useState<string>('ALL')
+  1655→
+  1656→  useEffect(() => {
+  1657→    productService.getAll().then(r => {
+  1658→      if (r.data) setProducts(r.data)
+  1659→      setLoading(false)
+  1660→    })
+  1661→  }, [])
+  1662→
+  1663→  if (loading) return <div className="min-h-screen flex items-center justify-center pt-16"><RefreshCw className="w-8 h-8 animate-spin text-[#48805b]" /></div>
+  1664→
+  1665→  const types = ['ALL', ...Array.from(new Set(products.map(p => p.type)))]
+  1666→  const filtered = selectedType === 'ALL' ? products : products.filter(p => p.type === selectedType)
+  1667→
+  1668→  return (
+  1669→    <div className="min-h-screen bg-[#f4f3f0] pt-20 pb-12">
+  1670→      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+  1671→        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+  1672→          {/* Hero Header */}
+  1673→          <div className="mb-10">
+  1674→            <div className="flex items-center gap-3 mb-2">
+  1675→              <div className="w-10 h-10 rounded-xl bg-[#48805b]/10 flex items-center justify-center">
+  1676→                <Store className="w-5 h-5 text-[#48805b]" />
+  1677→              </div>
+  1678→              <div>
+  1679→                <h1 className="font-heading text-3xl sm:text-4xl font-bold text-[#1f1e1c]">NOTJUST Watr Products</h1>
+  1680→                <p className="text-[#88837b] mt-0.5">Choose Fizz or Still, then pick the purchase option that fits your routine.</p>
+  1681→              </div>
+  1682→            </div>
+  1683→          </div>
+  1684→
+  1685→          {!user?.learning_completed && (
+  1686→            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mb-8 p-5 rounded-2xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+  1687→              <div className="w-12 h-12 rounded-xl bg-amber-100 flex items-center justify-center flex-shrink-0">
+  1688→                <Lock className="w-6 h-6 text-amber-600" />
+  1689→              </div>
+  1690→              <div className="flex-1">
+  1691→                <p className="font-heading font-semibold text-amber-900">Complete Learning to Unlock</p>
+  1692→                <p className="text-sm text-amber-700 mt-0.5">Finish the learning module and quiz to gain purchase access.</p>
+  1693→              </div>
+  1694→              <Button size="sm" onClick={() => navigateTo('learning')} className="bg-[#48805b] text-white flex-shrink-0 rounded-lg">
+  1695→                Start Learning <ArrowRight className="w-4 h-4 ml-1" />
+  1696→              </Button>
+  1697→            </motion.div>
+  1698→          )}
+  1699→
+  1700→          {/* Type Filter */}
+  1701→          <div className="mb-8 flex gap-2 flex-wrap">
+  1702→            {types.map(type => (
+  1703→              <button
+  1704→                key={type}
+  1705→                onClick={() => setSelectedType(type)}
+  1706→                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${selectedType === type ? 'bg-[#48805b] text-white shadow-md' : 'bg-white text-[#88837b] border border-[#e3dfd8] hover:border-[#48805b]/30'}`}
+  1707→              >
+  1708→                {type === 'ALL' ? 'All Products' : type}
+  1709→              </button>
+  1710→            ))}
+  1711→          </div>
+  1712→
+  1713→          <div className="grid md:grid-cols-2 gap-5 mb-8">
+  1714→            <div className="rounded-xl border border-[#e7b973]/40 bg-[#fff7ea] p-5 flex items-center gap-4">
+  1715→              <div className="w-11 h-11 rounded-lg bg-[#e7b973]/20 flex items-center justify-center flex-shrink-0">
+  1716→                <ClipboardList className="w-5 h-5 text-[#b56b20]" />
+  1717→              </div>
+  1718→              <div>
+  1719→                <p className="font-heading font-bold text-sm text-[#1f1e1c]">Monthly Pack (60 Shots)</p>
+  1720→                <p className="text-xs text-[#6b6560] mt-1">Daily use, 2 shots/day</p>
+  1721→              </div>
+  1722→            </div>
+  1723→            <div className="rounded-xl border border-[#48805b]/25 bg-[#edf5ee] p-5 flex items-center gap-4">
+  1724→              <div className="w-11 h-11 rounded-lg bg-[#48805b]/15 flex items-center justify-center flex-shrink-0">
+  1725→                <Leaf className="w-5 h-5 text-[#48805b]" />
+  1726→              </div>
+  1727→              <div>
+  1728→                <p className="font-heading font-bold text-sm text-[#1f1e1c]">Eco-Friendly Refill Pack</p>
+  1729→                <p className="text-xs text-[#6b6560] mt-1">Sustainable and affordable</p>
+  1730→              </div>
+  1731→            </div>
+  1732→          </div>
+  1733→
+  1734→          <div className="grid sm:grid-cols-2 gap-6 max-w-3xl">
+  1735→            {filtered.map((product, idx) => (
+  1736→              <motion.div
+  1737→                key={product.id}
+  1738→                initial={{ opacity: 0, y: 20 }}
+  1739→                animate={{ opacity: 1, y: 0 }}
+  1740→                transition={{ delay: idx * 0.05 }}
+  1741→              >
+  1742→                <Card className="card-lift border-[#e3dfd8] overflow-hidden group h-full flex flex-col">
+  1743→                  <div className="relative aspect-[4/3] bg-gradient-to-br from-[#e3dfd8]/50 to-[#f4f3f0] flex items-center justify-center overflow-hidden">
+  1744→                    <Image src="/images/product-shot.png" alt={product.name} fill className="object-cover group-hover:scale-105 transition-transform duration-500" />
+  1745→                    <Badge className="absolute top-3 right-3 bg-[#48805b] text-white text-[10px] shadow-sm">{product.type}</Badge>
+  1746→                    {product.stock < 50 && (
+  1747→                      <Badge variant="destructive" className="absolute top-3 left-3 text-[10px]">Low Stock</Badge>
+  1748→                    )}
+  1749→                  </div>
+  1750→                  <CardContent className="p-5 flex-1 flex flex-col">
+  1751→                    <h3 className="font-heading font-bold text-[#1f1e1c] mb-1">{product.name}</h3>
+  1752→                    <p className="text-sm text-[#88837b] line-clamp-2 mb-4 flex-1">{product.description}</p>
+  1753→                    <div className="flex items-end justify-between">
+  1754→                      <div>
+  1755→                        <p className="font-heading text-2xl font-bold text-[#48805b]">₹{product.price.toLocaleString()}</p>
+  1756→                        <p className="text-xs text-[#88837b] mt-0.5">{product.stock} in stock</p>
+  1757→                      </div>
+  1758→                    </div>
+  1759→                  </CardContent>
+  1760→                  <CardFooter className="px-5 pb-5 pt-0">
+  1761→                    {user?.learning_completed ? (
+  1762→                      <Button
+  1763→                        className="w-full bg-[#48805b] hover:bg-[#3a6a4a] text-white font-heading font-semibold rounded-xl h-11"
+  1764→                        onClick={() => {
+  1765→                          addToCart({
+  1766→                            productId: product.id,
+  1767→                            name: product.name,
+  1768→                            price: product.price,
+  1769→                            quantity: 1,
+  1770→                            type: product.type,
+  1771→                          })
+  1772→                          toast.success(`${product.name} added to cart`)
+  1773→                        }}
+  1774→                      >
+  1775→                        <ShoppingCart className="w-4 h-4 mr-2" /> Add to Cart
+  1776→                      </Button>
+  1777→                    ) : (
+  1778→                      <Button variant="outline" className="w-full rounded-xl h-11" disabled>
+  1779→                        <Lock className="w-4 h-4 mr-2" /> Locked
+  1780→                      </Button>
+  1781→                    )}
+  1782→                  </CardFooter>
+  1783→                </Card>
+  1784→              </motion.div>
+  1785→            ))}
+  1786→          </div>
+  1787→        </motion.div>
+  1788→      </div>
+  1789→    </div>
+  1790→  )
+  1791→}
+  1792→
+  1793→function CartView() {
+  1794→  const { cart, removeFromCart, updateCartQuantity, cartTotal, navigateTo, clearCart } = useAppStore()
+  1795→  const total = cartTotal()
+  1796→  const tax = Math.round(total * 0.18)
+  1797→  const [coupon, setCoupon] = useState('')
+  1798→  const [couponApplied, setCouponApplied] = useState(false)
+  1799→
+  1800→  return (
+  1801→    <div className="min-h-screen bg-[#f4f3f0] pt-20 pb-12">
+  1802→      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+  1803→        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+  1804→          {/* Breadcrumb */}
+  1805→          <div className="flex items-center gap-2 text-sm text-[#88837b] mb-6">
+  1806→            <button onClick={() => navigateTo('products')} className="hover:text-[#48805b] transition-colors">Products</button>
+  1807→            <ChevronRight className="w-3.5 h-3.5" />
+  1808→            <span className="text-[#1f1e1c] font-medium">Cart ({cart.length})</span>
+  1809→          </div>
+  1810→
+  1811→          <h1 className="font-heading text-3xl sm:text-4xl font-bold text-[#1f1e1c] mb-8">Your Cart</h1>
+  1812→
+  1813→          {cart.length === 0 ? (
+  1814→            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="text-center py-24">
+  1815→              <div className="w-24 h-24 rounded-full bg-[#e3dfd8]/50 flex items-center justify-center mx-auto mb-6">
+  1816→                <ShoppingCart className="w-10 h-10 text-[#88837b]" />
+  1817→              </div>
+  1818→              <h3 className="font-heading text-xl font-bold text-[#1f1e1c] mb-2">Your cart is empty</h3>
+  1819→              <p className="text-[#88837b] mb-8">Looks like you haven&apos;t added anything yet.</p>
+  1820→              <Button onClick={() => navigateTo('products')} className="bg-[#48805b] hover:bg-[#3a6a4a] text-white font-heading font-semibold rounded-xl px-8 h-12">
+  1821→                Browse Products <ArrowRight className="w-4 h-4 ml-2" />
+  1822→              </Button>
+  1823→            </motion.div>
+  1824→          ) : (
+  1825→            <div className="grid lg:grid-cols-3 gap-8">
+  1826→              {/* Cart Items */}
+  1827→              <div className="lg:col-span-2 space-y-4">
+  1828→                {cart.map((item, idx) => (
+  1829→                  <motion.div
+  1830→                    key={item.productId}
+  1831→                    initial={{ opacity: 0, x: -20 }}
+  1832→                    animate={{ opacity: 1, x: 0 }}
+  1833→                    transition={{ delay: idx * 0.05 }}
+  1834→                    layout
+  1835→                  >
+  1836→                    <Card className="border-[#e3dfd8] overflow-hidden hover:shadow-md transition-shadow">
+  1837→                      <CardContent className="p-0">
+  1838→                        <div className="flex items-stretch">
+  1839→                          {/* Product Thumbnail */}
+  1840→                          <div className="w-28 sm:w-36 bg-gradient-to-br from-[#e3dfd8]/40 to-[#f4f3f0] flex items-center justify-center flex-shrink-0 p-4">
+  1841→                            <div className="relative w-full h-full min-h-[80px]">
+  1842→                              <Image src="/images/product-shot.png" alt={item.name} fill className="object-contain" />
+  1843→                            </div>
+  1844→                          </div>
+  1845→                          {/* Details */}
+  1846→                          <div className="flex-1 p-5 flex flex-col sm:flex-row sm:items-center gap-4">
+  1847→                            <div className="flex-1 min-w-0">
+  1848→                              <h3 className="font-heading font-bold text-[#1f1e1c] truncate">{item.name}</h3>
+  1849→                              <p className="text-sm text-[#88837b] mt-0.5">{item.type}</p>
+  1850→                              <p className="font-heading text-lg font-bold text-[#48805b] mt-1 sm:hidden">₹{(item.price * item.quantity).toLocaleString()}</p>
+  1851→                            </div>
+  1852→                            {/* Quantity Stepper */}
+  1853→                            <div className="flex items-center gap-1">
+  1854→                              <button
+  1855→                                onClick={() => updateCartQuantity(item.productId, item.quantity - 1)}
+  1856→                                className="w-9 h-9 rounded-lg border border-[#e3dfd8] flex items-center justify-center hover:bg-[#e3dfd8]/50 transition-colors"
+  1857→                              >
+  1858→                                <Minus className="w-3.5 h-3.5" />
+  1859→                              </button>
+  1860→                              <span className="w-10 text-center font-heading font-semibold text-[#1f1e1c]">{item.quantity}</span>
+  1861→                              <button
+  1862→                                onClick={() => updateCartQuantity(item.productId, item.quantity + 1)}
+  1863→                                className="w-9 h-9 rounded-lg border border-[#e3dfd8] flex items-center justify-center hover:bg-[#e3dfd8]/50 transition-colors"
+  1864→                              >
+  1865→                                <Plus className="w-3.5 h-3.5" />
+  1866→                              </button>
+  1867→                            </div>
+  1868→                            {/* Price & Remove */}
+  1869→                            <div className="hidden sm:flex flex-col items-end gap-2">
+  1870→                              <p className="font-heading text-lg font-bold text-[#48805b]">₹{(item.price * item.quantity).toLocaleString()}</p>
+  1871→                              <button
+  1872→                                onClick={() => { removeFromCart(item.productId); toast.info(`${item.name} removed`) }}
+  1873→                                className="text-xs text-red-400 hover:text-red-600 flex items-center gap-1 transition-colors"
+  1874→                              >
+  1875→                                <Trash2 className="w-3.5 h-3.5" /> Remove
+  1876→                              </button>
+  1877→                            </div>
+  1878→                          </div>
+  1879→                        </div>
+  1880→                      </CardContent>
+  1881→                    </Card>
+  1882→                  </motion.div>
+  1883→                ))}
+  1884→
+  1885→                {/* Clear Cart */}
+  1886→                <div className="flex justify-end">
+  1887→                  <Button variant="ghost" size="sm" onClick={() => { clearCart(); toast.info('Cart cleared') }} className="text-red-400 hover:text-red-600">
+  1888→                    <Trash2 className="w-4 h-4 mr-2" /> Clear Cart
+  1889→                  </Button>
+  1890→                </div>
+  1891→              </div>
+  1892→
+  1893→              {/* Order Summary */}
+  1894→              <div className="lg:col-span-1">
+  1895→                <div className="sticky top-24">
+  1896→                  <Card className="border-[#e3dfd8] shadow-lg">
+  1897→                    <CardHeader className="pb-4">
+  1898→                      <CardTitle className="font-heading text-lg">Order Summary</CardTitle>
+  1899→                    </CardHeader>
+  1900→                    <CardContent className="space-y-4">
+  1901→                      {cart.map(item => (
+  1902→                        <div key={item.productId} className="flex justify-between text-sm">
+  1903→                          <span className="text-[#88837b] truncate mr-2">{item.name} <span className="text-[#88837b]/60">× {item.quantity}</span></span>
+  1904→                          <span className="font-medium text-[#1f1e1c] flex-shrink-0">₹{(item.price * item.quantity).toLocaleString()}</span>
+  1905→                        </div>
+  1906→                      ))}
+  1907→
+  1908→                      <Separator />
+  1909→
+  1910→                      {/* Coupon Code */}
+  1911→                      <div>
+  1912→                        <Label className="text-xs text-[#88837b] mb-1.5 block">Coupon Code</Label>
+  1913→                        <div className="flex gap-2">
+  1914→                          <Input
+  1915→                            placeholder="Enter code"
+  1916→                            value={coupon}
+  1917→                            onChange={e => setCoupon(e.target.value)}
+  1918→                            className="h-9 text-sm rounded-lg"
+  1919→                          />
+  1920→                          <Button
+  1921→                            variant="outline"
+  1922→                            size="sm"
+  1923→                            className="h-9 px-3 rounded-lg flex-shrink-0"
+  1924→                            onClick={() => { if (coupon) { setCouponApplied(true); toast.success('Coupon applied! (demo)') } }}
+  1925→                          >
+  1926→                            Apply
+  1927→                          </Button>
+  1928→                        </div>
+  1929→                        {couponApplied && (
+  1930→                          <p className="text-xs text-[#48805b] mt-1 flex items-center gap-1">
+  1931→                            <CheckCircle className="w-3 h-3" /> Discount applied
+  1932→                          </p>
+  1933→                        )}
+  1934→                      </div>
+  1935→
+  1936→                      <Separator />
+  1937→
+  1938→                      <div className="space-y-2">
+  1939→                        <div className="flex justify-between text-sm">
+  1940→                          <span className="text-[#88837b]">Subtotal</span>
+  1941→                          <span className="font-medium">₹{total.toLocaleString()}</span>
+  1942→                        </div>
+  1943→                        <div className="flex justify-between text-sm">
+  1944→                          <span className="text-[#88837b]">Shipping</span>
+  1945→                          <span className="text-[#48805b] font-medium">Free</span>
+  1946→                        </div>
+  1947→                        <div className="flex justify-between text-sm">
+  1948→                          <span className="text-[#88837b]">Tax (18% GST)</span>
+  1949→                          <span className="font-medium">₹{tax.toLocaleString()}</span>
+  1950→                        </div>
+  1951→                      </div>
+  1952→
+  1953→                      <Separator />
+  1954→
+  1955→                      <div className="flex justify-between items-center">
+  1956→                        <span className="font-heading font-bold text-lg text-[#1f1e1c]">Total</span>
+  1957→                        <span className="font-heading font-bold text-2xl text-[#48805b]">₹{(total + tax).toLocaleString()}</span>
+  1958→                      </div>
+  1959→
+  1960→                      <Button
+  1961→                        onClick={() => navigateTo('checkout')}
+  1962→                        className="w-full h-12 bg-[#48805b] hover:bg-[#3a6a4a] text-white font-heading font-semibold text-base rounded-xl mt-2"
+  1963→                      >
+  1964→                        Proceed to Payment <ArrowRight className="w-4 h-4 ml-2" />
+  1965→                      </Button>
+  1966→
+  1967→                      <Button variant="ghost" className="w-full text-[#88837b]" onClick={() => navigateTo('products')}>
+  1968→                        Continue Shopping
+  1969→                      </Button>
+  1970→                    </CardContent>
+  1971→                  </Card>
+  1972→                </div>
+  1973→              </div>
+  1974→            </div>
+  1975→          )}
+  1976→        </motion.div>
+  1977→      </div>
+  1978→    </div>
+  1979→  )
+  1980→}
+  1981→
+  1982→function CheckoutView() {
+  1983→  const { user, cart, cartTotal, navigateTo, clearCart, setLastOrderId } = useAppStore()
+  1984→  const [step, setStep] = useState(1) // 1=Address, 2=Payment, 3=Confirm
+  1985→  const [address, setAddress] = useState({ name: user?.name || '', line1: '', city: '', state: '', pincode: '' })
+  1986→  const [paymentMethod, setPaymentMethod] = useState<'razorpay' | 'cod'>('razorpay')
+  1987→  const [loading, setLoading] = useState(false)
+  1988→  const [paymentId, setPaymentId] = useState<string | null>(null)
+  1989→  const total = cartTotal()
+  1990→  const tax = Math.round(total * 0.18)
+  1991→  const grandTotal = total + tax
+  1992→
+  1993→  const handlePlaceOrder = async (payId?: string) => {
+  1994→    setLoading(true)
+  1995→    try {
+  1996→      const result = await orderService.create(
+  1997→        user!.user_id,
+  1998→        cart.map(i => ({ productId: i.productId, quantity: i.quantity })),
+  1999→        address,
+  2000→        paymentMethod === 'razorpay' ? 'RAZORPAY' : 'COD'
+  2001→      )
+  2002→      if (result.error) { toast.error(typeof result.error === 'string' ? result.error : 'Order failed'); return }
+  2003→      setPaymentId(payId || null)
+  2004→      setLastOrderId((result.data as any)?.id || null)
+  2005→      clearCart()
+  2006→      navigateTo('order-success')
+  2007→      toast.success('Order placed successfully!')
+  2008→    } catch { toast.error('Order failed') }
+  2009→    finally { setLoading(false) }
+  2010→  }
+  2011→
+  2012→  const handleRazorpayPayment = async () => {
+  2013→    // Try to use real Razorpay checkout if available
+  2014→    if (typeof window !== 'undefined' && (window as any).Razorpay) {
+  2015→      const options = {
+  2016→        key: 'rzp_test_DEMO_KEY', // Demo key — replace with real key in production
+  2017→        amount: grandTotal * 100, // Razorpay expects amount in paise
+  2018→        currency: 'INR',
+  2019→        name: 'NotJust Health',
+  2020→        description: 'Pre-Meal Wellness Shot',
+  2021→        image: '/images/notjust-logo-clean.png',
+  2022→        handler: function(response: any) {
+  2023→          handlePlaceOrder(response.razorpay_payment_id)
+  2024→        },
+  2025→        prefill: {
+  2026→          name: user?.name || '',
+  2027→          email: user?.email || '',
+  2028→          contact: user?.phone || '',
+  2029→        },
+  2030→        theme: { color: '#48805b' },
+  2031→        modal: {
+  2032→          ondismiss: function() {
+  2033→            toast.info('Payment cancelled')
+  2034→          }
+  2035→        }
+  2036→      }
+  2037→      try {
+  2038→        const rzp = new (window as any).Razorpay(options)
+  2039→        rzp.on('payment.failed', function() {
+  2040→          toast.error('Payment failed. Please try again.')
+  2041→        })
+  2042→        rzp.open()
+  2043→      } catch {
+  2044→        // Fallback to demo mode
+  2045→        const demoPaymentId = 'pay_demo_' + Date.now()
+  2046→        handlePlaceOrder(demoPaymentId)
+  2047→      }
+  2048→    } else {
+  2049→      // Razorpay script not loaded — demo mode
+  2050→      toast.info('Razorpay demo mode — payment simulated')
+  2051→      const demoPaymentId = 'pay_demo_' + Date.now()
+  2052→      handlePlaceOrder(demoPaymentId)
+  2053→    }
+  2054→  }
+  2055→
+  2056→  const steps = [
+  2057→    { num: 1, label: 'Address', icon: MapPin },
+  2058→    { num: 2, label: 'Payment', icon: CreditCard },
+  2059→    { num: 3, label: 'Confirmation', icon: CheckCircle },
+  2060→  ]
+  2061→
+  2062→  const addressValid = address.name && address.line1 && address.city && address.state && address.pincode
+  2063→
+  2064→  return (
+  2065→    <div className="min-h-screen bg-[#f4f3f0] pt-20 pb-12">
+  2066→      <div className="max-w-4xl mx-auto px-4 sm:px-6">
+  2067→        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+  2068→          {/* Breadcrumb */}
+  2069→          <div className="flex items-center gap-2 text-sm text-[#88837b] mb-6">
+  2070→            <button onClick={() => navigateTo('cart')} className="hover:text-[#48805b] transition-colors">Cart</button>
+  2071→            <ChevronRight className="w-3.5 h-3.5" />
+  2072→            <span className="text-[#1f1e1c] font-medium">Checkout</span>
+  2073→          </div>
+  2074→
+  2075→          <h1 className="font-heading text-3xl sm:text-4xl font-bold text-[#1f1e1c] mb-8">Checkout</h1>
+  2076→
+  2077→          {/* Step Indicator */}
+  2078→          <div className="flex items-center justify-center mb-10">
+  2079→            {steps.map((s, idx) => (
+  2080→              <React.Fragment key={s.num}>
+  2081→                <div className="flex items-center gap-3">
+  2082→                  <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
+  2083→                    step >= s.num ? 'bg-[#48805b] text-white' : 'bg-[#e3dfd8] text-[#88837b]'
+  2084→                  }`}>
+  2085→                    {step > s.num ? <CheckCircle className="w-5 h-5" /> : <s.icon className="w-5 h-5" />}
+  2086→                  </div>
+  2087→                  <span className={`font-medium text-sm hidden sm:block ${step >= s.num ? 'text-[#1f1e1c]' : 'text-[#88837b]'}`}>{s.label}</span>
+  2088→                </div>
+  2089→                {idx < steps.length - 1 && (
+  2090→                  <div className={`w-16 sm:w-24 h-0.5 mx-3 rounded-full transition-all ${step > s.num ? 'bg-[#48805b]' : 'bg-[#e3dfd8]'}`} />
+  2091→                )}
+  2092→              </React.Fragment>
+  2093→            ))}
+  2094→          </div>
+  2095→
+  2096→          <div className="grid md:grid-cols-5 gap-8">
+  2097→            <div className="md:col-span-3 space-y-6">
+  2098→              {/* Step 1: Address */}
+  2099→              {step === 1 && (
+  2100→                <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
+  2101→                  <Card className="border-[#e3dfd8]">
+  2102→                    <CardHeader>
+  2103→                      <div className="flex items-center gap-3">
+  2104→                        <div className="w-10 h-10 rounded-xl bg-[#48805b]/10 flex items-center justify-center">
+  2105→                          <MapPin className="w-5 h-5 text-[#48805b]" />
+  2106→                        </div>
+  2107→                        <div>
+  2108→                          <CardTitle className="font-heading">Shipping Address</CardTitle>
+  2109→                          <p className="text-xs text-[#88837b] mt-0.5">Where should we deliver your order?</p>
+  2110→                        </div>
+  2111→                      </div>
+  2112→                    </CardHeader>
+  2113→                    <CardContent className="space-y-4">
+  2114→                      <div className="space-y-1.5">
+  2115→                        <Label>Full Name</Label>
+  2116→                        <Input value={address.name} onChange={e => setAddress(p => ({ ...p, name: e.target.value }))} placeholder="Your full name" className="rounded-lg" />
+  2117→                      </div>
+  2118→                      <div className="space-y-1.5">
+  2119→                        <Label>Address Line 1</Label>
+  2120→                        <Input value={address.line1} onChange={e => setAddress(p => ({ ...p, line1: e.target.value }))} placeholder="Street address, house no." className="rounded-lg" />
+  2121→                      </div>
+  2122→                      <div className="grid grid-cols-3 gap-3">
+  2123→                        <div className="space-y-1.5">
+  2124→                          <Label>City</Label>
+  2125→                          <Input value={address.city} onChange={e => setAddress(p => ({ ...p, city: e.target.value }))} className="rounded-lg" />
+  2126→                        </div>
+  2127→                        <div className="space-y-1.5">
+  2128→                          <Label>State</Label>
+  2129→                          <Input value={address.state} onChange={e => setAddress(p => ({ ...p, state: e.target.value }))} className="rounded-lg" />
+  2130→                        </div>
+  2131→                        <div className="space-y-1.5">
+  2132→                          <Label>PIN Code</Label>
+  2133→                          <Input value={address.pincode} onChange={e => setAddress(p => ({ ...p, pincode: e.target.value }))} className="rounded-lg" />
+  2134→                        </div>
+  2135→                      </div>
+  2136→                    </CardContent>
+  2137→                    <CardFooter className="flex justify-end px-6 pb-6">
+  2138→                      <Button
+  2139→                        onClick={() => { if (!addressValid) { toast.error('Please fill all address fields'); return }; setStep(2) }}
+  2140→                        className="bg-[#48805b] hover:bg-[#3a6a4a] text-white font-heading font-semibold rounded-xl px-8 h-11"
+  2141→                      >
+  2142→                        Continue to Payment <ArrowRight className="w-4 h-4 ml-2" />
+  2143→                      </Button>
+  2144→                    </CardFooter>
+  2145→                  </Card>
+  2146→                </motion.div>
+  2147→              )}
+  2148→
+  2149→              {/* Step 2: Payment */}
+  2150→              {step === 2 && (
+  2151→                <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
+  2152→                  <Card className="border-[#e3dfd8]">
+  2153→                    <CardHeader>
+  2154→                      <div className="flex items-center gap-3">
+  2155→                        <div className="w-10 h-10 rounded-xl bg-[#48805b]/10 flex items-center justify-center">
+  2156→                          <CreditCard className="w-5 h-5 text-[#48805b]" />
+  2157→                        </div>
+  2158→                        <div>
+  2159→                          <CardTitle className="font-heading">Payment Method</CardTitle>
+  2160→                          <p className="text-xs text-[#88837b] mt-0.5">Choose how you want to pay</p>
+  2161→                        </div>
+  2162→                      </div>
+  2163→                    </CardHeader>
+  2164→                    <CardContent className="space-y-4">
+  2165→                      {/* Razorpay Option */}
+  2166→                      <button
+  2167→                        onClick={() => setPaymentMethod('razorpay')}
+  2168→                        className={`w-full p-4 rounded-xl border-2 transition-all text-left ${
+  2169→                          paymentMethod === 'razorpay' ? 'border-[#48805b] bg-[#48805b]/5' : 'border-[#e3dfd8] hover:border-[#48805b]/30'
+  2170→                        }`}
+  2171→                      >
+  2172→                        <div className="flex items-center gap-3">
+  2173→                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+  2174→                            paymentMethod === 'razorpay' ? 'border-[#48805b]' : 'border-[#e3dfd8]'
+  2175→                          }`}>
+  2176→                            {paymentMethod === 'razorpay' && <div className="w-2.5 h-2.5 rounded-full bg-[#48805b]" />}
+  2177→                          </div>
+  2178→                          <div className="flex-1">
+  2179→                            <div className="flex items-center gap-2">
+  2180→                              <span className="font-heading font-semibold text-[#1f1e1c]">Online Payment</span>
+  2181→                              <Badge className="bg-[#2e91b2]/10 text-[#2e91b2] text-[10px]">Razorpay</Badge>
+  2182→                            </div>
+  2183→                            <p className="text-xs text-[#88837b] mt-0.5">Pay securely with UPI, Cards, Net Banking & Wallets</p>
+  2184→                          </div>
+  2185→                          <div className="flex items-center gap-1 text-[#88837b]">
+  2186→                            <Shield className="w-4 h-4" />
+  2187→                            <span className="text-[10px]">Secure</span>
+  2188→                          </div>
+  2189→                        </div>
+  2190→                      </button>
+  2191→
+  2192→                      {/* COD Option */}
+  2193→                      <button
+  2194→                        onClick={() => setPaymentMethod('cod')}
+  2195→                        className={`w-full p-4 rounded-xl border-2 transition-all text-left ${
+  2196→                          paymentMethod === 'cod' ? 'border-[#48805b] bg-[#48805b]/5' : 'border-[#e3dfd8] hover:border-[#48805b]/30'
+  2197→                        }`}
+  2198→                      >
+  2199→                        <div className="flex items-center gap-3">
+  2200→                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+  2201→                            paymentMethod === 'cod' ? 'border-[#48805b]' : 'border-[#e3dfd8]'
+  2202→                          }`}>
+  2203→                            {paymentMethod === 'cod' && <div className="w-2.5 h-2.5 rounded-full bg-[#48805b]" />}
+  2204→                          </div>
+  2205→                          <div className="flex-1">
+  2206→                            <span className="font-heading font-semibold text-[#1f1e1c]">Cash on Delivery</span>
+  2207→                            <p className="text-xs text-[#88837b] mt-0.5">Pay when your order arrives at your doorstep</p>
+  2208→                          </div>
+  2209→                          <Truck className="w-5 h-5 text-[#88837b]" />
+  2210→                        </div>
+  2211→                      </button>
+  2212→                    </CardContent>
+  2213→                    <CardFooter className="flex justify-between px-6 pb-6">
+  2214→                      <Button variant="outline" onClick={() => setStep(1)} className="rounded-xl">
+  2215→                        <ArrowLeft className="w-4 h-4 mr-2" /> Back
+  2216→                      </Button>
+  2217→                      <Button
+  2218→                        onClick={() => {
+  2219→                          if (paymentMethod === 'cod') {
+  2220→                            handlePlaceOrder()
+  2221→                          } else {
+  2222→                            handleRazorpayPayment()
+  2223→                          }
+  2224→                        }}
+  2225→                        disabled={loading}
+  2226→                        className="bg-[#48805b] hover:bg-[#3a6a4a] text-white font-heading font-semibold rounded-xl px-8 h-11"
+  2227→                      >
+  2228→                        {loading ? (
+  2229→                          <><RefreshCw className="w-4 h-4 mr-2 animate-spin" /> Processing...</>
+  2230→                        ) : paymentMethod === 'razorpay' ? (
+  2231→                          <><CreditCard className="w-4 h-4 mr-2" /> Pay ₹{grandTotal.toLocaleString()}</>
+  2232→                        ) : (
+  2233→                          <><Truck className="w-4 h-4 mr-2" /> Place Order (COD)</>
+  2234→                        )}
+  2235→                      </Button>
+  2236→                    </CardFooter>
+  2237→                  </Card>
+  2238→                </motion.div>
+  2239→              )}
+  2240→            </div>
+  2241→
+  2242→            {/* Order Summary Sidebar */}
+  2243→            <div className="md:col-span-2">
+  2244→              <Card className="border-[#e3dfd8] sticky top-24">
+  2245→                <CardHeader className="pb-3">
+  2246→                  <CardTitle className="font-heading text-base">Order Summary</CardTitle>
+  2247→                </CardHeader>
+  2248→                <CardContent className="space-y-3">
+  2249→                  {cart.map(item => (
+  2250→                    <div key={item.productId} className="flex gap-3 items-start">
+  2251→                      <div className="w-12 h-12 rounded-lg bg-[#e3dfd8]/50 flex items-center justify-center flex-shrink-0">
+  2252→                        <Package className="w-5 h-5 text-[#88837b]" />
+  2253→                      </div>
+  2254→                      <div className="flex-1 min-w-0">
+  2255→                        <p className="text-sm font-medium text-[#1f1e1c] truncate">{item.name}</p>
+  2256→                        <p className="text-xs text-[#88837b]">Qty: {item.quantity}</p>
+  2257→                      </div>
+  2258→                      <p className="text-sm font-semibold text-[#1f1e1c]">₹{(item.price * item.quantity).toLocaleString()}</p>
+  2259→                    </div>
+  2260→                  ))}
+  2261→                  <Separator />
+  2262→                  <div className="space-y-1.5 text-sm">
+  2263→                    <div className="flex justify-between"><span className="text-[#88837b]">Subtotal</span><span>₹{total.toLocaleString()}</span></div>
+  2264→                    <div className="flex justify-between"><span className="text-[#88837b]">Shipping</span><span className="text-[#48805b]">Free</span></div>
+  2265→                    <div className="flex justify-between"><span className="text-[#88837b]">Tax (18% GST)</span><span>₹{tax.toLocaleString()}</span></div>
+  2266→                  </div>
+  2267→                  <Separator />
+  2268→                  <div className="flex justify-between font-heading font-bold">
+  2269→                    <span className="text-lg">Total</span>
+  2270→                    <span className="text-lg text-[#48805b]">₹{grandTotal.toLocaleString()}</span>
+  2271→                  </div>
+  2272→
+  2273→                  {/* Address Preview */}
+  2274→                  {step >= 2 && addressValid && (
+  2275→                    <>
+  2276→                      <Separator />
+  2277→                      <div className="text-xs">
+  2278→                        <p className="text-[#88837b] mb-1">Delivering to:</p>
+  2279→                        <p className="text-[#1f1e1c] font-medium">{address.name}</p>
+  2280→                        <p className="text-[#88837b]">{address.line1}, {address.city}, {address.state} - {address.pincode}</p>
+  2281→                      </div>
+  2282→                    </>
+  2283→                  )}
+  2284→                </CardContent>
+  2285→              </Card>
+  2286→            </div>
+  2287→          </div>
+  2288→        </motion.div>
+  2289→      </div>
+  2290→    </div>
+  2291→  )
+  2292→}
+  2293→
+  2294→function OrderSuccess() {
+  2295→  const { lastOrderId, navigateTo } = useAppStore()
+  2296→  return (
+  2297→    <div className="min-h-screen flex items-center justify-center bg-[#f4f3f0] pt-16 px-4">
+  2298→      <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="w-full max-w-md">
+  2299→        <Card className="border-[#e3dfd8] shadow-xl text-center overflow-hidden">
+
+[showing lines 1600-2299 of 3657; use offset=2300 with limit to continue reading]

@@ -1,0 +1,502 @@
+   500→   500→              <motion.div variants={fadeInUp}>
+   501→   501→                <Badge className="mb-6 bg-[#afb75d]/15 text-[#afb75d] border-[#afb75d]/25 px-4 py-1.5 text-xs font-semibold tracking-wider uppercase">
+   502→   502→                  <Zap className="w-3 h-3 mr-1.5" /> NOTJUST WATER(TM)
+   503→   503→                </Badge>
+   504→   504→              </motion.div>
+   505→   505→              <motion.h1
+   506→   506→                variants={fadeInUp}
+   507→   507→                className="font-heading text-[clamp(2.25rem,4vw+1rem,4.25rem)] font-extralight text-white leading-[1.05] tracking-tight mb-6"
+   508→   508→              >
+   509→   509→                Lower the{' '}
+   510→   510→                <span className="font-[family-name:var(--font-display)] italic font-light text-[#afb75d]">Glycemic Impact</span>
+   511→   511→                <br />
+   512→   512→                of Your Meal
+   513→   513→              </motion.h1>
+   514→   514→              <motion.p variants={fadeInUp} className="text-white/60 text-base sm:text-lg max-w-xl mb-8 leading-relaxed">
+   515→   515→                NOTJUST WATER(TM) is a convenient 50 ml pre-meal shot designed to help reduce the
+   516→   516→                Glycemic Index (GI) impact of carbohydrate-rich foods. Simply take one shot before your
+   517→   517→                meal to support a healthier glycemic response and help manage post-meal blood sugar spikes.
+   518→   518→              </motion.p>
+   519→   519→              <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-3 mb-8">
+   520→   520→                <Button
+   521→   521→                  size="lg"
+   522→   522→                  onClick={() => {
+   523→   523→                    if (!user) { navigateTo('auth-login'); toast.info('Please login first'); return }
+   524→   524→                    navigateTo('learning')
+   525→   525→                  }}
+   526→   526→                  className="bg-[#e3dfd8] hover:bg-white text-[#1f1e1c] font-heading font-semibold text-sm px-7 py-5 rounded-full shadow-lg shadow-black/20 hover:shadow-xl transition-all duration-300"
+   527→   527→                >
+   528→   528→                  Get Started <ArrowRight className="w-4 h-4 ml-2" />
+   529→   529→                </Button>
+   530→   530→                <Button
+   531→   531→                  size="lg"
+   532→   532→                  variant="outline"
+   533→   533→                  onClick={() => scrollToSection('how-it-works')}
+   534→   534→                  className="border-white/30 text-white bg-white/10 hover:bg-white/20 hover:border-white/50 font-heading font-semibold text-sm px-7 py-5 rounded-full backdrop-blur-sm transition-all duration-300"
+   535→   535→                >
+   536→   536→                  Learn More <ChevronDown className="w-4 h-4 ml-2" />
+   537→   537→                </Button>
+   538→   538→              </motion.div>
+   539→   539→              <motion.div variants={fadeInUp} className="flex flex-wrap gap-5 text-white/50 text-xs font-medium">
+   540→   540→                <div className="flex items-center gap-1.5"><CheckCircle className="w-3.5 h-3.5 text-[#afb75d]" /> Supports Blood Sugar Management</div>
+   541→   541→                <div className="flex items-center gap-1.5"><Leaf className="w-3.5 h-3.5 text-[#afb75d]" /> 50 ml Ready-to-Drink Shot</div>
+   542→   542→                <div className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5 text-[#afb75d]" /> 10-15 Minutes Before Meals</div>
+   543→   543→              </motion.div>
+   544→   544→            </motion.div>
+   545→   545→
+   546→   546→            {/* RIGHT - Diagonal hero product cards */}
+   547→   547→            <motion.div
+   548→   548→              initial={{ opacity: 0, y: 30 }}
+   549→   549→              animate={{ opacity: 1, y: 0 }}
+   550→   550→              transition={{ duration: 0.8, delay: 0.3, ease: 'easeOut' }}
+   551→   551→              className="hidden lg:block"
+   552→   552→            >
+   553→   553→              <div className="relative h-[620px] max-w-xl ml-auto">
+   554→   554→                {heroProducts.slice(0, 2).map((product, idx) => {
+   555→   555→                  const isSecond = idx === 1
+   556→   556→                  return (
+   557→   557→                    <div
+   558→   558→                      key={product.id}
+   559→   559→                      className={`card-reveal absolute w-[300px] bg-[#302f2c] rounded-xl overflow-hidden ring-1 ring-white/[0.12] shadow-2xl shadow-black/30 transition-all duration-300 cursor-pointer group hover:-translate-y-1 hover:ring-[#afb75d]/40 ${isSecond ? 'right-0 top-[270px]' : 'left-0 top-0'}`}
+   560→   560→                      style={{ animationDelay: `${0.1 + idx * 0.2}s` }}
+   561→   561→                      onClick={() => {
+   562→   562→                        if (!user) { navigateTo('auth-login'); toast.info('Please login first'); return }
+   563→   563→                        navigateTo('products')
+   564→   564→                      }}
+   565→   565→                    >
+   566→   566→                      <div className="relative h-[250px] bg-white/[0.03] overflow-hidden">
+   567→   567→                        <Image src="/images/product-shot.png" alt={product.name} fill className="object-cover group-hover:scale-105 transition-transform duration-500" />
+   568→   568→                        <div className="absolute bottom-3 left-3 rounded-full bg-black/35 backdrop-blur-sm px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-white">
+   569→   569→                          {isSecond ? 'Still' : 'Carbonated'}
+   570→   570→                        </div>
+   571→   571→                      </div>
+   572→   572→                      <div className="px-4 py-3 border-t border-white/[0.08]">
+   573→   573→                        <p className="text-[10px] font-semibold tracking-[0.28em] uppercase text-[#afb75d] mb-2">{product.type} Variant</p>
+   574→   574→                        <div className="flex items-end justify-between gap-4">
+   575→   575→                          <div className="min-w-0">
+   576→   576→                            <h3 className="text-base font-medium text-white truncate">{product.name}</h3>
+   577→   577→                            <p className="text-[11px] text-white/45 mt-1">NotJust</p>
+   578→   578→                          </div>
+   579→   579→                          <span className="text-[#afb75d] text-sm font-semibold flex-shrink-0">₹{product.price.toLocaleString()}</span>
+   580→   580→                        </div>
+   581→   581→                      </div>
+   582→   582→                    </div>
+   583→   583→                  )
+   584→   584→                })}
+   585→   585→              </div>
+   586→   586→            </motion.div>          </div>
+   587→   587→        </div>
+   588→   588→
+   589→   589→        {/* Scroll indicator */}
+   590→   590→        <motion.div
+   591→   591→          className="absolute bottom-8 left-1/2 -translate-x-1/2 cursor-pointer z-10"
+   592→   592→          animate={{ y: [0, 10, 0] }}
+   593→   593→          transition={{ repeat: Infinity, duration: 2 }}
+   594→   594→          onClick={() => scrollToSection('brand-story')}
+   595→   595→        >
+   596→   596→          <ChevronDown className="w-6 h-6 text-white/40" />
+   597→   597→        </motion.div>
+   598→   598→      </section>
+   599→   599→
+   600→   600→      {/* ═══════════════════════════════════════════════════════════
+   601→   601→          B. BRAND STORY SECTION — dark bg, two-column
+   602→   602→          ═══════════════════════════════════════════════════════════ */}
+   603→   603→      <AnimatedSection id="brand-story" className="py-20 md:py-28 bg-[#1f1e1c]">
+   604→   604→        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+   605→   605→          <div className="grid md:grid-cols-2 gap-12 lg:gap-20 items-center">
+   606→   606→            <motion.div variants={slideInLeft} className="relative">
+   607→   607→              <div className="relative aspect-[4/5] rounded-2xl overflow-hidden ring-1 ring-white/10">
+   608→   608→                <Image src="/images/about-product.png" alt="NotJust Product" fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover" />
+   609→   609→              </div>
+   610→   610→              <div className="absolute -bottom-5 -right-5 bg-gradient-to-br from-[#48805b] to-[#3a6a4a] rounded-2xl px-6 py-5 text-white shadow-2xl shadow-black/30">
+   611→   611→                <p className="font-heading text-3xl font-bold">40%</p>
+   612→   612→                <p className="text-xs text-white/70 font-medium">Spike Reduction</p>
+   613→   613→              </div>
+   614→   614→            </motion.div>
+   615→   615→            <motion.div variants={slideInRight}>
+   616→   616→              <Badge className="mb-4 bg-[#afb75d]/15 text-[#afb75d] border-[#afb75d]/25 text-xs font-semibold tracking-wider uppercase">NOTJUST WATER(TM)</Badge>
+   617→   617→              <h2 className="font-heading text-3xl sm:text-4xl lg:text-5xl font-extralight text-white mb-6 leading-[1.1] tracking-tight">
+   618→   618→                Enjoy Your Favorite Foods<br />
+   619→   619→                <span className="font-[family-name:var(--font-display)] italic font-light text-[#afb75d]">Smarter.</span>
+   620→   620→              </h2>
+   621→   621→              <p className="text-white/50 text-base sm:text-lg mb-8 leading-relaxed">
+   622→   622→                A simple pre-meal wellness solution designed to support better glycemic management as
+   623→   623→                part of a balanced lifestyle. Take one 50 ml shot before your meal to make carbohydrate-rich
+   624→   624→                foods easier to manage as part of your daily routine.
+   625→   625→              </p>
+   626→   626→              <div className="grid gap-3">
+   627→   627→                {[
+   628→   628→                  { icon: CheckCircle, title: 'Helps Reduce GI Impact', desc: 'Designed for carbohydrate-rich meals' },
+   629→   629→                  { icon: Heart, title: 'Blood Sugar Support', desc: 'Supports healthier post-meal response' },
+   630→   630→                  { icon: Package, title: '14 x 50 ml Shots', desc: 'Ready-to-drink pack for daily use' },
+   631→   631→                ].map((item) => (
+   632→   632→                  <div key={item.title} className="flex items-start gap-4 p-4 rounded-xl bg-white/[0.04] border border-white/[0.08] hover:border-white/15 transition-colors duration-300">
+   633→   633→                    <div className="w-10 h-10 rounded-lg bg-[#48805b]/20 flex items-center justify-center flex-shrink-0">
+   634→   634→                      <item.icon className="w-5 h-5 text-[#afb75d]" />
+   635→   635→                    </div>
+   636→   636→                    <div>
+   637→   637→                      <p className="font-heading font-semibold text-white text-sm">{item.title}</p>
+   638→   638→                      <p className="text-xs text-white/50">{item.desc}</p>
+   639→   639→                    </div>
+   640→   640→                  </div>
+   641→   641→                ))}
+   642→   642→              </div>
+   643→   643→            </motion.div>
+   644→   644→          </div>
+   645→   645→        </div>
+   646→   646→      </AnimatedSection>
+   647→   647→
+   648→   648→      {/* ═══════════════════════════════════════════════════════════
+   649→   649→          C. HOW IT WORKS SECTION — light bg, 4 steps
+   650→   650→          ═══════════════════════════════════════════════════════════ */}
+   651→   651→      <AnimatedSection id="how-it-works" className="py-20 md:py-28 bg-[#f4f3f0] overflow-hidden">
+   652→   652→        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+   653→   653→          <motion.div variants={fadeInUp} className="text-center mb-16">
+   654→   654→            <Badge className="mb-4 bg-[#48805b]/10 text-[#48805b] border-[#48805b]/20 text-xs font-semibold tracking-wider uppercase">How It Works</Badge>
+   655→   655→            <h2 className="font-heading text-3xl sm:text-4xl lg:text-5xl font-extralight text-[#1f1e1c] mb-4 leading-tight tracking-tight">
+   656→   656→              Simple Pre-Meal{' '}
+   657→   657→              <span className="font-[family-name:var(--font-display)] italic font-light text-[#48805b]">Wellness</span>
+   658→   658→            </h2>
+   659→   659→            <p className="text-[#88837b] text-base sm:text-lg max-w-2xl mx-auto">
+   660→   660→              Easy to incorporate into your daily routine before carbohydrate-rich meals.
+   661→   661→            </p>
+   662→   662→          </motion.div>
+   663→   663→
+   664→   664→          {/* Steps Row with Animated Dashed Connector */}
+   665→   665→          <div className="relative">
+   666→   666→            {/* ── Animated dashed line (desktop) ── */}
+   667→   667→            <div className="hidden lg:block absolute top-[48px] left-[14%] right-[14%]">
+   668→   668→              {/* Background dashed line */}
+   669→   669→              <div className="h-0 border-t-2 border-dashed border-[#c5c0b8]" />
+   670→   670→              {/* Animated progress fill — travels from left to right */}
+   671→   671→              <motion.div
+   672→   672→                className="absolute top-0 left-0 h-0 border-t-2 border-[#48805b]"
+   673→   673→                initial={{ width: '0%' }}
+   674→   674→                whileInView={{ width: '100%' }}
+   675→   675→                viewport={{ once: true }}
+   676→   676→                transition={{ duration: 2.4, delay: 0.3, ease: 'easeInOut' }}
+   677→   677→              />
+   678→   678→              {/* Traveling dot on the line */}
+   679→   679→              <motion.div
+   680→   680→                className="absolute -top-[5px] w-[12px] h-[12px] rounded-full bg-[#48805b] shadow-lg shadow-[#48805b]/50"
+   681→   681→                initial={{ left: '0%' }}
+   682→   682→                whileInView={{ left: '100%' }}
+   683→   683→                viewport={{ once: true }}
+   684→   684→                transition={{ duration: 2.4, delay: 0.3, ease: 'easeInOut' }}
+   685→   685→              />
+   686→   686→            </div>
+   687→   687→
+   688→   688→            {/* Step Cards */}
+   689→   689→            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-6">
+   690→   690→              {[
+   691→   691→                {
+   692→   692→                  num: '01', icon: Package, title: 'Open',
+   693→   693→                  desc: 'Keep your 14 x 50 ml shot pack ready before meals.',
+   694→   694→                  color: '#48805b', badge: 'Pack of 14', badgeIcon: Package,
+   695→   695→                },
+   696→   696→                {
+   697→   697→                  num: '02', icon: Clock, title: 'Take',
+   698→   698→                  desc: 'Drink one 50 ml shot 10-15 minutes before your meal.',
+   699→   699→                  color: '#48805b', badge: 'Pre-Meal', badgeIcon: Clock,
+   700→   700→                },
+   701→   701→                {
+   702→   702→                  num: '03', icon: Utensils, title: 'Eat',
+   703→   703→                  desc: 'Enjoy your carbohydrate-rich foods as part of a balanced lifestyle.',
+   704→   704→                  color: '#48805b', badge: 'Daily Routine', badgeIcon: Utensils,
+   705→   705→                },
+   706→   706→                {
+   707→   707→                  num: '04', icon: TrendingUp, title: 'Support',
+   708→   708→                  desc: 'Help manage post-meal blood sugar spikes and glycemic response.',
+   709→   709→                  color: '#48805b', badge: 'Smarter Meals', badgeIcon: TrendingUp,
+   710→   710→                },
+   711→   711→              ].map((step, idx) => (
+   712→   712→                <motion.div
+   713→   713→                  key={step.num}
+   714→   714→                  initial={{ opacity: 0, y: 40 }}
+   715→   715→                  whileInView={{ opacity: 1, y: 0 }}
+   716→   716→                  viewport={{ once: true }}
+   717→   717→                  transition={{ duration: 0.6, delay: 0.2 + idx * 0.25, ease: 'easeOut' }}
+   718→   718→                  className="relative flex flex-col items-center text-center group"
+   719→   719→                >
+   720→   720→                  {/* ── Rounded Square Icon ── */}
+   721→   721→                  <motion.div
+   722→   722→                    className="relative z-10 mb-5"
+   723→   723→                    initial={{ scale: 0, opacity: 0 }}
+   724→   724→                    whileInView={{ scale: 1, opacity: 1 }}
+   725→   725→                    viewport={{ once: true }}
+   726→   726→                    transition={{ type: 'spring', stiffness: 260, damping: 20, delay: 0.1 + idx * 0.25 }}
+   727→   727→                  >
+   728→   728→                    <div
+   729→   729→                      className="w-[88px] h-[88px] rounded-2xl text-white flex items-center justify-center shadow-lg transition-all duration-500 group-hover:scale-110 group-hover:shadow-xl group-hover:rounded-3xl"
+   730→   730→                      style={{ backgroundColor: step.color, boxShadow: `0 8px 24px ${step.color}30` }}
+   731→   731→                    >
+   732→   732→                      <motion.div
+   733→   733→                        animate={{ y: [0, -2, 0] }}
+   734→   734→                        transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut', delay: idx * 0.3 }}
+   735→   735→                      >
+   736→   736→                        <step.icon className="w-8 h-8" />
+   737→   737→                      </motion.div>
+   738→   738→                    </div>
+   739→   739→                    {/* Step number badge */}
+   740→   740→                    <div
+   741→   741→                      className="absolute -top-2 -right-2 w-7 h-7 rounded-full text-white text-xs font-bold flex items-center justify-center shadow-md"
+   742→   742→                      style={{ backgroundColor: step.color }}
+   743→   743→                    >
+   744→   744→                      {step.num}
+   745→   745→                    </div>
+   746→   746→                  </motion.div>
+   747→   747→
+   748→   748→                  {/* ── Title ── */}
+   749→   749→                  <motion.h3
+   750→   750→                    className="font-heading text-lg font-bold text-[#1f1e1c] mb-1.5 transition-colors duration-300 group-hover:text-[#48805b]"
+   751→   751→                    initial={{ opacity: 0, y: 8 }}
+   752→   752→                    whileInView={{ opacity: 1, y: 0 }}
+   753→   753→                    viewport={{ once: true }}
+   754→   754→                    transition={{ duration: 0.4, delay: 0.3 + idx * 0.25 }}
+   755→   755→                  >
+   756→   756→                    {step.title}
+   757→   757→                  </motion.h3>
+   758→   758→
+   759→   759→                  {/* ── Description ── */}
+   760→   760→                  <motion.p
+   761→   761→                    className="text-[#88837b] text-sm leading-relaxed max-w-[240px] min-h-[48px] mx-auto mb-3 transition-colors duration-300 group-hover:text-[#1f1e1c]/70"
+   762→   762→                    initial={{ opacity: 0, y: 8 }}
+   763→   763→                    whileInView={{ opacity: 1, y: 0 }}
+   764→   764→                    viewport={{ once: true }}
+   765→   765→                    transition={{ duration: 0.4, delay: 0.4 + idx * 0.25 }}
+   766→   766→                  >
+   767→   767→                    {step.desc}
+   768→   768→                  </motion.p>
+   769→   769→
+   770→   770→                  {/* ── Benefit Badge ── */}
+   771→   771→                  <motion.div
+   772→   772→                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border transition-all duration-300"
+   773→   773→                    style={{
+   774→   774→                      backgroundColor: `${step.color}10`,
+   775→   775→                      color: step.color,
+   776→   776→                      borderColor: `${step.color}25`,
+   777→   777→                    }}
+   778→   778→                    initial={{ opacity: 0, scale: 0.8 }}
+   779→   779→                    whileInView={{ opacity: 1, scale: 1 }}
+   780→   780→                    viewport={{ once: true }}
+   781→   781→                    transition={{ type: 'spring', stiffness: 300, damping: 20, delay: 0.5 + idx * 0.25 }}
+   782→   782→                    whileHover={{ scale: 1.08 }}
+   783→   783→                  >
+   784→   784→                    <step.badgeIcon className="w-3 h-3" />
+   785→   785→                    {step.badge}
+   786→   786→                  </motion.div>
+   787→   787→                </motion.div>
+   788→   788→              ))}
+   789→   789→            </div>
+   790→   790→          </div>
+   791→   791→        </div>
+   792→   792→      </AnimatedSection>
+   793→   793→
+   794→   794→      {/* ═══════════════════════════════════════════════════════════
+   795→   795→          D. SCIENCE SECTION — white bg, graph + stats
+   796→   796→          ═══════════════════════════════════════════════════════════ */}
+   797→   797→      <AnimatedSection className="py-20 md:py-28 bg-white">
+   798→   798→        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+   799→   799→          <div className="grid md:grid-cols-2 gap-12 items-center">
+   800→   800→            <motion.div variants={slideInLeft}>
+   801→   801→              <div className="bg-gradient-to-br from-[#48805b] to-[#3a6a4a] rounded-2xl p-8 md:p-10 text-white shadow-2xl shadow-[#48805b]/15">
+   802→   802→                <h3 className="font-heading text-2xl font-bold mb-2">Glycemic Response</h3>
+   803→   803→                <p className="text-white/60 text-sm mb-6">See how NOTJUST WATER(TM) supports a healthier post-meal response.</p>
+   804→   804→                {/* SVG Graph */}
+   805→   805→                <svg viewBox="0 0 400 200" className="w-full h-auto">
+   806→   806→                  <defs>
+   807→   807→                    <linearGradient id="greenGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+   808→   808→                      <stop offset="0%" stopColor="#afb75d" stopOpacity="0.4"/>
+   809→   809→                      <stop offset="100%" stopColor="#afb75d" stopOpacity="0"/>
+   810→   810→                    </linearGradient>
+   811→   811→                    <linearGradient id="redGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+   812→   812→                      <stop offset="0%" stopColor="#ff6b6b" stopOpacity="0.3"/>
+   813→   813→                      <stop offset="100%" stopColor="#ff6b6b" stopOpacity="0"/>
+   814→   814→                    </linearGradient>
+   815→   815→                  </defs>
+   816→   816→                  <line x1="40" y1="20" x2="40" y2="170" stroke="rgba(255,255,255,0.15)" strokeWidth="1"/>
+   817→   817→                  <line x1="40" y1="170" x2="380" y2="170" stroke="rgba(255,255,255,0.15)" strokeWidth="1"/>
+   818→   818→                  <line x1="40" y1="95" x2="380" y2="95" stroke="rgba(255,255,255,0.1)" strokeWidth="1" strokeDasharray="4"/>
+   819→   819→                  <text x="10" y="175" fill="rgba(255,255,255,0.5)" fontSize="9">0h</text>
+   820→   820→                  <text x="10" y="100" fill="rgba(255,255,255,0.5)" fontSize="9">2h</text>
+   821→   821→                  <text x="10" y="25" fill="rgba(255,255,255,0.5)" fontSize="9">4h</text>
+   822→   822→                  <path d="M40,170 Q100,160 130,40 Q160,60 200,120 Q260,155 380,165" fill="url(#redGrad)" />
+   823→   823→                  <path d="M40,170 Q100,160 130,40 Q160,60 200,120 Q260,155 380,165" fill="none" stroke="#ff6b6b" strokeWidth="2.5" />
+   824→   824→                  <path d="M40,170 Q100,165 130,110 Q160,115 200,140 Q260,160 380,168" fill="url(#greenGrad)" />
+   825→   825→                  <path d="M40,170 Q100,165 130,110 Q160,115 200,140 Q260,160 380,168" fill="none" stroke="#afb75d" strokeWidth="2.5" />
+   826→   826→                  <circle cx="130" cy="40" r="3" fill="#ff6b6b"/>
+   827→   827→                  <text x="140" y="38" fill="#ff6b6b" fontSize="10" fontWeight="bold">Without NotJust</text>
+   828→   828→                  <circle cx="130" cy="110" r="3" fill="#afb75d"/>
+   829→   829→                  <text x="140" y="108" fill="#afb75d" fontSize="10" fontWeight="bold">With NotJust</text>
+   830→   830→                </svg>
+   831→   831→              </div>
+   832→   832→            </motion.div>
+   833→   833→            <motion.div variants={slideInRight}>
+   834→   834→              <Badge className="mb-4 bg-[#2e91b2]/10 text-[#2e91b2] border-[#2e91b2]/20 text-xs font-semibold tracking-wider uppercase">The Science</Badge>
+   835→   835→              <h2 className="font-heading text-3xl sm:text-4xl font-extralight text-[#1f1e1c] mb-6 leading-tight tracking-tight">
+   836→   836→                Key Benefits for<br />
+   837→   837→                <span className="font-[family-name:var(--font-display)] italic font-light text-[#48805b]">Smarter Meals</span>
+   838→   838→              </h2>
+   839→   839→              <p className="text-[#88837b] text-base sm:text-lg mb-8 leading-relaxed">
+   840→   840→                NOTJUST WATER(TM) helps reduce the GI impact of meals, supports healthy blood sugar
+   841→   841→                management, and comes in a convenient ready-to-drink format.
+   842→   842→              </p>
+   843→   843→              <div className="grid grid-cols-2 gap-4">
+   844→   844→                {[
+   845→   845→                  { value: '50 ml', label: 'Per Shot' },
+   846→   846→                  { value: '10-15', label: 'Minutes Before Meals' },
+   847→   847→                  { value: '14', label: 'Shots Per Pack' },
+   848→   848→                  { value: 'GI', label: 'Impact Support' },
+   849→   849→                ].map(stat => (
+   850→   850→                  <div key={stat.label} className="text-center p-4 rounded-xl bg-[#f4f3f0] border border-[#e3dfd8]">
+   851→   851→                    <p className="font-heading text-2xl font-bold text-[#48805b]">{stat.value}</p>
+   852→   852→                    <p className="text-xs text-[#88837b] font-medium">{stat.label}</p>
+   853→   853→                  </div>
+   854→   854→                ))}
+   855→   855→              </div>
+   856→   856→            </motion.div>
+   857→   857→          </div>
+   858→   858→        </div>
+   859→   859→      </AnimatedSection>
+   860→   860→
+   861→   861→      {/* ═══════════════════════════════════════════════════════════
+   862→   862→          E. PRODUCTS SECTION — light bg, full product cards
+   863→   863→          ═══════════════════════════════════════════════════════════ */}
+   864→   864→      <AnimatedSection className="py-20 md:py-28 bg-[#f4f3f0]">
+   865→   865→        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+   866→   866→          <motion.div variants={fadeInUp} className="text-center mb-16">
+   867→   867→            <Badge className="mb-4 bg-[#48805b]/10 text-[#48805b] border-[#48805b]/20 text-xs font-semibold tracking-wider uppercase">Our Products</Badge>
+   868→   868→            <h2 className="font-heading text-3xl sm:text-4xl lg:text-5xl font-extralight text-[#1f1e1c] mb-4 leading-tight tracking-tight">
+   869→   869→              NOTJUST WATER(TM){' '}
+   870→   870→              <span className="font-[family-name:var(--font-display)] italic font-light text-[#48805b]">Pre-Meal Wellness Shot</span>
+   871→   871→            </h2>
+   872→   872→            <p className="text-[#88837b] text-base sm:text-lg max-w-2xl mx-auto">
+   873→   873→              Choose from NOTJUST Watr Fizz or NOTJUST Watr Still, with monthly and eco-friendly refill purchase options.
+   874→   874→            </p>
+   875→   875→          </motion.div>
+   876→   876→
+   877→   877→          <motion.div variants={fadeInUp} className="grid md:grid-cols-2 gap-5 max-w-3xl mx-auto mb-12">
+   878→   878→            <div className="rounded-xl border border-[#e7b973]/40 bg-[#fff7ea] p-5 flex items-center gap-4">
+   879→   879→              <div className="w-11 h-11 rounded-lg bg-[#e7b973]/20 flex items-center justify-center flex-shrink-0">
+   880→   880→                <ClipboardList className="w-5 h-5 text-[#b56b20]" />
+   881→   881→              </div>
+   882→   882→              <div>
+   883→   883→                <p className="font-heading font-bold text-sm text-[#1f1e1c]">Monthly Pack (60 Shots)</p>
+   884→   884→                <p className="text-xs text-[#6b6560] mt-1">Daily use, 2 shots/day</p>
+   885→   885→              </div>
+   886→   886→            </div>
+   887→   887→            <div className="rounded-xl border border-[#48805b]/25 bg-[#edf5ee] p-5 flex items-center gap-4">
+   888→   888→              <div className="w-11 h-11 rounded-lg bg-[#48805b]/15 flex items-center justify-center flex-shrink-0">
+   889→   889→                <Leaf className="w-5 h-5 text-[#48805b]" />
+   890→   890→              </div>
+   891→   891→              <div>
+   892→   892→                <p className="font-heading font-bold text-sm text-[#1f1e1c]">Eco-Friendly Refill Pack</p>
+   893→   893→                <p className="text-xs text-[#6b6560] mt-1">Sustainable and affordable</p>
+   894→   894→              </div>
+   895→   895→            </div>
+   896→   896→          </motion.div>
+   897→   897→
+   898→   898→          <div className="grid gap-6 max-w-6xl mx-auto">
+   899→   899→            {products.slice(0, 2).map((product, idx) => {
+   900→   900→              const isStill = idx === 1
+   901→   901→              return (
+   902→   902→                <motion.div key={product.id} variants={scaleIn}>
+   903→   903→                  <Card className="border-[#3c3a35] bg-[#262520] text-white overflow-hidden rounded-xl shadow-xl shadow-black/10">
+   904→   904→                    <div className={`grid lg:grid-cols-2 min-h-[330px] ${isStill ? 'lg:[&>div:first-child]:order-2' : ''}`}>
+   905→   905→                      <div className="relative min-h-[260px] lg:min-h-full overflow-hidden bg-[#1f1e1c]">
+   906→   906→                        <Image src="/images/product-shot.png" alt={product.name} fill className="object-cover" />
+   907→   907→                        <div className="absolute inset-0 bg-gradient-to-r from-transparent to-[#262520]/25" />
+   908→   908→                        <div className="absolute bottom-5 left-5 rounded-full bg-white/15 backdrop-blur-md px-4 py-2 text-[11px] font-bold uppercase tracking-widest text-white">
+   909→   909→                          {isStill ? 'Still Variant' : 'Fizz Variant'}
+   910→   910→                        </div>
+   911→   911→                      </div>
+   912→   912→                      <div className="p-7 lg:p-10 flex flex-col justify-center">
+   913→   913→                        <p className="text-[11px] font-semibold tracking-[0.35em] uppercase text-[#48805b] mb-4">{product.type} Variant</p>
+   914→   914→                        <h3 className="font-heading text-3xl text-white mb-4 leading-tight">{product.name}</h3>
+   915→   915→                        <p className="text-sm sm:text-base text-white/45 leading-relaxed max-w-xl">{product.description}</p>
+   916→   916→                        <div className="grid grid-cols-3 gap-3 my-7 max-w-md">
+   917→   917→                          {[
+   918→   918→                            { value: '14 shots', label: 'Per pack' },
+   919→   919→                            { value: '50 ml', label: 'Per shot' },
+   920→   920→                            { value: '0 cal', label: 'Zero calorie' },
+   921→   921→                          ].map(stat => (
+   922→   922→                            <div key={stat.label} className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3">
+   923→   923→                              <p className="text-lg font-bold text-white leading-none">{stat.value}</p>
+   924→   924→                              <p className="text-[10px] uppercase tracking-wide text-white/30 mt-2">{stat.label}</p>
+   925→   925→                            </div>
+   926→   926→                          ))}
+   927→   927→                        </div>
+   928→   928→                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5">
+   929→   929→                          <div>
+   930→   930→                            <p className="font-heading text-4xl text-white">₹{product.price.toLocaleString()}</p>
+   931→   931→                            <p className="text-xs text-white/35 mt-1">incl. tax</p>
+   932→   932→                          </div>
+   933→   933→                          {user?.learning_completed ? (
+   934→   934→                            <Button className="bg-[#48805b] hover:bg-[#3a6a4a] text-white font-heading font-semibold rounded-full text-sm px-7" onClick={() => navigateTo('products')}>
+   935→   935→                              View Details
+   936→   936→                            </Button>
+   937→   937→                          ) : (
+   938→   938→                            <Button variant="outline" className="border-white/20 bg-white/10 text-white/70 font-heading font-semibold rounded-full text-sm px-7" disabled>
+   939→   939→                              <Lock className="w-4 h-4 mr-2" /> Locked
+   940→   940→                            </Button>
+   941→   941→                          )}
+   942→   942→                        </div>
+   943→   943→                      </div>
+   944→   944→                    </div>
+   945→   945→                  </Card>
+   946→   946→                </motion.div>
+   947→   947→              )
+   948→   948→            })}
+   949→   949→          </div>        </div>
+   950→   950→      </AnimatedSection>
+   951→   951→      {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   952→   952→          G. STATS / COUNTER SECTION â€” dark bg
+   953→   953→          â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
+   954→   954→      <AnimatedSection className="py-20 md:py-28 bg-[#1f1e1c]">
+   955→   955→        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+   956→   956→          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
+   957→   957→            {[
+   958→   958→              { value: 10000, suffix: '+', label: 'Users', icon: Users },
+   959→   959→              { value: 50, suffix: '+', label: 'Partners', icon: Globe },
+   960→   960→              { value: 98, suffix: '%', label: 'Satisfaction', icon: Star },
+   961→   961→              { value: 40, suffix: '%', label: 'Spike Reduction', icon: TrendingUp },
+   962→   962→            ].map((stat) => (
+   963→   963→              <motion.div key={stat.label} variants={fadeInUp} className="text-center">
+   964→   964→                <div className="w-12 h-12 rounded-xl bg-[#48805b]/15 flex items-center justify-center mx-auto mb-4">
+   965→   965→                  <stat.icon className="w-5 h-5 text-[#48805b]" />
+   966→   966→                </div>
+   967→   967→                <p className="font-heading text-4xl sm:text-5xl font-extralight text-white mb-2 tracking-tight">
+   968→   968→                  <AnimatedCounter end={stat.value} suffix={stat.suffix} />
+   969→   969→                </p>
+   970→   970→                <p className="text-white/40 text-xs font-medium uppercase tracking-widest">{stat.label}</p>
+   971→   971→              </motion.div>
+   972→   972→            ))}
+   973→   973→          </div>
+   974→   974→        </div>
+   975→   975→      </AnimatedSection>
+   976→   976→      {/* ═══════════════════════════════════════════════════════════
+   977→   977→          H. CTA SECTION — dark with image overlay
+   978→   978→          ═══════════════════════════════════════════════════════════ */}
+   979→   979→      <AnimatedSection className="relative py-24 md:py-32 overflow-hidden">
+   980→   980→        <div className="absolute inset-0">
+   981→   981→          <Image src="/images/hero-bg.png" alt="" fill className="object-cover" />
+   982→   982→          <div className="absolute inset-0 bg-[#1f1e1c]/90" />
+   983→   983→        </div>
+   984→   984→        <div className="relative z-10 max-w-3xl mx-auto px-4 text-center">
+   985→   985→          <motion.div variants={fadeInUp}>
+   986→   986→            <h2 className="font-heading text-3xl sm:text-4xl lg:text-5xl font-extralight text-white mb-6 leading-tight tracking-tight">
+   987→   987→              Enjoy Your Favorite Foods<br />
+   988→   988→              <span className="font-[family-name:var(--font-display)] italic font-light text-[#afb75d]">Smarter.</span>
+   989→   989→            </h2>
+   990→   990→            <p className="text-white/50 text-base sm:text-lg mb-10 max-w-xl mx-auto">
+   991→   991→              NOTJUST WATER(TM) is a simple pre-meal wellness shot designed to support better
+   992→   992→              glycemic management as part of a balanced lifestyle.
+   993→   993→            </p>
+   994→   994→            <Button
+   995→   995→              size="lg"
+   996→   996→              onClick={() => {
+   997→   997→                if (!user) { navigateTo('auth-login'); toast.info('Please sign in to get started'); return }
+   998→   998→                navigateTo('learning')
+   999→   999→              }}
+
+[showing lines 500-999 of 2002; use offset=1000 with limit to continue reading]

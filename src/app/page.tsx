@@ -14,17 +14,18 @@ import {
   Filter, Download, MoreVertical, AlertCircle, Info, ChevronUp,
   DollarSign, Activity, PieChart, BarChart, Globe, Mail, Phone as PhoneIcon,
   Facebook, Twitter, Instagram, Linkedin, Youtube, Send,
-  LayoutDashboard, CreditCard, Truck, Kanban, Columns3, Tag, Copy, ExternalLink, Utensils
+  LayoutDashboard, CreditCard, Truck, Kanban, Columns3, Tag, Copy, ExternalLink, Utensils, Pencil, GripVertical, Repeat, Pause, PlayCircle
 } from 'lucide-react'
 import { useAppStore, type AppView, type CartItem } from '@/store/app-store'
 import {
   authService, campaignService, learningService, quizService,
   productService, orderService, adminStatsService, userService,
-  guaranteeService, qrScanService, initDataService, isUsingRealSupabase
+  guaranteeService, qrScanService, initDataService, isUsingRealSupabase,
+  productVideoService, subscriptionService
 } from '@/lib/data-service'
 import type {
   UserProfile, Campaign, QrScan, LearningProgress, QuizQuestion,
-  Product, Order, OrderItem, GuaranteePlan
+  Product, Order, OrderItem, GuaranteePlan, ProductVideo, Subscription
 } from '@/lib/data-service'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -1652,10 +1653,16 @@ function ProductsCatalog() {
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedType, setSelectedType] = useState<string>('ALL')
+  const [purchaseType, setPurchaseType] = useState<Record<string, 'one-time' | 'subscription'>>({})
 
   useEffect(() => {
     productService.getAll().then(r => {
-      if (r.data) setProducts(r.data)
+      if (r.data) {
+        setProducts(r.data)
+        const defaultTypes: Record<string, 'one-time' | 'subscription'> = {}
+        r.data.forEach(p => { defaultTypes[p.id] = 'one-time' })
+        setPurchaseType(defaultTypes)
+      }
       setLoading(false)
     })
   }, [])
@@ -1722,67 +1729,113 @@ function ProductsCatalog() {
             </div>
             <div className="rounded-xl border border-[#48805b]/25 bg-[#edf5ee] p-5 flex items-center gap-4">
               <div className="w-11 h-11 rounded-lg bg-[#48805b]/15 flex items-center justify-center flex-shrink-0">
-                <Leaf className="w-5 h-5 text-[#48805b]" />
+                <Repeat className="w-5 h-5 text-[#48805b]" />
               </div>
               <div>
-                <p className="font-heading font-bold text-sm text-[#1f1e1c]">Eco-Friendly Refill Pack</p>
-                <p className="text-xs text-[#6b6560] mt-1">Sustainable and affordable</p>
+                <p className="font-heading font-bold text-sm text-[#1f1e1c]">Subscribe & Save</p>
+                <p className="text-xs text-[#6b6560] mt-1">Auto-delivery with discounts, cancel anytime</p>
               </div>
             </div>
           </div>
 
-          <div className="grid sm:grid-cols-2 gap-6 max-w-3xl">
-            {filtered.map((product, idx) => (
-              <motion.div
-                key={product.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: idx * 0.05 }}
-              >
-                <Card className="card-lift border-[#e3dfd8] overflow-hidden group h-full flex flex-col">
-                  <div className="relative aspect-[4/3] bg-gradient-to-br from-[#e3dfd8]/50 to-[#f4f3f0] flex items-center justify-center overflow-hidden">
-                    <Image src="/images/product-shot.png" alt={product.name} fill className="object-cover group-hover:scale-105 transition-transform duration-500" />
-                    <Badge className="absolute top-3 right-3 bg-[#48805b] text-white text-[10px] shadow-sm">{product.type}</Badge>
-                    {product.stock < 50 && (
-                      <Badge variant="destructive" className="absolute top-3 left-3 text-[10px]">Low Stock</Badge>
-                    )}
-                  </div>
-                  <CardContent className="p-5 flex-1 flex flex-col">
-                    <h3 className="font-heading font-bold text-[#1f1e1c] mb-1">{product.name}</h3>
-                    <p className="text-sm text-[#88837b] line-clamp-2 mb-4 flex-1">{product.description}</p>
-                    <div className="flex items-end justify-between">
-                      <div>
-                        <p className="font-heading text-2xl font-bold text-[#48805b]">₹{product.price.toLocaleString()}</p>
-                        <p className="text-xs text-[#88837b] mt-0.5">{product.stock} in stock</p>
-                      </div>
+          <div className="grid sm:grid-cols-2 gap-6 max-w-4xl">
+            {filtered.map((product, idx) => {
+              const pType = purchaseType[product.id] || 'one-time'
+              const isSub = pType === 'subscription' && (product as any).has_subscription
+              const subPrice = (product as any).subscription_price
+              const subInterval = (product as any).subscription_interval
+              const displayPrice = isSub && subPrice ? subPrice : product.price
+              return (
+                <motion.div
+                  key={product.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: idx * 0.05 }}
+                >
+                  <Card className="card-lift border-[#e3dfd8] overflow-hidden group h-full flex flex-col">
+                    <div className="relative aspect-[4/3] bg-gradient-to-br from-[#e3dfd8]/50 to-[#f4f3f0] flex items-center justify-center overflow-hidden">
+                      <Image src="/images/product-shot.png" alt={product.name} fill className="object-cover group-hover:scale-105 transition-transform duration-500" />
+                      <Badge className="absolute top-3 right-3 bg-[#48805b] text-white text-[10px] shadow-sm">{product.type}</Badge>
+                      {(product as any).has_subscription && (
+                        <Badge className="absolute top-3 left-3 bg-[#afb75d] text-white text-[10px] shadow-sm flex items-center gap-1">
+                          <Repeat className="w-3 h-3" /> Sub Available
+                        </Badge>
+                      )}
+                      {product.stock < 50 && (
+                        <Badge variant="destructive" className="absolute bottom-3 left-3 text-[10px]">Low Stock</Badge>
+                      )}
                     </div>
-                  </CardContent>
-                  <CardFooter className="px-5 pb-5 pt-0">
-                    {user?.learning_completed ? (
-                      <Button
-                        className="w-full bg-[#48805b] hover:bg-[#3a6a4a] text-white font-heading font-semibold rounded-xl h-11"
-                        onClick={() => {
-                          addToCart({
-                            productId: product.id,
-                            name: product.name,
-                            price: product.price,
-                            quantity: 1,
-                            type: product.type,
-                          })
-                          toast.success(`${product.name} added to cart`)
-                        }}
-                      >
-                        <ShoppingCart className="w-4 h-4 mr-2" /> Add to Cart
-                      </Button>
-                    ) : (
-                      <Button variant="outline" className="w-full rounded-xl h-11" disabled>
-                        <Lock className="w-4 h-4 mr-2" /> Locked
-                      </Button>
-                    )}
-                  </CardFooter>
-                </Card>
-              </motion.div>
-            ))}
+                    <CardContent className="p-5 flex-1 flex flex-col">
+                      <h3 className="font-heading font-bold text-[#1f1e1c] mb-1">{product.name}</h3>
+                      <p className="text-sm text-[#88837b] line-clamp-2 mb-3 flex-1">{product.description}</p>
+
+                      {/* Purchase Type Toggle */}
+                      {(product as any).has_subscription && (
+                        <div className="flex rounded-lg border border-[#e3dfd8] overflow-hidden mb-4">
+                          <button
+                            onClick={() => setPurchaseType(prev => ({ ...prev, [product.id]: 'one-time' }))}
+                            className={`flex-1 py-2 text-xs font-semibold transition-all ${pType === 'one-time' ? 'bg-[#48805b] text-white' : 'bg-white text-[#88837b] hover:bg-[#f4f3f0]'}`}
+                          >
+                            One-Time
+                          </button>
+                          <button
+                            onClick={() => setPurchaseType(prev => ({ ...prev, [product.id]: 'subscription' }))}
+                            className={`flex-1 py-2 text-xs font-semibold transition-all flex items-center justify-center gap-1 ${pType === 'subscription' ? 'bg-[#afb75d] text-white' : 'bg-white text-[#88837b] hover:bg-[#f4f3f0]'}`}
+                          >
+                            <Repeat className="w-3 h-3" /> Subscribe
+                          </button>
+                        </div>
+                      )}
+
+                      <div className="flex items-end justify-between">
+                        <div>
+                          {isSub && subPrice ? (
+                            <>
+                              <p className="font-heading text-2xl font-bold text-[#afb75d]">₹{subPrice.toLocaleString()}<span className="text-sm font-normal text-[#88837b]">/{subInterval?.toLowerCase() || 'month'}</span></p>
+                              <p className="text-xs text-[#88837b] line-through mt-0.5">₹{product.price.toLocaleString()} one-time</p>
+                            </>
+                          ) : (
+                            <>
+                              <p className="font-heading text-2xl font-bold text-[#48805b]">₹{product.price.toLocaleString()}</p>
+                              <p className="text-xs text-[#88837b] mt-0.5">{product.stock} in stock</p>
+                            </>
+                          )}
+                        </div>
+                        {isSub && subPrice && (
+                          <Badge className="bg-[#afb75d]/10 text-[#afb75d] text-[10px]">Save ₹{(product.price - subPrice).toLocaleString()}</Badge>
+                        )}
+                      </div>
+                    </CardContent>
+                    <CardFooter className="px-5 pb-5 pt-0">
+                      {user?.learning_completed ? (
+                        <Button
+                          className={`w-full font-heading font-semibold rounded-xl h-11 ${isSub ? 'bg-[#afb75d] hover:bg-[#9aa34e] text-white' : 'bg-[#48805b] hover:bg-[#3a6a4a] text-white'}`}
+                          onClick={() => {
+                            addToCart({
+                              productId: product.id + (isSub ? '_sub' : ''),
+                              name: product.name,
+                              price: product.price,
+                              subscriptionPrice: subPrice,
+                              quantity: 1,
+                              type: product.type,
+                              purchaseType: isSub ? 'subscription' : 'one-time',
+                              subscriptionInterval: isSub ? subInterval : undefined,
+                            })
+                            toast.success(`${product.name} ${isSub ? 'subscription' : ''} added to cart`)
+                          }}
+                        >
+                          {isSub ? <><Repeat className="w-4 h-4 mr-2" /> Subscribe Now</> : <><ShoppingCart className="w-4 h-4 mr-2" /> Add to Cart</>}
+                        </Button>
+                      ) : (
+                        <Button variant="outline" className="w-full rounded-xl h-11" disabled>
+                          <Lock className="w-4 h-4 mr-2" /> Locked
+                        </Button>
+                      )}
+                    </CardFooter>
+                  </Card>
+                </motion.div>
+              )
+            })}
           </div>
         </motion.div>
       </div>
@@ -1796,6 +1849,15 @@ function CartView() {
   const tax = Math.round(total * 0.18)
   const [coupon, setCoupon] = useState('')
   const [couponApplied, setCouponApplied] = useState(false)
+
+  const hasSubscription = cart.some(i => i.purchaseType === 'subscription')
+  const hasOneTime = cart.some(i => i.purchaseType !== 'subscription')
+  const oneTimeTotal = cart.filter(i => i.purchaseType !== 'subscription').reduce((s, i) => s + i.price * i.quantity, 0)
+  const subTotal = cart.filter(i => i.purchaseType === 'subscription').reduce((s, i) => (s + (i.subscriptionPrice || i.price) * i.quantity), 0)
+
+  const getItemPrice = (item: CartItem) => {
+    return item.purchaseType === 'subscription' && item.subscriptionPrice ? item.subscriptionPrice : item.price
+  }
 
   return (
     <div className="min-h-screen bg-[#f4f3f0] pt-20 pb-12">
@@ -1825,62 +1887,80 @@ function CartView() {
             <div className="grid lg:grid-cols-3 gap-8">
               {/* Cart Items */}
               <div className="lg:col-span-2 space-y-4">
-                {cart.map((item, idx) => (
-                  <motion.div
-                    key={item.productId}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: idx * 0.05 }}
-                    layout
-                  >
-                    <Card className="border-[#e3dfd8] overflow-hidden hover:shadow-md transition-shadow">
-                      <CardContent className="p-0">
-                        <div className="flex items-stretch">
-                          {/* Product Thumbnail */}
-                          <div className="w-28 sm:w-36 bg-gradient-to-br from-[#e3dfd8]/40 to-[#f4f3f0] flex items-center justify-center flex-shrink-0 p-4">
-                            <div className="relative w-full h-full min-h-[80px]">
-                              <Image src="/images/product-shot.png" alt={item.name} fill className="object-contain" />
+                {cart.map((item, idx) => {
+                  const itemPrice = getItemPrice(item)
+                  const isSub = item.purchaseType === 'subscription'
+                  return (
+                    <motion.div
+                      key={item.productId}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: idx * 0.05 }}
+                      layout
+                    >
+                      <Card className={`border overflow-hidden hover:shadow-md transition-shadow ${isSub ? 'border-[#afb75d]/40 bg-[#fafbe8]/30' : 'border-[#e3dfd8]'}`}>
+                        <CardContent className="p-0">
+                          <div className="flex items-stretch">
+                            {/* Product Thumbnail */}
+                            <div className="w-28 sm:w-36 bg-gradient-to-br from-[#e3dfd8]/40 to-[#f4f3f0] flex items-center justify-center flex-shrink-0 p-4">
+                              <div className="relative w-full h-full min-h-[80px]">
+                                <Image src="/images/product-shot.png" alt={item.name} fill className="object-contain" />
+                              </div>
+                            </div>
+                            {/* Details */}
+                            <div className="flex-1 p-5 flex flex-col sm:flex-row sm:items-center gap-4">
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <h3 className="font-heading font-bold text-[#1f1e1c] truncate">{item.name}</h3>
+                                  {isSub && (
+                                    <Badge className="bg-[#afb75d]/10 text-[#afb75d] text-[10px] flex-shrink-0">
+                                      <Repeat className="w-3 h-3 mr-0.5" /> Sub
+                                    </Badge>
+                                  )}
+                                </div>
+                                <p className="text-sm text-[#88837b] mt-0.5">
+                                  {item.type}
+                                  {isSub && item.subscriptionInterval && <span className="text-[#afb75d]"> · {item.subscriptionInterval.toLowerCase()} renewal</span>}
+                                </p>
+                                <p className={`font-heading text-lg font-bold mt-1 sm:hidden ${isSub ? 'text-[#afb75d]' : 'text-[#48805b]'}`}>
+                                  ₹{(itemPrice * item.quantity).toLocaleString()}{isSub ? `/${item.subscriptionInterval?.toLowerCase() || 'month'}` : ''}
+                                </p>
+                              </div>
+                              {/* Quantity Stepper */}
+                              <div className="flex items-center gap-1">
+                                <button
+                                  onClick={() => updateCartQuantity(item.productId, item.quantity - 1)}
+                                  className="w-9 h-9 rounded-lg border border-[#e3dfd8] flex items-center justify-center hover:bg-[#e3dfd8]/50 transition-colors"
+                                >
+                                  <Minus className="w-3.5 h-3.5" />
+                                </button>
+                                <span className="w-10 text-center font-heading font-semibold text-[#1f1e1c]">{item.quantity}</span>
+                                <button
+                                  onClick={() => updateCartQuantity(item.productId, item.quantity + 1)}
+                                  className="w-9 h-9 rounded-lg border border-[#e3dfd8] flex items-center justify-center hover:bg-[#e3dfd8]/50 transition-colors"
+                                >
+                                  <Plus className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                              {/* Price & Remove */}
+                              <div className="hidden sm:flex flex-col items-end gap-2">
+                                <p className={`font-heading text-lg font-bold ${isSub ? 'text-[#afb75d]' : 'text-[#48805b]'}`}>
+                                  ₹{(itemPrice * item.quantity).toLocaleString()}{isSub ? `/${item.subscriptionInterval?.toLowerCase() || 'mo'}` : ''}
+                                </p>
+                                <button
+                                  onClick={() => { removeFromCart(item.productId); toast.info(`${item.name} removed`) }}
+                                  className="text-xs text-red-400 hover:text-red-600 flex items-center gap-1 transition-colors"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" /> Remove
+                                </button>
+                              </div>
                             </div>
                           </div>
-                          {/* Details */}
-                          <div className="flex-1 p-5 flex flex-col sm:flex-row sm:items-center gap-4">
-                            <div className="flex-1 min-w-0">
-                              <h3 className="font-heading font-bold text-[#1f1e1c] truncate">{item.name}</h3>
-                              <p className="text-sm text-[#88837b] mt-0.5">{item.type}</p>
-                              <p className="font-heading text-lg font-bold text-[#48805b] mt-1 sm:hidden">₹{(item.price * item.quantity).toLocaleString()}</p>
-                            </div>
-                            {/* Quantity Stepper */}
-                            <div className="flex items-center gap-1">
-                              <button
-                                onClick={() => updateCartQuantity(item.productId, item.quantity - 1)}
-                                className="w-9 h-9 rounded-lg border border-[#e3dfd8] flex items-center justify-center hover:bg-[#e3dfd8]/50 transition-colors"
-                              >
-                                <Minus className="w-3.5 h-3.5" />
-                              </button>
-                              <span className="w-10 text-center font-heading font-semibold text-[#1f1e1c]">{item.quantity}</span>
-                              <button
-                                onClick={() => updateCartQuantity(item.productId, item.quantity + 1)}
-                                className="w-9 h-9 rounded-lg border border-[#e3dfd8] flex items-center justify-center hover:bg-[#e3dfd8]/50 transition-colors"
-                              >
-                                <Plus className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
-                            {/* Price & Remove */}
-                            <div className="hidden sm:flex flex-col items-end gap-2">
-                              <p className="font-heading text-lg font-bold text-[#48805b]">₹{(item.price * item.quantity).toLocaleString()}</p>
-                              <button
-                                onClick={() => { removeFromCart(item.productId); toast.info(`${item.name} removed`) }}
-                                className="text-xs text-red-400 hover:text-red-600 flex items-center gap-1 transition-colors"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" /> Remove
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </motion.div>
-                ))}
+                        </CardContent>
+                      </Card>
+                    </motion.div>
+                  )
+                })}
 
                 {/* Clear Cart */}
                 <div className="flex justify-end">
@@ -1898,12 +1978,20 @@ function CartView() {
                       <CardTitle className="font-heading text-lg">Order Summary</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                      {cart.map(item => (
-                        <div key={item.productId} className="flex justify-between text-sm">
-                          <span className="text-[#88837b] truncate mr-2">{item.name} <span className="text-[#88837b]/60">× {item.quantity}</span></span>
-                          <span className="font-medium text-[#1f1e1c] flex-shrink-0">₹{(item.price * item.quantity).toLocaleString()}</span>
-                        </div>
-                      ))}
+                      {cart.map(item => {
+                        const ip = getItemPrice(item)
+                        const isSub = item.purchaseType === 'subscription'
+                        return (
+                          <div key={item.productId} className="flex justify-between text-sm">
+                            <span className="text-[#88837b] truncate mr-2">
+                              {item.name} {isSub && <span className="text-[#afb75d]">(Sub)</span>} <span className="text-[#88837b]/60">× {item.quantity}</span>
+                            </span>
+                            <span className={`font-medium flex-shrink-0 ${isSub ? 'text-[#afb75d]' : 'text-[#1f1e1c]'}`}>
+                              ₹{(ip * item.quantity).toLocaleString()}{isSub ? '/mo' : ''}
+                            </span>
+                          </div>
+                        )
+                      })}
 
                       <Separator />
 
@@ -1936,10 +2024,18 @@ function CartView() {
                       <Separator />
 
                       <div className="space-y-2">
-                        <div className="flex justify-between text-sm">
-                          <span className="text-[#88837b]">Subtotal</span>
-                          <span className="font-medium">₹{total.toLocaleString()}</span>
-                        </div>
+                        {hasOneTime && (
+                          <div className="flex justify-between text-sm">
+                            <span className="text-[#88837b]">One-Time Items</span>
+                            <span className="font-medium">₹{oneTimeTotal.toLocaleString()}</span>
+                          </div>
+                        )}
+                        {hasSubscription && (
+                          <div className="flex justify-between text-sm">
+                            <span className="text-[#afb75d]">Subscription (1st billing)</span>
+                            <span className="font-medium text-[#afb75d]">₹{subTotal.toLocaleString()}/mo</span>
+                          </div>
+                        )}
                         <div className="flex justify-between text-sm">
                           <span className="text-[#88837b]">Shipping</span>
                           <span className="text-[#48805b] font-medium">Free</span>
@@ -1956,6 +2052,11 @@ function CartView() {
                         <span className="font-heading font-bold text-lg text-[#1f1e1c]">Total</span>
                         <span className="font-heading font-bold text-2xl text-[#48805b]">₹{(total + tax).toLocaleString()}</span>
                       </div>
+                      {hasSubscription && (
+                        <p className="text-[11px] text-[#88837b] flex items-center gap-1">
+                          <Repeat className="w-3 h-3" /> Subscription items auto-renew. Cancel anytime.
+                        </p>
+                      )}
 
                       <Button
                         onClick={() => navigateTo('checkout')}
@@ -1990,21 +2091,52 @@ function CheckoutView() {
   const tax = Math.round(total * 0.18)
   const grandTotal = total + tax
 
+  const hasSubscription = cart.some(i => i.purchaseType === 'subscription')
+
   const handlePlaceOrder = async (payId?: string) => {
     setLoading(true)
     try {
-      const result = await orderService.create(
-        user!.user_id,
-        cart.map(i => ({ productId: i.productId, quantity: i.quantity })),
-        address,
-        paymentMethod === 'razorpay' ? 'RAZORPAY' : 'COD'
-      )
-      if (result.error) { toast.error(typeof result.error === 'string' ? result.error : 'Order failed'); return }
+      // Separate one-time and subscription items
+      const oneTimeItems = cart.filter(i => i.purchaseType !== 'subscription')
+      const subItems = cart.filter(i => i.purchaseType === 'subscription')
+
+      // Create order for one-time items
+      if (oneTimeItems.length > 0) {
+        const result = await orderService.create(
+          user!.user_id,
+          oneTimeItems.map(i => ({ productId: i.productId.replace('_sub', ''), quantity: i.quantity, purchaseType: 'one-time' as const })),
+          address,
+          paymentMethod === 'razorpay' ? 'RAZORPAY' : 'COD',
+          'one-time'
+        )
+        if (result.error) { toast.error(typeof result.error === 'string' ? result.error : 'Order failed'); setLoading(false); return }
+        setLastOrderId((result.data as any)?.id || null)
+      }
+
+      // Create subscription orders
+      for (const item of subItems) {
+        const subResult = await orderService.create(
+          user!.user_id,
+          [{ productId: item.productId.replace('_sub', ''), quantity: item.quantity, purchaseType: 'subscription' as const }],
+          address,
+          paymentMethod === 'razorpay' ? 'RAZORPAY' : 'COD',
+          'subscription'
+        )
+        if (subResult.data) {
+          // Also create subscription record
+          await subscriptionService.create(
+            user!.user_id,
+            item.productId.replace('_sub', ''),
+            item.subscriptionPrice || item.price,
+            item.subscriptionInterval || 'MONTHLY'
+          )
+        }
+      }
+
       setPaymentId(payId || null)
-      setLastOrderId((result.data as any)?.id || null)
       clearCart()
       navigateTo('order-success')
-      toast.success('Order placed successfully!')
+      toast.success(hasSubscription ? 'Order & subscription activated successfully!' : 'Order placed successfully!')
     } catch { toast.error('Order failed') }
     finally { setLoading(false) }
   }
@@ -2017,7 +2149,7 @@ function CheckoutView() {
         amount: grandTotal * 100, // Razorpay expects amount in paise
         currency: 'INR',
         name: 'NotJust Health',
-        description: 'Pre-Meal Wellness Shot',
+        description: hasSubscription ? 'Pre-Meal Wellness Shot + Subscription' : 'Pre-Meal Wellness Shot',
         image: '/images/notjust-logo-clean.png',
         handler: function(response: any) {
           handlePlaceOrder(response.razorpay_payment_id)

@@ -1,0 +1,502 @@
+  3100→    campaignService.getCampaignSales().then(r => {
+  3101→      if (r.data) setCampaignSales(r.data as any)
+  3102→    })
+  3103→  }, [orders, scans])
+  3104→
+  3105→  // Compute sales per campaign from orders + scans data
+  3106→  const getCampaignSalesInfo = (campaignId: string) => {
+  3107→    // Find all users who scanned this campaign's QR
+  3108→    const campaignUserIds = scans
+  3109→      .filter(s => s.campaign_id === campaignId && s.user_id)
+  3110→      .map(s => s.user_id!)
+  3111→
+  3112→    // Find orders from those users (only confirmed/shipped/delivered)
+  3113→    const campaignOrders = orders.filter((o: any) =>
+  3114→      campaignUserIds.includes(o.user_id) &&
+  3115→      ['CONFIRMED', 'SHIPPED', 'DELIVERED'].includes(o.status)
+  3116→    )
+  3117→
+  3118→    const totalRevenue = campaignOrders.reduce((sum: number, o: any) => sum + (o.amount || 0), 0)
+  3119→    return {
+  3120→      orderCount: campaignOrders.length,
+  3121→      revenue: totalRevenue,
+  3122→    }
+  3123→  }
+  3124→
+  3125→  const handleCreate = async () => {
+  3126→    if (!form.name) { toast.error('Campaign name is required'); return }
+  3127→    const result = await campaignService.create(form as any)
+  3128→    if (result.data) {
+  3129→      setCampaigns(prev => [result.data as Campaign, ...prev])
+  3130→      toast.success('Campaign created with QR code')
+  3131→      setDialogOpen(false)
+  3132→      setForm({ name: '', channel: 'HOTEL', partner_name: '', location: '' })
+  3133→    }
+  3134→  }
+  3135→
+  3136→  const toggleStatus = async (id: string, status: string) => {
+  3137→    const newStatus = status === 'ACTIVE' ? 'ARCHIVED' : 'ACTIVE'
+  3138→    await campaignService.updateStatus(id, newStatus)
+  3139→    setCampaigns(prev => prev.map(c => c.id === id ? { ...c, status: newStatus } : c))
+  3140→    toast.success('Status updated')
+  3141→  }
+  3142→
+  3143→  const channelIcons: Record<string, string> = {
+  3144→    HOTEL: '🏨', HOSPITAL: '🏥', CLINIC: '🏥', DOCTOR: '👨‍⚕️',
+  3145→    EVENT: '🎉', CORPORATE: '🏢', INFLUENCER: '📱', WELLNESS: '🧘',
+  3146→  }
+  3147→
+  3148→  // Summary stats
+  3149→  const totalSales = Object.values(campaignSales).reduce((sum, s) => sum + s.orderCount, 0)
+  3150→  const totalRevenue = Object.values(campaignSales).reduce((sum, s) => sum + s.revenue, 0)
+  3151→
+  3152→  return (
+  3153→    <div className="space-y-4">
+  3154→      <div className="flex items-center justify-between">
+  3155→        <div>
+  3156→          <h2 className="text-base font-semibold" style={{ color: A.text }}>Campaigns</h2>
+  3157→          <p className="text-[12px]" style={{ color: A.textMuted }}>{campaigns.length} total campaigns · {totalSales} sales · ₹{totalRevenue.toLocaleString()} revenue</p>
+  3158→        </div>
+  3159→        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+  3160→          <DialogTrigger asChild>
+  3161→            <Button size="sm" className="rounded-md text-[12px] h-8 text-white" style={{ background: A.green }}>
+  3162→              <Plus className="w-3.5 h-3.5 mr-1" /> Create Campaign
+  3163→            </Button>
+  3164→          </DialogTrigger>
+  3165→          <DialogContent style={{ background: '#fff', borderColor: A.border, color: A.text }}>
+  3166→            <DialogHeader><DialogTitle style={{ color: A.text }}>Create Campaign</DialogTitle></DialogHeader>
+  3167→            <div className="space-y-3 py-4">
+  3168→              <div className="space-y-1.5"><Label style={{ color: A.textSecondary }}>Name</Label><Input value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} placeholder="Campaign name" className="rounded-md" style={{ borderColor: A.border, color: A.text }} /></div>
+  3169→              <div className="space-y-1.5">
+  3170→                <Label style={{ color: A.textSecondary }}>Channel</Label>
+  3171→                <Select value={form.channel} onValueChange={v => setForm(p => ({ ...p, channel: v }))}>
+  3172→                  <SelectTrigger className="rounded-md" style={{ borderColor: A.border, color: A.text }}><SelectValue /></SelectTrigger>
+  3173→                  <SelectContent style={{ background: '#fff', borderColor: A.border }}>
+  3174→                    {['HOTEL', 'HOSPITAL', 'CLINIC', 'DOCTOR', 'EVENT', 'CORPORATE', 'INFLUENCER', 'WELLNESS'].map(c => <SelectItem key={c} value={c} style={{ color: A.text }}>{channelIcons[c]} {c}</SelectItem>)}
+  3175→                  </SelectContent>
+  3176→                </Select>
+  3177→              </div>
+  3178→              <div className="space-y-1.5"><Label style={{ color: A.textSecondary }}>Partner</Label><Input value={form.partner_name} onChange={e => setForm(p => ({ ...p, partner_name: e.target.value }))} className="rounded-md" style={{ borderColor: A.border, color: A.text }} /></div>
+  3179→              <div className="space-y-1.5"><Label style={{ color: A.textSecondary }}>Location</Label><Input value={form.location} onChange={e => setForm(p => ({ ...p, location: e.target.value }))} className="rounded-md" style={{ borderColor: A.border, color: A.text }} /></div>
+  3180→              <div className="flex items-center gap-2 p-3 rounded-md" style={{ background: A.greenLight, border: `1px solid ${A.green}20` }}>
+  3181→                <QrCode className="w-4 h-4" style={{ color: A.green }} />
+  3182→                <span className="text-[11px]" style={{ color: A.green }}>QR code will be auto-generated for this campaign</span>
+  3183→              </div>
+  3184→            </div>
+  3185→            <DialogFooter>
+  3186→              <Button onClick={handleCreate} className="rounded-md text-white" style={{ background: A.green }}>Create & Generate QR</Button>
+  3187→            </DialogFooter>
+  3188→          </DialogContent>
+  3189→        </Dialog>
+  3190→      </div>
+  3191→
+  3192→      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+  3193→        {campaigns.map(campaign => {
+  3194→          const campaignScans = scans.filter(s => s.campaign_id === campaign.id)
+  3195→          const salesInfo = getCampaignSalesInfo(campaign.id)
+  3196→          const qrUrl = `https://notjust.health/scan/${campaign.id}`
+  3197→          return (
+  3198→            <div key={campaign.id} className="bg-white border rounded-lg p-4 hover:shadow-sm transition-shadow" style={{ borderColor: A.border }}>
+  3199→              <div className="flex items-start gap-3">
+  3200→                <div className="flex-shrink-0 p-2 bg-white rounded-md border" style={{ borderColor: A.borderLight }}>
+  3201→                  <QRCodeSVG value={qrUrl} size={56} bgColor="#ffffff" fgColor="#1f1e1c" level="L" />
+  3202→                </div>
+  3203→                <div className="flex-1 min-w-0">
+  3204→                  <h3 className="font-semibold text-sm truncate" style={{ color: A.text }}>{campaign.name}</h3>
+  3205→                  <div className="flex items-center gap-2 mt-1">
+  3206→                    <span className="text-[9px] font-medium px-1.5 py-0.5 rounded" style={{ color: A.blue, background: A.blueLight }}>{channelIcons[campaign.channel] || '📋'} {campaign.channel}</span>
+  3207→                  </div>
+  3208→                  <p className="text-[10px] mt-1" style={{ color: A.textMuted }}>{campaign.partner_name || 'No partner'}</p>
+  3209→                  <div className="flex items-center gap-3 mt-1.5 text-[10px]" style={{ color: A.textSecondary }}>
+  3210→                    <span className="flex items-center gap-1"><Scan className="w-2.5 h-2.5" /> {campaignScans.length}</span>
+  3211→                    <span className="flex items-center gap-1"><Package className="w-2.5 h-2.5" /> {salesInfo.orderCount}</span>
+  3212→                    {salesInfo.orderCount > 0 && (
+  3213→                      <span className="flex items-center gap-1" style={{ color: A.green }}><DollarSign className="w-2.5 h-2.5" /> ₹{salesInfo.revenue.toLocaleString()}</span>
+  3214→                    )}
+  3215→                  </div>
+  3216→                </div>
+  3217→              </div>
+  3218→              <div className="flex items-center justify-between mt-3 pt-3" style={{ borderTop: `1px solid ${A.borderLight}` }}>
+  3219→                <span className="inline-flex items-center gap-1 text-[9px] font-medium px-2 py-0.5 rounded" style={campaign.status === 'ACTIVE' ? { color: A.green, background: A.greenLight } : { color: A.textMuted, background: A.bg }}>{campaign.status}</span>
+  3220→                <div className="flex items-center gap-1">
+  3221→                  <Button variant="ghost" size="sm" className="text-[10px] h-6 px-2" style={{ color: A.textSecondary }} onClick={() => setDetailCampaign(campaign)}><Eye className="w-3 h-3 mr-0.5" /> View</Button>
+  3222→                  <Button variant="ghost" size="sm" className="text-[10px] h-6 px-2" style={{ color: A.textSecondary }} onClick={() => toggleStatus(campaign.id, campaign.status)}>{campaign.status === 'ACTIVE' ? 'Archive' : 'Activate'}</Button>
+  3223→                </div>
+  3224→              </div>
+  3225→            </div>
+  3226→          )
+  3227→        })}
+  3228→        {campaigns.length === 0 && (
+  3229→          <div className="col-span-full bg-white border rounded-lg py-16 text-center" style={{ borderColor: A.border }}>
+  3230→            <MegaphoneIcon className="w-10 h-10 mx-auto mb-3" style={{ color: A.border }} />
+  3231→            <p className="text-sm" style={{ color: A.textMuted }}>No campaigns yet. Create one to get started.</p>
+  3232→          </div>
+  3233→        )}
+  3234→      </div>
+  3235→
+  3236→      <Dialog open={!!detailCampaign} onOpenChange={() => setDetailCampaign(null)}>
+  3237→        <DialogContent className="max-w-lg" style={{ background: '#fff', borderColor: A.border, color: A.text }}>
+  3238→          <DialogHeader><DialogTitle style={{ color: A.text }}>Campaign Details</DialogTitle></DialogHeader>
+  3239→          {detailCampaign && (() => {
+  3240→            const detailSales = getCampaignSalesInfo(detailCampaign.id)
+  3241→            const detailScans = scans.filter(s => s.campaign_id === detailCampaign.id)
+  3242→            // Get unique users who scanned
+  3243→            const scanUsers = [...new Set(detailScans.filter(s => s.user_id).map(s => s.user_id))]
+  3244→            // Get orders from those users
+  3245→            const detailOrders = orders.filter((o: any) =>
+  3246→              scanUsers.includes(o.user_id) &&
+  3247→              ['CONFIRMED', 'SHIPPED', 'DELIVERED'].includes(o.status)
+  3248→            )
+  3249→            return (
+  3250→              <div className="space-y-4">
+  3251→                <div className="flex items-start gap-6">
+  3252→                  <div className="p-4 bg-white rounded-lg border" style={{ borderColor: A.border }}>
+  3253→                    <QRCodeSVG value={`https://notjust.health/scan/${detailCampaign.id}`} size={130} bgColor="#ffffff" fgColor="#1f1e1c" level="M" />
+  3254→                  </div>
+  3255→                  <div className="flex-1 space-y-2">
+  3256→                    <h3 className="font-bold text-lg" style={{ color: A.text }}>{detailCampaign.name}</h3>
+  3257→                    <div className="flex items-center gap-2">
+  3258→                      <span className="text-[10px] font-medium px-2 py-0.5 rounded" style={{ color: A.blue, background: A.blueLight }}>{channelIcons[detailCampaign.channel] || '📋'} {detailCampaign.channel}</span>
+  3259→                      <span className="inline-flex items-center gap-1 text-[9px] font-medium px-2 py-0.5 rounded" style={detailCampaign.status === 'ACTIVE' ? { color: A.green, background: A.greenLight } : { color: A.textMuted, background: A.bg }}>{detailCampaign.status}</span>
+  3260→                    </div>
+  3261→                    <div className="text-[12px] space-y-1" style={{ color: A.textSecondary }}>
+  3262→                      <p>Partner: {detailCampaign.partner_name || '-'}</p>
+  3263→                      <p>Location: {detailCampaign.location || '-'}</p>
+  3264→                    </div>
+  3265→                    <div className="flex gap-2 pt-2">
+  3266→                      <Button variant="outline" size="sm" className="rounded-md text-[11px] h-8" style={{ borderColor: A.border, color: A.text }} onClick={() => { navigator.clipboard.writeText(`https://notjust.health/scan/${detailCampaign.id}`); toast.success('QR URL copied!') }}>
+  3267→                        <Copy className="w-3 h-3 mr-1" /> Copy URL
+  3268→                      </Button>
+  3269→                      <Button variant="outline" size="sm" className="rounded-md text-[11px] h-8" style={{ borderColor: A.border, color: A.text }} onClick={() => toggleStatus(detailCampaign.id, detailCampaign.status)}>
+  3270→                        {detailCampaign.status === 'ACTIVE' ? 'Archive' : 'Activate'}
+  3271→                      </Button>
+  3272→                    </div>
+  3273→                  </div>
+  3274→                </div>
+  3275→
+  3276→                {/* Campaign Performance Stats */}
+  3277→                <div style={{ borderTop: `1px solid ${A.borderLight}` }} className="pt-4">
+  3278→                  <h4 className="text-sm font-semibold mb-3" style={{ color: A.text }}>Campaign Performance</h4>
+  3279→                  <div className="grid grid-cols-3 gap-3">
+  3280→                    <div className="rounded-lg p-3 text-center" style={{ background: A.bg }}>
+  3281→                      <p className="text-xl font-bold" style={{ color: A.blue }}>{detailScans.length}</p>
+  3282→                      <p className="text-[10px]" style={{ color: A.textMuted }}>QR Scans</p>
+  3283→                    </div>
+  3284→                    <div className="rounded-lg p-3 text-center" style={{ background: A.greenLight }}>
+  3285→                      <p className="text-xl font-bold" style={{ color: A.green }}>{detailSales.orderCount}</p>
+  3286→                      <p className="text-[10px]" style={{ color: A.textMuted }}>Sales</p>
+  3287→                    </div>
+  3288→                    <div className="rounded-lg p-3 text-center" style={{ background: A.limeLight }}>
+  3289→                      <p className="text-xl font-bold" style={{ color: A.lime }}>₹{detailSales.revenue.toLocaleString()}</p>
+  3290→                      <p className="text-[10px]" style={{ color: A.textMuted }}>Revenue</p>
+  3291→                    </div>
+  3292→                  </div>
+  3293→                  {detailScans.length > 0 && (
+  3294→                    <div className="mt-2 text-[10px] text-center" style={{ color: A.textMuted }}>
+  3295→                      Conversion rate: {detailScans.length > 0 ? ((detailSales.orderCount / scanUsers.length) * 100).toFixed(0) : 0}% (scanned users who purchased)
+  3296→                    </div>
+  3297→                  )}
+  3298→                </div>
+  3299→
+  3300→                {/* Recent Orders from this campaign */}
+  3301→                {detailOrders.length > 0 && (
+  3302→                  <div style={{ borderTop: `1px solid ${A.borderLight}` }} className="pt-4">
+  3303→                    <h4 className="text-sm font-semibold mb-2" style={{ color: A.text }}>Recent Orders ({detailOrders.length})</h4>
+  3304→                    <div className="space-y-1.5 max-h-40 overflow-y-auto">
+  3305→                      {detailOrders.slice(0, 5).map((o: any) => (
+  3306→                        <div key={o.id} className="flex items-center justify-between p-2 rounded-md" style={{ background: A.bg }}>
+  3307→                          <div className="flex items-center gap-2">
+  3308→                            <Package className="w-3.5 h-3.5" style={{ color: A.textMuted }} />
+  3309→                            <span className="text-[11px] font-medium" style={{ color: A.text }}>{o.user?.name || o.user_id?.slice(0, 12)}</span>
+  3310→                          </div>
+  3311→                          <div className="flex items-center gap-3">
+  3312→                            <span className="text-[11px] font-semibold" style={{ color: A.green }}>₹{o.amount?.toLocaleString()}</span>
+  3313→                            <span className="text-[9px] font-medium px-1.5 py-0.5 rounded" style={{
+  3314→                              color: o.status === 'DELIVERED' ? A.green : o.status === 'SHIPPED' ? '#7c3aed' : A.blue,
+  3315→                              background: o.status === 'DELIVERED' ? A.greenLight : o.status === 'SHIPPED' ? '#f3f0ff' : A.blueLight,
+  3316→                            }}>{o.status}</span>
+  3317→                          </div>
+  3318→                        </div>
+  3319→                      ))}
+  3320→                    </div>
+  3321→                  </div>
+  3322→                )}
+  3323→              </div>
+  3324→            )
+  3325→          })()}
+  3326→        </DialogContent>
+  3327→      </Dialog>
+  3328→    </div>
+  3329→  )
+  3330→}
+  3331→
+  3332→// ============================================================
+  3333→// QUIZ MANAGER — Light Theme
+  3334→// ============================================================
+  3335→function QuizManager({ questions, setQuestions }: { questions: QuizQuestion[]; setQuestions: React.Dispatch<React.SetStateAction<QuizQuestion[]>> }) {
+  3336→  const [dialogOpen, setDialogOpen] = useState(false)
+  3337→  const [form, setForm] = useState({ question: '', option1: '', option2: '', option3: '', option4: '', answer: '0', category: 'usage', difficulty: 'EASY' })
+  3338→  const [filterCategory, setFilterCategory] = useState<string>('all')
+  3339→  const [filterDifficulty, setFilterDifficulty] = useState<string>('all')
+  3340→
+  3341→  const handleCreate = async () => {
+  3342→    if (!form.question || !form.option1) { toast.error('Question and at least option 1 are required'); return }
+  3343→    const result = await quizService.createQuestion({
+  3344→      question: form.question,
+  3345→      options: [form.option1, form.option2, form.option3, form.option4].filter(Boolean),
+  3346→      answer: parseInt(form.answer),
+  3347→      category: form.category,
+  3348→      difficulty: form.difficulty,
+  3349→    } as any)
+  3350→    if (result.data) {
+  3351→      setQuestions(prev => [...prev, result.data as QuizQuestion])
+  3352→      toast.success('Question created')
+  3353→      setDialogOpen(false)
+  3354→      setForm({ question: '', option1: '', option2: '', option3: '', option4: '', answer: '0', category: 'usage', difficulty: 'EASY' })
+  3355→    }
+  3356→  }
+  3357→
+  3358→  const filtered = questions.filter(q => {
+  3359→    if (filterCategory !== 'all' && q.category !== filterCategory) return false
+  3360→    if (filterDifficulty !== 'all' && q.difficulty !== filterDifficulty) return false
+  3361→    return true
+  3362→  })
+  3363→
+  3364→  const categories = ['all', ...Array.from(new Set(questions.map(q => q.category).filter(Boolean)))]
+  3365→  const difficulties = ['all', ...Array.from(new Set(questions.map(q => q.difficulty).filter(Boolean)))]
+  3366→
+  3367→  const difficultyColors: Record<string, { text: string; bg: string }> = {
+  3368→    EASY: { text: A.green, bg: A.greenLight },
+  3369→    MEDIUM: { text: A.amber, bg: A.amberLight },
+  3370→    HARD: { text: A.red, bg: A.redLight },
+  3371→  }
+  3372→
+  3373→  return (
+  3374→    <div className="space-y-4">
+  3375→      <div className="flex items-center justify-between">
+  3376→        <div>
+  3377→          <h2 className="text-base font-semibold" style={{ color: A.text }}>Quiz Questions</h2>
+  3378→          <p className="text-[12px]" style={{ color: A.textMuted }}>{questions.length} total questions</p>
+  3379→        </div>
+  3380→        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+  3381→          <DialogTrigger asChild>
+  3382→            <Button size="sm" className="rounded-md text-[12px] h-8 text-white" style={{ background: A.green }}>
+  3383→              <Plus className="w-3.5 h-3.5 mr-1" /> Add Question
+  3384→            </Button>
+  3385→          </DialogTrigger>
+  3386→          <DialogContent className="max-w-lg" style={{ background: '#fff', borderColor: A.border, color: A.text }}>
+  3387→            <DialogHeader><DialogTitle style={{ color: A.text }}>Add Quiz Question</DialogTitle></DialogHeader>
+  3388→            <div className="space-y-3 py-4">
+  3389→              <div className="space-y-1.5"><Label style={{ color: A.textSecondary }}>Question</Label><Textarea value={form.question} onChange={e => setForm(p => ({ ...p, question: e.target.value }))} className="rounded-md" style={{ borderColor: A.border, color: A.text }} /></div>
+  3390→              {[1, 2, 3, 4].map(i => (
+  3391→                <div key={i} className="space-y-1.5">
+  3392→                  <Label style={{ color: A.textSecondary }}>Option {i}{i === 1 && ' *'}</Label>
+  3393→                  <Input value={(form as any)[`option${i}`]} onChange={e => setForm(p => ({ ...p, [`option${i}`]: e.target.value }))} className="rounded-md" style={{ borderColor: A.border, color: A.text }} />
+  3394→                </div>
+  3395→              ))}
+  3396→              <div className="grid grid-cols-3 gap-3">
+  3397→                <div className="space-y-1.5">
+  3398→                  <Label style={{ color: A.textSecondary }}>Correct</Label>
+  3399→                  <Select value={form.answer} onValueChange={v => setForm(p => ({ ...p, answer: v }))}>
+  3400→                    <SelectTrigger className="rounded-md" style={{ borderColor: A.border, color: A.text }}><SelectValue /></SelectTrigger>
+  3401→                    <SelectContent style={{ background: '#fff', borderColor: A.border }}>
+  3402→                      <SelectItem value="0" style={{ color: A.text }}>Option 1</SelectItem>
+  3403→                      <SelectItem value="1" style={{ color: A.text }}>Option 2</SelectItem>
+  3404→                      <SelectItem value="2" style={{ color: A.text }}>Option 3</SelectItem>
+  3405→                      <SelectItem value="3" style={{ color: A.text }}>Option 4</SelectItem>
+  3406→                    </SelectContent>
+  3407→                  </Select>
+  3408→                </div>
+  3409→                <div className="space-y-1.5">
+  3410→                  <Label style={{ color: A.textSecondary }}>Category</Label>
+  3411→                  <Select value={form.category} onValueChange={v => setForm(p => ({ ...p, category: v }))}>
+  3412→                    <SelectTrigger className="rounded-md" style={{ borderColor: A.border, color: A.text }}><SelectValue /></SelectTrigger>
+  3413→                    <SelectContent style={{ background: '#fff', borderColor: A.border }}>
+  3414→                      <SelectItem value="usage" style={{ color: A.text }}>Usage</SelectItem>
+  3415→                      <SelectItem value="science" style={{ color: A.text }}>Science</SelectItem>
+  3416→                      <SelectItem value="product" style={{ color: A.text }}>Product</SelectItem>
+  3417→                      <SelectItem value="health" style={{ color: A.text }}>Health</SelectItem>
+  3418→                    </SelectContent>
+  3419→                  </Select>
+  3420→                </div>
+  3421→                <div className="space-y-1.5">
+  3422→                  <Label style={{ color: A.textSecondary }}>Difficulty</Label>
+  3423→                  <Select value={form.difficulty} onValueChange={v => setForm(p => ({ ...p, difficulty: v }))}>
+  3424→                    <SelectTrigger className="rounded-md" style={{ borderColor: A.border, color: A.text }}><SelectValue /></SelectTrigger>
+  3425→                    <SelectContent style={{ background: '#fff', borderColor: A.border }}>
+  3426→                      <SelectItem value="EASY" style={{ color: A.text }}>Easy</SelectItem>
+  3427→                      <SelectItem value="MEDIUM" style={{ color: A.text }}>Medium</SelectItem>
+  3428→                      <SelectItem value="HARD" style={{ color: A.text }}>Hard</SelectItem>
+  3429→                    </SelectContent>
+  3430→                  </Select>
+  3431→                </div>
+  3432→              </div>
+  3433→            </div>
+  3434→            <DialogFooter>
+  3435→              <Button onClick={handleCreate} className="rounded-md text-white" style={{ background: A.green }}>Create Question</Button>
+  3436→            </DialogFooter>
+  3437→          </DialogContent>
+  3438→        </Dialog>
+  3439→      </div>
+  3440→
+  3441→      {/* Filters */}
+  3442→      <div className="flex items-center gap-3">
+  3443→        <Select value={filterCategory} onValueChange={setFilterCategory}>
+  3444→          <SelectTrigger className="w-36 rounded-md h-8 text-[11px]" style={{ background: '#fff', borderColor: A.border, color: A.text }}><SelectValue placeholder="Category" /></SelectTrigger>
+  3445→          <SelectContent style={{ background: '#fff', borderColor: A.border }}>
+  3446→            {categories.map(c => <SelectItem key={c} value={c} style={{ color: A.text }}>{c === 'all' ? 'All Categories' : c}</SelectItem>)}
+  3447→          </SelectContent>
+  3448→        </Select>
+  3449→        <Select value={filterDifficulty} onValueChange={setFilterDifficulty}>
+  3450→          <SelectTrigger className="w-32 rounded-md h-8 text-[11px]" style={{ background: '#fff', borderColor: A.border, color: A.text }}><SelectValue placeholder="Difficulty" /></SelectTrigger>
+  3451→          <SelectContent style={{ background: '#fff', borderColor: A.border }}>
+  3452→            {difficulties.map(d => <SelectItem key={d} value={d} style={{ color: A.text }}>{d === 'all' ? 'All Levels' : d}</SelectItem>)}
+  3453→          </SelectContent>
+  3454→        </Select>
+  3455→        <span className="text-[10px] px-2 py-0.5 rounded" style={{ color: A.textSecondary, background: A.bg }}>{filtered.length} shown</span>
+  3456→      </div>
+  3457→
+  3458→      {/* Questions Table */}
+  3459→      <div className="bg-white border rounded-lg overflow-hidden" style={{ borderColor: A.border }}>
+  3460→        <Table>
+  3461→          <TableHeader>
+  3462→            <TableRow className="hover:bg-transparent" style={{ borderColor: A.borderLight }}>
+  3463→              <TableHead className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: A.textMuted }}>Question</TableHead>
+  3464→              <TableHead className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: A.textMuted }}>Category</TableHead>
+  3465→              <TableHead className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: A.textMuted }}>Difficulty</TableHead>
+  3466→              <TableHead className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: A.textMuted }}>Answer</TableHead>
+  3467→            </TableRow>
+  3468→          </TableHeader>
+  3469→          <TableBody>
+  3470→            {filtered.map((q, idx) => (
+  3471→              <TableRow key={q.id || idx} className="hover:bg-[#f8f7f5]" style={{ borderColor: A.borderLight }}>
+  3472→                <TableCell className="text-[12px] max-w-md truncate" style={{ color: A.text }}>{q.question}</TableCell>
+  3473→                <TableCell><span className="text-[9px] font-medium px-1.5 py-0.5 rounded" style={{ color: A.blue, background: A.blueLight }}>{q.category || '-'}</span></TableCell>
+  3474→                <TableCell><span className="text-[9px] font-medium px-1.5 py-0.5 rounded" style={difficultyColors[q.difficulty] || { color: A.textMuted, background: A.bg }}>{q.difficulty || '-'}</span></TableCell>
+  3475→                <TableCell className="text-[11px]" style={{ color: A.textSecondary }}>Option {(q.answer || 0) + 1}</TableCell>
+  3476→              </TableRow>
+  3477→            ))}
+  3478→          </TableBody>
+  3479→        </Table>
+  3480→      </div>
+  3481→    </div>
+  3482→  )
+  3483→}
+  3484→
+  3485→
+  3486→
+  3487→// ============================================================
+  3488→// PROFILE
+  3489→// ============================================================
+  3490→function ProfileView() {
+  3491→  const { user, navigateTo, setUser } = useAppStore()
+  3492→  const [orders, setOrders] = useState<any[]>([])
+  3493→  const [learning, setLearning] = useState<LearningProgress | null>(null)
+  3494→
+  3495→  useEffect(() => {
+  3496→    if (!user) return
+  3497→    orderService.getByUser(user.user_id).then(r => r.data && setOrders(r.data))
+  3498→    learningService.getProgress(user.user_id).then(r => r.data && setLearning(r.data))
+  3499→  }, [user])
+  3500→
+  3501→  if (!user) { navigateTo('auth-login'); return null }
+  3502→
+  3503→  return (
+  3504→    <div className="min-h-screen bg-[#f4f3f0] pt-20 pb-12">
+  3505→      <div className="max-w-4xl mx-auto px-4 sm:px-6">
+  3506→        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+  3507→          <h1 className="text-3xl font-bold text-[#1f1e1c] mb-8">My Profile</h1>
+  3508→
+  3509→          <div className="grid md:grid-cols-3 gap-6">
+  3510→            {/* User Info */}
+  3511→            <Card className="border-[#e3dfd8] md:col-span-1">
+  3512→              <CardContent className="p-6 text-center">
+  3513→                <div className="w-20 h-20 rounded-full bg-[#48805b] flex items-center justify-center mx-auto mb-4">
+  3514→                  <span className="text-3xl font-bold text-white">{user.name.charAt(0)}</span>
+  3515→                </div>
+  3516→                <h2 className="font-bold text-xl text-[#1f1e1c]">{user.name}</h2>
+  3517→                <p className="text-sm text-[#88837b]">{user.email || user.phone}</p>
+  3518→                <div className="mt-4 space-y-2 text-sm text-left">
+  3519→                  {user.age && <p><span className="text-[#88837b]">Age:</span> {user.age}</p>}
+  3520→                  {user.gender && <p><span className="text-[#88837b]">Gender:</span> {user.gender}</p>}
+  3521→                  {user.country && <p><span className="text-[#88837b]">Country:</span> {user.country}</p>}
+  3522→                  {user.state && <p><span className="text-[#88837b]">State:</span> {user.state}</p>}
+  3523→                </div>
+  3524→                {user.learning_completed && (
+  3525→                  <Badge className="mt-4 bg-[#48805b]/10 text-[#48805b]">
+  3526→                    <CheckCircle className="w-3 h-3 mr-1" /> Learning Complete
+  3527→                  </Badge>
+  3528→                )}
+  3529→              </CardContent>
+  3530→            </Card>
+  3531→
+  3532→            <div className="md:col-span-2 space-y-6">
+  3533→              {/* Learning Progress */}
+  3534→              <Card className="border-[#e3dfd8]">
+  3535→                <CardHeader><CardTitle className="text-base">Learning Progress</CardTitle></CardHeader>
+  3536→                <CardContent>
+  3537→                  {learning ? (
+  3538→                    <div className="space-y-3">
+  3539→                      {VIDEO_MODULES.map(v => (
+  3540→                        <div key={v.id} className="flex items-center gap-3">
+  3541→                          <span className="text-sm w-32">{v.title}</span>
+  3542→                          <Progress value={learning.video_progress?.[v.id] || 0} className="flex-1 h-2" />
+  3543→                          <span className="text-xs text-[#88837b] w-10 text-right">{learning.video_progress?.[v.id] || 0}%</span>
+  3544→                        </div>
+  3545→                      ))}
+  3546→                      <div className="flex items-center gap-3 pt-2">
+  3547→                        <span className="text-sm w-32">Quiz</span>
+  3548→                        {learning.quiz_completed ? (
+  3549→                          <Badge className="bg-[#48805b]/10 text-[#48805b]">Score: {learning.quiz_score}%</Badge>
+  3550→                        ) : (
+  3551→                          <Badge variant="secondary">Not completed</Badge>
+  3552→                        )}
+  3553→                      </div>
+  3554→                    </div>
+  3555→                  ) : (
+  3556→                    <p className="text-sm text-[#88837b]">No learning progress yet.</p>
+  3557→                  )}
+  3558→                </CardContent>
+  3559→              </Card>
+  3560→
+  3561→              {/* Order History */}
+  3562→              <Card className="border-[#e3dfd8]">
+  3563→                <CardHeader><CardTitle className="text-base">Order History</CardTitle></CardHeader>
+  3564→                <CardContent>
+  3565→                  {orders.length === 0 ? (
+  3566→                    <p className="text-sm text-[#88837b]">No orders yet.</p>
+  3567→                  ) : (
+  3568→                    <div className="space-y-3">
+  3569→                      {orders.map((o: any) => (
+  3570→                        <div key={o.id} className="flex items-center justify-between p-3 rounded-lg bg-[#f4f3f0] border border-[#e3dfd8]">
+  3571→                          <div>
+  3572→                            <p className="font-medium text-sm">{o.id}</p>
+  3573→                            <p className="text-xs text-[#88837b]">{new Date(o.created_at).toLocaleDateString()}</p>
+  3574→                          </div>
+  3575→                          <div className="text-right">
+  3576→                            <p className="font-semibold">₹{o.amount?.toLocaleString()}</p>
+  3577→                            <Badge className={`text-[10px] ${o.status === 'DELIVERED' ? 'bg-[#48805b]/10 text-[#48805b]' : 'bg-[#e3dfd8] text-[#88837b]'}`}>
+  3578→                              {o.status}
+  3579→                            </Badge>
+  3580→                          </div>
+  3581→                        </div>
+  3582→                      ))}
+  3583→                    </div>
+  3584→                  )}
+  3585→                </CardContent>
+  3586→              </Card>
+  3587→            </div>
+  3588→          </div>
+  3589→        </motion.div>
+  3590→      </div>
+  3591→    </div>
+  3592→  )
+  3593→}
+  3594→
+  3595→// ============================================================
+  3596→// MAIN APP
+  3597→// ============================================================
+  3598→export default function HomePage() {
+  3599→  const { currentView } = useAppStore()
+
+[showing lines 3100-3599 of 3657; use offset=3600 with limit to continue reading]

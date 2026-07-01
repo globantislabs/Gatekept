@@ -58,6 +58,7 @@ export interface QuizQuestion {
   category?: string
   difficulty: string
   active: boolean
+  product_id?: string
 }
 
 export interface Product {
@@ -65,6 +66,9 @@ export interface Product {
   name: string
   description?: string
   price: number
+  subscription_price?: number
+  subscription_interval?: 'MONTHLY' | 'QUARTERLY'
+  has_subscription: boolean
   stock: number
   image_url?: string
   type: string
@@ -76,6 +80,7 @@ export interface Order {
   id: string
   user_id: string
   status: string
+  order_type: 'one-time' | 'subscription'
   amount: number
   payment_gateway?: string
   payment_id?: string
@@ -106,7 +111,29 @@ export interface GuaranteePlan {
   created_at: string
 }
 
-type TableName = 'users_profile' | 'campaigns' | 'qr_scans' | 'learning_progress' | 'quiz_questions' | 'products' | 'orders' | 'order_items' | 'guarantee_plans'
+export interface ProductVideo {
+  id: string
+  product_id: string
+  title: string
+  url: string
+  order_index: number
+  duration?: number
+  created_at: string
+}
+
+export interface Subscription {
+  id: string
+  user_id: string
+  product_id: string
+  status: 'ACTIVE' | 'PAUSED' | 'CANCELLED'
+  amount: number
+  interval: 'MONTHLY' | 'QUARTERLY'
+  start_date: string
+  next_billing_date: string
+  created_at: string
+}
+
+type TableName = 'users_profile' | 'campaigns' | 'qr_scans' | 'learning_progress' | 'quiz_questions' | 'products' | 'orders' | 'order_items' | 'guarantee_plans' | 'product_videos' | 'subscriptions'
 
 // ============================================================
 // Data Store with localStorage persistence
@@ -122,6 +149,8 @@ class MockDataStore {
     orders: [],
     order_items: [],
     guarantee_plans: [],
+    product_videos: [],
+    subscriptions: [],
   }
 
   constructor() {
@@ -132,7 +161,7 @@ class MockDataStore {
     if (typeof window === 'undefined') return
     try {
       const storedVersion = localStorage.getItem('notjust_mock_db_version')
-      const currentVersion = 'v5' // Increment when seed data changes
+      const currentVersion = 'v6' // Increment when seed data changes
       if (storedVersion === currentVersion) {
         const stored = localStorage.getItem('notjust_mock_db')
         if (stored) {
@@ -258,30 +287,30 @@ class MockDataStore {
 
     // Products
     this.data.products = [
-      { id: 'prod_001', name: 'NOTJUST Watr Fizz', description: 'Sparkling 50 ml pre-meal wellness shots designed to help reduce the GI impact of carbohydrate-rich meals. Available as a Monthly Pack with 60 shots for daily use.', price: 2999, stock: 500, image_url: '/images/notjust-logo.png', type: 'FIZZ', active: true, created_at: '2026-06-01T00:00:00Z' },
-      { id: 'prod_002', name: 'NOTJUST Watr Still', description: 'Still 50 ml pre-meal wellness shots designed to support healthy blood sugar management. Available with an eco-friendly refill pack that is sustainable and affordable.', price: 2499, stock: 300, image_url: '/images/notjust-logo.png', type: 'STILL', active: true, created_at: '2026-06-01T00:00:00Z' },
+      { id: 'prod_001', name: 'NOTJUST Watr Fizz', description: 'Sparkling 50 ml pre-meal wellness shots designed to help reduce the GI impact of carbohydrate-rich meals. Available as a Monthly Pack with 60 shots for daily use.', price: 2999, subscription_price: 2499, subscription_interval: 'MONTHLY', has_subscription: true, stock: 500, image_url: '/images/notjust-logo.png', type: 'FIZZ', active: true, created_at: '2026-06-01T00:00:00Z' },
+      { id: 'prod_002', name: 'NOTJUST Watr Still', description: 'Still 50 ml pre-meal wellness shots designed to support healthy blood sugar management. Available with an eco-friendly refill pack that is sustainable and affordable.', price: 2499, subscription_price: 1999, subscription_interval: 'MONTHLY', has_subscription: true, stock: 300, image_url: '/images/notjust-logo.png', type: 'STILL', active: true, created_at: '2026-06-01T00:00:00Z' },
     ]
 
     // Orders — 18 orders covering all statuses and time range
     this.data.orders = [
-      { id: 'ord_001', user_id: 'user_002', status: 'DELIVERED', amount: 2999, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_001', shipping_address: { name: 'Priya Sharma', line1: '42 MG Road', city: 'Bangalore', state: 'Karnataka', pincode: '560001' }, created_at: '2026-05-02T10:30:00Z', updated_at: '2026-05-05T14:00:00Z' },
-      { id: 'ord_002', user_id: 'user_003', status: 'DELIVERED', amount: 2499, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_002', shipping_address: { name: 'Rajesh Kumar', line1: '15 Anna Nagar', city: 'Chennai', state: 'Tamil Nadu', pincode: '600040' }, created_at: '2026-05-05T15:30:00Z', updated_at: '2026-05-08T09:00:00Z' },
-      { id: 'ord_003', user_id: 'user_005', status: 'DELIVERED', amount: 2999, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_003', shipping_address: { name: 'Vikram Patel', line1: '78 CG Road', city: 'Ahmedabad', state: 'Gujarat', pincode: '380006' }, created_at: '2026-05-10T11:00:00Z', updated_at: '2026-05-13T11:05:00Z' },
-      { id: 'ord_004', user_id: 'user_007', status: 'DELIVERED', amount: 2499, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_004', shipping_address: { name: 'Suresh Menon', line1: '23 Panaji Market', city: 'Panaji', state: 'Goa', pincode: '403001' }, created_at: '2026-05-14T14:00:00Z', updated_at: '2026-05-17T14:05:00Z' },
-      { id: 'ord_005', user_id: 'user_002', status: 'DELIVERED', amount: 799, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_005', shipping_address: { name: 'Priya Sharma', line1: '42 MG Road', city: 'Bangalore', state: 'Karnataka', pincode: '560001' }, created_at: '2026-05-18T09:20:00Z', updated_at: '2026-05-21T10:00:00Z' },
-      { id: 'ord_006', user_id: 'user_009', status: 'DELIVERED', amount: 2999, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_006', shipping_address: { name: 'Arjun Reddy', line1: '56 Jubilee Hills', city: 'Hyderabad', state: 'Telangana', pincode: '500033' }, created_at: '2026-05-22T16:45:00Z', updated_at: '2026-05-25T10:00:00Z' },
-      { id: 'ord_007', user_id: 'user_010', status: 'DELIVERED', amount: 2499, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_007', shipping_address: { name: 'Kavita Joshi', line1: '9 MI Road', city: 'Jaipur', state: 'Rajasthan', pincode: '302001' }, created_at: '2026-05-26T11:30:00Z', updated_at: '2026-05-29T09:00:00Z' },
-      { id: 'ord_008', user_id: 'user_003', status: 'SHIPPED', amount: 2999, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_008', shipping_address: { name: 'Rajesh Kumar', line1: '15 Anna Nagar', city: 'Chennai', state: 'Tamil Nadu', pincode: '600040' }, created_at: '2026-06-02T08:15:00Z', updated_at: '2026-06-04T07:00:00Z' },
-      { id: 'ord_009', user_id: 'user_005', status: 'SHIPPED', amount: 2499, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_009', shipping_address: { name: 'Vikram Patel', line1: '78 CG Road', city: 'Ahmedabad', state: 'Gujarat', pincode: '380006' }, created_at: '2026-06-04T13:40:00Z', updated_at: '2026-06-06T11:00:00Z' },
-      { id: 'ord_010', user_id: 'user_007', status: 'SHIPPED', amount: 799, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_010', shipping_address: { name: 'Suresh Menon', line1: '23 Panaji Market', city: 'Panaji', state: 'Goa', pincode: '403001' }, created_at: '2026-06-06T10:20:00Z', updated_at: '2026-06-08T09:00:00Z' },
-      { id: 'ord_011', user_id: 'user_002', status: 'CONFIRMED', amount: 2999, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_011', shipping_address: { name: 'Priya Sharma', line1: '42 MG Road', city: 'Bangalore', state: 'Karnataka', pincode: '560001' }, created_at: '2026-06-08T15:10:00Z', updated_at: '2026-06-08T15:15:00Z' },
-      { id: 'ord_012', user_id: 'user_009', status: 'CONFIRMED', amount: 2499, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_012', shipping_address: { name: 'Arjun Reddy', line1: '56 Jubilee Hills', city: 'Hyderabad', state: 'Telangana', pincode: '500033' }, created_at: '2026-06-09T09:45:00Z', updated_at: '2026-06-09T09:50:00Z' },
-      { id: 'ord_013', user_id: 'user_010', status: 'CONFIRMED', amount: 2999, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_013', shipping_address: { name: 'Kavita Joshi', line1: '9 MI Road', city: 'Jaipur', state: 'Rajasthan', pincode: '302001' }, created_at: '2026-06-10T14:30:00Z', updated_at: '2026-06-10T14:35:00Z' },
-      { id: 'ord_014', user_id: 'user_003', status: 'CONFIRMED', amount: 799, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_014', shipping_address: { name: 'Rajesh Kumar', line1: '15 Anna Nagar', city: 'Chennai', state: 'Tamil Nadu', pincode: '600040' }, created_at: '2026-06-11T08:00:00Z', updated_at: '2026-06-11T08:05:00Z' },
-      { id: 'ord_015', user_id: 'user_005', status: 'PENDING', amount: 2999, payment_gateway: null, payment_id: null, shipping_address: { name: 'Vikram Patel', line1: '78 CG Road', city: 'Ahmedabad', state: 'Gujarat', pincode: '380006' }, created_at: '2026-06-12T11:20:00Z', updated_at: '2026-06-12T11:20:00Z' },
-      { id: 'ord_016', user_id: 'user_007', status: 'PENDING', amount: 2499, payment_gateway: null, payment_id: null, shipping_address: { name: 'Suresh Menon', line1: '23 Panaji Market', city: 'Panaji', state: 'Goa', pincode: '403001' }, created_at: '2026-06-13T09:30:00Z', updated_at: '2026-06-13T09:30:00Z' },
-      { id: 'ord_017', user_id: 'user_002', status: 'CANCELLED', amount: 799, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_017', shipping_address: { name: 'Priya Sharma', line1: '42 MG Road', city: 'Bangalore', state: 'Karnataka', pincode: '560001' }, created_at: '2026-05-08T10:00:00Z', updated_at: '2026-05-09T08:00:00Z' },
-      { id: 'ord_018', user_id: 'user_009', status: 'CANCELLED', amount: 2499, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_018', shipping_address: { name: 'Arjun Reddy', line1: '56 Jubilee Hills', city: 'Hyderabad', state: 'Telangana', pincode: '500033' }, created_at: '2026-05-15T14:00:00Z', updated_at: '2026-05-16T10:00:00Z' },
+      { id: 'ord_001', user_id: 'user_002', status: 'DELIVERED', order_type: 'one-time', amount: 2999, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_001', shipping_address: { name: 'Priya Sharma', line1: '42 MG Road', city: 'Bangalore', state: 'Karnataka', pincode: '560001' }, created_at: '2026-05-02T10:30:00Z', updated_at: '2026-05-05T14:00:00Z' },
+      { id: 'ord_002', user_id: 'user_003', status: 'DELIVERED', order_type: 'one-time', amount: 2499, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_002', shipping_address: { name: 'Rajesh Kumar', line1: '15 Anna Nagar', city: 'Chennai', state: 'Tamil Nadu', pincode: '600040' }, created_at: '2026-05-05T15:30:00Z', updated_at: '2026-05-08T09:00:00Z' },
+      { id: 'ord_003', user_id: 'user_005', status: 'DELIVERED', order_type: 'subscription', amount: 2499, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_003', shipping_address: { name: 'Vikram Patel', line1: '78 CG Road', city: 'Ahmedabad', state: 'Gujarat', pincode: '380006' }, created_at: '2026-05-10T11:00:00Z', updated_at: '2026-05-13T11:05:00Z' },
+      { id: 'ord_004', user_id: 'user_007', status: 'DELIVERED', order_type: 'one-time', amount: 2499, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_004', shipping_address: { name: 'Suresh Menon', line1: '23 Panaji Market', city: 'Panaji', state: 'Goa', pincode: '403001' }, created_at: '2026-05-14T14:00:00Z', updated_at: '2026-05-17T14:05:00Z' },
+      { id: 'ord_005', user_id: 'user_002', status: 'DELIVERED', order_type: 'subscription', amount: 2499, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_005', shipping_address: { name: 'Priya Sharma', line1: '42 MG Road', city: 'Bangalore', state: 'Karnataka', pincode: '560001' }, created_at: '2026-05-18T09:20:00Z', updated_at: '2026-05-21T10:00:00Z' },
+      { id: 'ord_006', user_id: 'user_009', status: 'DELIVERED', order_type: 'one-time', amount: 2999, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_006', shipping_address: { name: 'Arjun Reddy', line1: '56 Jubilee Hills', city: 'Hyderabad', state: 'Telangana', pincode: '500033' }, created_at: '2026-05-22T16:45:00Z', updated_at: '2026-05-25T10:00:00Z' },
+      { id: 'ord_007', user_id: 'user_010', status: 'DELIVERED', order_type: 'one-time', amount: 2499, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_007', shipping_address: { name: 'Kavita Joshi', line1: '9 MI Road', city: 'Jaipur', state: 'Rajasthan', pincode: '302001' }, created_at: '2026-05-26T11:30:00Z', updated_at: '2026-05-29T09:00:00Z' },
+      { id: 'ord_008', user_id: 'user_003', status: 'SHIPPED', order_type: 'one-time', amount: 2999, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_008', shipping_address: { name: 'Rajesh Kumar', line1: '15 Anna Nagar', city: 'Chennai', state: 'Tamil Nadu', pincode: '600040' }, created_at: '2026-06-02T08:15:00Z', updated_at: '2026-06-04T07:00:00Z' },
+      { id: 'ord_009', user_id: 'user_005', status: 'SHIPPED', order_type: 'subscription', amount: 1999, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_009', shipping_address: { name: 'Vikram Patel', line1: '78 CG Road', city: 'Ahmedabad', state: 'Gujarat', pincode: '380006' }, created_at: '2026-06-04T13:40:00Z', updated_at: '2026-06-06T11:00:00Z' },
+      { id: 'ord_010', user_id: 'user_007', status: 'SHIPPED', order_type: 'one-time', amount: 799, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_010', shipping_address: { name: 'Suresh Menon', line1: '23 Panaji Market', city: 'Panaji', state: 'Goa', pincode: '403001' }, created_at: '2026-06-06T10:20:00Z', updated_at: '2026-06-08T09:00:00Z' },
+      { id: 'ord_011', user_id: 'user_002', status: 'CONFIRMED', order_type: 'one-time', amount: 2999, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_011', shipping_address: { name: 'Priya Sharma', line1: '42 MG Road', city: 'Bangalore', state: 'Karnataka', pincode: '560001' }, created_at: '2026-06-08T15:10:00Z', updated_at: '2026-06-08T15:15:00Z' },
+      { id: 'ord_012', user_id: 'user_009', status: 'CONFIRMED', order_type: 'subscription', amount: 1999, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_012', shipping_address: { name: 'Arjun Reddy', line1: '56 Jubilee Hills', city: 'Hyderabad', state: 'Telangana', pincode: '500033' }, created_at: '2026-06-09T09:45:00Z', updated_at: '2026-06-09T09:50:00Z' },
+      { id: 'ord_013', user_id: 'user_010', status: 'CONFIRMED', order_type: 'one-time', amount: 2999, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_013', shipping_address: { name: 'Kavita Joshi', line1: '9 MI Road', city: 'Jaipur', state: 'Rajasthan', pincode: '302001' }, created_at: '2026-06-10T14:30:00Z', updated_at: '2026-06-10T14:35:00Z' },
+      { id: 'ord_014', user_id: 'user_003', status: 'CONFIRMED', order_type: 'one-time', amount: 799, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_014', shipping_address: { name: 'Rajesh Kumar', line1: '15 Anna Nagar', city: 'Chennai', state: 'Tamil Nadu', pincode: '600040' }, created_at: '2026-06-11T08:00:00Z', updated_at: '2026-06-11T08:05:00Z' },
+      { id: 'ord_015', user_id: 'user_005', status: 'PENDING', order_type: 'one-time', amount: 2999, payment_gateway: null, payment_id: null, shipping_address: { name: 'Vikram Patel', line1: '78 CG Road', city: 'Ahmedabad', state: 'Gujarat', pincode: '380006' }, created_at: '2026-06-12T11:20:00Z', updated_at: '2026-06-12T11:20:00Z' },
+      { id: 'ord_016', user_id: 'user_007', status: 'PENDING', order_type: 'subscription', amount: 2499, payment_gateway: null, payment_id: null, shipping_address: { name: 'Suresh Menon', line1: '23 Panaji Market', city: 'Panaji', state: 'Goa', pincode: '403001' }, created_at: '2026-06-13T09:30:00Z', updated_at: '2026-06-13T09:30:00Z' },
+      { id: 'ord_017', user_id: 'user_002', status: 'CANCELLED', order_type: 'one-time', amount: 799, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_017', shipping_address: { name: 'Priya Sharma', line1: '42 MG Road', city: 'Bangalore', state: 'Karnataka', pincode: '560001' }, created_at: '2026-05-08T10:00:00Z', updated_at: '2026-05-09T08:00:00Z' },
+      { id: 'ord_018', user_id: 'user_009', status: 'CANCELLED', order_type: 'one-time', amount: 2499, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_018', shipping_address: { name: 'Arjun Reddy', line1: '56 Jubilee Hills', city: 'Hyderabad', state: 'Telangana', pincode: '500033' }, created_at: '2026-05-15T14:00:00Z', updated_at: '2026-05-16T10:00:00Z' },
     ]
 
     // Order items — one item per order, matching product prices
@@ -304,6 +333,24 @@ class MockDataStore {
       { id: 'oi_016', order_id: 'ord_016', product_id: 'prod_002', quantity: 1, price: 2499 },
       { id: 'oi_017', order_id: 'ord_017', product_id: 'prod_001', quantity: 1, price: 799 },
       { id: 'oi_018', order_id: 'ord_018', product_id: 'prod_002', quantity: 1, price: 2499 },
+    ]
+
+    // Product Videos — 3 per product
+    this.data.product_videos = [
+      { id: 'pv_001', product_id: 'prod_001', title: 'What is NOTJUST Watr Fizz?', url: '/videos/fizz-intro.mp4', order_index: 1, duration: 120, created_at: '2026-06-01T00:00:00Z' },
+      { id: 'pv_002', product_id: 'prod_001', title: 'How to Use the Fizz Shot', url: '/videos/fizz-usage.mp4', order_index: 2, duration: 90, created_at: '2026-06-01T00:00:00Z' },
+      { id: 'pv_003', product_id: 'prod_001', title: 'The Science Behind Fizz', url: '/videos/fizz-science.mp4', order_index: 3, duration: 150, created_at: '2026-06-01T00:00:00Z' },
+      { id: 'pv_004', product_id: 'prod_002', title: 'What is NOTJUST Watr Still?', url: '/videos/still-intro.mp4', order_index: 1, duration: 110, created_at: '2026-06-01T00:00:00Z' },
+      { id: 'pv_005', product_id: 'prod_002', title: 'How to Use the Still Shot', url: '/videos/still-usage.mp4', order_index: 2, duration: 85, created_at: '2026-06-01T00:00:00Z' },
+      { id: 'pv_006', product_id: 'prod_002', title: 'The Science Behind Still', url: '/videos/still-science.mp4', order_index: 3, duration: 140, created_at: '2026-06-01T00:00:00Z' },
+    ]
+
+    // Subscriptions
+    this.data.subscriptions = [
+      { id: 'sub_001', user_id: 'user_002', product_id: 'prod_001', status: 'ACTIVE', amount: 2499, interval: 'MONTHLY', start_date: '2026-05-01T00:00:00Z', next_billing_date: '2026-07-01T00:00:00Z', created_at: '2026-05-01T00:00:00Z' },
+      { id: 'sub_002', user_id: 'user_005', product_id: 'prod_002', status: 'ACTIVE', amount: 1999, interval: 'MONTHLY', start_date: '2026-05-15T00:00:00Z', next_billing_date: '2026-07-15T00:00:00Z', created_at: '2026-05-15T00:00:00Z' },
+      { id: 'sub_003', user_id: 'user_007', product_id: 'prod_001', status: 'PAUSED', amount: 2499, interval: 'MONTHLY', start_date: '2026-04-01T00:00:00Z', next_billing_date: '2026-07-01T00:00:00Z', created_at: '2026-04-01T00:00:00Z' },
+      { id: 'sub_004', user_id: 'user_009', product_id: 'prod_002', status: 'CANCELLED', amount: 1999, interval: 'MONTHLY', start_date: '2026-03-01T00:00:00Z', next_billing_date: '2026-04-01T00:00:00Z', created_at: '2026-03-01T00:00:00Z' },
     ]
 
     // Guarantee Plans

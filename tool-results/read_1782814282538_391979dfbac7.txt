@@ -1,0 +1,502 @@
+     1→     1→// Mock Supabase Data Layer
+     2→     2→// This provides a complete in-memory + localStorage implementation
+     3→     3→// that mirrors the Supabase JS API. When real Supabase credentials
+     4→     4→// are configured, the app switches to the real backend seamlessly.
+     5→     5→
+     6→     6→export interface UserProfile {
+     7→     7→  id: string
+     8→     8→  user_id: string
+     9→     9→  name: string
+    10→    10→  age?: number
+    11→    11→  gender?: string
+    12→    12→  phone?: string
+    13→    13→  email?: string
+    14→    14→  country: string
+    15→    15→  state?: string
+    16→    16→  learning_completed: boolean
+    17→    17→  is_admin: boolean
+    18→    18→  created_at: string
+    19→    19→  updated_at: string
+    20→    20→}
+    21→    21→
+    22→    22→export interface Campaign {
+    23→    23→  id: string
+    24→    24→  name: string
+    25→    25→  channel: string
+    26→    26→  partner_name?: string
+    27→    27→  location?: string
+    28→    28→  start_date?: string
+    29→    29→  end_date?: string
+    30→    30→  status: string
+    31→    31→  created_at: string
+    32→    32→}
+    33→    33→
+    34→    34→export interface QrScan {
+    35→    35→  id: string
+    36→    36→  campaign_id?: string
+    37→    37→  user_id?: string
+    38→    38→  device?: string
+    39→    39→  location?: string
+    40→    40→  created_at: string
+    41→    41→}
+    42→    42→
+    43→    43→export interface LearningProgress {
+    44→    44→  id: string
+    45→    45→  user_id: string
+    46→    46→  video_progress: Record<string, number>
+    47→    47→  quiz_completed: boolean
+    48→    48→  quiz_score: number
+    49→    49→  completed_at?: string
+    50→    50→  created_at: string
+    51→    51→}
+    52→    52→
+    53→    53→export interface QuizQuestion {
+    54→    54→  id: string
+    55→    55→  question: string
+    56→    56→  options: string[]
+    57→    57→  answer: number
+    58→    58→  category?: string
+    59→    59→  difficulty: string
+    60→    60→  active: boolean
+    61→    61→}
+    62→    62→
+    63→    63→export interface Product {
+    64→    64→  id: string
+    65→    65→  name: string
+    66→    66→  description?: string
+    67→    67→  price: number
+    68→    68→  stock: number
+    69→    69→  image_url?: string
+    70→    70→  type: string
+    71→    71→  active: boolean
+    72→    72→  created_at: string
+    73→    73→}
+    74→    74→
+    75→    75→export interface Order {
+    76→    76→  id: string
+    77→    77→  user_id: string
+    78→    78→  status: string
+    79→    79→  amount: number
+    80→    80→  payment_gateway?: string
+    81→    81→  payment_id?: string
+    82→    82→  shipping_address?: any
+    83→    83→  created_at: string
+    84→    84→  updated_at: string
+    85→    85→  items?: OrderItem[]
+    86→    86→  user?: UserProfile
+    87→    87→}
+    88→    88→
+    89→    89→export interface OrderItem {
+    90→    90→  id: string
+    91→    91→  order_id: string
+    92→    92→  product_id: string
+    93→    93→  quantity: number
+    94→    94→  price: number
+    95→    95→  product?: Product
+    96→    96→}
+    97→    97→
+    98→    98→export interface GuaranteePlan {
+    99→    99→  id: string
+   100→   100→  name: string
+   101→   101→  description: string
+   102→   102→  duration: string
+   103→   103→  price: number
+   104→   104→  features: string[]
+   105→   105→  active: boolean
+   106→   106→  created_at: string
+   107→   107→}
+   108→   108→
+   109→   109→export interface ProductVideo {
+   110→   110→  id: string
+   111→   111→  product_id: string
+   112→   112→  title: string
+   113→   113→  duration: string
+   114→   114→  description: string
+   115→   115→  order: number  // sequence within product
+   116→   116→  video_url?: string
+   117→   117→  active: boolean
+   118→   118→}
+   119→   119→
+   120→   120→export interface ProductQuiz {
+   121→   121→  id: string
+   122→   122→  product_id: string
+   123→   123→  video_id: string  // linked to which video
+   124→   124→  question: string
+   125→   125→  options: string[]
+   126→   126→  answer: number
+   127→   127→  category?: string
+   128→   128→  difficulty: string
+   129→   129→  order: number
+   130→   130→  active: boolean
+   131→   131→}
+   132→   132→
+   133→   133→export interface ProductLearningProgress {
+   134→   134→  id: string
+   135→   135→  user_id: string
+   136→   136→  product_id: string
+   137→   137→  video_progress: Record<string, number>  // videoId -> percentage
+   138→   138→  quiz_answers: Record<string, number>  // quizId -> selectedOptionIndex
+   139→   139→  quiz_completed: boolean
+   140→   140→  quiz_score: number
+   141→   141→  status: 'NOT_STARTED' | 'IN_PROGRESS' | 'PENDING_REEVALUATION' | 'COMPLETED' | 'UNLOCKED'
+   142→   142→  completed_at?: string
+   143→   143→  created_at: string
+   144→   144→  updated_at: string
+   145→   145→}
+   146→   146→
+   147→   147→export interface Subscription {
+   148→   148→  id: string
+   149→   149→  user_id: string
+   150→   150→  product_id: string
+   151→   151→  pack_type: string  // 30_DAY, 60_DAY, 90_DAY, 180_DAY, CUSTOM
+   152→   152→  pack_duration_days: number
+   153→   153→  status: 'ACTIVE' | 'PAUSED' | 'CANCELLED' | 'EXPIRED'
+   154→   154→  amount: number
+   155→   155→  start_date: string
+   156→   156→  end_date: string
+   157→   157→  auto_renew: boolean
+   158→   158→  payment_id?: string
+   159→   159→  created_at: string
+   160→   160→  updated_at: string
+   161→   161→}
+   162→   162→
+   163→   163→export interface ReorderReminder {
+   164→   164→  id: string
+   165→   165→  user_id: string
+   166→   166→  subscription_id: string
+   167→   167→  product_id: string
+   168→   168→  reminder_date: string
+   169→   169→  channel: string  // WHATSAPP, EMAIL, SMS, PUSH
+   170→   170→  status: 'PENDING' | 'SENT' | 'DISMISSED'
+   171→   171→  message: string
+   172→   172→  created_at: string
+   173→   173→}
+   174→   174→
+   175→   175→type TableName = 'users_profile' | 'campaigns' | 'qr_scans' | 'learning_progress' | 'quiz_questions' | 'products' | 'orders' | 'order_items' | 'guarantee_plans' | 'product_videos' | 'product_quizzes' | 'product_learning_progress' | 'subscriptions' | 'reorder_reminders'
+   176→   176→
+   177→   177→// ============================================================
+   178→   178→// Data Store with localStorage persistence
+   179→   179→// ============================================================
+   180→   180→class MockDataStore {
+   181→   181→  private data: Record<TableName, any[]> = {
+   182→   182→    users_profile: [],
+   183→   183→    campaigns: [],
+   184→   184→    qr_scans: [],
+   185→   185→    learning_progress: [],
+   186→   186→    quiz_questions: [],
+   187→   187→    products: [],
+   188→   188→    orders: [],
+   189→   189→    order_items: [],
+   190→   190→    guarantee_plans: [],
+   191→   191→    product_videos: [],
+   192→   192→    product_quizzes: [],
+   193→   193→    product_learning_progress: [],
+   194→   194→    subscriptions: [],
+   195→   195→    reorder_reminders: [],
+   196→   196→  }
+   197→   197→
+   198→   198→  constructor() {
+   199→   199→    this.load()
+   200→   200→  }
+   201→   201→
+   202→   202→  private load() {
+   203→   203→    if (typeof window === 'undefined') return
+   204→   204→    try {
+   205→   205→      const storedVersion = localStorage.getItem('notjust_mock_db_version')
+   206→   206→      const currentVersion = 'v6' // Increment when seed data changes
+   207→   207→      if (storedVersion === currentVersion) {
+   208→   208→        const stored = localStorage.getItem('notjust_mock_db')
+   209→   209→        if (stored) {
+   210→   210→          this.data = JSON.parse(stored)
+   211→   211→          return
+   212→   212→        }
+   213→   213→      }
+   214→   214→      // Version mismatch or first load — reseed
+   215→   215→      this.seed()
+   216→   216→      localStorage.setItem('notjust_mock_db_version', currentVersion)
+   217→   217→    } catch {
+   218→   218→      this.seed()
+   219→   219→    }
+   220→   220→  }
+   221→   221→
+   222→   222→  private save() {
+   223→   223→    if (typeof window === 'undefined') return
+   224→   224→    try {
+   225→   225→      localStorage.setItem('notjust_mock_db', JSON.stringify(this.data))
+   226→   226→    } catch { /* ignore */ }
+   227→   227→  }
+   228→   228→
+   229→   229→  seed() {
+   230→   230→    const now = new Date().toISOString()
+   231→   231→
+   232→   232→    // Admin user
+   233→   233→    this.data.users_profile = [
+   234→   234→      {
+   235→   235→        id: 'usr_001',
+   236→   236→        user_id: 'admin_001',
+   237→   237→        name: 'Admin',
+   238→   238→        age: 35,
+   239→   239→        gender: 'male',
+   240→   240→        phone: '+919876543210',
+   241→   241→        email: 'admin@notjust.com',
+   242→   242→        country: 'India',
+   243→   243→        state: 'Maharashtra',
+   244→   244→        learning_completed: true,
+   245→   245→        is_admin: true,
+   246→   246→        created_at: '2026-06-01T10:00:00Z',
+   247→   247→        updated_at: now,
+   248→   248→      },
+   249→   249→    ]
+   250→   250→
+   251→   251→    // Demo users
+   252→   252→    const demoUsers: UserProfile[] = [
+   253→   253→      { id: 'usr_002', user_id: 'user_002', name: 'Priya Sharma', age: 42, gender: 'female', phone: '+919812345678', email: 'priya@email.com', country: 'India', state: 'Karnataka', learning_completed: true, is_admin: false, created_at: '2026-06-05T08:30:00Z', updated_at: now },
+   254→   254→      { id: 'usr_003', user_id: 'user_003', name: 'Rajesh Kumar', age: 55, gender: 'male', phone: '+919823456789', email: 'rajesh@email.com', country: 'India', state: 'Tamil Nadu', learning_completed: true, is_admin: false, created_at: '2026-06-06T14:20:00Z', updated_at: now },
+   255→   255→      { id: 'usr_004', user_id: 'user_004', name: 'Anita Desai', age: 38, gender: 'female', phone: '+919834567890', email: 'anita@email.com', country: 'India', state: 'Delhi', learning_completed: false, is_admin: false, created_at: '2026-06-08T09:15:00Z', updated_at: now },
+   256→   256→      { id: 'usr_005', user_id: 'user_005', name: 'Vikram Patel', age: 47, gender: 'male', phone: '+919845678901', email: 'vikram@email.com', country: 'India', state: 'Gujarat', learning_completed: true, is_admin: false, created_at: '2026-06-09T16:45:00Z', updated_at: now },
+   257→   257→      { id: 'usr_006', user_id: 'user_006', name: 'Meera Nair', age: 33, gender: 'female', email: 'meera@email.com', country: 'India', state: 'Kerala', learning_completed: false, is_admin: false, created_at: '2026-06-10T11:00:00Z', updated_at: now },
+   258→   258→      { id: 'usr_007', user_id: 'user_007', name: 'Suresh Menon', age: 60, gender: 'male', phone: '+919867890123', email: 'suresh@email.com', country: 'India', state: 'Goa', learning_completed: true, is_admin: false, created_at: '2026-06-11T13:30:00Z', updated_at: now },
+   259→   259→      { id: 'usr_008', user_id: 'user_008', name: 'Deepa Iyer', age: 29, gender: 'female', phone: '+919878901234', country: 'India', state: 'Maharashtra', learning_completed: false, is_admin: false, created_at: '2026-06-12T07:20:00Z', updated_at: now },
+   260→   260→      { id: 'usr_009', user_id: 'user_009', name: 'Arjun Reddy', age: 51, gender: 'male', phone: '+919889012345', email: 'arjun@email.com', country: 'India', state: 'Telangana', learning_completed: true, is_admin: false, created_at: '2026-06-13T10:10:00Z', updated_at: now },
+   261→   261→      { id: 'usr_010', user_id: 'user_010', name: 'Kavita Joshi', age: 44, gender: 'female', phone: '+919890123456', email: 'kavita@email.com', country: 'India', state: 'Rajasthan', learning_completed: true, is_admin: false, created_at: '2026-06-13T15:40:00Z', updated_at: now },
+   262→   262→    ]
+   263→   263→    this.data.users_profile.push(...demoUsers)
+   264→   264→
+   265→   265→    // Learning progress
+   266→   266→    this.data.learning_progress = this.data.users_profile.map((u: UserProfile) => ({
+   267→   267→      id: `lp_${u.id}`,
+   268→   268→      user_id: u.user_id,
+   269→   269→      video_progress: u.learning_completed ? { 'intro': 100, 'usage': 100, 'science': 100 } : u.id === 'usr_004' ? { 'intro': 100, 'usage': 60 } : u.id === 'usr_006' ? { 'intro': 30 } : {},
+   270→   270→      quiz_completed: u.learning_completed,
+   271→   271→      quiz_score: u.learning_completed ? 80 + Math.floor(Math.random() * 20) : 0,
+   272→   272→      completed_at: u.learning_completed ? u.created_at : undefined,
+   273→   273→      created_at: u.created_at,
+   274→   274→    }))
+   275→   275→
+   276→   276→    // Campaigns
+   277→   277→    this.data.campaigns = [
+   278→   278→      { id: 'camp_001', name: 'Taj Palace Mumbai Launch', channel: 'HOTEL', partner_name: 'Taj Hotels', location: 'Mumbai, Maharashtra', start_date: '2026-06-01', end_date: '2026-07-31', status: 'ACTIVE', created_at: '2026-06-01T08:00:00Z' },
+   279→   279→      { id: 'camp_002', name: 'Apollo Hospital Delhi', channel: 'HOSPITAL', partner_name: 'Apollo Hospitals', location: 'New Delhi, Delhi', start_date: '2026-06-05', end_date: '2026-08-05', status: 'ACTIVE', created_at: '2026-06-05T09:00:00Z' },
+   280→   280→      { id: 'camp_003', name: 'Wellness Expo Bangalore', channel: 'EVENT', partner_name: 'Wellness India Expo', location: 'Bangalore, Karnataka', start_date: '2026-06-10', end_date: '2026-06-12', status: 'ACTIVE', created_at: '2026-06-08T10:00:00Z' },
+   281→   281→      { id: 'camp_004', name: 'Dr. Rao Clinic Program', channel: 'CLINIC', partner_name: 'Dr. Rao Wellness Clinic', location: 'Hyderabad, Telangana', start_date: '2026-06-01', end_date: '2026-12-31', status: 'ACTIVE', created_at: '2026-06-01T07:00:00Z' },
+   282→   282→      { id: 'camp_005', name: 'Soul Spa Partnership', channel: 'WELLNESS', partner_name: 'Soul Spa & Wellness', location: 'Goa', start_date: '2026-06-15', end_date: '2026-09-15', status: 'ACTIVE', created_at: '2026-06-14T08:00:00Z' },
+   283→   283→      { id: 'camp_006', name: 'Infosys Corporate Health', channel: 'CORPORATE', partner_name: 'Infosys Ltd', location: 'Bangalore, Karnataka', start_date: '2026-06-01', end_date: '2026-06-30', status: 'ACTIVE', created_at: '2026-05-28T12:00:00Z' },
+   284→   284→      { id: 'camp_007', name: 'Dr. Mehta Referral Network', channel: 'DOCTOR', partner_name: 'Dr. Anil Mehta', location: 'Mumbai, Maharashtra', start_date: '2026-06-01', end_date: '2026-12-31', status: 'ACTIVE', created_at: '2026-06-01T06:00:00Z' },
+   285→   285→      { id: 'camp_008', name: 'FitInfluencer Campaign', channel: 'INFLUENCER', partner_name: 'FitWithPriya (Instagram)', location: 'Pan India', start_date: '2026-06-10', end_date: '2026-07-10', status: 'ACTIVE', created_at: '2026-06-09T14:00:00Z' },
+   286→   286→      { id: 'camp_009', name: 'Old Pharmacy Trial', channel: 'HOSPITAL', partner_name: 'City Pharmacy', location: 'Chennai, Tamil Nadu', start_date: '2026-05-01', end_date: '2026-05-31', status: 'ARCHIVED', created_at: '2026-04-28T08:00:00Z' },
+   287→   287→    ]
+   288→   288→
+   289→   289→    // QR Scans — 25 scans across campaigns and time range
+   290→   290→    this.data.qr_scans = [
+   291→   291→      { id: 'scan_001', campaign_id: 'camp_001', user_id: 'user_002', device: 'iPhone 15', location: 'Mumbai', created_at: '2026-05-03T08:30:00Z' },
+   292→   292→      { id: 'scan_002', campaign_id: 'camp_001', device: 'Samsung Galaxy S24', location: 'Mumbai', created_at: '2026-05-05T09:15:00Z' },
+   293→   293→      { id: 'scan_003', campaign_id: 'camp_002', user_id: 'user_003', device: 'OnePlus 12', location: 'Delhi', created_at: '2026-05-06T14:20:00Z' },
+   294→   294→      { id: 'scan_004', campaign_id: 'camp_002', user_id: 'user_004', device: 'iPhone 14', location: 'Delhi', created_at: '2026-05-08T09:15:00Z' },
+   295→   295→      { id: 'scan_005', campaign_id: 'camp_003', user_id: 'user_005', device: 'Pixel 8', location: 'Bangalore', created_at: '2026-05-10T10:00:00Z' },
+   296→   296→      { id: 'scan_006', campaign_id: 'camp_004', user_id: 'user_007', device: 'Samsung Galaxy S23', location: 'Hyderabad', created_at: '2026-05-11T13:30:00Z' },
+   297→   297→      { id: 'scan_007', campaign_id: 'camp_006', user_id: 'user_009', device: 'iPhone 15 Pro', location: 'Bangalore', created_at: '2026-05-12T10:00:00Z' },
+   298→   298→      { id: 'scan_008', campaign_id: 'camp_001', user_id: 'user_010', device: 'Xiaomi 14', location: 'Mumbai', created_at: '2026-05-13T11:20:00Z' },
+   299→   299→      { id: 'scan_009', campaign_id: 'camp_005', device: 'Unknown', location: 'Goa', created_at: '2026-05-14T08:30:00Z' },
+   300→   300→      { id: 'scan_010', campaign_id: 'camp_003', device: 'iPad', location: 'Bangalore', created_at: '2026-05-16T09:00:00Z' },
+   301→   301→      { id: 'scan_011', campaign_id: 'camp_007', user_id: 'user_002', device: 'iPhone 15', location: 'Mumbai', created_at: '2026-05-18T14:00:00Z' },
+   302→   302→      { id: 'scan_012', campaign_id: 'camp_008', device: 'Samsung A54', location: 'Mumbai', created_at: '2026-05-20T16:00:00Z' },
+   303→   303→      { id: 'scan_013', campaign_id: 'camp_001', user_id: 'user_004', device: 'iPhone 16', location: 'Mumbai', created_at: '2026-05-22T10:30:00Z' },
+   304→   304→      { id: 'scan_014', campaign_id: 'camp_002', device: 'Samsung S25', location: 'Delhi', created_at: '2026-05-24T11:45:00Z' },
+   305→   305→      { id: 'scan_015', campaign_id: 'camp_006', device: 'MacBook', location: 'Bangalore', created_at: '2026-05-26T09:20:00Z' },
+   306→   306→      { id: 'scan_016', campaign_id: 'camp_005', user_id: 'user_007', device: 'Pixel 9', location: 'Goa', created_at: '2026-06-01T08:00:00Z' },
+   307→   307→      { id: 'scan_017', campaign_id: 'camp_001', device: 'iPhone 15', location: 'Mumbai', created_at: '2026-06-02T09:30:00Z' },
+   308→   308→      { id: 'scan_018', campaign_id: 'camp_004', device: 'OnePlus 13', location: 'Hyderabad', created_at: '2026-06-03T14:15:00Z' },
+   309→   309→      { id: 'scan_019', campaign_id: 'camp_007', user_id: 'user_003', device: 'Samsung Galaxy S24', location: 'Mumbai', created_at: '2026-06-04T11:00:00Z' },
+   310→   310→      { id: 'scan_020', campaign_id: 'camp_002', user_id: 'user_010', device: 'iPhone 14 Pro', location: 'Delhi', created_at: '2026-06-05T13:45:00Z' },
+   311→   311→      { id: 'scan_021', campaign_id: 'camp_003', device: 'iPad Pro', location: 'Bangalore', created_at: '2026-06-07T10:00:00Z' },
+   312→   312→      { id: 'scan_022', campaign_id: 'camp_008', user_id: 'user_005', device: 'Samsung S24 Ultra', location: 'Pan India', created_at: '2026-06-08T15:30:00Z' },
+   313→   313→      { id: 'scan_023', campaign_id: 'camp_006', device: 'ThinkPad X1', location: 'Bangalore', created_at: '2026-06-09T08:45:00Z' },
+   314→   314→      { id: 'scan_024', campaign_id: 'camp_001', user_id: 'user_009', device: 'Pixel 8a', location: 'Mumbai', created_at: '2026-06-10T12:00:00Z' },
+   315→   315→      { id: 'scan_025', campaign_id: 'camp_005', device: 'Unknown', location: 'Goa', created_at: '2026-06-11T09:15:00Z' },
+   316→   316→    ]
+   317→   317→
+   318→   318→    // Quiz questions
+   319→   319→    this.data.quiz_questions = [
+   320→   320→      { id: 'qq_001', question: 'When should you consume the NotJust pre-meal shot?', options: ['After dinner', 'Before a meal', 'During exercise', 'Before sleeping'], answer: 1, category: 'usage', difficulty: 'EASY', active: true },
+   321→   321→      { id: 'qq_002', question: 'What is the primary benefit of the NotJust shot?', options: ['Weight loss', 'Muscle building', 'Glycemic control - reducing sugar spikes', 'Better sleep'], answer: 2, category: 'science', difficulty: 'EASY', active: true },
+   322→   322→      { id: 'qq_003', question: 'How many shots are in a Monthly Pack?', options: ['15', '30', '60', '90'], answer: 2, category: 'product', difficulty: 'EASY', active: true },
+   323→   323→      { id: 'qq_004', question: 'What does glycemic control help with?', options: ['Hair growth', 'Blood sugar management after meals', 'Skin complexion', 'Eye health'], answer: 1, category: 'science', difficulty: 'MEDIUM', active: true },
+   324→   324→      { id: 'qq_005', question: 'What is the recommended usage frequency?', options: ['Once a week', 'Once before each main meal', 'Only on weekends', 'Three times a day regardless of meals'], answer: 1, category: 'usage', difficulty: 'MEDIUM', active: true },
+   325→   325→      { id: 'qq_006', question: 'The NotJust shot works by:', options: ['Replacing meals entirely', 'Slowing carbohydrate absorption in the digestive system', 'Increasing insulin production', 'Eliminating sugar from food'], answer: 1, category: 'science', difficulty: 'HARD', active: true },
+   326→   326→      { id: 'qq_007', question: 'Which pack offers sustainable packaging?', options: ['Monthly Pack', 'Eco-Friendly Refill Pack', 'Trial Pack', 'Family Pack'], answer: 1, category: 'product', difficulty: 'EASY', active: true },
+   327→   327→      { id: 'qq_008', question: 'What should you do if you miss a dose before a meal?', options: ['Double the next dose', 'Take it as soon as you remember, or skip and take before the next meal', 'Stop the course entirely', 'Take it after the meal instead'], answer: 1, category: 'usage', difficulty: 'MEDIUM', active: true },
+   328→   328→    ]
+   329→   329→
+   330→   330→    // Products
+   331→   331→    this.data.products = [
+   332→   332→      { id: 'prod_001', name: 'NOTJUST Watr Fizz', description: 'Sparkling 50 ml pre-meal wellness shots designed to help reduce the GI impact of carbohydrate-rich meals. Available as a Monthly Pack with 60 shots for daily use.', price: 2999, stock: 500, image_url: '/images/notjust-logo.png', type: 'FIZZ', active: true, created_at: '2026-06-01T00:00:00Z' },
+   333→   333→      { id: 'prod_002', name: 'NOTJUST Watr Still', description: 'Still 50 ml pre-meal wellness shots designed to support healthy blood sugar management. Available with an eco-friendly refill pack that is sustainable and affordable.', price: 2499, stock: 300, image_url: '/images/notjust-logo.png', type: 'STILL', active: true, created_at: '2026-06-01T00:00:00Z' },
+   334→   334→    ]
+   335→   335→
+   336→   336→    // Orders — 18 orders covering all statuses and time range
+   337→   337→    this.data.orders = [
+   338→   338→      { id: 'ord_001', user_id: 'user_002', status: 'DELIVERED', amount: 2999, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_001', shipping_address: { name: 'Priya Sharma', line1: '42 MG Road', city: 'Bangalore', state: 'Karnataka', pincode: '560001' }, created_at: '2026-05-02T10:30:00Z', updated_at: '2026-05-05T14:00:00Z' },
+   339→   339→      { id: 'ord_002', user_id: 'user_003', status: 'DELIVERED', amount: 2499, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_002', shipping_address: { name: 'Rajesh Kumar', line1: '15 Anna Nagar', city: 'Chennai', state: 'Tamil Nadu', pincode: '600040' }, created_at: '2026-05-05T15:30:00Z', updated_at: '2026-05-08T09:00:00Z' },
+   340→   340→      { id: 'ord_003', user_id: 'user_005', status: 'DELIVERED', amount: 2999, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_003', shipping_address: { name: 'Vikram Patel', line1: '78 CG Road', city: 'Ahmedabad', state: 'Gujarat', pincode: '380006' }, created_at: '2026-05-10T11:00:00Z', updated_at: '2026-05-13T11:05:00Z' },
+   341→   341→      { id: 'ord_004', user_id: 'user_007', status: 'DELIVERED', amount: 2499, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_004', shipping_address: { name: 'Suresh Menon', line1: '23 Panaji Market', city: 'Panaji', state: 'Goa', pincode: '403001' }, created_at: '2026-05-14T14:00:00Z', updated_at: '2026-05-17T14:05:00Z' },
+   342→   342→      { id: 'ord_005', user_id: 'user_002', status: 'DELIVERED', amount: 799, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_005', shipping_address: { name: 'Priya Sharma', line1: '42 MG Road', city: 'Bangalore', state: 'Karnataka', pincode: '560001' }, created_at: '2026-05-18T09:20:00Z', updated_at: '2026-05-21T10:00:00Z' },
+   343→   343→      { id: 'ord_006', user_id: 'user_009', status: 'DELIVERED', amount: 2999, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_006', shipping_address: { name: 'Arjun Reddy', line1: '56 Jubilee Hills', city: 'Hyderabad', state: 'Telangana', pincode: '500033' }, created_at: '2026-05-22T16:45:00Z', updated_at: '2026-05-25T10:00:00Z' },
+   344→   344→      { id: 'ord_007', user_id: 'user_010', status: 'DELIVERED', amount: 2499, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_007', shipping_address: { name: 'Kavita Joshi', line1: '9 MI Road', city: 'Jaipur', state: 'Rajasthan', pincode: '302001' }, created_at: '2026-05-26T11:30:00Z', updated_at: '2026-05-29T09:00:00Z' },
+   345→   345→      { id: 'ord_008', user_id: 'user_003', status: 'SHIPPED', amount: 2999, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_008', shipping_address: { name: 'Rajesh Kumar', line1: '15 Anna Nagar', city: 'Chennai', state: 'Tamil Nadu', pincode: '600040' }, created_at: '2026-06-02T08:15:00Z', updated_at: '2026-06-04T07:00:00Z' },
+   346→   346→      { id: 'ord_009', user_id: 'user_005', status: 'SHIPPED', amount: 2499, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_009', shipping_address: { name: 'Vikram Patel', line1: '78 CG Road', city: 'Ahmedabad', state: 'Gujarat', pincode: '380006' }, created_at: '2026-06-04T13:40:00Z', updated_at: '2026-06-06T11:00:00Z' },
+   347→   347→      { id: 'ord_010', user_id: 'user_007', status: 'SHIPPED', amount: 799, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_010', shipping_address: { name: 'Suresh Menon', line1: '23 Panaji Market', city: 'Panaji', state: 'Goa', pincode: '403001' }, created_at: '2026-06-06T10:20:00Z', updated_at: '2026-06-08T09:00:00Z' },
+   348→   348→      { id: 'ord_011', user_id: 'user_002', status: 'CONFIRMED', amount: 2999, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_011', shipping_address: { name: 'Priya Sharma', line1: '42 MG Road', city: 'Bangalore', state: 'Karnataka', pincode: '560001' }, created_at: '2026-06-08T15:10:00Z', updated_at: '2026-06-08T15:15:00Z' },
+   349→   349→      { id: 'ord_012', user_id: 'user_009', status: 'CONFIRMED', amount: 2499, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_012', shipping_address: { name: 'Arjun Reddy', line1: '56 Jubilee Hills', city: 'Hyderabad', state: 'Telangana', pincode: '500033' }, created_at: '2026-06-09T09:45:00Z', updated_at: '2026-06-09T09:50:00Z' },
+   350→   350→      { id: 'ord_013', user_id: 'user_010', status: 'CONFIRMED', amount: 2999, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_013', shipping_address: { name: 'Kavita Joshi', line1: '9 MI Road', city: 'Jaipur', state: 'Rajasthan', pincode: '302001' }, created_at: '2026-06-10T14:30:00Z', updated_at: '2026-06-10T14:35:00Z' },
+   351→   351→      { id: 'ord_014', user_id: 'user_003', status: 'CONFIRMED', amount: 799, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_014', shipping_address: { name: 'Rajesh Kumar', line1: '15 Anna Nagar', city: 'Chennai', state: 'Tamil Nadu', pincode: '600040' }, created_at: '2026-06-11T08:00:00Z', updated_at: '2026-06-11T08:05:00Z' },
+   352→   352→      { id: 'ord_015', user_id: 'user_005', status: 'PENDING', amount: 2999, payment_gateway: null, payment_id: null, shipping_address: { name: 'Vikram Patel', line1: '78 CG Road', city: 'Ahmedabad', state: 'Gujarat', pincode: '380006' }, created_at: '2026-06-12T11:20:00Z', updated_at: '2026-06-12T11:20:00Z' },
+   353→   353→      { id: 'ord_016', user_id: 'user_007', status: 'PENDING', amount: 2499, payment_gateway: null, payment_id: null, shipping_address: { name: 'Suresh Menon', line1: '23 Panaji Market', city: 'Panaji', state: 'Goa', pincode: '403001' }, created_at: '2026-06-13T09:30:00Z', updated_at: '2026-06-13T09:30:00Z' },
+   354→   354→      { id: 'ord_017', user_id: 'user_002', status: 'CANCELLED', amount: 799, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_017', shipping_address: { name: 'Priya Sharma', line1: '42 MG Road', city: 'Bangalore', state: 'Karnataka', pincode: '560001' }, created_at: '2026-05-08T10:00:00Z', updated_at: '2026-05-09T08:00:00Z' },
+   355→   355→      { id: 'ord_018', user_id: 'user_009', status: 'CANCELLED', amount: 2499, payment_gateway: 'RAZORPAY', payment_id: 'pay_rz_018', shipping_address: { name: 'Arjun Reddy', line1: '56 Jubilee Hills', city: 'Hyderabad', state: 'Telangana', pincode: '500033' }, created_at: '2026-05-15T14:00:00Z', updated_at: '2026-05-16T10:00:00Z' },
+   356→   356→    ]
+   357→   357→
+   358→   358→    // Order items — one item per order, matching product prices
+   359→   359→    this.data.order_items = [
+   360→   360→      { id: 'oi_001', order_id: 'ord_001', product_id: 'prod_001', quantity: 1, price: 2999 },
+   361→   361→      { id: 'oi_002', order_id: 'ord_002', product_id: 'prod_002', quantity: 1, price: 2499 },
+   362→   362→      { id: 'oi_003', order_id: 'ord_003', product_id: 'prod_001', quantity: 1, price: 2999 },
+   363→   363→      { id: 'oi_004', order_id: 'ord_004', product_id: 'prod_002', quantity: 1, price: 2499 },
+   364→   364→      { id: 'oi_005', order_id: 'ord_005', product_id: 'prod_001', quantity: 1, price: 799 },
+   365→   365→      { id: 'oi_006', order_id: 'ord_006', product_id: 'prod_001', quantity: 1, price: 2999 },
+   366→   366→      { id: 'oi_007', order_id: 'ord_007', product_id: 'prod_002', quantity: 1, price: 2499 },
+   367→   367→      { id: 'oi_008', order_id: 'ord_008', product_id: 'prod_001', quantity: 1, price: 2999 },
+   368→   368→      { id: 'oi_009', order_id: 'ord_009', product_id: 'prod_002', quantity: 1, price: 2499 },
+   369→   369→      { id: 'oi_010', order_id: 'ord_010', product_id: 'prod_001', quantity: 1, price: 799 },
+   370→   370→      { id: 'oi_011', order_id: 'ord_011', product_id: 'prod_001', quantity: 1, price: 2999 },
+   371→   371→      { id: 'oi_012', order_id: 'ord_012', product_id: 'prod_002', quantity: 1, price: 2499 },
+   372→   372→      { id: 'oi_013', order_id: 'ord_013', product_id: 'prod_001', quantity: 1, price: 2999 },
+   373→   373→      { id: 'oi_014', order_id: 'ord_014', product_id: 'prod_001', quantity: 1, price: 799 },
+   374→   374→      { id: 'oi_015', order_id: 'ord_015', product_id: 'prod_001', quantity: 1, price: 2999 },
+   375→   375→      { id: 'oi_016', order_id: 'ord_016', product_id: 'prod_002', quantity: 1, price: 2499 },
+   376→   376→      { id: 'oi_017', order_id: 'ord_017', product_id: 'prod_001', quantity: 1, price: 799 },
+   377→   377→      { id: 'oi_018', order_id: 'ord_018', product_id: 'prod_002', quantity: 1, price: 2499 },
+   378→   378→    ]
+   379→   379→
+   380→   380→    // Guarantee Plans
+   381→   381→    this.data.guarantee_plans = [
+   382→   382→      { id: 'gp_001', name: '30-Day Satisfaction Guarantee', description: 'If you are not satisfied with the product within 30 days of purchase, get a full refund. No questions asked.', duration: '30 days', price: 0, features: ['Full refund within 30 days', 'No questions asked', 'Free return shipping', 'Dedicated support'], active: true, created_at: '2026-06-01T00:00:00Z' },
+   383→   383→      { id: 'gp_002', name: '60-Day Wellness Promise', description: 'Our extended guarantee ensures you see real results. If glycemic response improvement is not observed within 60 days, receive a full refund plus a complimentary consultation with our wellness advisor.', duration: '60 days', price: 0, features: ['Full refund within 60 days', 'Complimentary wellness consultation', 'Priority customer support', 'Extended return window', 'Free return shipping'], active: true, created_at: '2026-06-01T00:00:00Z' },
+   384→   384→    ]
+   385→   385→
+   386→   386→    // ─── NEW: Product Videos (3 per product = 6 total) ───
+   387→   387→    this.data.product_videos = [
+   388→   388→      // Product 1: NOTJUST Watr Fizz
+   389→   389→      { id: 'pvid_001', product_id: 'prod_001', title: 'Introduction to NOTJUST Watr Fizz', duration: '4:32', description: 'Learn what NOTJUST Watr Fizz is, how it works, and why pre-meal wellness shots are transforming glycemic health management.', order: 1, video_url: undefined, active: true },
+   390→   390→      { id: 'pvid_002', product_id: 'prod_001', title: 'How to Use Fizz', duration: '3:15', description: 'A step-by-step guide on when and how to consume your NOTJUST Watr Fizz shot for maximum effectiveness before meals.', order: 2, video_url: undefined, active: true },
+   391→   391→      { id: 'pvid_003', product_id: 'prod_001', title: 'Science Behind Fizz', duration: '5:48', description: 'Deep dive into the science of sparkling pre-meal shots — how carbonation and active ingredients slow carbohydrate absorption.', order: 3, video_url: undefined, active: true },
+   392→   392→      // Product 2: NOTJUST Watr Still
+   393→   393→      { id: 'pvid_004', product_id: 'prod_002', title: 'Introduction to NOTJUST Watr Still', duration: '4:10', description: 'Discover NOTJUST Watr Still — the gentle, non-carbonated pre-meal wellness shot designed for daily blood sugar support.', order: 1, video_url: undefined, active: true },
+   394→   394→      { id: 'pvid_005', product_id: 'prod_002', title: 'How to Use Still', duration: '3:05', description: 'Learn the recommended usage pattern for NOTJUST Watr Still, including timing, dosage, and tips for best results.', order: 2, video_url: undefined, active: true },
+   395→   395→      { id: 'pvid_006', product_id: 'prod_002', title: 'Science Behind Still', duration: '5:22', description: 'Explore the clinical science behind NOTJUST Watr Still and how its formulation supports healthy post-meal glycemic response.', order: 3, video_url: undefined, active: true },
+   396→   396→    ]
+   397→   397→
+   398→   398→    // ─── NEW: Product Quizzes (2 per video = 12 total) ───
+   399→   399→    this.data.product_quizzes = [
+   400→   400→      // Video 1: Introduction to Fizz
+   401→   401→      { id: 'pq_001', product_id: 'prod_001', video_id: 'pvid_001', question: 'What is NOTJUST Watr Fizz primarily designed for?', options: ['Hydration during exercise', 'Reducing the glycemic impact of carbohydrate-rich meals', 'Replacing your daily water intake', 'Enhancing muscle recovery'], answer: 1, category: 'intro', difficulty: 'EASY', order: 1, active: true },
+   402→   402→      { id: 'pq_002', product_id: 'prod_001', video_id: 'pvid_001', question: 'When should you take the NOTJUST Watr Fizz shot?', options: ['After dinner', 'Before a meal', 'During a workout', 'Right before sleeping'], answer: 1, category: 'intro', difficulty: 'EASY', order: 2, active: true },
+   403→   403→      // Video 2: How to Use Fizz
+   404→   404→      { id: 'pq_003', product_id: 'prod_001', video_id: 'pvid_002', question: 'How many minutes before a meal is the Fizz shot recommended?', options: ['1-2 minutes', '5-10 minutes', '30 minutes', '60 minutes'], answer: 1, category: 'usage', difficulty: 'EASY', order: 1, active: true },
+   405→   405→      { id: 'pq_004', product_id: 'prod_001', video_id: 'pvid_002', question: 'What should you do if you forget to take your Fizz shot before a meal?', options: ['Skip it entirely', 'Double the dose next time', 'Take it as soon as you remember or before the next meal', 'Take it after the meal'], answer: 2, category: 'usage', difficulty: 'MEDIUM', order: 2, active: true },
+   406→   406→      // Video 3: Science Behind Fizz
+   407→   407→      { id: 'pq_005', product_id: 'prod_001', video_id: 'pvid_003', question: 'How does the carbonation in Fizz help with glycemic control?', options: ['It increases insulin production', 'It slows down gastric emptying and carbohydrate absorption', 'It directly neutralizes sugar in the blood', 'It has no effect on glycemic control'], answer: 1, category: 'science', difficulty: 'MEDIUM', order: 1, active: true },
+   408→   408→      { id: 'pq_006', product_id: 'prod_001', video_id: 'pvid_003', question: 'Which mechanism is central to how NOTJUST Watr Fizz works?', options: ['Increasing metabolic rate', 'Replacing carbohydrate intake', 'Slowing carbohydrate absorption in the digestive system', 'Stimulating the pancreas'], answer: 2, category: 'science', difficulty: 'HARD', order: 2, active: true },
+   409→   409→      // Video 4: Introduction to Still
+   410→   410→      { id: 'pq_007', product_id: 'prod_002', video_id: 'pvid_004', question: 'What makes NOTJUST Watr Still different from Fizz?', options: ['It contains caffeine', 'It is non-carbonated and gentler on the stomach', 'It is only for children', 'It has no active ingredients'], answer: 1, category: 'intro', difficulty: 'EASY', order: 1, active: true },
+   411→   411→      { id: 'pq_008', product_id: 'prod_002', video_id: 'pvid_004', question: 'Who is NOTJUST Watr Still best suited for?', options: ['Athletes only', 'People who prefer a non-sparkling option for blood sugar support', 'People who want to lose weight quickly', 'Children under 12'], answer: 1, category: 'intro', difficulty: 'EASY', order: 2, active: true },
+   412→   412→      // Video 5: How to Use Still
+   413→   413→      { id: 'pq_009', product_id: 'prod_002', video_id: 'pvid_005', question: 'How is the Still shot typically consumed?', options: ['Mixed with hot tea', 'Drunk directly before a meal', 'Applied topically', 'Diluted in a liter of water'], answer: 1, category: 'usage', difficulty: 'EASY', order: 1, active: true },
+   414→   414→      { id: 'pq_010', product_id: 'prod_002', video_id: 'pvid_005', question: 'What is the recommended frequency for taking NOTJUST Watr Still?', options: ['Once a week', 'Once before each main meal', 'Only when you feel unwell', 'Three times a day regardless of meals'], answer: 1, category: 'usage', difficulty: 'MEDIUM', order: 2, active: true },
+   415→   415→      // Video 6: Science Behind Still
+   416→   416→      { id: 'pq_011', product_id: 'prod_002', video_id: 'pvid_006', question: 'What does clinical research suggest about the Still formulation?', options: ['It cures diabetes', 'It supports healthy post-meal glycemic response', 'It replaces the need for medication', 'It increases blood sugar levels'], answer: 1, category: 'science', difficulty: 'MEDIUM', order: 1, active: true },
+   417→   417→      { id: 'pq_012', product_id: 'prod_002', video_id: 'pvid_006', question: 'Which of the following is NOT a mechanism of the Still formulation?', options: ['Slowing carbohydrate absorption', 'Directly reducing blood glucose', 'Supporting digestive health', 'Modulating glycemic response'], answer: 1, category: 'science', difficulty: 'HARD', order: 2, active: true },
+   418→   418→    ]
+   419→   419→
+   420→   420→    // ─── NEW: Product Learning Progress ───
+   421→   421→    this.data.product_learning_progress = [
+   422→   422→      // admin_001: completed for both products
+   423→   423→      {
+   424→   424→        id: 'plp_001',
+   425→   425→        user_id: 'admin_001',
+   426→   426→        product_id: 'prod_001',
+   427→   427→        video_progress: { 'pvid_001': 100, 'pvid_002': 100, 'pvid_003': 100 },
+   428→   428→        quiz_answers: { 'pq_001': 1, 'pq_002': 1, 'pq_003': 1, 'pq_004': 2, 'pq_005': 1, 'pq_006': 2 },
+   429→   429→        quiz_completed: true,
+   430→   430→        quiz_score: 100,
+   431→   431→        status: 'COMPLETED',
+   432→   432→        completed_at: '2026-06-01T12:00:00Z',
+   433→   433→        created_at: '2026-06-01T10:00:00Z',
+   434→   434→        updated_at: '2026-06-01T12:00:00Z',
+   435→   435→      },
+   436→   436→      {
+   437→   437→        id: 'plp_002',
+   438→   438→        user_id: 'admin_001',
+   439→   439→        product_id: 'prod_002',
+   440→   440→        video_progress: { 'pvid_004': 100, 'pvid_005': 100, 'pvid_006': 100 },
+   441→   441→        quiz_answers: { 'pq_007': 1, 'pq_008': 1, 'pq_009': 1, 'pq_010': 1, 'pq_011': 1, 'pq_012': 1 },
+   442→   442→        quiz_completed: true,
+   443→   443→        quiz_score: 100,
+   444→   444→        status: 'COMPLETED',
+   445→   445→        completed_at: '2026-06-01T14:00:00Z',
+   446→   446→        created_at: '2026-06-01T10:00:00Z',
+   447→   447→        updated_at: '2026-06-01T14:00:00Z',
+   448→   448→      },
+   449→   449→      // user_002 (Priya): completed for prod_001, in_progress for prod_002
+   450→   450→      {
+   451→   451→        id: 'plp_003',
+   452→   452→        user_id: 'user_002',
+   453→   453→        product_id: 'prod_001',
+   454→   454→        video_progress: { 'pvid_001': 100, 'pvid_002': 100, 'pvid_003': 100 },
+   455→   455→        quiz_answers: { 'pq_001': 1, 'pq_002': 1, 'pq_003': 1, 'pq_004': 2, 'pq_005': 1, 'pq_006': 0 },
+   456→   456→        quiz_completed: true,
+   457→   457→        quiz_score: 83,
+   458→   458→        status: 'COMPLETED',
+   459→   459→        completed_at: '2026-06-06T09:00:00Z',
+   460→   460→        created_at: '2026-06-05T08:30:00Z',
+   461→   461→        updated_at: '2026-06-06T09:00:00Z',
+   462→   462→      },
+   463→   463→      {
+   464→   464→        id: 'plp_004',
+   465→   465→        user_id: 'user_002',
+   466→   466→        product_id: 'prod_002',
+   467→   467→        video_progress: { 'pvid_004': 100, 'pvid_005': 80 },
+   468→   468→        quiz_answers: { 'pq_007': 1, 'pq_008': 1 },
+   469→   469→        quiz_completed: false,
+   470→   470→        quiz_score: 0,
+   471→   471→        status: 'IN_PROGRESS',
+   472→   472→        completed_at: undefined,
+   473→   473→        created_at: '2026-06-05T08:30:00Z',
+   474→   474→        updated_at: now,
+   475→   475→      },
+   476→   476→      // user_003 (Rajesh): completed for prod_001, NOT_STARTED for prod_002
+   477→   477→      {
+   478→   478→        id: 'plp_005',
+   479→   479→        user_id: 'user_003',
+   480→   480→        product_id: 'prod_001',
+   481→   481→        video_progress: { 'pvid_001': 100, 'pvid_002': 100, 'pvid_003': 100 },
+   482→   482→        quiz_answers: { 'pq_001': 1, 'pq_002': 1, 'pq_003': 0, 'pq_004': 2, 'pq_005': 1, 'pq_006': 2 },
+   483→   483→        quiz_completed: true,
+   484→   484→        quiz_score: 83,
+   485→   485→        status: 'COMPLETED',
+   486→   486→        completed_at: '2026-06-07T16:00:00Z',
+   487→   487→        created_at: '2026-06-06T14:20:00Z',
+   488→   488→        updated_at: '2026-06-07T16:00:00Z',
+   489→   489→      },
+   490→   490→      {
+   491→   491→        id: 'plp_006',
+   492→   492→        user_id: 'user_003',
+   493→   493→        product_id: 'prod_002',
+   494→   494→        video_progress: {},
+   495→   495→        quiz_answers: {},
+   496→   496→        quiz_completed: false,
+   497→   497→        quiz_score: 0,
+   498→   498→        status: 'NOT_STARTED',
+   499→   499→        completed_at: undefined,
+   500→   500→        created_at: '2026-06-06T14:20:00Z',
+
+[showing lines 1-500 of 867; use offset=501 with limit to continue reading]

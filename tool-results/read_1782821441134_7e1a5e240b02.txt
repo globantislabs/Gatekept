@@ -1,0 +1,602 @@
+  2559→function AdminDashboard() {
+  2560→  const { adminTab, setAdminTab, user, navigateTo } = useAppStore()
+  2561→  const [stats, setStats] = useState<any>(null)
+  2562→  const [users, setUsers] = useState<any[]>([])
+  2563→  const [campaigns, setCampaigns] = useState<Campaign[]>([])
+  2564→  const [scans, setScans] = useState<QrScan[]>([])
+  2565→  const [orders, setOrders] = useState<any[]>([])
+  2566→  const [questions, setQuestions] = useState<QuizQuestion[]>([])
+  2567→  const [guarantees, setGuarantees] = useState<GuaranteePlan[]>([])
+  2568→  const [loading, setLoading] = useState(true)
+  2569→  const [userSearch, setUserSearch] = useState('')
+  2570→  const [selectedOrder, setSelectedOrder] = useState<any>(null)
+  2571→  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  2572→  const [orderView, setOrderView] = useState<'kanban' | 'table'>('table')
+  2573→  const [adminProducts, setAdminProducts] = useState<Product[]>([])
+  2574→  const [adminSubscriptions, setAdminSubscriptions] = useState<Subscription[]>([])
+  2575→  const [productVideoCounts, setProductVideoCounts] = useState<Record<string, number>>({})
+  2576→  const [productQuizCounts, setProductQuizCounts] = useState<Record<string, number>>({})
+  2577→  const [productLearningStats, setProductLearningStats] = useState<Record<string, { total: number; completed: number; unlocked: number }>>({})
+  2578→
+  2579→  useEffect(() => {
+  2580→    if (!user?.is_admin) { navigateTo('landing'); return }
+  2581→    const load = async () => {
+  2582→      const [statsR, usersR, campsR, scansR, ordersR, questionsR, guaranteesR, productsR, subsR] = await Promise.all([
+  2583→        adminStatsService.getDashboardStats(),
+  2584→        userService.getAll(),
+  2585→        campaignService.getAll(),
+  2586→        qrScanService.getAll(),
+  2587→        orderService.getAll(),
+  2588→        quizService.getQuestions(20),
+  2589→        guaranteeService.getAll(),
+  2590→        productService.getAll(),
+  2591→        subscriptionService.getAll(),
+  2592→      ])
+  2593→      if (statsR.data) setStats(statsR.data)
+  2594→      if (usersR.data) setUsers(usersR.data)
+  2595→      if (campsR.data) setCampaigns(campsR.data)
+  2596→      if (scansR.data) setScans(scansR.data)
+  2597→      if (ordersR.data) setOrders(ordersR.data)
+  2598→      if (questionsR.data) setQuestions(questionsR.data)
+  2599→      if (guaranteesR.data) setGuarantees(guaranteesR.data)
+  2600→      if (productsR.data) setAdminProducts(productsR.data)
+  2601→      if (subsR.data) setAdminSubscriptions(subsR.data as Subscription[])
+  2602→
+  2603→      // Fetch video/quiz counts per product
+  2604→      if (productsR.data) {
+  2605→        const vCounts: Record<string, number> = {}
+  2606→        const qCounts: Record<string, number> = {}
+  2607→        const lStats: Record<string, { total: number; completed: number; unlocked: number }> = {}
+  2608→        for (const prod of productsR.data as Product[]) {
+  2609→          const [vR, qR] = await Promise.all([
+  2610→            productVideoService.getByProduct(prod.id),
+  2611→            productQuizService.getByProduct(prod.id),
+  2612→          ])
+  2613→          vCounts[prod.id] = (vR.data || []).length
+  2614→          qCounts[prod.id] = (qR.data || []).length
+  2615→        }
+  2616→        // Compute learning stats across all users
+  2617→        if (usersR.data) {
+  2618→          for (const prod of productsR.data as Product[]) {
+  2619→            let total = 0, completed = 0, unlocked = 0
+  2620→            for (const u of usersR.data as any[]) {
+  2621→              const pR = await productLearningService.getProgress(u.user_id, prod.id)
+  2622→              if (pR.data) {
+  2623→                total++
+  2624→                if (pR.data.status === 'COMPLETED') completed++
+  2625→                if (pR.data.status === 'UNLOCKED' || pR.data.status === 'COMPLETED') unlocked++
+  2626→              }
+  2627→            }
+  2628→            lStats[prod.id] = { total, completed, unlocked }
+  2629→          }
+  2630→        }
+  2631→        setProductVideoCounts(vCounts)
+  2632→        setProductQuizCounts(qCounts)
+  2633→        setProductLearningStats(lStats)
+  2634→      }
+  2635→
+  2636→      setLoading(false)
+  2637→    }
+  2638→    load()
+  2639→  }, [user, navigateTo])
+  2640→
+  2641→  const refreshData = async () => {
+  2642→    setLoading(true)
+  2643→    const [statsR, usersR, campsR, scansR, ordersR] = await Promise.all([
+  2644→      adminStatsService.getDashboardStats(),
+  2645→      userService.getAll(),
+  2646→      campaignService.getAll(),
+  2647→      qrScanService.getAll(),
+  2648→      orderService.getAll(),
+  2649→    ])
+  2650→    if (statsR.data) setStats(statsR.data)
+  2651→    if (usersR.data) setUsers(usersR.data)
+  2652→    if (campsR.data) setCampaigns(campsR.data)
+  2653→    if (scansR.data) setScans(scansR.data)
+  2654→    if (ordersR.data) setOrders(ordersR.data)
+  2655→    setLoading(false)
+  2656→  }
+  2657→
+  2658→  if (loading) return (
+  2659→    <div className="min-h-screen flex items-center justify-center font-[family-name:var(--font-admin)]" style={{ background: A.bg }}>
+  2660→      <div className="flex flex-col items-center gap-3">
+  2661→        <div className="w-10 h-10 rounded-lg flex items-center justify-center animate-pulse" style={{ background: A.greenLight }}>
+  2662→          <Leaf className="w-5 h-5" style={{ color: A.green }} />
+  2663→        </div>
+  2664→        <span className="text-sm" style={{ color: A.textMuted }}>Loading dashboard...</span>
+  2665→      </div>
+  2666→    </div>
+  2667→  )
+  2668→  if (!stats) return null
+  2669→
+  2670→  const ordersByStatus = Object.entries(stats.ordersByStatus || {}).map(([name, value]) => ({ name, value: value as number }))
+  2671→  const scansByCampaign = Object.entries(stats.scansByCampaign || {}).map(([name, value]) => ({ name: name.slice(0, 15), value: value as number }))
+  2672→  const campaignsByChannel = Object.entries(stats.campaignsByChannel || {}).map(([name, value]) => ({ name, value: value as number }))
+  2673→
+  2674→  const revenueTrend = [
+  2675→    { month: 'Jan', revenue: Math.round(stats.totalRevenue * 0.1), orders: Math.round(stats.totalOrders * 0.08) },
+  2676→    { month: 'Feb', revenue: Math.round(stats.totalRevenue * 0.12), orders: Math.round(stats.totalOrders * 0.1) },
+  2677→    { month: 'Mar', revenue: Math.round(stats.totalRevenue * 0.18), orders: Math.round(stats.totalOrders * 0.15) },
+  2678→    { month: 'Apr', revenue: Math.round(stats.totalRevenue * 0.22), orders: Math.round(stats.totalOrders * 0.18) },
+  2679→    { month: 'May', revenue: Math.round(stats.totalRevenue * 0.28), orders: Math.round(stats.totalOrders * 0.22) },
+  2680→    { month: 'Jun', revenue: Math.round(stats.totalRevenue * 0.32), orders: Math.round(stats.totalOrders * 0.27) },
+  2681→  ]
+  2682→
+  2683→  const sidebarItems = [
+  2684→    { value: 'dashboard', label: 'Overview', icon: LayoutDashboard, badge: null },
+  2685→    { value: 'users', label: 'Users', icon: Users, badge: users.length },
+  2686→    { value: 'campaigns', label: 'Campaigns', icon: MegaphoneIcon, badge: campaigns.length },
+  2687→    { value: 'products', label: 'Products', icon: Store, badge: null },
+  2688→    { value: 'qr', label: 'QR Codes', icon: QrCode, badge: campaigns.filter(c => c.status === 'ACTIVE').length },
+  2689→    { value: 'orders', label: 'Orders', icon: Package, badge: orders.length },
+  2690→    { value: 'subscriptions', label: 'Subscriptions', icon: CreditCard, badge: null },
+  2691→    { value: 'analytics', label: 'Analytics', icon: TrendingUp, badge: null },
+  2692→    { value: 'content', label: 'Content', icon: FileText, badge: questions.length },
+  2693→    { value: 'guarantees', label: 'Guarantees', icon: Shield, badge: guarantees.length },
+  2694→  ]
+  2695→
+  2696→  const filteredUsers = userSearch
+  2697→    ? users.filter((u: any) => u.name?.toLowerCase().includes(userSearch.toLowerCase()) || u.email?.toLowerCase().includes(userSearch.toLowerCase()))
+  2698→    : users
+  2699→
+  2700→  const orderStatuses = ['PENDING', 'CONFIRMED', 'SHIPPED', 'DELIVERED'] as const
+  2701→  const ordersByKanbanStatus = (status: string) => orders.filter((o: any) => o.status === status)
+  2702→
+  2703→  const statusColors: Record<string, { text: string; bg: string; dot: string }> = {
+  2704→    PENDING: { text: A.amber, bg: A.amberLight, dot: A.amber },
+  2705→    CONFIRMED: { text: A.blue, bg: A.blueLight, dot: A.blue },
+  2706→    SHIPPED: { text: '#7c3aed', bg: '#f3f0ff', dot: '#7c3aed' },
+  2707→    DELIVERED: { text: A.green, bg: A.greenLight, dot: A.green },
+  2708→    CANCELLED: { text: A.red, bg: A.redLight, dot: A.red },
+  2709→  }
+  2710→
+  2711→  const StatusBadge = ({ status }: { status: string }) => {
+  2712→    const c = statusColors[status] || { text: A.textMuted, bg: A.borderLight, dot: A.textMuted }
+  2713→    return (
+  2714→      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-medium" style={{ color: c.text, background: c.bg }}>
+  2715→        <span className="w-1.5 h-1.5 rounded-full" style={{ background: c.dot }} />
+  2716→        {status}
+  2717→      </span>
+  2718→    )
+  2719→  }
+  2720→
+  2721→  const renderContent = () => {
+  2722→    switch (adminTab) {
+  2723→      case 'dashboard':
+  2724→        return (
+  2725→          <div className="space-y-5">
+  2726→            {/* Stat Cards */}
+  2727→            <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+  2728→              {[
+  2729→                { label: 'Total Users', value: stats.totalUsers, icon: Users, color: A.green, bgColor: A.greenLight, trend: '+12%', sub: `${stats.learningCompleted} completed learning` },
+  2730→                { label: 'QR Scans', value: stats.totalScans, icon: QrCode, color: A.blue, bgColor: A.blueLight, trend: '+8%', sub: `${campaigns.filter(c => c.status === 'ACTIVE').length} active campaigns` },
+  2731→                { label: 'Total Orders', value: stats.totalOrders, icon: Package, color: A.lime, bgColor: A.limeLight, trend: '+23%', sub: `${orders.filter((o: any) => o.status === 'DELIVERED').length} delivered` },
+  2732→                { label: 'Revenue', value: `₹${stats.totalRevenue?.toLocaleString()}`, icon: DollarSign, color: A.green, bgColor: A.greenLight, trend: '+15%', sub: `₹${stats.totalRevenue ? Math.round(stats.totalRevenue * 0.3).toLocaleString() : 0} this month` },
+  2733→              ].map(card => (
+  2734→                <div key={card.label} className="bg-white border rounded-lg p-4 hover:shadow-sm transition-shadow" style={{ borderColor: A.border }}>
+  2735→                  <div className="flex items-center justify-between mb-3">
+  2736→                    <div className="w-8 h-8 rounded-md flex items-center justify-center" style={{ backgroundColor: card.bgColor }}>
+  2737→                      <card.icon className="w-4 h-4" style={{ color: card.color }} />
+  2738→                    </div>
+  2739→                    <span className="text-[11px] font-medium px-1.5 py-0.5 rounded" style={{ color: A.green, background: A.greenLight }}>{card.trend}</span>
+  2740→                  </div>
+  2741→                  <p className="text-xl font-bold" style={{ color: A.text }}>{card.value}</p>
+  2742→                  <p className="text-[12px] mt-0.5" style={{ color: A.textSecondary }}>{card.label}</p>
+  2743→                  <p className="text-[11px] mt-1" style={{ color: A.textMuted }}>{card.sub}</p>
+  2744→                </div>
+  2745→              ))}
+  2746→            </div>
+  2747→
+  2748→            {/* Charts Row */}
+  2749→            <div className="grid lg:grid-cols-2 gap-4">
+  2750→              <div className="bg-white border rounded-lg p-5" style={{ borderColor: A.border }}>
+  2751→                <div className="flex items-center justify-between mb-4">
+  2752→                  <h3 className="text-sm font-semibold" style={{ color: A.text }}>Revenue Trend</h3>
+  2753→                  <span className="text-[11px] px-2 py-0.5 rounded" style={{ background: A.greenLight, color: A.green }}>6 months</span>
+  2754→                </div>
+  2755→                <ResponsiveContainer width="100%" height={220}>
+  2756→                  <LineChart data={revenueTrend}>
+  2757→                    <CartesianGrid strokeDasharray="3 3" stroke="#eeebe5" />
+  2758→                    <XAxis dataKey="month" tick={{ fontSize: 11, fill: A.textMuted }} axisLine={{ stroke: A.border }} />
+  2759→                    <YAxis tick={{ fontSize: 11, fill: A.textMuted }} axisLine={{ stroke: A.border }} />
+  2760→                    <Tooltip contentStyle={{ backgroundColor: '#fff', border: `1px solid ${A.border}`, borderRadius: 8, color: A.text, fontSize: 12 }} />
+  2761→                    <Line type="monotone" dataKey="revenue" stroke={A.green} strokeWidth={2} dot={{ r: 3, fill: A.green }} />
+  2762→                    <Line type="monotone" dataKey="orders" stroke={A.lime} strokeWidth={2} dot={{ r: 3, fill: A.lime }} strokeDasharray="5 5" />
+  2763→                  </LineChart>
+  2764→                </ResponsiveContainer>
+  2765→              </div>
+  2766→              <div className="bg-white border rounded-lg p-5" style={{ borderColor: A.border }}>
+  2767→                <div className="flex items-center justify-between mb-4">
+  2768→                  <h3 className="text-sm font-semibold" style={{ color: A.text }}>Orders by Status</h3>
+  2769→                  <span className="text-[11px] px-2 py-0.5 rounded" style={{ background: A.blueLight, color: A.blue }}>{orders.length} total</span>
+  2770→                </div>
+  2771→                <ResponsiveContainer width="100%" height={220}>
+  2772→                  <RechartsPieChart>
+  2773→                    <Pie data={ordersByStatus} cx="50%" cy="50%" innerRadius={55} outerRadius={85} dataKey="value" strokeWidth={0}>
+  2774→                      {ordersByStatus.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
+  2775→                    </Pie>
+  2776→                    <Tooltip contentStyle={{ backgroundColor: '#fff', border: `1px solid ${A.border}`, borderRadius: 8, color: A.text, fontSize: 12 }} />
+  2777→                    <Legend formatter={(value: string) => <span style={{ color: A.textSecondary, fontSize: 12 }}>{value}</span>} />
+  2778→                  </RechartsPieChart>
+  2779→                </ResponsiveContainer>
+  2780→              </div>
+  2781→            </div>
+  2782→
+  2783→            {/* Activity + Quick Stats */}
+  2784→            <div className="grid lg:grid-cols-3 gap-4">
+  2785→              <div className="lg:col-span-2 bg-white border rounded-lg p-5" style={{ borderColor: A.border }}>
+  2786→                <h3 className="text-sm font-semibold mb-4" style={{ color: A.text }}>Recent Activity</h3>
+  2787→                <div className="space-y-1">
+  2788→                  {(stats.recentUsers || []).slice(0, 4).map((u: UserProfile) => (
+  2789→                    <div key={u.id} className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-[#f8f7f5] transition-colors">
+  2790→                      <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: A.greenLight }}>
+  2791→                        <span className="text-[11px] font-bold" style={{ color: A.green }}>{u.name.charAt(0)}</span>
+  2792→                      </div>
+  2793→                      <div className="flex-1 min-w-0">
+  2794→                        <p className="text-sm truncate" style={{ color: A.text }}>{u.name} <span style={{ color: A.textMuted }}>registered</span></p>
+  2795→                        <p className="text-[11px]" style={{ color: A.textMuted }}>{new Date(u.created_at).toLocaleDateString()}</p>
+  2796→                      </div>
+  2797→                      <StatusBadge status={u.learning_completed ? 'DELIVERED' : 'PENDING'} />
+  2798→                    </div>
+  2799→                  ))}
+  2800→                  {orders.slice(0, 3).map((o: any) => (
+  2801→                    <div key={o.id} className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-[#f8f7f5] transition-colors">
+  2802→                      <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: A.blueLight }}>
+  2803→                        <Package className="w-3.5 h-3.5" style={{ color: A.blue }} />
+  2804→                      </div>
+  2805→                      <div className="flex-1 min-w-0">
+  2806→                        <p className="text-sm truncate" style={{ color: A.text }}>Order ₹{o.amount?.toLocaleString()} <span style={{ color: A.textMuted }}>by {o.user?.name || 'Customer'}</span></p>
+  2807→                        <p className="text-[11px]" style={{ color: A.textMuted }}>{new Date(o.created_at).toLocaleDateString()}</p>
+  2808→                      </div>
+  2809→                      <StatusBadge status={o.status} />
+  2810→                    </div>
+  2811→                  ))}
+  2812→                </div>
+  2813→              </div>
+  2814→
+  2815→              <div className="bg-white border rounded-lg p-5" style={{ borderColor: A.border }}>
+  2816→                <h3 className="text-sm font-semibold mb-4" style={{ color: A.text }}>Quick Stats</h3>
+  2817→                <div className="space-y-4">
+  2818→                  <div>
+  2819→                    <div className="flex items-center justify-between mb-1.5">
+  2820→                      <span className="text-[12px]" style={{ color: A.textSecondary }}>Conversion Rate</span>
+  2821→                      <span className="text-[12px] font-semibold" style={{ color: A.green }}>{stats.conversionRate}%</span>
+  2822→                    </div>
+  2823→                    <div className="h-1.5 rounded-full overflow-hidden" style={{ background: A.borderLight }}>
+  2824→                      <div className="h-full rounded-full" style={{ width: `${stats.conversionRate}%`, background: A.green }} />
+  2825→                    </div>
+  2826→                  </div>
+  2827→                  <div>
+  2828→                    <div className="flex items-center justify-between mb-1.5">
+  2829→                      <span className="text-[12px]" style={{ color: A.textSecondary }}>Learning Completion</span>
+  2830→                      <span className="text-[12px] font-semibold" style={{ color: A.blue }}>{stats.totalUsers ? Math.round(stats.learningCompleted / stats.totalUsers * 100) : 0}%</span>
+  2831→                    </div>
+  2832→                    <div className="h-1.5 rounded-full overflow-hidden" style={{ background: A.borderLight }}>
+  2833→                      <div className="h-full rounded-full" style={{ width: `${stats.totalUsers ? Math.round(stats.learningCompleted / stats.totalUsers * 100) : 0}%`, background: A.blue }} />
+  2834→                    </div>
+  2835→                  </div>
+  2836→                  <div>
+  2837→                    <div className="flex items-center justify-between mb-1.5">
+  2838→                      <span className="text-[12px]" style={{ color: A.textSecondary }}>Order Fulfillment</span>
+  2839→                      <span className="text-[12px] font-semibold" style={{ color: A.lime }}>{stats.totalOrders ? Math.round((orders.filter((o: any) => o.status === 'DELIVERED').length / stats.totalOrders) * 100) : 0}%</span>
+  2840→                    </div>
+  2841→                    <div className="h-1.5 rounded-full overflow-hidden" style={{ background: A.borderLight }}>
+  2842→                      <div className="h-full rounded-full" style={{ width: `${stats.totalOrders ? Math.round((orders.filter((o: any) => o.status === 'DELIVERED').length / stats.totalOrders) * 100) : 0}%`, background: A.lime }} />
+  2843→                    </div>
+  2844→                  </div>
+  2845→                  <Separator style={{ background: A.border }} />
+  2846→                  <div className="grid grid-cols-2 gap-3">
+  2847→                    <div className="rounded-lg p-3 text-center" style={{ background: A.bg }}>
+  2848→                      <p className="font-bold text-lg" style={{ color: A.text }}>{stats.learningCompleted}</p>
+  2849→                      <p className="text-[10px]" style={{ color: A.textMuted }}>Completed</p>
+  2850→                    </div>
+  2851→                    <div className="rounded-lg p-3 text-center" style={{ background: A.bg }}>
+  2852→                      <p className="font-bold text-lg" style={{ color: A.text }}>{stats.totalUsers - stats.learningCompleted}</p>
+  2853→                      <p className="text-[10px]" style={{ color: A.textMuted }}>Pending</p>
+  2854→                    </div>
+  2855→                  </div>
+  2856→                </div>
+  2857→              </div>
+  2858→            </div>
+  2859→          </div>
+  2860→        )
+  2861→
+  2862→      case 'users':
+  2863→        return (
+  2864→          <div className="space-y-4">
+  2865→            <div className="flex items-center justify-between">
+  2866→              <div>
+  2867→                <h2 className="text-base font-semibold" style={{ color: A.text }}>Users</h2>
+  2868→                <p className="text-[12px]" style={{ color: A.textMuted }}>{users.length} registered users</p>
+  2869→              </div>
+  2870→              <div className="relative">
+  2871→                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2" style={{ color: A.textMuted }} />
+  2872→                <Input placeholder="Search users..." value={userSearch} onChange={e => setUserSearch(e.target.value)} className="pl-9 w-64 h-8 text-sm" style={{ background: '#fff', borderColor: A.border, color: A.text }} />
+  2873→              </div>
+  2874→            </div>
+  2875→            <div className="bg-white border rounded-lg overflow-hidden" style={{ borderColor: A.border }}>
+  2876→              <Table>
+  2877→                <TableHeader>
+  2878→                  <TableRow style={{ borderColor: A.borderLight }} className="hover:bg-transparent">
+  2879→                    <TableHead className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: A.textMuted }}>User</TableHead>
+  2880→                    <TableHead className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: A.textMuted }}>Contact</TableHead>
+  2881→                    <TableHead className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: A.textMuted }}>Learning</TableHead>
+  2882→                    <TableHead className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: A.textMuted }}>Status</TableHead>
+  2883→                    <TableHead className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: A.textMuted }}>Joined</TableHead>
+  2884→                    <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-right" style={{ color: A.textMuted }}>Actions</TableHead>
+  2885→                  </TableRow>
+  2886→                </TableHeader>
+  2887→                <TableBody>
+  2888→                  {filteredUsers.map((u: any) => (
+  2889→                    <TableRow key={u.id} className="hover:bg-[#f8f7f5]" style={{ borderColor: A.borderLight }}>
+  2890→                      <TableCell>
+  2891→                        <div className="flex items-center gap-3">
+  2892→                          <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: A.greenLight }}>
+  2893→                            <span className="text-[11px] font-bold" style={{ color: A.green }}>{u.name?.charAt(0) || '?'}</span>
+  2894→                          </div>
+  2895→                          <div>
+  2896→                            <p className="text-sm font-medium" style={{ color: A.text }}>{u.name}</p>
+  2897→                            {u.is_admin && <span className="text-[9px] font-medium px-1.5 py-0.5 rounded" style={{ color: A.green, background: A.greenLight }}>Admin</span>}
+  2898→                          </div>
+  2899→                        </div>
+  2900→                      </TableCell>
+  2901→                      <TableCell className="text-[12px]" style={{ color: A.textSecondary }}>{u.email || u.phone || '-'}</TableCell>
+  2902→                      <TableCell>
+  2903→                        <div className="flex items-center gap-2">
+  2904→                          <div className="w-16 h-1.5 rounded-full overflow-hidden" style={{ background: A.borderLight }}>
+  2905→                            <div className="h-full rounded-full" style={{ width: u.learning_completed ? '100%' : '0%', background: u.learning_completed ? A.green : A.amber }} />
+  2906→                          </div>
+  2907→                          <span className="text-[11px]" style={{ color: A.textMuted }}>{u.learning_completed ? '100%' : '0%'}</span>
+  2908→                        </div>
+  2909→                      </TableCell>
+  2910→                      <TableCell>
+  2911→                        <StatusBadge status={u.learning_completed ? 'DELIVERED' : 'PENDING'} />
+  2912→                      </TableCell>
+  2913→                      <TableCell className="text-[11px]" style={{ color: A.textMuted }}>{new Date(u.created_at).toLocaleDateString()}</TableCell>
+  2914→                      <TableCell className="text-right">
+  2915→                        <Switch checked={u.learning_completed} onCheckedChange={async (checked) => { await userService.updateLearningCompleted(u.user_id, checked); setUsers(prev => prev.map(p => p.user_id === u.user_id ? { ...p, learning_completed: checked } : p)); toast.success(`Learning ${checked ? 'completed' : 'reset'}`) }} />
+  2916→                      </TableCell>
+  2917→                    </TableRow>
+  2918→                  ))}
+  2919→                </TableBody>
+  2920→              </Table>
+  2921→            </div>
+  2922→          </div>
+  2923→        )
+  2924→
+  2925→      case 'campaigns':
+  2926→        return <CampaignManager campaigns={campaigns} setCampaigns={setCampaigns} scans={scans} orders={orders} />
+  2927→
+  2928→      case 'qr':
+  2929→        return (
+  2930→          <div className="space-y-4">
+  2931→            <div className="flex items-center justify-between">
+  2932→              <div>
+  2933→                <h2 className="text-base font-semibold" style={{ color: A.text }}>QR Codes</h2>
+  2934→                <p className="text-[12px]" style={{ color: A.textMuted }}>Generate and manage QR codes for campaigns</p>
+  2935→              </div>
+  2936→            </div>
+  2937→            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+  2938→              {campaigns.filter(c => c.status === 'ACTIVE').map(campaign => {
+  2939→                const campaignScans = scans.filter(s => s.campaign_id === campaign.id)
+  2940→                const qrUrl = `https://notjust.health/scan/${campaign.id}`
+  2941→                return (
+  2942→                  <div key={campaign.id} className="bg-white border rounded-lg p-5 text-center hover:shadow-sm transition-shadow" style={{ borderColor: A.border }}>
+  2943→                    <div className="mb-4 inline-block p-3 bg-white rounded-lg border" style={{ borderColor: A.borderLight }}>
+  2944→                      <QRCodeSVG value={qrUrl} size={120} bgColor="#ffffff" fgColor="#1f1e1c" level="M" />
+  2945→                    </div>
+  2946→                    <h3 className="font-semibold text-sm mb-1" style={{ color: A.text }}>{campaign.name}</h3>
+  2947→                    <span className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded mb-3" style={{ color: A.blue, background: A.blueLight }}>{campaign.channel}</span>
+  2948→                    <div className="flex items-center justify-center gap-4 text-[11px] mb-4" style={{ color: A.textSecondary }}>
+  2949→                      <span className="flex items-center gap-1"><Scan className="w-3 h-3" /> {campaignScans.length} scans</span>
+  2950→                    </div>
+  2951→                    <div className="flex gap-2">
+  2952→                      <Button variant="outline" size="sm" className="flex-1 rounded-md text-[11px] h-8" style={{ borderColor: A.border, color: A.text }} onClick={() => { const svgEl = document.querySelector('svg'); if (svgEl) { const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d'); const data = new XMLSerializer().serializeToString(svgEl); const img = document.createElement('img'); img.onload = () => { canvas.width = img.width; canvas.height = img.height; ctx?.drawImage(img, 0, 0); const a = document.createElement('a'); a.download = `qr-${campaign.name}.png`; a.href = canvas.toDataURL('image/png'); a.click(); }; img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(data))); } else { toast.info('Right-click QR to save'); } }}>
+  2953→                        <Download className="w-3 h-3 mr-1" /> Download
+  2954→                      </Button>
+  2955→                      <Button variant="outline" size="sm" className="flex-1 rounded-md text-[11px] h-8" style={{ borderColor: A.border, color: A.text }} onClick={() => { navigator.clipboard.writeText(qrUrl); toast.success('QR URL copied!') }}>
+  2956→                        <Copy className="w-3 h-3 mr-1" /> Copy URL
+  2957→                      </Button>
+  2958→                    </div>
+  2959→                  </div>
+  2960→                )
+  2961→              })}
+  2962→              {campaigns.filter(c => c.status === 'ACTIVE').length === 0 && (
+  2963→                <div className="col-span-full bg-white border rounded-lg py-16 text-center" style={{ borderColor: A.border }}>
+  2964→                  <QrCode className="w-10 h-10 mx-auto mb-3" style={{ color: A.border }} />
+  2965→                  <p className="text-sm" style={{ color: A.textMuted }}>No active campaigns. Create one to generate QR codes.</p>
+  2966→                </div>
+  2967→              )}
+  2968→            </div>
+  2969→            <div className="bg-white border rounded-lg overflow-hidden" style={{ borderColor: A.border }}>
+  2970→              <div className="px-5 py-3 flex items-center justify-between" style={{ borderBottom: `1px solid ${A.borderLight}` }}>
+  2971→                <h3 className="text-sm font-semibold" style={{ color: A.text }}>Scan History</h3>
+  2972→                <span className="text-[11px] px-2 py-0.5 rounded" style={{ color: A.textSecondary, background: A.bg }}>{scans.length} scans</span>
+  2973→              </div>
+  2974→              <Table>
+  2975→                <TableHeader>
+  2976→                  <TableRow className="hover:bg-transparent" style={{ borderColor: A.borderLight }}>
+  2977→                    <TableHead className="text-[11px]" style={{ color: A.textMuted }}>ID</TableHead>
+  2978→                    <TableHead className="text-[11px]" style={{ color: A.textMuted }}>Campaign</TableHead>
+  2979→                    <TableHead className="text-[11px]" style={{ color: A.textMuted }}>Device</TableHead>
+  2980→                    <TableHead className="text-[11px]" style={{ color: A.textMuted }}>Location</TableHead>
+  2981→                    <TableHead className="text-[11px]" style={{ color: A.textMuted }}>Date</TableHead>
+  2982→                  </TableRow>
+  2983→                </TableHeader>
+  2984→                <TableBody>
+  2985→                  {scans.slice(0, 20).map(s => (
+  2986→                    <TableRow key={s.id} className="hover:bg-[#f8f7f5]" style={{ borderColor: A.borderLight }}>
+  2987→                      <TableCell className="font-mono text-[11px]" style={{ color: A.textMuted }}>{s.id.slice(0, 8)}</TableCell>
+  2988→                      <TableCell className="text-[12px]" style={{ color: A.text }}>{s.campaign_id ? s.campaign_id.slice(0, 8) : '-'}</TableCell>
+  2989→                      <TableCell className="text-[11px]" style={{ color: A.textSecondary }}>{s.device || '-'}</TableCell>
+  2990→                      <TableCell className="text-[11px]" style={{ color: A.textSecondary }}>{s.location || '-'}</TableCell>
+  2991→                      <TableCell className="text-[11px]" style={{ color: A.textMuted }}>{new Date(s.created_at).toLocaleDateString()}</TableCell>
+  2992→                    </TableRow>
+  2993→                  ))}
+  2994→                </TableBody>
+  2995→              </Table>
+  2996→            </div>
+  2997→          </div>
+  2998→        )
+  2999→
+  3000→      case 'orders':
+  3001→        return (
+  3002→          <div className="space-y-4">
+  3003→            <div className="flex items-center justify-between">
+  3004→              <div>
+  3005→                <h2 className="text-base font-semibold" style={{ color: A.text }}>Orders</h2>
+  3006→                <p className="text-[12px]" style={{ color: A.textMuted }}>{orders.length} total orders</p>
+  3007→              </div>
+  3008→              <div className="flex items-center gap-1 p-1 rounded-md border" style={{ borderColor: A.border, background: '#fff' }}>
+  3009→                <button onClick={() => setOrderView('table')} className={`px-3 py-1.5 rounded text-[11px] font-medium transition-colors ${orderView === 'table' ? 'text-white' : ''}`} style={orderView === 'table' ? { background: A.green, color: '#fff' } : { color: A.textSecondary }}>
+  3010→                  <ClipboardList className="w-3.5 h-3.5 inline mr-1" /> Table
+  3011→                </button>
+  3012→                <button onClick={() => setOrderView('kanban')} className={`px-3 py-1.5 rounded text-[11px] font-medium transition-colors ${orderView === 'kanban' ? 'text-white' : ''}`} style={orderView === 'kanban' ? { background: A.green, color: '#fff' } : { color: A.textSecondary }}>
+  3013→                  <Columns3 className="w-3.5 h-3.5 inline mr-1" /> Board
+  3014→                </button>
+  3015→              </div>
+  3016→            </div>
+  3017→
+  3018→            {orderView === 'kanban' ? (
+  3019→              <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
+  3020→                {orderStatuses.map(status => {
+  3021→                  const statusOrders = ordersByKanbanStatus(status)
+  3022→                  const c = statusColors[status] || { text: A.textMuted, bg: A.bg, dot: A.textMuted }
+  3023→                  return (
+  3024→                    <div key={status} className="rounded-lg p-3" style={{ background: A.bg, border: `1px solid ${A.border}` }}>
+  3025→                      <div className="flex items-center justify-between mb-3">
+  3026→                        <div className="flex items-center gap-2">
+  3027→                          <div className="w-2 h-2 rounded-full" style={{ background: c.dot }} />
+  3028→                          <h3 className="text-xs font-semibold" style={{ color: c.text }}>{status}</h3>
+  3029→                        </div>
+  3030→                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded" style={{ color: c.text, background: c.bg }}>{statusOrders.length}</span>
+  3031→                      </div>
+  3032→                      <div className="space-y-2 max-h-[420px] overflow-y-auto">
+  3033→                        {statusOrders.map((o: any) => (
+  3034→                          <div key={o.id} className="bg-white border rounded-lg p-3 cursor-pointer hover:shadow-sm transition-shadow" style={{ borderColor: A.border }} onClick={() => setSelectedOrder(o)}>
+  3035→                            <p className="font-mono text-[9px] mb-1" style={{ color: A.textMuted }}>{o.id.slice(0, 10)}</p>
+  3036→                            <p className="text-[12px] font-medium truncate" style={{ color: A.text }}>{o.user?.name || 'Customer'}</p>
+  3037→                            <div className="flex items-center justify-between mt-2">
+  3038→                              <p className="font-semibold text-[12px]" style={{ color: A.green }}>₹{o.amount?.toLocaleString()}</p>
+  3039→                              <Select value={o.status} onValueChange={async (newStatus) => { await orderService.updateStatus(o.id, newStatus); setOrders(prev => prev.map(p => p.id === o.id ? { ...p, status: newStatus } : p)); toast.success('Status updated') }}>
+  3040→                                <SelectTrigger className="h-5 text-[9px] w-[70px]" style={{ background: A.bg, borderColor: A.border, color: A.textSecondary }} onClick={e => e.stopPropagation()}><SelectValue /></SelectTrigger>
+  3041→                                <SelectContent style={{ background: '#fff', borderColor: A.border }}>
+  3042→                                  <SelectItem value="PENDING" style={{ color: A.text }}>Pending</SelectItem>
+  3043→                                  <SelectItem value="CONFIRMED" style={{ color: A.text }}>Confirmed</SelectItem>
+  3044→                                  <SelectItem value="SHIPPED" style={{ color: A.text }}>Shipped</SelectItem>
+  3045→                                  <SelectItem value="DELIVERED" style={{ color: A.text }}>Delivered</SelectItem>
+  3046→                                  <SelectItem value="CANCELLED" style={{ color: A.text }}>Cancelled</SelectItem>
+  3047→                                </SelectContent>
+  3048→                              </Select>
+  3049→                            </div>
+  3050→                            <p className="text-[9px] mt-1" style={{ color: A.textMuted }}>{new Date(o.created_at).toLocaleDateString()}</p>
+  3051→                          </div>
+  3052→                        ))}
+  3053→                        {statusOrders.length === 0 && <p className="text-[10px] text-center py-6" style={{ color: A.textMuted }}>No orders</p>}
+  3054→                      </div>
+  3055→                    </div>
+  3056→                  )
+  3057→                })}
+  3058→              </div>
+  3059→            ) : (
+  3060→              <div className="bg-white border rounded-lg overflow-hidden" style={{ borderColor: A.border }}>
+  3061→                <Table>
+  3062→                  <TableHeader>
+  3063→                    <TableRow className="hover:bg-transparent" style={{ borderColor: A.borderLight }}>
+  3064→                      <TableHead className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: A.textMuted }}>Order ID</TableHead>
+  3065→                      <TableHead className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: A.textMuted }}>Customer</TableHead>
+  3066→                      <TableHead className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: A.textMuted }}>Amount</TableHead>
+  3067→                      <TableHead className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: A.textMuted }}>Status</TableHead>
+  3068→                      <TableHead className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: A.textMuted }}>Payment</TableHead>
+  3069→                      <TableHead className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: A.textMuted }}>Date</TableHead>
+  3070→                    </TableRow>
+  3071→                  </TableHeader>
+  3072→                  <TableBody>
+  3073→                    {orders.map((o: any) => (
+  3074→                      <TableRow key={o.id} className="hover:bg-[#f8f7f5] cursor-pointer" style={{ borderColor: A.borderLight }} onClick={() => setSelectedOrder(o)}>
+  3075→                        <TableCell className="font-mono text-[11px]" style={{ color: A.textMuted }}>{o.id.slice(0, 10)}</TableCell>
+  3076→                        <TableCell className="text-[12px]" style={{ color: A.text }}>{o.user?.name || 'Customer'}</TableCell>
+  3077→                        <TableCell className="font-semibold text-[12px]" style={{ color: A.green }}>₹{o.amount?.toLocaleString()}</TableCell>
+  3078→                        <TableCell><StatusBadge status={o.status} /></TableCell>
+  3079→                        <TableCell className="text-[11px]" style={{ color: A.textSecondary }}>{o.payment_method || 'N/A'}</TableCell>
+  3080→                        <TableCell className="text-[11px]" style={{ color: A.textMuted }}>{new Date(o.created_at).toLocaleDateString()}</TableCell>
+  3081→                      </TableRow>
+  3082→                    ))}
+  3083→                  </TableBody>
+  3084→                </Table>
+  3085→              </div>
+  3086→            )}
+  3087→
+  3088→            <Dialog open={!!selectedOrder} onOpenChange={() => setSelectedOrder(null)}>
+  3089→              <DialogContent className="max-w-md" style={{ background: '#fff', borderColor: A.border, color: A.text }}>
+  3090→                <DialogHeader><DialogTitle style={{ color: A.text }}>Order Details</DialogTitle></DialogHeader>
+  3091→                {selectedOrder && (
+  3092→                  <div className="space-y-4">
+  3093→                    <div className="grid grid-cols-2 gap-3 text-sm">
+  3094→                      <div><span className="text-[11px]" style={{ color: A.textMuted }}>Order ID</span><p className="font-mono text-[11px]" style={{ color: A.text }}>{selectedOrder.id}</p></div>
+  3095→                      <div><span className="text-[11px]" style={{ color: A.textMuted }}>Customer</span><p className="font-medium" style={{ color: A.text }}>{selectedOrder.user?.name || selectedOrder.user_id}</p></div>
+  3096→                      <div><span className="text-[11px]" style={{ color: A.textMuted }}>Amount</span><p className="font-bold" style={{ color: A.green }}>₹{selectedOrder.amount?.toLocaleString()}</p></div>
+  3097→                      <div><span className="text-[11px]" style={{ color: A.textMuted }}>Status</span><StatusBadge status={selectedOrder.status} /></div>
+  3098→                      <div><span className="text-[11px]" style={{ color: A.textMuted }}>Payment</span><p className="text-[11px]" style={{ color: A.text }}>{selectedOrder.payment_method || 'N/A'}</p></div>
+  3099→                      <div><span className="text-[11px]" style={{ color: A.textMuted }}>Date</span><p className="text-[11px]" style={{ color: A.text }}>{new Date(selectedOrder.created_at).toLocaleDateString()}</p></div>
+  3100→                    </div>
+  3101→                    <Separator style={{ background: A.border }} />
+  3102→                    <Select value={selectedOrder.status} onValueChange={async (newStatus) => { await orderService.updateStatus(selectedOrder.id, newStatus); setOrders(prev => prev.map(p => p.id === selectedOrder.id ? { ...p, status: newStatus } : p)); setSelectedOrder({ ...selectedOrder, status: newStatus }); toast.success('Status updated') }}>
+  3103→                      <SelectTrigger className="rounded-md" style={{ borderColor: A.border, color: A.text }}><SelectValue /></SelectTrigger>
+  3104→                      <SelectContent style={{ background: '#fff', borderColor: A.border }}>
+  3105→                        <SelectItem value="PENDING" style={{ color: A.text }}>Pending</SelectItem>
+  3106→                        <SelectItem value="CONFIRMED" style={{ color: A.text }}>Confirmed</SelectItem>
+  3107→                        <SelectItem value="SHIPPED" style={{ color: A.text }}>Shipped</SelectItem>
+  3108→                        <SelectItem value="DELIVERED" style={{ color: A.text }}>Delivered</SelectItem>
+  3109→                        <SelectItem value="CANCELLED" style={{ color: A.text }}>Cancelled</SelectItem>
+  3110→                      </SelectContent>
+  3111→                    </Select>
+  3112→                  </div>
+  3113→                )}
+  3114→              </DialogContent>
+  3115→            </Dialog>
+  3116→          </div>
+  3117→        )
+  3118→
+  3119→      case 'analytics':
+  3120→        return (
+  3121→          <div className="space-y-4">
+  3122→            <h2 className="text-base font-semibold" style={{ color: A.text }}>Analytics</h2>
+  3123→            <div className="grid lg:grid-cols-2 gap-4">
+  3124→              <div className="bg-white border rounded-lg p-5" style={{ borderColor: A.border }}>
+  3125→                <h3 className="text-sm font-semibold mb-4" style={{ color: A.text }}>Campaigns by Channel</h3>
+  3126→                <ResponsiveContainer width="100%" height={280}>
+  3127→                  <RechartsBarChart data={campaignsByChannel}>
+  3128→                    <CartesianGrid strokeDasharray="3 3" stroke="#eeebe5" />
+  3129→                    <XAxis dataKey="name" tick={{ fontSize: 10, fill: A.textMuted }} axisLine={{ stroke: A.border }} />
+  3130→                    <YAxis tick={{ fontSize: 10, fill: A.textMuted }} axisLine={{ stroke: A.border }} />
+  3131→                    <Tooltip contentStyle={{ backgroundColor: '#fff', border: `1px solid ${A.border}`, borderRadius: 8, color: A.text, fontSize: 12 }} />
+  3132→                    <Bar dataKey="value" fill={A.lime} radius={[4, 4, 0, 0]} />
+  3133→                  </RechartsBarChart>
+  3134→                </ResponsiveContainer>
+  3135→              </div>
+  3136→              <div className="bg-white border rounded-lg p-5" style={{ borderColor: A.border }}>
+  3137→                <h3 className="text-sm font-semibold mb-4" style={{ color: A.text }}>Scans by Campaign</h3>
+  3138→                <ResponsiveContainer width="100%" height={280}>
+  3139→                  <RechartsBarChart data={scansByCampaign}>
+  3140→                    <CartesianGrid strokeDasharray="3 3" stroke="#eeebe5" />
+  3141→                    <XAxis dataKey="name" tick={{ fontSize: 10, fill: A.textMuted }} axisLine={{ stroke: A.border }} />
+  3142→                    <YAxis tick={{ fontSize: 10, fill: A.textMuted }} axisLine={{ stroke: A.border }} />
+  3143→                    <Tooltip contentStyle={{ backgroundColor: '#fff', border: `1px solid ${A.border}`, borderRadius: 8, color: A.text, fontSize: 12 }} />
+  3144→                    <Bar dataKey="value" fill={A.green} radius={[4, 4, 0, 0]} />
+  3145→                  </RechartsBarChart>
+  3146→                </ResponsiveContainer>
+  3147→              </div>
+  3148→              <div className="bg-white border rounded-lg p-5" style={{ borderColor: A.border }}>
+  3149→                <h3 className="text-sm font-semibold mb-4" style={{ color: A.text }}>Conversion Funnel</h3>
+  3150→                <div className="flex items-center justify-center h-[280px]">
+  3151→                  <div className="text-center">
+  3152→                    <p className="text-5xl font-bold" style={{ color: A.green }}>{stats.conversionRate}%</p>
+  3153→                    <p className="mt-2 text-sm" style={{ color: A.textSecondary }}>Learning Completion Rate</p>
+  3154→                    <div className="mt-6 grid grid-cols-2 gap-6">
+  3155→                      <div className="rounded-lg p-4" style={{ background: A.bg }}><p className="font-bold text-xl" style={{ color: A.green }}>{stats.learningCompleted}</p><p className="text-[11px]" style={{ color: A.textMuted }}>Completed</p></div>
+  3156→                      <div className="rounded-lg p-4" style={{ background: A.bg }}><p className="font-bold text-xl" style={{ color: A.amber }}>{stats.totalUsers - stats.learningCompleted}</p><p className="text-[11px]" style={{ color: A.textMuted }}>Pending</p></div>
+  3157→                    </div>
+  3158→                  </div>
+
+[showing lines 2559-3158 of 4004; use offset=3159 with limit to continue reading]

@@ -1,0 +1,382 @@
+  3414→      case 'products':
+  3415→        const filteredProducts = adminProducts.filter(p => {
+  3416→          const matchSearch = !productSearch || p.name.toLowerCase().includes(productSearch.toLowerCase()) || p.type.toLowerCase().includes(productSearch.toLowerCase()) || (p.category || '').toLowerCase().includes(productSearch.toLowerCase())
+  3417→          const matchFilter = productFilter === 'all' || (productFilter === 'active' ? p.active : !p.active)
+  3418→          return matchSearch && matchFilter
+  3419→        })
+  3420→        return (
+  3421→          <div className="space-y-5">
+  3422→            {/* Header */}
+  3423→            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+  3424→              <div>
+  3425→                <h2 className="text-lg font-bold" style={{ color: A.text }}>Products</h2>
+  3426→                <p className="text-[12px]" style={{ color: A.textMuted }}>{adminProducts.length} products · {adminProducts.filter(p => p.active).length} active</p>
+  3427→              </div>
+  3428→              <Dialog open={showAddProduct} onOpenChange={(open) => { setShowAddProduct(open); if (!open) resetProductForm() }}>
+  3429→                <DialogTrigger asChild>
+  3430→                  <Button size="sm" className="gap-2 text-xs font-bold rounded-lg shadow-sm" style={{ background: A.green, color: '#fff' }}>
+  3431→                    <Plus className="w-4 h-4" /> Add Product
+  3432→                  </Button>
+  3433→                </DialogTrigger>
+  3434→                <DialogContent className="sm:max-w-[680px] max-h-[90vh] overflow-y-auto">
+  3435→                  <DialogHeader>
+  3436→                    <DialogTitle className="font-heading text-lg">{editingProduct ? 'Edit Product' : 'Add New Product'}</DialogTitle>
+  3437→                    <DialogDescription>{editingProduct ? 'Update product details below.' : 'Fill in the details to create a new product.'}</DialogDescription>
+  3438→                  </DialogHeader>
+  3439→                  <div className="grid gap-5 py-4">
+  3440→                    {/* Image Upload Section */}
+  3441→                    <div className="space-y-3">
+  3442→                      <Label className="text-xs font-bold uppercase tracking-wider" style={{ color: A.textSecondary }}>Product Image</Label>
+  3443→                      <div className="flex items-start gap-4">
+  3444→                        <div className="relative w-32 h-32 rounded-xl border-2 border-dashed overflow-hidden flex items-center justify-center group cursor-pointer" style={{ borderColor: newProduct.image_url ? A.green : A.border, background: newProduct.image_url ? 'transparent' : A.bg }}>
+  3445→                          {newProduct.image_url ? (
+  3446→                            <Image src={newProduct.image_url} alt="Product" fill className="object-cover" />
+  3447→                          ) : (
+  3448→                            <div className="text-center p-2">
+  3449→                              <Package className="w-8 h-8 mx-auto mb-1" style={{ color: A.textMuted }} />
+  3450→                              <p className="text-[9px]" style={{ color: A.textMuted }}>No image</p>
+  3451→                            </div>
+  3452→                          )}
+  3453→                          <label className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+  3454→                            <div className="text-center text-white">
+  3455→                              {uploadingImage ? <><div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-1" /><p className="text-[9px]">Uploading...</p></> : <><Edit className="w-5 h-5 mx-auto mb-1" /><p className="text-[9px]">Change</p></>}
+  3456→                            </div>
+  3457→                            <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
+  3458→                              const file = e.target.files?.[0]
+  3459→                              if (file) { const url = await handleImageUpload(file); if (url) setNewProduct({ ...newProduct, image_url: url }) }
+  3460→                            }} />
+  3461→                          </label>
+  3462→                        </div>
+  3463→                        <div className="flex-1 space-y-2">
+  3464→                          <p className="text-xs font-semibold" style={{ color: A.text }}>Upload Image</p>
+  3465→                          <p className="text-[11px] leading-relaxed" style={{ color: A.textMuted }}>Click the image to upload or enter a URL below. Supports JPG, PNG, WebP up to 5MB.</p>
+  3466→                          <div className="flex gap-2">
+  3467→                            <label className="flex-1 cursor-pointer">
+  3468→                              <div className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg border text-xs font-medium transition-colors hover:bg-[#f8f7f5]" style={{ borderColor: A.border, color: A.textSecondary }}>
+  3469→                                <Plus className="w-3.5 h-3.5" /> Choose File
+  3470→                              </div>
+  3471→                              <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
+  3472→                                const file = e.target.files?.[0]
+  3473→                                if (file) { const url = await handleImageUpload(file); if (url) setNewProduct({ ...newProduct, image_url: url }) }
+  3474→                              }} />
+  3475→                            </label>
+  3476→                          </div>
+  3477→                          <Input placeholder="Or paste image URL..." value={newProduct.image_url} onChange={e => setNewProduct({ ...newProduct, image_url: e.target.value })} className="text-xs h-8" />
+  3478→                        </div>
+  3479→                      </div>
+  3480→                    </div>
+  3481→
+  3482→                    <div className="h-px" style={{ background: A.borderLight }} />
+  3483→
+  3484→                    {/* Basic Info */}
+  3485→                    <div className="space-y-3">
+  3486→                      <Label className="text-xs font-bold uppercase tracking-wider" style={{ color: A.textSecondary }}>Basic Information</Label>
+  3487→                      <div className="grid gap-3">
+  3488→                        <div className="grid gap-1.5">
+  3489→                          <Label htmlFor="prod-name" className="text-xs font-semibold">Product Name *</Label>
+  3490→                          <Input id="prod-name" placeholder="e.g. NOTJUST Watr Berry Blast" value={newProduct.name} onChange={e => setNewProduct({ ...newProduct, name: e.target.value })} className="text-sm h-9" />
+  3491→                        </div>
+  3492→                        <div className="grid gap-1.5">
+  3493→                          <Label htmlFor="prod-short-desc" className="text-xs font-semibold">Short Description</Label>
+  3494→                          <Input id="prod-short-desc" placeholder="Brief one-liner for product cards" value={newProduct.short_description} onChange={e => setNewProduct({ ...newProduct, short_description: e.target.value })} className="text-sm h-9" />
+  3495→                        </div>
+  3496→                        <div className="grid gap-1.5">
+  3497→                          <Label htmlFor="prod-desc" className="text-xs font-semibold">Full Description</Label>
+  3498→                          <Textarea id="prod-desc" placeholder="Detailed product description..." rows={3} value={newProduct.description} onChange={e => setNewProduct({ ...newProduct, description: e.target.value })} className="text-sm resize-none" />
+  3499→                        </div>
+  3500→                      </div>
+  3501→                    </div>
+  3502→
+  3503→                    <div className="h-px" style={{ background: A.borderLight }} />
+  3504→
+  3505→                    {/* Classification */}
+  3506→                    <div className="space-y-3">
+  3507→                      <Label className="text-xs font-bold uppercase tracking-wider" style={{ color: A.textSecondary }}>Classification</Label>
+  3508→                      <div className="grid grid-cols-2 gap-3">
+  3509→                        <div className="grid gap-1.5">
+  3510→                          <Label htmlFor="prod-type" className="text-xs font-semibold">Product Type *</Label>
+  3511→                          <Select value={newProduct.type} onValueChange={v => setNewProduct({ ...newProduct, type: v })}>
+  3512→                            <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Select type" /></SelectTrigger>
+  3513→                            <SelectContent>
+  3514→                              <SelectItem value="FIZZ">🫧 FIZZ (Carbonated)</SelectItem>
+  3515→                              <SelectItem value="STILL">💧 STILL (Non-Carbonated)</SelectItem>
+  3516→                              <SelectItem value="BERRY">🫐 BERRY</SelectItem>
+  3517→                              <SelectItem value="HERBAL">🌿 HERBAL</SelectItem>
+  3518→                              <SelectItem value="OTHER">📦 OTHER</SelectItem>
+  3519→                            </SelectContent>
+  3520→                          </Select>
+  3521→                        </div>
+  3522→                        <div className="grid gap-1.5">
+  3523→                          <Label htmlFor="prod-category" className="text-xs font-semibold">Category</Label>
+  3524→                          <Select value={newProduct.category} onValueChange={v => setNewProduct({ ...newProduct, category: v })}>
+  3525→                            <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Select category" /></SelectTrigger>
+  3526→                            <SelectContent>
+  3527→                              <SelectItem value="Wellness Shot">Wellness Shot</SelectItem>
+  3528→                              <SelectItem value="Health Drink">Health Drink</SelectItem>
+  3529→                              <SelectItem value="Supplement">Supplement</SelectItem>
+  3530→                              <SelectItem value="Functional Beverage">Functional Beverage</SelectItem>
+  3531→                              <SelectItem value="Other">Other</SelectItem>
+  3532→                            </SelectContent>
+  3533→                          </Select>
+  3534→                        </div>
+  3535→                      </div>
+  3536→                      <div className="grid grid-cols-2 gap-3">
+  3537→                        <div className="grid gap-1.5">
+  3538→                          <Label htmlFor="prod-sku" className="text-xs font-semibold">SKU Code</Label>
+  3539→                          <Input id="prod-sku" placeholder="e.g. NJW-FIZZ-001" value={newProduct.sku} onChange={e => setNewProduct({ ...newProduct, sku: e.target.value })} className="text-sm h-9 font-mono" />
+  3540→                        </div>
+  3541→                        <div className="grid gap-1.5">
+  3542→                          <Label htmlFor="prod-weight" className="text-xs font-semibold">Weight / Volume</Label>
+  3543→                          <Input id="prod-weight" placeholder="e.g. 50ml per shot, 14 shots" value={newProduct.weight} onChange={e => setNewProduct({ ...newProduct, weight: e.target.value })} className="text-sm h-9" />
+  3544→                        </div>
+  3545→                      </div>
+  3546→                    </div>
+  3547→
+  3548→                    <div className="h-px" style={{ background: A.borderLight }} />
+  3549→
+  3550→                    {/* Pricing */}
+  3551→                    <div className="space-y-3">
+  3552→                      <Label className="text-xs font-bold uppercase tracking-wider" style={{ color: A.textSecondary }}>Pricing & Inventory</Label>
+  3553→                      <div className="grid grid-cols-3 gap-3">
+  3554→                        <div className="grid gap-1.5">
+  3555→                          <Label htmlFor="prod-price" className="text-xs font-semibold">Selling Price (₹) *</Label>
+  3556→                          <Input id="prod-price" type="number" placeholder="2999" value={newProduct.price || ''} onChange={e => setNewProduct({ ...newProduct, price: Number(e.target.value) })} className="text-sm h-9" />
+  3557→                        </div>
+  3558→                        <div className="grid gap-1.5">
+  3559→                          <Label htmlFor="prod-mrp" className="text-xs font-semibold">MRP (₹)</Label>
+  3560→                          <Input id="prod-mrp" type="number" placeholder="3499" value={newProduct.mrp || ''} onChange={e => setNewProduct({ ...newProduct, mrp: Number(e.target.value) })} className="text-sm h-9" />
+  3561→                        </div>
+  3562→                        <div className="grid gap-1.5">
+  3563→                          <Label htmlFor="prod-stock" className="text-xs font-semibold">Stock Qty</Label>
+  3564→                          <Input id="prod-stock" type="number" placeholder="500" value={newProduct.stock || ''} onChange={e => setNewProduct({ ...newProduct, stock: Number(e.target.value) })} className="text-sm h-9" />
+  3565→                        </div>
+  3566→                      </div>
+  3567→                      {newProduct.mrp && newProduct.mrp > newProduct.price && (
+  3568→                        <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: A.greenLight }}>
+  3569→                          <Tag className="w-3.5 h-3.5" style={{ color: A.green }} />
+  3570→                          <span className="text-[11px] font-semibold" style={{ color: A.green }}>
+  3571→                            {Math.round((1 - newProduct.price / newProduct.mrp) * 100)}% off — Save ₹{(newProduct.mrp - newProduct.price).toLocaleString()}
+  3572→                          </span>
+  3573→                        </div>
+  3574→                      )}
+  3575→                    </div>
+  3576→
+  3577→                    <div className="h-px" style={{ background: A.borderLight }} />
+  3578→
+  3579→                    {/* Product Details */}
+  3580→                    <div className="space-y-3">
+  3581→                      <Label className="text-xs font-bold uppercase tracking-wider" style={{ color: A.textSecondary }}>Product Details</Label>
+  3582→                      <div className="grid gap-3">
+  3583→                        <div className="grid gap-1.5">
+  3584→                          <Label htmlFor="prod-ingredients" className="text-xs font-semibold">Ingredients</Label>
+  3585→                          <Textarea id="prod-ingredients" placeholder="List key ingredients, separated by commas" rows={2} value={newProduct.ingredients} onChange={e => setNewProduct({ ...newProduct, ingredients: e.target.value })} className="text-sm resize-none" />
+  3586→                        </div>
+  3587→                        <div className="grid gap-1.5">
+  3588→                          <Label htmlFor="prod-nutrition" className="text-xs font-semibold">Nutrition Info</Label>
+  3589→                          <Textarea id="prod-nutrition" placeholder="Calories, sugar, etc." rows={2} value={newProduct.nutrition_info} onChange={e => setNewProduct({ ...newProduct, nutrition_info: e.target.value })} className="text-sm resize-none" />
+  3590→                        </div>
+  3591→                        <div className="grid gap-1.5">
+  3592→                          <Label htmlFor="prod-tags" className="text-xs font-semibold">Tags (comma separated)</Label>
+  3593→                          <Input id="prod-tags" placeholder="e.g. vegan, sugar-free, natural" value={newProduct.tags} onChange={e => setNewProduct({ ...newProduct, tags: e.target.value })} className="text-sm h-9" />
+  3594→                        </div>
+  3595→                      </div>
+  3596→                    </div>
+  3597→
+  3598→                    <div className="h-px" style={{ background: A.borderLight }} />
+  3599→
+  3600→                    {/* Status */}
+  3601→                    <div className="flex items-center gap-6">
+  3602→                      <div className="flex items-center gap-3">
+  3603→                        <Switch id="prod-active" checked={newProduct.active} onCheckedChange={v => setNewProduct({ ...newProduct, active: v })} />
+  3604→                        <Label htmlFor="prod-active" className="text-xs font-semibold">Active</Label>
+  3605→                      </div>
+  3606→                      <div className="flex items-center gap-3">
+  3607→                        <Switch id="prod-featured" checked={newProduct.featured} onCheckedChange={v => setNewProduct({ ...newProduct, featured: v })} />
+  3608→                        <Label htmlFor="prod-featured" className="text-xs font-semibold">Featured</Label>
+  3609→                      </div>
+  3610→                    </div>
+  3611→                  </div>
+  3612→                  <DialogFooter className="gap-2">
+  3613→                    <Button variant="outline" onClick={() => { setShowAddProduct(false); resetProductForm() }} className="text-sm">Cancel</Button>
+  3614→                    <Button onClick={handleSaveProduct} disabled={!newProduct.name || !newProduct.price || uploadingImage} className="text-sm font-bold gap-2" style={{ background: A.green, color: '#fff' }}>
+  3615→                      {uploadingImage ? <><div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Uploading...</> :
+  3616→                        editingProduct ? <><Save className="w-4 h-4" /> Save Changes</> : <><Plus className="w-4 h-4" /> Create Product</>}
+  3617→                    </Button>
+  3618→                  </DialogFooter>
+  3619→                </DialogContent>
+  3620→              </Dialog>
+  3621→            </div>
+  3622→
+  3623→            {/* Quick Stats */}
+  3624→            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+  3625→              {[
+  3626→                { label: 'Total Products', value: adminProducts.length, icon: Package, color: A.green, bg: A.greenLight },
+  3627→                { label: 'Active', value: adminProducts.filter(p => p.active).length, icon: Eye, color: A.blue, bg: A.blueLight },
+  3628→                { label: 'Featured', value: adminProducts.filter(p => p.featured).length, icon: Star, color: A.lime, bg: A.limeLight },
+  3629→                { label: 'Out of Stock', value: adminProducts.filter(p => p.stock === 0).length, icon: AlertCircle, color: A.red, bg: A.redLight },
+  3630→              ].map(card => (
+  3631→                <div key={card.label} className="bg-white border rounded-lg p-3 flex items-center gap-3" style={{ borderColor: A.border }}>
+  3632→                  <div className="w-8 h-8 rounded-md flex items-center justify-center" style={{ backgroundColor: card.bg }}>
+  3633→                    <card.icon className="w-4 h-4" style={{ color: card.color }} />
+  3634→                  </div>
+  3635→                  <div>
+  3636→                    <p className="text-lg font-bold leading-none" style={{ color: A.text }}>{card.value}</p>
+  3637→                    <p className="text-[10px] mt-0.5" style={{ color: A.textMuted }}>{card.label}</p>
+  3638→                  </div>
+  3639→                </div>
+  3640→              ))}
+  3641→            </div>
+  3642→
+  3643→            {/* Search and Filter Bar */}
+  3644→            <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+  3645→              <div className="relative flex-1 w-full">
+  3646→                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: A.textMuted }} />
+  3647→                <Input placeholder="Search products by name, type, or category..." value={productSearch} onChange={e => setProductSearch(e.target.value)} className="pl-9 h-9 text-sm" />
+  3648→              </div>
+  3649→              <div className="flex gap-2">
+  3650→                {(['all', 'active', 'inactive'] as const).map(filter => (
+  3651→                  <button key={filter} onClick={() => setProductFilter(filter)} className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${productFilter === filter ? 'text-white' : ''}`} style={productFilter === filter ? { background: A.green, color: '#fff' } : { background: A.bg, color: A.textSecondary }}>
+  3652→                    {filter.charAt(0).toUpperCase() + filter.slice(1)}
+  3653→                  </button>
+  3654→                ))}
+  3655→              </div>
+  3656→            </div>
+  3657→
+  3658→            {/* Product Cards Grid */}
+  3659→            <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
+  3660→              {filteredProducts.map(product => {
+  3661→                const vCount = productVideoCounts[product.id] || 0
+  3662→                const qCount = productQuizCounts[product.id] || 0
+  3663→                const ls = productLearningStats[product.id] || { total: 0, completed: 0, unlocked: 0 }
+  3664→                const discount = product.mrp && product.mrp > product.price ? Math.round((1 - product.price / product.mrp) * 100) : 0
+  3665→                return (
+  3666→                  <div key={product.id} className="bg-white border rounded-xl overflow-hidden hover:shadow-lg transition-all duration-300 group" style={{ borderColor: A.border }}>
+  3667→                    {/* Product Image */}
+  3668→                    <div className="relative h-44 bg-[#f4f3f0] overflow-hidden">
+  3669→                      {product.image_url ? (
+  3670→                        <Image src={product.image_url} alt={product.name} fill className="object-cover group-hover:scale-105 transition-transform duration-500" />
+  3671→                      ) : (
+  3672→                        <div className="flex items-center justify-center h-full">
+  3673→                          <Package className="w-12 h-12" style={{ color: A.textMuted }} />
+  3674→                        </div>
+  3675→                      )}
+  3676→                      <div className="absolute top-3 left-3 flex gap-1.5">
+  3677→                        {discount > 0 && (
+  3678→                          <span className="px-2 py-0.5 rounded-md text-[10px] font-bold text-white" style={{ background: A.green }}>{discount}% OFF</span>
+  3679→                        )}
+  3680→                        {product.featured && (
+  3681→                          <span className="px-2 py-0.5 rounded-md text-[10px] font-bold text-white bg-[#e7b973]">★ Featured</span>
+  3682→                        )}
+  3683→                      </div>
+  3684→                      <div className="absolute top-3 right-3">
+  3685→                        <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold" style={{ color: product.active ? A.green : A.textMuted, background: product.active ? A.greenLight : A.bg }}>
+  3686→                          {product.active ? 'Active' : 'Inactive'}
+  3687→                        </span>
+  3688→                      </div>
+  3689→                    </div>
+  3690→                    {/* Product Info */}
+  3691→                    <div className="p-4">
+  3692→                      <div className="flex items-start justify-between mb-2">
+  3693→                        <div className="flex-1 min-w-0">
+  3694→                          <h3 className="font-bold text-sm truncate" style={{ color: A.text }}>{product.name}</h3>
+  3695→                          <p className="text-[11px] mt-0.5" style={{ color: A.textMuted }}>{product.type}{product.category ? ` · ${product.category}` : ''}{product.sku ? ` · ${product.sku}` : ''}</p>
+  3696→                        </div>
+  3697→                        <div className="text-right ml-2">
+  3698→                          <p className="font-bold text-sm" style={{ color: A.green }}>₹{product.price.toLocaleString()}</p>
+  3699→                          {product.mrp && product.mrp > product.price && (
+  3700→                            <p className="text-[10px] line-through" style={{ color: A.textMuted }}>₹{product.mrp.toLocaleString()}</p>
+  3701→                          )}
+  3702→                        </div>
+  3703→                      </div>
+  3704→                      {product.short_description && (
+  3705→                        <p className="text-[11px] mb-3 line-clamp-2" style={{ color: A.textSecondary }}>{product.short_description}</p>
+  3706→                      )}
+  3707→                      {/* Stats Row */}
+  3708→                      <div className="grid grid-cols-4 gap-2 mb-3">
+  3709→                        <div className="rounded-lg p-2 text-center" style={{ background: A.bg }}>
+  3710→                          <p className="font-bold text-sm" style={{ color: A.blue }}>{vCount}</p>
+  3711→                          <p className="text-[9px]" style={{ color: A.textMuted }}>Videos</p>
+  3712→                        </div>
+  3713→                        <div className="rounded-lg p-2 text-center" style={{ background: A.bg }}>
+  3714→                          <p className="font-bold text-sm" style={{ color: A.lime }}>{qCount}</p>
+  3715→                          <p className="text-[9px]" style={{ color: A.textMuted }}>Quizzes</p>
+  3716→                        </div>
+  3717→                        <div className="rounded-lg p-2 text-center" style={{ background: A.bg }}>
+  3718→                          <p className="font-bold text-sm" style={{ color: A.green }}>{ls.unlocked}</p>
+  3719→                          <p className="text-[9px]" style={{ color: A.textMuted }}>Unlocked</p>
+  3720→                        </div>
+  3721→                        <div className="rounded-lg p-2 text-center" style={{ background: A.bg }}>
+  3722→                          <p className="font-bold text-sm" style={{ color: product.stock > 0 ? A.text : A.red }}>{product.stock}</p>
+  3723→                          <p className="text-[9px]" style={{ color: A.textMuted }}>Stock</p>
+  3724→                        </div>
+  3725→                      </div>
+  3726→                      {/* Tags */}
+  3727→                      {product.tags && (
+  3728→                        <div className="flex flex-wrap gap-1 mb-3">
+  3729→                          {product.tags.split(',').slice(0, 4).map((tag, i) => (
+  3730→                            <span key={i} className="px-1.5 py-0.5 rounded text-[9px] font-medium" style={{ background: A.greenLight, color: A.green }}>{tag.trim()}</span>
+  3731→                          ))}
+  3732→                        </div>
+  3733→                      )}
+  3734→                      {/* Learning Progress */}
+  3735→                      {ls.total > 0 && (
+  3736→                        <div className="mb-3">
+  3737→                          <div className="flex items-center justify-between mb-1">
+  3738→                            <span className="text-[11px]" style={{ color: A.textSecondary }}>Learning Progress</span>
+  3739→                            <span className="text-[11px] font-semibold" style={{ color: A.green }}>{Math.round(ls.completed / ls.total * 100)}%</span>
+  3740→                          </div>
+  3741→                          <div className="h-1.5 rounded-full overflow-hidden" style={{ background: A.borderLight }}>
+  3742→                            <div className="h-full rounded-full transition-all" style={{ width: `${Math.round(ls.completed / ls.total * 100)}%`, background: A.green }} />
+  3743→                          </div>
+  3744→                        </div>
+  3745→                      )}
+  3746→                      {/* Actions */}
+  3747→                      <div className="flex items-center gap-1.5 pt-3 border-t" style={{ borderColor: A.borderLight }}>
+  3748→                        <Button variant="ghost" size="sm" className="text-[11px] h-7 gap-1 font-semibold" style={{ color: A.blue }} onClick={() => {
+  3749→                          setEditingProduct(product)
+  3750→                          setNewProduct({
+  3751→                            name: product.name, description: product.description || '', short_description: product.short_description || '',
+  3752→                            price: product.price, mrp: product.mrp || 0, stock: product.stock,
+  3753→                            image_url: product.image_url || '', gallery_images: product.gallery_images || '',
+  3754→                            type: product.type, category: product.category || 'Wellness Shot',
+  3755→                            sku: product.sku || '', weight: product.weight || '',
+  3756→                            ingredients: product.ingredients || '', nutrition_info: product.nutrition_info || '',
+  3757→                            tags: product.tags || '', active: product.active, featured: product.featured || false,
+  3758→                          })
+  3759→                          setShowAddProduct(true)
+  3760→                        }}>
+  3761→                          <Edit className="w-3 h-3" /> Edit
+  3762→                        </Button>
+  3763→                        <Button variant="ghost" size="sm" className="text-[11px] h-7 gap-1 font-semibold" style={{ color: product.active ? A.amber : A.green }} onClick={async () => {
+  3764→                          const r = await productService.toggleActive(product.id)
+  3765→                          if (r.data) { toast.success(`Product ${!product.active ? 'activated' : 'deactivated'}`); refreshData() }
+  3766→                          else toast.error('Failed to update')
+  3767→                        }}>
+  3768→                          {product.active ? <><EyeOff className="w-3 h-3" /> Hide</> : <><Eye className="w-3 h-3" /> Show</>}
+  3769→                        </Button>
+  3770→                        <Button variant="ghost" size="sm" className="text-[11px] h-7 gap-1 font-semibold ml-auto" style={{ color: A.destructive }} onClick={async () => {
+  3771→                          if (confirm('Delete this product? This action cannot be undone.')) {
+  3772→                            const r = await productService.delete(product.id)
+  3773→                            if (r.data) { toast.success('Product deleted'); refreshData() }
+  3774→                            else toast.error('Failed to delete')
+  3775→                          }
+  3776→                        }}>
+  3777→                          <Trash2 className="w-3 h-3" /> Delete
+  3778→                        </Button>
+  3779→                      </div>
+  3780→                    </div>
+  3781→                  </div>
+  3782→                )
+  3783→              })}
+  3784→              {filteredProducts.length === 0 && (
+  3785→                <div className="col-span-full text-center py-12">
+  3786→                  <Package className="w-12 h-12 mx-auto mb-3" style={{ color: A.textMuted }} />
+  3787→                  <p className="text-sm font-semibold" style={{ color: A.textSecondary }}>No products found</p>
+  3788→                  <p className="text-xs mt-1" style={{ color: A.textMuted }}>Try adjusting your search or filters</p>
+  3789→                </div>
+  3790→              )}
+  3791→            </div>
+  3792→          </div>
+  3793→        )
+
+[showing lines 3414-3793 of 4538; use offset=3794 with limit to continue reading]

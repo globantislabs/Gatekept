@@ -1,0 +1,602 @@
+  3406→      case 'products':
+  3407→        const filteredProducts = adminProducts.filter(p => {
+  3408→          const matchSearch = !productSearch || p.name.toLowerCase().includes(productSearch.toLowerCase()) || p.type.toLowerCase().includes(productSearch.toLowerCase()) || (p.category || '').toLowerCase().includes(productSearch.toLowerCase())
+  3409→          const matchFilter = productFilter === 'all' || (productFilter === 'active' ? p.active : !p.active)
+  3410→          return matchSearch && matchFilter
+  3411→        })
+  3412→        return (
+  3413→          <div className="space-y-5">
+  3414→            {/* Header */}
+  3415→            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+  3416→              <div>
+  3417→                <h2 className="text-lg font-bold" style={{ color: A.text }}>Products</h2>
+  3418→                <p className="text-[12px]" style={{ color: A.textMuted }}>{adminProducts.length} products · {adminProducts.filter(p => p.active).length} active</p>
+  3419→              </div>
+  3420→              <Dialog open={showAddProduct} onOpenChange={(open) => { setShowAddProduct(open); if (!open) resetProductForm() }}>
+  3421→                <DialogTrigger asChild>
+  3422→                  <Button size="sm" className="gap-2 text-xs font-bold rounded-lg shadow-sm" style={{ background: A.green, color: '#fff' }}>
+  3423→                    <Plus className="w-4 h-4" /> Add Product
+  3424→                  </Button>
+  3425→                </DialogTrigger>
+  3426→                <DialogContent className="sm:max-w-[680px] max-h-[90vh] overflow-y-auto">
+  3427→                  <DialogHeader>
+  3428→                    <DialogTitle className="font-heading text-lg">{editingProduct ? 'Edit Product' : 'Add New Product'}</DialogTitle>
+  3429→                    <DialogDescription>{editingProduct ? 'Update product details below.' : 'Fill in the details to create a new product.'}</DialogDescription>
+  3430→                  </DialogHeader>
+  3431→                  <div className="grid gap-5 py-4">
+  3432→                    {/* Image Upload Section */}
+  3433→                    <div className="space-y-3">
+  3434→                      <Label className="text-xs font-bold uppercase tracking-wider" style={{ color: A.textSecondary }}>Product Image</Label>
+  3435→                      <div className="flex items-start gap-4">
+  3436→                        <div className="relative w-32 h-32 rounded-xl border-2 border-dashed overflow-hidden flex items-center justify-center group cursor-pointer" style={{ borderColor: newProduct.image_url ? A.green : A.border, background: newProduct.image_url ? 'transparent' : A.bg }}>
+  3437→                          {newProduct.image_url ? (
+  3438→                            <Image src={newProduct.image_url} alt="Product" fill className="object-cover" />
+  3439→                          ) : (
+  3440→                            <div className="text-center p-2">
+  3441→                              <Package className="w-8 h-8 mx-auto mb-1" style={{ color: A.textMuted }} />
+  3442→                              <p className="text-[9px]" style={{ color: A.textMuted }}>No image</p>
+  3443→                            </div>
+  3444→                          )}
+  3445→                          <label className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+  3446→                            <div className="text-center text-white">
+  3447→                              {uploadingImage ? <><div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-1" /><p className="text-[9px]">Uploading...</p></> : <><Edit className="w-5 h-5 mx-auto mb-1" /><p className="text-[9px]">Change</p></>}
+  3448→                            </div>
+  3449→                            <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
+  3450→                              const file = e.target.files?.[0]
+  3451→                              if (file) { const url = await handleImageUpload(file); if (url) setNewProduct({ ...newProduct, image_url: url }) }
+  3452→                            }} />
+  3453→                          </label>
+  3454→                        </div>
+  3455→                        <div className="flex-1 space-y-2">
+  3456→                          <p className="text-xs font-semibold" style={{ color: A.text }}>Upload Image</p>
+  3457→                          <p className="text-[11px] leading-relaxed" style={{ color: A.textMuted }}>Click the image to upload or enter a URL below. Supports JPG, PNG, WebP up to 5MB.</p>
+  3458→                          <div className="flex gap-2">
+  3459→                            <label className="flex-1 cursor-pointer">
+  3460→                              <div className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg border text-xs font-medium transition-colors hover:bg-[#f8f7f5]" style={{ borderColor: A.border, color: A.textSecondary }}>
+  3461→                                <Plus className="w-3.5 h-3.5" /> Choose File
+  3462→                              </div>
+  3463→                              <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
+  3464→                                const file = e.target.files?.[0]
+  3465→                                if (file) { const url = await handleImageUpload(file); if (url) setNewProduct({ ...newProduct, image_url: url }) }
+  3466→                              }} />
+  3467→                            </label>
+  3468→                          </div>
+  3469→                          <Input placeholder="Or paste image URL..." value={newProduct.image_url} onChange={e => setNewProduct({ ...newProduct, image_url: e.target.value })} className="text-xs h-8" />
+  3470→                        </div>
+  3471→                      </div>
+  3472→                    </div>
+  3473→
+  3474→                    <div className="h-px" style={{ background: A.borderLight }} />
+  3475→
+  3476→                    {/* Basic Info */}
+  3477→                    <div className="space-y-3">
+  3478→                      <Label className="text-xs font-bold uppercase tracking-wider" style={{ color: A.textSecondary }}>Basic Information</Label>
+  3479→                      <div className="grid gap-3">
+  3480→                        <div className="grid gap-1.5">
+  3481→                          <Label htmlFor="prod-name" className="text-xs font-semibold">Product Name *</Label>
+  3482→                          <Input id="prod-name" placeholder="e.g. NOTJUST Watr Berry Blast" value={newProduct.name} onChange={e => setNewProduct({ ...newProduct, name: e.target.value })} className="text-sm h-9" />
+  3483→                        </div>
+  3484→                        <div className="grid gap-1.5">
+  3485→                          <Label htmlFor="prod-short-desc" className="text-xs font-semibold">Short Description</Label>
+  3486→                          <Input id="prod-short-desc" placeholder="Brief one-liner for product cards" value={newProduct.short_description} onChange={e => setNewProduct({ ...newProduct, short_description: e.target.value })} className="text-sm h-9" />
+  3487→                        </div>
+  3488→                        <div className="grid gap-1.5">
+  3489→                          <Label htmlFor="prod-desc" className="text-xs font-semibold">Full Description</Label>
+  3490→                          <Textarea id="prod-desc" placeholder="Detailed product description..." rows={3} value={newProduct.description} onChange={e => setNewProduct({ ...newProduct, description: e.target.value })} className="text-sm resize-none" />
+  3491→                        </div>
+  3492→                      </div>
+  3493→                    </div>
+  3494→
+  3495→                    <div className="h-px" style={{ background: A.borderLight }} />
+  3496→
+  3497→                    {/* Classification */}
+  3498→                    <div className="space-y-3">
+  3499→                      <Label className="text-xs font-bold uppercase tracking-wider" style={{ color: A.textSecondary }}>Classification</Label>
+  3500→                      <div className="grid grid-cols-2 gap-3">
+  3501→                        <div className="grid gap-1.5">
+  3502→                          <Label htmlFor="prod-type" className="text-xs font-semibold">Product Type *</Label>
+  3503→                          <Select value={newProduct.type} onValueChange={v => setNewProduct({ ...newProduct, type: v })}>
+  3504→                            <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Select type" /></SelectTrigger>
+  3505→                            <SelectContent>
+  3506→                              <SelectItem value="FIZZ">🫧 FIZZ (Carbonated)</SelectItem>
+  3507→                              <SelectItem value="STILL">💧 STILL (Non-Carbonated)</SelectItem>
+  3508→                              <SelectItem value="BERRY">🫐 BERRY</SelectItem>
+  3509→                              <SelectItem value="HERBAL">🌿 HERBAL</SelectItem>
+  3510→                              <SelectItem value="OTHER">📦 OTHER</SelectItem>
+  3511→                            </SelectContent>
+  3512→                          </Select>
+  3513→                        </div>
+  3514→                        <div className="grid gap-1.5">
+  3515→                          <Label htmlFor="prod-category" className="text-xs font-semibold">Category</Label>
+  3516→                          <Select value={newProduct.category} onValueChange={v => setNewProduct({ ...newProduct, category: v })}>
+  3517→                            <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Select category" /></SelectTrigger>
+  3518→                            <SelectContent>
+  3519→                              <SelectItem value="Wellness Shot">Wellness Shot</SelectItem>
+  3520→                              <SelectItem value="Health Drink">Health Drink</SelectItem>
+  3521→                              <SelectItem value="Supplement">Supplement</SelectItem>
+  3522→                              <SelectItem value="Functional Beverage">Functional Beverage</SelectItem>
+  3523→                              <SelectItem value="Other">Other</SelectItem>
+  3524→                            </SelectContent>
+  3525→                          </Select>
+  3526→                        </div>
+  3527→                      </div>
+  3528→                      <div className="grid grid-cols-2 gap-3">
+  3529→                        <div className="grid gap-1.5">
+  3530→                          <Label htmlFor="prod-sku" className="text-xs font-semibold">SKU Code</Label>
+  3531→                          <Input id="prod-sku" placeholder="e.g. NJW-FIZZ-001" value={newProduct.sku} onChange={e => setNewProduct({ ...newProduct, sku: e.target.value })} className="text-sm h-9 font-mono" />
+  3532→                        </div>
+  3533→                        <div className="grid gap-1.5">
+  3534→                          <Label htmlFor="prod-weight" className="text-xs font-semibold">Weight / Volume</Label>
+  3535→                          <Input id="prod-weight" placeholder="e.g. 50ml per shot, 14 shots" value={newProduct.weight} onChange={e => setNewProduct({ ...newProduct, weight: e.target.value })} className="text-sm h-9" />
+  3536→                        </div>
+  3537→                      </div>
+  3538→                    </div>
+  3539→
+  3540→                    <div className="h-px" style={{ background: A.borderLight }} />
+  3541→
+  3542→                    {/* Pricing */}
+  3543→                    <div className="space-y-3">
+  3544→                      <Label className="text-xs font-bold uppercase tracking-wider" style={{ color: A.textSecondary }}>Pricing & Inventory</Label>
+  3545→                      <div className="grid grid-cols-3 gap-3">
+  3546→                        <div className="grid gap-1.5">
+  3547→                          <Label htmlFor="prod-price" className="text-xs font-semibold">Selling Price (₹) *</Label>
+  3548→                          <Input id="prod-price" type="number" placeholder="2999" value={newProduct.price || ''} onChange={e => setNewProduct({ ...newProduct, price: Number(e.target.value) })} className="text-sm h-9" />
+  3549→                        </div>
+  3550→                        <div className="grid gap-1.5">
+  3551→                          <Label htmlFor="prod-mrp" className="text-xs font-semibold">MRP (₹)</Label>
+  3552→                          <Input id="prod-mrp" type="number" placeholder="3499" value={newProduct.mrp || ''} onChange={e => setNewProduct({ ...newProduct, mrp: Number(e.target.value) })} className="text-sm h-9" />
+  3553→                        </div>
+  3554→                        <div className="grid gap-1.5">
+  3555→                          <Label htmlFor="prod-stock" className="text-xs font-semibold">Stock Qty</Label>
+  3556→                          <Input id="prod-stock" type="number" placeholder="500" value={newProduct.stock || ''} onChange={e => setNewProduct({ ...newProduct, stock: Number(e.target.value) })} className="text-sm h-9" />
+  3557→                        </div>
+  3558→                      </div>
+  3559→                      {newProduct.mrp && newProduct.mrp > newProduct.price && (
+  3560→                        <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: A.greenLight }}>
+  3561→                          <Tag className="w-3.5 h-3.5" style={{ color: A.green }} />
+  3562→                          <span className="text-[11px] font-semibold" style={{ color: A.green }}>
+  3563→                            {Math.round((1 - newProduct.price / newProduct.mrp) * 100)}% off — Save ₹{(newProduct.mrp - newProduct.price).toLocaleString()}
+  3564→                          </span>
+  3565→                        </div>
+  3566→                      )}
+  3567→                    </div>
+  3568→
+  3569→                    <div className="h-px" style={{ background: A.borderLight }} />
+  3570→
+  3571→                    {/* Product Details */}
+  3572→                    <div className="space-y-3">
+  3573→                      <Label className="text-xs font-bold uppercase tracking-wider" style={{ color: A.textSecondary }}>Product Details</Label>
+  3574→                      <div className="grid gap-3">
+  3575→                        <div className="grid gap-1.5">
+  3576→                          <Label htmlFor="prod-ingredients" className="text-xs font-semibold">Ingredients</Label>
+  3577→                          <Textarea id="prod-ingredients" placeholder="List key ingredients, separated by commas" rows={2} value={newProduct.ingredients} onChange={e => setNewProduct({ ...newProduct, ingredients: e.target.value })} className="text-sm resize-none" />
+  3578→                        </div>
+  3579→                        <div className="grid gap-1.5">
+  3580→                          <Label htmlFor="prod-nutrition" className="text-xs font-semibold">Nutrition Info</Label>
+  3581→                          <Textarea id="prod-nutrition" placeholder="Calories, sugar, etc." rows={2} value={newProduct.nutrition_info} onChange={e => setNewProduct({ ...newProduct, nutrition_info: e.target.value })} className="text-sm resize-none" />
+  3582→                        </div>
+  3583→                        <div className="grid gap-1.5">
+  3584→                          <Label htmlFor="prod-tags" className="text-xs font-semibold">Tags (comma separated)</Label>
+  3585→                          <Input id="prod-tags" placeholder="e.g. vegan, sugar-free, natural" value={newProduct.tags} onChange={e => setNewProduct({ ...newProduct, tags: e.target.value })} className="text-sm h-9" />
+  3586→                        </div>
+  3587→                      </div>
+  3588→                    </div>
+  3589→
+  3590→                    <div className="h-px" style={{ background: A.borderLight }} />
+  3591→
+  3592→                    {/* Status */}
+  3593→                    <div className="flex items-center gap-6">
+  3594→                      <div className="flex items-center gap-3">
+  3595→                        <Switch id="prod-active" checked={newProduct.active} onCheckedChange={v => setNewProduct({ ...newProduct, active: v })} />
+  3596→                        <Label htmlFor="prod-active" className="text-xs font-semibold">Active</Label>
+  3597→                      </div>
+  3598→                      <div className="flex items-center gap-3">
+  3599→                        <Switch id="prod-featured" checked={newProduct.featured} onCheckedChange={v => setNewProduct({ ...newProduct, featured: v })} />
+  3600→                        <Label htmlFor="prod-featured" className="text-xs font-semibold">Featured</Label>
+  3601→                      </div>
+  3602→                    </div>
+  3603→                  </div>
+  3604→                  <DialogFooter className="gap-2">
+  3605→                    <Button variant="outline" onClick={() => { setShowAddProduct(false); resetProductForm() }} className="text-sm">Cancel</Button>
+  3606→                    <Button onClick={handleSaveProduct} disabled={!newProduct.name || !newProduct.price || uploadingImage} className="text-sm font-bold gap-2" style={{ background: A.green, color: '#fff' }}>
+  3607→                      {uploadingImage ? <><div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Uploading...</> :
+  3608→                        editingProduct ? <><Save className="w-4 h-4" /> Save Changes</> : <><Plus className="w-4 h-4" /> Create Product</>}
+  3609→                    </Button>
+  3610→                  </DialogFooter>
+  3611→                </DialogContent>
+  3612→              </Dialog>
+  3613→            </div>
+  3614→
+  3615→            {/* Quick Stats */}
+  3616→            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+  3617→              {[
+  3618→                { label: 'Total Products', value: adminProducts.length, icon: Package, color: A.green, bg: A.greenLight },
+  3619→                { label: 'Active', value: adminProducts.filter(p => p.active).length, icon: Eye, color: A.blue, bg: A.blueLight },
+  3620→                { label: 'Featured', value: adminProducts.filter(p => p.featured).length, icon: Star, color: A.lime, bg: A.limeLight },
+  3621→                { label: 'Out of Stock', value: adminProducts.filter(p => p.stock === 0).length, icon: AlertCircle, color: A.red, bg: A.redLight },
+  3622→              ].map(card => (
+  3623→                <div key={card.label} className="bg-white border rounded-lg p-3 flex items-center gap-3" style={{ borderColor: A.border }}>
+  3624→                  <div className="w-8 h-8 rounded-md flex items-center justify-center" style={{ backgroundColor: card.bg }}>
+  3625→                    <card.icon className="w-4 h-4" style={{ color: card.color }} />
+  3626→                  </div>
+  3627→                  <div>
+  3628→                    <p className="text-lg font-bold leading-none" style={{ color: A.text }}>{card.value}</p>
+  3629→                    <p className="text-[10px] mt-0.5" style={{ color: A.textMuted }}>{card.label}</p>
+  3630→                  </div>
+  3631→                </div>
+  3632→              ))}
+  3633→            </div>
+  3634→
+  3635→            {/* Search and Filter Bar */}
+  3636→            <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+  3637→              <div className="relative flex-1 w-full">
+  3638→                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: A.textMuted }} />
+  3639→                <Input placeholder="Search products by name, type, or category..." value={productSearch} onChange={e => setProductSearch(e.target.value)} className="pl-9 h-9 text-sm" />
+  3640→              </div>
+  3641→              <div className="flex gap-2">
+  3642→                {(['all', 'active', 'inactive'] as const).map(filter => (
+  3643→                  <button key={filter} onClick={() => setProductFilter(filter)} className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${productFilter === filter ? 'text-white' : ''}`} style={productFilter === filter ? { background: A.green, color: '#fff' } : { background: A.bg, color: A.textSecondary }}>
+  3644→                    {filter.charAt(0).toUpperCase() + filter.slice(1)}
+  3645→                  </button>
+  3646→                ))}
+  3647→              </div>
+  3648→            </div>
+  3649→
+  3650→            {/* Product Cards Grid */}
+  3651→            <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
+  3652→              {filteredProducts.map(product => {
+  3653→                const vCount = productVideoCounts[product.id] || 0
+  3654→                const qCount = productQuizCounts[product.id] || 0
+  3655→                const ls = productLearningStats[product.id] || { total: 0, completed: 0, unlocked: 0 }
+  3656→                const discount = product.mrp && product.mrp > product.price ? Math.round((1 - product.price / product.mrp) * 100) : 0
+  3657→                return (
+  3658→                  <div key={product.id} className="bg-white border rounded-xl overflow-hidden hover:shadow-lg transition-all duration-300 group" style={{ borderColor: A.border }}>
+  3659→                    {/* Product Image */}
+  3660→                    <div className="relative h-44 bg-[#f4f3f0] overflow-hidden">
+  3661→                      {product.image_url ? (
+  3662→                        <Image src={product.image_url} alt={product.name} fill className="object-cover group-hover:scale-105 transition-transform duration-500" />
+  3663→                      ) : (
+  3664→                        <div className="flex items-center justify-center h-full">
+  3665→                          <Package className="w-12 h-12" style={{ color: A.textMuted }} />
+  3666→                        </div>
+  3667→                      )}
+  3668→                      <div className="absolute top-3 left-3 flex gap-1.5">
+  3669→                        {discount > 0 && (
+  3670→                          <span className="px-2 py-0.5 rounded-md text-[10px] font-bold text-white" style={{ background: A.green }}>{discount}% OFF</span>
+  3671→                        )}
+  3672→                        {product.featured && (
+  3673→                          <span className="px-2 py-0.5 rounded-md text-[10px] font-bold text-white bg-[#e7b973]">★ Featured</span>
+  3674→                        )}
+  3675→                      </div>
+  3676→                      <div className="absolute top-3 right-3">
+  3677→                        <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold" style={{ color: product.active ? A.green : A.textMuted, background: product.active ? A.greenLight : A.bg }}>
+  3678→                          {product.active ? 'Active' : 'Inactive'}
+  3679→                        </span>
+  3680→                      </div>
+  3681→                    </div>
+  3682→                    {/* Product Info */}
+  3683→                    <div className="p-4">
+  3684→                      <div className="flex items-start justify-between mb-2">
+  3685→                        <div className="flex-1 min-w-0">
+  3686→                          <h3 className="font-bold text-sm truncate" style={{ color: A.text }}>{product.name}</h3>
+  3687→                          <p className="text-[11px] mt-0.5" style={{ color: A.textMuted }}>{product.type}{product.category ? ` · ${product.category}` : ''}{product.sku ? ` · ${product.sku}` : ''}</p>
+  3688→                        </div>
+  3689→                        <div className="text-right ml-2">
+  3690→                          <p className="font-bold text-sm" style={{ color: A.green }}>₹{product.price.toLocaleString()}</p>
+  3691→                          {product.mrp && product.mrp > product.price && (
+  3692→                            <p className="text-[10px] line-through" style={{ color: A.textMuted }}>₹{product.mrp.toLocaleString()}</p>
+  3693→                          )}
+  3694→                        </div>
+  3695→                      </div>
+  3696→                      {product.short_description && (
+  3697→                        <p className="text-[11px] mb-3 line-clamp-2" style={{ color: A.textSecondary }}>{product.short_description}</p>
+  3698→                      )}
+  3699→                      {/* Stats Row */}
+  3700→                      <div className="grid grid-cols-4 gap-2 mb-3">
+  3701→                        <div className="rounded-lg p-2 text-center" style={{ background: A.bg }}>
+  3702→                          <p className="font-bold text-sm" style={{ color: A.blue }}>{vCount}</p>
+  3703→                          <p className="text-[9px]" style={{ color: A.textMuted }}>Videos</p>
+  3704→                        </div>
+  3705→                        <div className="rounded-lg p-2 text-center" style={{ background: A.bg }}>
+  3706→                          <p className="font-bold text-sm" style={{ color: A.lime }}>{qCount}</p>
+  3707→                          <p className="text-[9px]" style={{ color: A.textMuted }}>Quizzes</p>
+  3708→                        </div>
+  3709→                        <div className="rounded-lg p-2 text-center" style={{ background: A.bg }}>
+  3710→                          <p className="font-bold text-sm" style={{ color: A.green }}>{ls.unlocked}</p>
+  3711→                          <p className="text-[9px]" style={{ color: A.textMuted }}>Unlocked</p>
+  3712→                        </div>
+  3713→                        <div className="rounded-lg p-2 text-center" style={{ background: A.bg }}>
+  3714→                          <p className="font-bold text-sm" style={{ color: product.stock > 0 ? A.text : A.red }}>{product.stock}</p>
+  3715→                          <p className="text-[9px]" style={{ color: A.textMuted }}>Stock</p>
+  3716→                        </div>
+  3717→                      </div>
+  3718→                      {/* Tags */}
+  3719→                      {product.tags && (
+  3720→                        <div className="flex flex-wrap gap-1 mb-3">
+  3721→                          {product.tags.split(',').slice(0, 4).map((tag, i) => (
+  3722→                            <span key={i} className="px-1.5 py-0.5 rounded text-[9px] font-medium" style={{ background: A.greenLight, color: A.green }}>{tag.trim()}</span>
+  3723→                          ))}
+  3724→                        </div>
+  3725→                      )}
+  3726→                      {/* Learning Progress */}
+  3727→                      {ls.total > 0 && (
+  3728→                        <div className="mb-3">
+  3729→                          <div className="flex items-center justify-between mb-1">
+  3730→                            <span className="text-[11px]" style={{ color: A.textSecondary }}>Learning Progress</span>
+  3731→                            <span className="text-[11px] font-semibold" style={{ color: A.green }}>{Math.round(ls.completed / ls.total * 100)}%</span>
+  3732→                          </div>
+  3733→                          <div className="h-1.5 rounded-full overflow-hidden" style={{ background: A.borderLight }}>
+  3734→                            <div className="h-full rounded-full transition-all" style={{ width: `${Math.round(ls.completed / ls.total * 100)}%`, background: A.green }} />
+  3735→                          </div>
+  3736→                        </div>
+  3737→                      )}
+  3738→                      {/* Actions */}
+  3739→                      <div className="flex items-center gap-1.5 pt-3 border-t" style={{ borderColor: A.borderLight }}>
+  3740→                        <Button variant="ghost" size="sm" className="text-[11px] h-7 gap-1 font-semibold" style={{ color: A.blue }} onClick={() => {
+  3741→                          setEditingProduct(product)
+  3742→                          setNewProduct({
+  3743→                            name: product.name, description: product.description || '', short_description: product.short_description || '',
+  3744→                            price: product.price, mrp: product.mrp || 0, stock: product.stock,
+  3745→                            image_url: product.image_url || '', gallery_images: product.gallery_images || '',
+  3746→                            type: product.type, category: product.category || 'Wellness Shot',
+  3747→                            sku: product.sku || '', weight: product.weight || '',
+  3748→                            ingredients: product.ingredients || '', nutrition_info: product.nutrition_info || '',
+  3749→                            tags: product.tags || '', active: product.active, featured: product.featured || false,
+  3750→                          })
+  3751→                          setShowAddProduct(true)
+  3752→                        }}>
+  3753→                          <Edit className="w-3 h-3" /> Edit
+  3754→                        </Button>
+  3755→                        <Button variant="ghost" size="sm" className="text-[11px] h-7 gap-1 font-semibold" style={{ color: product.active ? A.amber : A.green }} onClick={async () => {
+  3756→                          const r = await productService.toggleActive(product.id)
+  3757→                          if (r.data) { toast.success(`Product ${!product.active ? 'activated' : 'deactivated'}`); refreshData() }
+  3758→                          else toast.error('Failed to update')
+  3759→                        }}>
+  3760→                          {product.active ? <><EyeOff className="w-3 h-3" /> Hide</> : <><Eye className="w-3 h-3" /> Show</>}
+  3761→                        </Button>
+  3762→                        <Button variant="ghost" size="sm" className="text-[11px] h-7 gap-1 font-semibold ml-auto" style={{ color: A.destructive }} onClick={async () => {
+  3763→                          if (confirm('Delete this product? This action cannot be undone.')) {
+  3764→                            const r = await productService.delete(product.id)
+  3765→                            if (r.data) { toast.success('Product deleted'); refreshData() }
+  3766→                            else toast.error('Failed to delete')
+  3767→                          }
+  3768→                        }}>
+  3769→                          <Trash2 className="w-3 h-3" /> Delete
+  3770→                        </Button>
+  3771→                      </div>
+  3772→                    </div>
+  3773→                  </div>
+  3774→                )
+  3775→              })}
+  3776→              {filteredProducts.length === 0 && (
+  3777→                <div className="col-span-full text-center py-12">
+  3778→                  <Package className="w-12 h-12 mx-auto mb-3" style={{ color: A.textMuted }} />
+  3779→                  <p className="text-sm font-semibold" style={{ color: A.textSecondary }}>No products found</p>
+  3780→                  <p className="text-xs mt-1" style={{ color: A.textMuted }}>Try adjusting your search or filters</p>
+  3781→                </div>
+  3782→              )}
+  3783→            </div>
+  3784→          </div>
+  3785→        )
+  3786→
+  3787→      case 'subscriptions':
+  3788→        return (
+  3789→          <div className="space-y-4">
+  3790→            <div className="flex items-center justify-between">
+  3791→              <div>
+  3792→                <h2 className="text-base font-semibold" style={{ color: A.text }}>Subscriptions</h2>
+  3793→                <p className="text-[12px]" style={{ color: A.textMuted }}>{adminSubscriptions.length} total subscriptions</p>
+  3794→              </div>
+  3795→            </div>
+  3796→            {/* Stats Cards */}
+  3797→            <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+  3798→              {[
+  3799→                { label: 'Active', value: adminSubscriptions.filter(s => s.status === 'ACTIVE').length, color: A.green, bgColor: A.greenLight },
+  3800→                { label: 'Paused', value: adminSubscriptions.filter(s => s.status === 'PAUSED').length, color: A.amber, bgColor: A.amberLight },
+  3801→                { label: 'Revenue', value: `₹${adminSubscriptions.filter(s => s.status === 'ACTIVE').reduce((sum, s) => sum + (s.amount || 0), 0).toLocaleString()}`, color: A.blue, bgColor: A.blueLight },
+  3802→                { label: 'Auto-Renew', value: adminSubscriptions.filter(s => s.auto_renew).length, color: A.lime, bgColor: A.limeLight },
+  3803→              ].map(card => (
+  3804→                <div key={card.label} className="bg-white border rounded-lg p-4" style={{ borderColor: A.border }}>
+  3805→                  <div className="w-8 h-8 rounded-md flex items-center justify-center mb-2" style={{ backgroundColor: card.bgColor }}>
+  3806→                    <CreditCard className="w-4 h-4" style={{ color: card.color }} />
+  3807→                  </div>
+  3808→                  <p className="text-xl font-bold" style={{ color: A.text }}>{card.value}</p>
+  3809→                  <p className="text-[12px] mt-0.5" style={{ color: A.textMuted }}>{card.label}</p>
+  3810→                </div>
+  3811→              ))}
+  3812→            </div>
+  3813→            {/* Subscription Table */}
+  3814→            <div className="bg-white border rounded-lg overflow-hidden" style={{ borderColor: A.border }}>
+  3815→              <Table>
+  3816→                <TableHeader>
+  3817→                  <TableRow className="hover:bg-transparent" style={{ borderColor: A.borderLight }}>
+  3818→                    <TableHead className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: A.textMuted }}>ID</TableHead>
+  3819→                    <TableHead className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: A.textMuted }}>User</TableHead>
+  3820→                    <TableHead className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: A.textMuted }}>Product</TableHead>
+  3821→                    <TableHead className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: A.textMuted }}>Pack</TableHead>
+  3822→                    <TableHead className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: A.textMuted }}>Amount</TableHead>
+  3823→                    <TableHead className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: A.textMuted }}>Status</TableHead>
+  3824→                    <TableHead className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: A.textMuted }}>End Date</TableHead>
+  3825→                    <TableHead className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: A.textMuted }}>Auto-Renew</TableHead>
+  3826→                  </TableRow>
+  3827→                </TableHeader>
+  3828→                <TableBody>
+  3829→                  {adminSubscriptions.map(sub => {
+  3830→                    const subUser = users.find((u: any) => u.user_id === sub.user_id)
+  3831→                    const subProduct = adminProducts.find(p => p.id === sub.product_id)
+  3832→                    return (
+  3833→                      <TableRow key={sub.id} className="hover:bg-[#f8f7f5]" style={{ borderColor: A.borderLight }}>
+  3834→                        <TableCell className="font-mono text-[10px]" style={{ color: A.textMuted }}>{sub.id?.slice(0, 8)}</TableCell>
+  3835→                        <TableCell className="text-[12px]" style={{ color: A.text }}>{subUser?.name || sub.user_id?.slice(0, 8)}</TableCell>
+  3836→                        <TableCell className="text-[12px]" style={{ color: A.text }}>{subProduct?.name || sub.product_id?.slice(0, 8)}</TableCell>
+  3837→                        <TableCell className="text-[11px]" style={{ color: A.textSecondary }}>{sub.pack_type}</TableCell>
+  3838→                        <TableCell className="font-semibold text-[12px]" style={{ color: A.green }}>₹{(sub.amount || 0).toLocaleString()}</TableCell>
+  3839→                        <TableCell><StatusBadge status={sub.status} /></TableCell>
+  3840→                        <TableCell className="text-[11px]" style={{ color: A.textMuted }}>{sub.end_date ? new Date(sub.end_date).toLocaleDateString() : '-'}</TableCell>
+  3841→                        <TableCell>
+  3842→                          <Switch
+  3843→                            checked={sub.auto_renew}
+  3844→                            onCheckedChange={async (checked) => {
+  3845→                              await subscriptionService.toggleAutoRenew(sub.id)
+  3846→                              setAdminSubscriptions(prev => prev.map(s => s.id === sub.id ? { ...s, auto_renew: checked } : s))
+  3847→                              toast.success(`Auto-renew ${checked ? 'enabled' : 'disabled'}`)
+  3848→                            }}
+  3849→                          />
+  3850→                        </TableCell>
+  3851→                      </TableRow>
+  3852→                    )
+  3853→                  })}
+  3854→                </TableBody>
+  3855→              </Table>
+  3856→              {adminSubscriptions.length === 0 && (
+  3857→                <div className="py-16 text-center">
+  3858→                  <CreditCard className="w-10 h-10 mx-auto mb-3" style={{ color: A.border }} />
+  3859→                  <p className="text-sm" style={{ color: A.textMuted }}>No subscriptions yet.</p>
+  3860→                </div>
+  3861→              )}
+  3862→            </div>
+  3863→          </div>
+  3864→        )
+  3865→
+  3866→      default: return null
+  3867→    }
+  3868→  }
+  3869→
+  3870→  return (
+  3871→    <div className="min-h-screen flex font-[family-name:var(--font-admin)]" style={{ background: A.bg }}>
+  3872→      {/* Sidebar — Dark */}
+  3873→      <aside className={`${sidebarCollapsed ? 'w-[56px]' : 'w-[220px]'} flex flex-col flex-shrink-0 sticky top-0 h-screen transition-all duration-200`} style={{ background: A.sidebarBg, borderRight: '1px solid #2a2926' }}>
+  3874→        <div className="px-3 py-3 flex items-center gap-2.5 h-[52px]" style={{ borderBottom: '1px solid #2a2926' }}>
+  3875→          <div className="w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0" style={{ background: A.green }}>
+  3876→            <Leaf className="w-3.5 h-3.5 text-white" />
+  3877→          </div>
+  3878→          {!sidebarCollapsed && (
+  3879→            <div className="flex-1 min-w-0">
+  3880→              <p className="font-semibold text-[12px] text-white truncate">NotJust</p>
+  3881→              <p className="text-[8px]" style={{ color: '#6b6560' }}>Admin Console</p>
+  3882→            </div>
+  3883→          )}
+  3884→          <button onClick={() => setSidebarCollapsed(!sidebarCollapsed)} className="w-5 h-5 rounded flex items-center justify-center hover:bg-[#2a2926] transition-colors flex-shrink-0" style={{ color: '#6b6560' }}>
+  3885→            <ChevronLeft className={`w-3 h-3 transition-transform ${sidebarCollapsed ? 'rotate-180' : ''}`} />
+  3886→          </button>
+  3887→        </div>
+  3888→        <nav className="flex-1 px-2 py-2 space-y-0.5 overflow-y-auto">
+  3889→          {sidebarItems.map(item => (
+  3890→            <button key={item.value} onClick={() => setAdminTab(item.value)} className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md text-[11px] font-medium transition-all`} style={adminTab === item.value ? { background: A.green, color: '#fff' } : { color: A.sidebarText, background: 'transparent' }} onMouseEnter={e => { if (adminTab !== item.value) (e.currentTarget as HTMLElement).style.background = A.sidebarHover }} onMouseLeave={e => { if (adminTab !== item.value) (e.currentTarget as HTMLElement).style.background = 'transparent' }} title={sidebarCollapsed ? item.label : undefined}>
+  3891→              <item.icon className="w-4 h-4 flex-shrink-0" />
+  3892→              {!sidebarCollapsed && (<><span className="flex-1 text-left">{item.label}</span>{item.badge !== null && (<span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded`} style={adminTab === item.value ? { background: 'rgba(255,255,255,0.2)', color: '#fff' } : { background: '#2a2926', color: '#6b6560' }}>{item.badge}</span>)}</>)}
+  3893→            </button>
+  3894→          ))}
+  3895→        </nav>
+  3896→        <div className="px-3 py-3" style={{ borderTop: '1px solid #2a2926' }}>
+  3897→          <div className="flex items-center gap-2">
+  3898→            <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: A.greenLight }}>
+  3899→              <span className="font-bold text-[10px]" style={{ color: A.green }}>{user?.name?.charAt(0) || 'A'}</span>
+  3900→            </div>
+  3901→            {!sidebarCollapsed && (<div className="flex-1 min-w-0"><p className="text-[11px] font-medium text-white truncate">{user?.name || 'Admin'}</p><p className="text-[9px]" style={{ color: '#6b6560' }}>Administrator</p></div>)}
+  3902→          </div>
+  3903→        </div>
+  3904→      </aside>
+  3905→
+  3906→      {/* Main Area — Light */}
+  3907→      <main className="flex-1 min-h-screen">
+  3908→        {/* Top Bar */}
+  3909→        <div className="bg-white border-b px-5 h-[52px] flex items-center justify-between sticky top-0 z-10" style={{ borderColor: A.border }}>
+  3910→          <div className="flex items-center gap-3">
+  3911→            <div className="flex items-center gap-2">
+  3912→              <div className="w-5 h-5 rounded flex items-center justify-center" style={{ background: A.greenLight }}>
+  3913→                {(() => { const Item = sidebarItems.find(i => i.value === adminTab); return Item ? <Item.icon className="w-3 h-3" style={{ color: A.green }} /> : null })()}
+  3914→              </div>
+  3915→              <span className="font-semibold text-[13px]" style={{ color: A.text }}>{sidebarItems.find(i => i.value === adminTab)?.label || 'Overview'}</span>
+  3916→            </div>
+  3917→            <div className="h-4 w-px" style={{ background: A.border }} />
+  3918→            <span className="text-[11px]" style={{ color: A.textMuted }}>
+  3919→              {adminTab === 'dashboard' && `${stats.totalUsers} users · ${stats.totalOrders} orders · ₹${stats.totalRevenue?.toLocaleString()} revenue`}
+  3920→              {adminTab === 'users' && `${filteredUsers.length} shown`}
+  3921→              {adminTab === 'campaigns' && `${campaigns.length} campaigns`}
+  3922→              {adminTab === 'products' && `${adminProducts.length} products`}
+  3923→              {adminTab === 'qr' && `${campaigns.filter(c => c.status === 'ACTIVE').length} QR codes`}
+  3924→              {adminTab === 'orders' && `${orders.length} orders`}
+  3925→              {adminTab === 'subscriptions' && `${adminSubscriptions.length} subscriptions`}
+  3926→              {adminTab === 'analytics' && 'Real-time analytics'}
+  3927→              {adminTab === 'content' && `${questions.length} questions`}
+  3928→            </span>
+  3929→          </div>
+  3930→          <div className="flex items-center gap-1.5">
+  3931→            {adminTab !== 'dashboard' && (
+  3932→              <>
+  3933→                <button onClick={() => {
+  3934→                  if (adminTab === 'users') exportToCSV(filteredUsers, 'notjust-users', [{ key: 'name', label: 'Name' }, { key: 'email', label: 'Email' }, { key: 'phone', label: 'Phone' }, { key: 'country', label: 'Country' }, { key: 'state', label: 'State' }, { key: 'learning_completed', label: 'Learning Completed' }, { key: 'created_at', label: 'Joined' }])
+  3935→                  else if (adminTab === 'orders') exportToCSV(orders, 'notjust-orders', [{ key: 'id', label: 'Order ID' }, { key: 'user_id', label: 'User ID' }, { key: 'status', label: 'Status' }, { key: 'amount', label: 'Amount' }, { key: 'payment_gateway', label: 'Payment Gateway' }, { key: 'created_at', label: 'Date' }])
+  3936→                  else if (adminTab === 'campaigns') exportToCSV(campaigns, 'notjust-campaigns', [{ key: 'name', label: 'Name' }, { key: 'channel', label: 'Channel' }, { key: 'partner_name', label: 'Partner' }, { key: 'location', label: 'Location' }, { key: 'status', label: 'Status' }, { key: 'created_at', label: 'Created' }])
+  3937→                  else if (adminTab === 'qr') exportToCSV(scans, 'notjust-qr-scans', [{ key: 'id', label: 'Scan ID' }, { key: 'campaign_id', label: 'Campaign ID' }, { key: 'device', label: 'Device' }, { key: 'location', label: 'Location' }, { key: 'created_at', label: 'Date' }])
+  3938→                  else if (adminTab === 'analytics') exportToCSV([...orders.map(o => ({ month: new Date(o.created_at).toLocaleDateString('en', { month: 'short' }), revenue: o.amount, status: o.status }))], 'notjust-analytics', [{ key: 'month', label: 'Month' }, { key: 'revenue', label: 'Revenue' }, { key: 'status', label: 'Status' }])
+  3939→                  else if (adminTab === 'content') exportToCSV(questions, 'notjust-quiz-questions', [{ key: 'question', label: 'Question' }, { key: 'category', label: 'Category' }, { key: 'difficulty', label: 'Difficulty' }, { key: 'answer', label: 'Answer Index' }])
+  3940→                }} className="h-7 px-2.5 rounded-md flex items-center gap-1.5 text-[11px] font-medium border transition-colors hover:bg-[#f8f7f5]" style={{ borderColor: A.border, color: A.textSecondary }} title="Export CSV">
+  3941→                  <Download className="w-3 h-3" /> CSV
+  3942→                </button>
+  3943→                <button onClick={() => exportToPDF(sidebarItems.find(i => i.value === adminTab)?.label || 'Report')} className="h-7 px-2.5 rounded-md flex items-center gap-1.5 text-[11px] font-medium border transition-colors hover:bg-[#f8f7f5]" style={{ borderColor: A.border, color: A.textSecondary }} title="Export PDF">
+  3944→                  <FileText className="w-3 h-3" /> PDF
+  3945→                </button>
+  3946→              </>
+  3947→            )}
+  3948→            <button onClick={() => navigateTo('landing')} className="w-7 h-7 rounded-md flex items-center justify-center border transition-colors hover:bg-[#f8f7f5]" style={{ borderColor: A.border, color: A.textMuted }} title="Back to site"><ExternalLink className="w-3.5 h-3.5" /></button>
+  3949→            <button onClick={refreshData} className="w-7 h-7 rounded-md flex items-center justify-center border transition-colors hover:bg-[#f8f7f5]" style={{ borderColor: A.border, color: A.textMuted }} title="Refresh data"><RefreshCw className="w-3.5 h-3.5" /></button>
+  3950→          </div>
+  3951→        </div>
+  3952→        <div className="p-5" data-admin-content>{renderContent()}</div>
+  3953→      </main>
+  3954→    </div>
+  3955→  )
+  3956→}
+  3957→
+  3958→// ============================================================
+  3959→// CAMPAIGN MANAGER — Light Theme
+  3960→// ============================================================
+  3961→function CampaignManager({ campaigns, setCampaigns, scans, orders }: { campaigns: Campaign[]; setCampaigns: React.Dispatch<React.SetStateAction<Campaign[]>>; scans: QrScan[]; orders: any[] }) {
+  3962→  const [dialogOpen, setDialogOpen] = useState(false)
+  3963→  const [detailCampaign, setDetailCampaign] = useState<Campaign | null>(null)
+  3964→  const [form, setForm] = useState({ name: '', channel: 'HOTEL', partner_name: '', location: '' })
+  3965→  const [campaignSales, setCampaignSales] = useState<Record<string, { orderCount: number; revenue: number }>>({})
+  3966→
+  3967→  // Fetch campaign sales data
+  3968→  useEffect(() => {
+  3969→    campaignService.getCampaignSales().then(r => {
+  3970→      if (r.data) setCampaignSales(r.data as any)
+  3971→    })
+  3972→  }, [orders, scans])
+  3973→
+  3974→  // Compute sales per campaign from orders + scans data
+  3975→  const getCampaignSalesInfo = (campaignId: string) => {
+  3976→    // Find all users who scanned this campaign's QR
+  3977→    const campaignUserIds = scans
+  3978→      .filter(s => s.campaign_id === campaignId && s.user_id)
+  3979→      .map(s => s.user_id!)
+  3980→
+  3981→    // Find orders from those users (only confirmed/shipped/delivered)
+  3982→    const campaignOrders = orders.filter((o: any) =>
+  3983→      campaignUserIds.includes(o.user_id) &&
+  3984→      ['CONFIRMED', 'SHIPPED', 'DELIVERED'].includes(o.status)
+  3985→    )
+  3986→
+  3987→    const totalRevenue = campaignOrders.reduce((sum: number, o: any) => sum + (o.amount || 0), 0)
+  3988→    return {
+  3989→      orderCount: campaignOrders.length,
+  3990→      revenue: totalRevenue,
+  3991→    }
+  3992→  }
+  3993→
+  3994→  const handleCreate = async () => {
+  3995→    if (!form.name) { toast.error('Campaign name is required'); return }
+  3996→    const result = await campaignService.create(form as any)
+  3997→    if (result.data) {
+  3998→      setCampaigns(prev => [result.data as Campaign, ...prev])
+  3999→      toast.success('Campaign created with QR code')
+  4000→      setDialogOpen(false)
+  4001→      setForm({ name: '', channel: 'HOTEL', partner_name: '', location: '' })
+  4002→    }
+  4003→  }
+  4004→
+  4005→  const toggleStatus = async (id: string, status: string) => {
+
+[showing lines 3406-4005 of 4530; use offset=4006 with limit to continue reading]

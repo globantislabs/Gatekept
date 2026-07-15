@@ -16,7 +16,7 @@ import {
   DollarSign, Activity, PieChart, BarChart, Globe, Mail, Phone as PhoneIcon,
   Facebook, Twitter, Instagram, Linkedin, Youtube, Send,
   LayoutDashboard, CreditCard, Truck, Kanban, Columns3, Tag, Copy, ExternalLink, Utensils, Save, Edit, EyeOff,
-  Upload, Check, Sparkles, Layers, ArrowUpRight
+  Upload, Check, Sparkles, Layers, ArrowUpRight, MessageCircle, Share2, ShieldCheck
 } from 'lucide-react'
 import { useAppStore, type AppView, type CartItem } from '@/store/app-store'
 import {
@@ -1293,8 +1293,21 @@ function LandingPage() {
             <div>
               <h4 className="font-heading font-semibold text-white text-sm mb-4">Contact</h4>
               <ul className="space-y-2.5 text-sm text-white/40">
-                <li className="flex items-center gap-2"><Mail className="w-3.5 h-3.5" /> hello@notjust.health</li>
-                <li className="flex items-center gap-2"><PhoneIcon className="w-3.5 h-3.5" /> +91 98765 43210</li>
+                <li>
+                  <button className="flex items-center gap-2 hover:text-[#25D366] transition-colors" onClick={() => window.open('https://wa.me/919876543210?text=Hi%2C%20I%20have%20a%20question%20about%20NOTJUST%20Watr', '_blank')}>
+                    <MessageCircle className="w-3.5 h-3.5" /> WhatsApp
+                  </button>
+                </li>
+                <li>
+                  <button className="flex items-center gap-2 hover:text-[#2e91b2] transition-colors" onClick={() => window.open('mailto:hello@notjust.health?subject=Query%20about%20NOTJUST%20Watr', '_blank')}>
+                    <Mail className="w-3.5 h-3.5" /> hello@notjust.health
+                  </button>
+                </li>
+                <li>
+                  <button className="flex items-center gap-2 hover:text-[#48805b] transition-colors" onClick={() => window.open('sms:+919876543210?body=Hi%2C%20I%20have%20a%20question%20about%20NOTJUST%20Watr', '_blank')}>
+                    <Smartphone className="w-3.5 h-3.5" /> SMS +91 98765 43210
+                  </button>
+                </li>
                 <li className="flex items-center gap-2"><MapPin className="w-3.5 h-3.5" /> Mumbai, India</li>
               </ul>
             </div>
@@ -1306,6 +1319,10 @@ function LandingPage() {
                     <Icon className="w-4 h-4" />
                   </button>
                 ))}
+              </div>
+              <div className="mt-4 p-3 rounded-lg bg-white/[0.03] border border-white/[0.06]">
+                <p className="text-[10px] text-white/30 font-medium mb-1">POWERED BY</p>
+                <p className="text-xs text-white/50">Zoho Mail · Zoho SMS</p>
               </div>
             </div>
           </div>
@@ -2011,7 +2028,6 @@ function ProductsCatalog() {
   const [loading, setLoading] = useState(true)
   const [selectedType, setSelectedType] = useState<string>('ALL')
   const [productProgress, setProductProgress] = useState<Record<string, ProductLearningProgress>>({})
-  const [subSelectProduct, setSubSelectProduct] = useState<Product | null>(null)
 
   useEffect(() => {
     productService.getAll().then(r => {
@@ -2020,19 +2036,18 @@ function ProductsCatalog() {
     })
   }, [])
 
-  // Handle URL search params - auto-navigate to product learning page
+  // Handle URL search params - auto-navigate to product detail page
   useEffect(() => {
     if (!user || products.length === 0) return
     const productSlug = searchParams.get('product')
     if (!productSlug) return
-    // Find matching product by slug (name converted to kebab-case)
     const matchedProduct = products.find(p => {
       const slug = p.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
       return slug === productSlug.toLowerCase()
     })
     if (matchedProduct) {
       setSelectedProductId(matchedProduct.id)
-      navigateTo('product-learning')
+      navigateTo('product-detail')
     }
   }, [searchParams, user, products, navigateTo, setSelectedProductId])
 
@@ -2133,7 +2148,11 @@ function ProductsCatalog() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: idx * 0.05 }}
               >
-                <Card className="card-lift border-[#e3dfd8] overflow-hidden group h-full flex flex-col">
+                <Card className="card-lift border-[#e3dfd8] overflow-hidden group h-full flex flex-col cursor-pointer"
+                  onClick={() => {
+                    setSelectedProductId(product.id)
+                    navigateTo('product-detail')
+                  }}>
                   <div className="relative aspect-[4/3] bg-gradient-to-br from-[#e3dfd8]/50 to-[#f4f3f0] flex items-center justify-center overflow-hidden">
                     <Image src={product.image_url || (product.type === 'STILL' ? '/images/product-still.webp' : '/images/product-fizz.webp')} alt={product.name} fill className="object-contain p-6 group-hover:scale-105 transition-transform duration-500" />
                     <Badge className="absolute top-3 right-3 bg-[#48805b] text-white text-[10px] shadow-sm">{product.type}</Badge>
@@ -2160,76 +2179,466 @@ function ProductsCatalog() {
                     <div className="flex items-end justify-between">
                       <div>
                         <p className="font-heading text-2xl font-bold text-[#48805b]">₹{product.price.toLocaleString()}</p>
-                        <p className="text-xs text-[#88837b] mt-0.5">{product.stock} in stock</p>
+                        {product.mrp && product.mrp > product.price && (
+                          <p className="text-xs text-[#88837b] line-through mt-0.5">₹{product.mrp.toLocaleString()}</p>
+                        )}
                       </div>
                     </div>
                   </CardContent>
-                  <CardFooter className="px-5 pb-5 pt-0 flex-col gap-2">
-                    {isProductUnlocked(product.id) ? (
-                      <Button className="w-full bg-[#48805b] hover:bg-[#3a6a4a] text-white font-heading font-semibold rounded-xl h-11"
-                        onClick={() => {
-                          setSelectedProductId(product.id)
-                          setSubSelectProduct(product)
-                        }}>
-                        <ShoppingCart className="w-4 h-4 mr-2" /> Buy Now
-                      </Button>
-                    ) : (
-                      <Button variant="outline" className="w-full rounded-xl h-11"
-                        onClick={() => {
-                          setSelectedProductId(product.id)
-                          navigateTo('product-learning')
-                        }}>
-                        <GraduationCap className="w-4 h-4 mr-2" /> Complete Learning
-                      </Button>
-                    )}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="w-full text-xs text-[#88837b] hover:text-[#48805b] rounded-lg h-8"
-                      onClick={() => {
-                        const slug = product.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
-                        const url = `${window.location.origin}${window.location.pathname}?product=${slug}`
-                        navigator.clipboard.writeText(url).then(() => {
-                          toast.success('Link copied to clipboard!')
-                        }).catch(() => {
-                          toast.error('Failed to copy link')
-                        })
-                      }}
-                    >
-                      <Copy className="w-3 h-3 mr-1" /> Copy Link
+                  <CardFooter className="px-5 pb-5 pt-0">
+                    <Button className="w-full bg-[#48805b] hover:bg-[#3a6a4a] text-white font-heading font-semibold rounded-xl h-11">
+                      View Details <ArrowRight className="w-4 h-4 ml-2" />
                     </Button>
                   </CardFooter>
                 </Card>
               </motion.div>
             ))}
           </div>
+        </motion.div>
+      </div>
+    </div>
+  )
+}
 
-          {subSelectProduct && (
-            <SubscriptionSelector
-              product={subSelectProduct}
-              open={!!subSelectProduct}
-              onClose={() => setSubSelectProduct(null)}
-              onAddToCart={(mode, packType, amount, packDays, packDiscount) => {
-                if (!subSelectProduct) return
-                const isSub = mode === 'subscription'
-                addToCart({
-                  productId: isSub ? `${subSelectProduct.id}_sub_${packType}` : subSelectProduct.id,
-                  name: subSelectProduct.name + (isSub ? ` (${PACK_TYPES.find(p => p.value === packType)?.label || packType})` : ''),
-                  price: amount,
-                  quantity: 1,
-                  imageUrl: subSelectProduct.image_url || undefined,
-                  type: subSelectProduct.type,
-                  purchaseType: isSub ? 'subscription' : 'one-time',
-                  packType: isSub ? packType : undefined,
-                  packDays: isSub ? packDays : undefined,
-                  packDiscount: isSub ? packDiscount : undefined,
-                })
-                toast.success(isSub ? 'Subscription plan added to cart!' : 'Added to cart!')
-                setSubSelectProduct(null)
-                navigateTo('cart')
-              }}
-            />
-          )}
+// ── Product Detail Page ──────────────────────────────────────
+function ProductDetailPage() {
+  const { user, selectedProductId, navigateTo, addToCart, setSelectedProductId, goBack } = useAppStore()
+  const [product, setProduct] = useState<Product | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [purchaseMode, setPurchaseMode] = useState<'one-time' | 'subscription'>('one-time')
+  const [selectedPack, setSelectedPack] = useState('30_DAY')
+  const [quantity, setQuantity] = useState(1)
+  const [productProgress, setProductProgress] = useState<ProductLearningProgress | null>(null)
+  const [activeTab, setActiveTab] = useState('overview')
+
+  useEffect(() => {
+    if (!selectedProductId) return
+    productService.getAll().then(r => {
+      if (r.data) {
+        const found = r.data.find((p: Product) => p.id === selectedProductId)
+        if (found) setProduct(found)
+      }
+      setLoading(false)
+    })
+  }, [selectedProductId])
+
+  useEffect(() => {
+    if (!user || !selectedProductId) return
+    productLearningService.getAllProgress(user.user_id).then(r => {
+      if (r.data) {
+        const prog = r.data.find((p: ProductLearningProgress) => p.product_id === selectedProductId)
+        setProductProgress(prog || null)
+      }
+    })
+  }, [user, selectedProductId])
+
+  const isUnlocked = productProgress?.status === 'UNLOCKED' || productProgress?.status === 'COMPLETED'
+
+  if (loading) return <div className="min-h-screen flex items-center justify-center pt-16"><RefreshCw className="w-8 h-8 animate-spin text-[#48805b]" /></div>
+  if (!product) return <div className="min-h-screen flex items-center justify-center pt-16"><p className="text-[#88837b]">Product not found</p></div>
+
+  const selectedPackDef = PACK_TYPES.find(p => p.value === selectedPack) ?? PACK_TYPES[0]
+  const discountAmount = product.price * (selectedPackDef.discount / 100)
+  const finalPrice = purchaseMode === 'subscription' ? product.price - discountAmount : product.price
+  const totalAmount = finalPrice * quantity
+
+  const handleAddToCart = () => {
+    const isSub = purchaseMode === 'subscription'
+    addToCart({
+      productId: isSub ? `${product.id}_sub_${selectedPack}` : product.id,
+      name: product.name + (isSub ? ` (${selectedPackDef.label})` : ''),
+      price: finalPrice,
+      quantity,
+      imageUrl: product.image_url || undefined,
+      type: product.type,
+      purchaseType: isSub ? 'subscription' : 'one-time',
+      packType: isSub ? selectedPack : undefined,
+      packDays: isSub ? selectedPackDef.days : undefined,
+      packDiscount: isSub ? selectedPackDef.discount : undefined,
+    })
+    toast.success(isSub ? 'Subscription plan added to cart!' : 'Added to cart!')
+    navigateTo('cart')
+  }
+
+  const highlights = product.highlights ? product.highlights.split(',').map(h => h.trim()) : []
+  const ingredients = product.ingredients ? product.ingredients.split(',').map(i => i.trim()) : []
+
+  return (
+    <div className="min-h-screen bg-[#f4f3f0] pt-20 pb-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+          {/* Breadcrumb */}
+          <div className="flex items-center gap-2 text-sm text-[#88837b] mb-8">
+            <button onClick={() => navigateTo('products')} className="hover:text-[#48805b] transition-colors">Products</button>
+            <ChevronRight className="w-3.5 h-3.5" />
+            <span className="text-[#1f1e1c] font-medium">{product.name}</span>
+          </div>
+
+          <div className="grid lg:grid-cols-2 gap-10">
+            {/* Left: Product Image */}
+            <div className="space-y-4">
+              <div className="relative aspect-square rounded-3xl overflow-hidden bg-gradient-to-br from-[#e3dfd8]/40 to-[#f4f3f0] flex items-center justify-center border border-[#e3dfd8]">
+                <Image
+                  src={product.image_url || (product.type === 'STILL' ? '/images/product-still.webp' : '/images/product-fizz.webp')}
+                  alt={product.name}
+                  fill
+                  className="object-contain p-12"
+                />
+                <Badge className="absolute top-4 right-4 bg-[#48805b] text-white text-xs shadow-md">{product.type}</Badge>
+                {product.discount_label && (
+                  <Badge className="absolute top-4 left-4 bg-[#e7b973] text-[#1f1e1c] text-xs shadow-md">{product.discount_label}</Badge>
+                )}
+              </div>
+
+              {/* Highlights strip */}
+              {highlights.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {highlights.slice(0, 5).map((h, i) => (
+                    <span key={i} className="px-3 py-1.5 rounded-full bg-[#48805b]/8 text-[#48805b] text-xs font-medium border border-[#48805b]/15">
+                      {h}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Right: Product Info & Purchase */}
+            <div className="space-y-6">
+              {/* Title & Price */}
+              <div>
+                <h1 className="font-heading text-3xl sm:text-4xl font-bold text-[#1f1e1c] mb-2">{product.name}</h1>
+                <p className="text-[#88837b] leading-relaxed">{product.short_description || product.description}</p>
+                <div className="flex items-baseline gap-3 mt-4">
+                  <span className="font-heading text-4xl font-bold text-[#48805b]">₹{product.price.toLocaleString()}</span>
+                  {product.mrp && product.mrp > product.price && (
+                    <>
+                      <span className="text-lg text-[#88837b] line-through">₹{product.mrp.toLocaleString()}</span>
+                      <Badge className="bg-[#e7b973]/20 text-[#b56b20] text-xs">{Math.round(((product.mrp - product.price) / product.mrp) * 100)}% OFF</Badge>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Unlock status */}
+              {!isUnlocked && (
+                <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 flex items-center gap-3">
+                  <Lock className="w-5 h-5 text-amber-600 flex-shrink-0" />
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-amber-900">Complete Learning to Purchase</p>
+                    <p className="text-xs text-amber-700 mt-0.5">Take the product learning module and quiz first</p>
+                  </div>
+                  <Button size="sm" onClick={() => { setSelectedProductId(product.id); navigateTo('product-learning') }} className="bg-[#48805b] text-white rounded-lg flex-shrink-0">
+                    Start <ArrowRight className="w-3 h-3 ml-1" />
+                  </Button>
+                </div>
+              )}
+
+              {/* Purchase Mode Selector */}
+              {isUnlocked && (
+                <>
+                  <div>
+                    <Label className="text-sm font-heading font-semibold text-[#1f1e1c] mb-3 block">Choose Purchase Option</Label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <button
+                        onClick={() => setPurchaseMode('one-time')}
+                        className="relative rounded-xl p-4 text-left transition-all border-2"
+                        style={{
+                          borderColor: purchaseMode === 'one-time' ? '#48805b' : '#e3dfd8',
+                          backgroundColor: purchaseMode === 'one-time' ? 'rgba(72,128,91,0.06)' : 'white',
+                        }}
+                      >
+                        <CreditCard className="w-5 h-5 mb-2" style={{ color: purchaseMode === 'one-time' ? '#48805b' : '#88837b' }} />
+                        <p className="font-heading text-sm font-semibold text-[#1f1e1c]">One-Time</p>
+                        <p className="text-[11px] text-[#88837b]">Single purchase</p>
+                        <p className="font-heading font-bold text-[#48805b] mt-1">₹{product.price.toLocaleString()}</p>
+                        {purchaseMode === 'one-time' && <CheckCircle className="absolute top-3 right-3 w-4 h-4 text-[#48805b]" />}
+                      </button>
+                      <button
+                        onClick={() => setPurchaseMode('subscription')}
+                        className="relative rounded-xl p-4 text-left transition-all border-2"
+                        style={{
+                          borderColor: purchaseMode === 'subscription' ? '#48805b' : '#e3dfd8',
+                          backgroundColor: purchaseMode === 'subscription' ? 'rgba(72,128,91,0.06)' : 'white',
+                        }}
+                      >
+                        <RefreshCw className="w-5 h-5 mb-2" style={{ color: purchaseMode === 'subscription' ? '#48805b' : '#88837b' }} />
+                        <p className="font-heading text-sm font-semibold text-[#1f1e1c]">Subscribe</p>
+                        <p className="text-[11px] text-[#88837b]">Save up to 15%</p>
+                        <p className="font-heading font-bold text-[#48805b] mt-1">₹{product.price.toLocaleString()}/mo</p>
+                        {purchaseMode === 'subscription' && <CheckCircle className="absolute top-3 right-3 w-4 h-4 text-[#48805b]" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Subscription Pack Selector */}
+                  {purchaseMode === 'subscription' && (
+                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} transition={{ duration: 0.2 }}>
+                      <Label className="text-sm font-heading font-semibold text-[#1f1e1c] mb-2 block">Select Pack Duration</Label>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        {PACK_TYPES.map(pt => (
+                          <button
+                            key={pt.value}
+                            onClick={() => setSelectedPack(pt.value)}
+                            className="relative rounded-xl p-3 text-center transition-all border-2"
+                            style={{
+                              borderColor: selectedPack === pt.value ? '#48805b' : '#e3dfd8',
+                              backgroundColor: selectedPack === pt.value ? 'rgba(72,128,91,0.06)' : 'white',
+                            }}
+                          >
+                            <p className="font-heading text-xs font-semibold text-[#1f1e1c]">{pt.label}</p>
+                            {pt.discount > 0 && <p className="text-[10px] text-[#48805b] font-medium">{pt.discount}% off</p>}
+                            <p className="font-heading text-sm font-bold text-[#48805b] mt-1">₹{Math.round(product.price * (1 - pt.discount / 100)).toLocaleString()}</p>
+                            {selectedPack === pt.value && <CheckCircle className="absolute top-1.5 right-1.5 w-3 h-3 text-[#48805b]" />}
+                          </button>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {/* Quantity */}
+                  <div>
+                    <Label className="text-sm font-heading font-semibold text-[#1f1e1c] mb-2 block">Quantity</Label>
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-0 border border-[#e3dfd8] rounded-xl overflow-hidden">
+                        <button onClick={() => setQuantity(q => Math.max(1, q - 1))} className="w-10 h-10 flex items-center justify-center hover:bg-[#e3dfd8]/50 transition-colors"><Minus className="w-4 h-4" /></button>
+                        <span className="w-12 text-center font-heading font-semibold text-[#1f1e1c]">{quantity}</span>
+                        <button onClick={() => setQuantity(q => Math.min(product.max_order_qty || 10, q + 1))} className="w-10 h-10 flex items-center justify-center hover:bg-[#e3dfd8]/50 transition-colors"><Plus className="w-4 h-4" /></button>
+                      </div>
+                      <span className="text-xs text-[#88837b]">{product.weight}</span>
+                    </div>
+                  </div>
+
+                  {/* Price Summary */}
+                  <div className="p-4 rounded-xl bg-white border border-[#e3dfd8] space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-[#88837b]">Price per unit</span>
+                      <span className="text-[#1f1e1c]">₹{finalPrice.toLocaleString()}</span>
+                    </div>
+                    {purchaseMode === 'subscription' && selectedPackDef.discount > 0 && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-[#48805b]">Discount ({selectedPackDef.discount}%)</span>
+                        <span className="text-[#48805b]">-₹{discountAmount.toLocaleString()}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between text-sm">
+                      <span className="text-[#88837b]">Quantity</span>
+                      <span className="text-[#1f1e1c]">× {quantity}</span>
+                    </div>
+                    <Separator />
+                    <div className="flex justify-between">
+                      <span className="font-heading font-bold text-[#1f1e1c]">Total</span>
+                      <span className="font-heading font-bold text-xl text-[#48805b]">₹{totalAmount.toLocaleString()}</span>
+                    </div>
+                    {purchaseMode === 'subscription' && (
+                      <p className="text-[10px] text-[#88837b]">Auto-renews every {selectedPackDef.days} days · Cancel anytime</p>
+                    )}
+                  </div>
+
+                  {/* Add to Cart Button */}
+                  <div className="flex gap-3">
+                    <Button
+                      onClick={handleAddToCart}
+                      className="flex-1 h-13 bg-[#48805b] hover:bg-[#3a6a4a] text-white font-heading font-semibold text-base rounded-xl"
+                    >
+                      <ShoppingCart className="w-5 h-5 mr-2" />
+                      {purchaseMode === 'subscription' ? 'Add Subscription to Cart' : 'Add to Cart'}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="h-13 rounded-xl border-[#e3dfd8]"
+                      onClick={() => {
+                        const slug = product.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+                        const url = `${window.location.origin}${window.location.pathname}?product=${slug}`
+                        navigator.clipboard.writeText(url).then(() => toast.success('Link copied!')).catch(() => toast.error('Failed to copy'))
+                      }}
+                    >
+                      <Share2 className="w-5 h-5" />
+                    </Button>
+                  </div>
+                </>
+              )}
+
+              {/* Trust badges */}
+              <div className="grid grid-cols-3 gap-3">
+                <div className="flex flex-col items-center text-center p-3 rounded-xl bg-white border border-[#e3dfd8]">
+                  <ShieldCheck className="w-5 h-5 text-[#48805b] mb-1" />
+                  <p className="text-[10px] font-medium text-[#1f1e1c]">FSSAI Certified</p>
+                  <p className="text-[9px] text-[#88837b]">{product.fssai_license || 'Licensed'}</p>
+                </div>
+                <div className="flex flex-col items-center text-center p-3 rounded-xl bg-white border border-[#e3dfd8]">
+                  <Truck className="w-5 h-5 text-[#48805b] mb-1" />
+                  <p className="text-[10px] font-medium text-[#1f1e1c]">Free Shipping</p>
+                  <p className="text-[9px] text-[#88837b]">Pan India</p>
+                </div>
+                <div className="flex flex-col items-center text-center p-3 rounded-xl bg-white border border-[#e3dfd8]">
+                  <Leaf className="w-5 h-5 text-[#48805b] mb-1" />
+                  <p className="text-[10px] font-medium text-[#1f1e1c]">100% Natural</p>
+                  <p className="text-[9px] text-[#88837b]">{product.country_origin || 'Made in India'}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Product Details Tabs */}
+          <div className="mt-12">
+            <div className="flex gap-1 border-b border-[#e3dfd8] mb-6">
+              {[
+                { key: 'overview', label: 'Overview' },
+                { key: 'nutrition', label: 'Nutrition & Ingredients' },
+                { key: 'info', label: 'Storage & Safety' },
+              ].map(tab => (
+                <button
+                  key={tab.key}
+                  onClick={() => setActiveTab(tab.key)}
+                  className={`px-5 py-3 text-sm font-heading font-medium transition-all border-b-2 -mb-px ${
+                    activeTab === tab.key ? 'border-[#48805b] text-[#48805b]' : 'border-transparent text-[#88837b] hover:text-[#1f1e1c]'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
+            <motion.div key={activeTab} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
+              {activeTab === 'overview' && (
+                <div className="grid md:grid-cols-2 gap-8">
+                  <div className="space-y-4">
+                    <h3 className="font-heading font-bold text-lg text-[#1f1e1c]">About This Product</h3>
+                    <p className="text-[#88837b] leading-relaxed">{product.description}</p>
+                    {highlights.length > 0 && (
+                      <div className="space-y-2">
+                        {highlights.map((h, i) => (
+                          <div key={i} className="flex items-center gap-2">
+                            <CheckCircle className="w-4 h-4 text-[#48805b] flex-shrink-0" />
+                            <span className="text-sm text-[#1f1e1c]">{h}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <div className="space-y-3">
+                    <h3 className="font-heading font-bold text-lg text-[#1f1e1c]">Product Details</h3>
+                    <div className="grid grid-cols-2 gap-3">
+                      {[
+                        { label: 'SKU', value: product.sku },
+                        { label: 'Weight', value: product.weight },
+                        { label: 'Serving Size', value: product.serving_size },
+                        { label: 'Flavor', value: product.flavor },
+                        { label: 'Shelf Life', value: product.shelf_life },
+                        { label: 'HSN Code', value: product.hsn_code },
+                        { label: 'GST Rate', value: product.gst_rate ? `${product.gst_rate}%` : undefined },
+                        { label: 'Brand', value: product.brand },
+                      ].filter(d => d.value).map((d, i) => (
+                        <div key={i} className="p-3 rounded-lg bg-white border border-[#e3dfd8]">
+                          <p className="text-[10px] text-[#88837b] uppercase tracking-wider">{d.label}</p>
+                          <p className="text-sm font-medium text-[#1f1e1c] mt-0.5">{d.value}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'nutrition' && (
+                <div className="grid md:grid-cols-2 gap-8">
+                  <div className="space-y-4">
+                    <h3 className="font-heading font-bold text-lg text-[#1f1e1c]">Nutrition Info</h3>
+                    {product.nutrition_info ? (
+                      <div className="p-4 rounded-xl bg-white border border-[#e3dfd8]">
+                        <p className="text-sm text-[#1f1e1c] leading-relaxed">{product.nutrition_info}</p>
+                      </div>
+                    ) : <p className="text-sm text-[#88837b]">No nutrition info available</p>}
+                  </div>
+                  <div className="space-y-4">
+                    <h3 className="font-heading font-bold text-lg text-[#1f1e1c]">Ingredients</h3>
+                    {ingredients.length > 0 ? (
+                      <div className="flex flex-wrap gap-2">
+                        {ingredients.map((ing, i) => (
+                          <span key={i} className="px-3 py-1.5 rounded-full bg-[#edf5ee] text-[#48805b] text-xs font-medium">{ing}</span>
+                        ))}
+                      </div>
+                    ) : <p className="text-sm text-[#88837b]">No ingredients info available</p>}
+                    {product.allergen_info && (
+                      <div className="p-3 rounded-xl bg-red-50 border border-red-200">
+                        <p className="text-xs font-semibold text-red-800 mb-1">⚠️ Allergen Info</p>
+                        <p className="text-xs text-red-700">{product.allergen_info}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'info' && (
+                <div className="grid md:grid-cols-2 gap-8">
+                  <div className="space-y-4">
+                    <h3 className="font-heading font-bold text-lg text-[#1f1e1c]">Storage Instructions</h3>
+                    {product.storage_info ? (
+                      <div className="p-4 rounded-xl bg-white border border-[#e3dfd8] flex items-start gap-3">
+                        <ShieldCheck className="w-5 h-5 text-[#48805b] flex-shrink-0 mt-0.5" />
+                        <p className="text-sm text-[#1f1e1c]">{product.storage_info}</p>
+                      </div>
+                    ) : <p className="text-sm text-[#88837b]">No storage info available</p>}
+                  </div>
+                  <div className="space-y-4">
+                    <h3 className="font-heading font-bold text-lg text-[#1f1e1c]">Product Safety</h3>
+                    <div className="space-y-2">
+                      {product.fssai_license && (
+                        <div className="p-3 rounded-lg bg-white border border-[#e3dfd8] flex items-center gap-3">
+                          <ShieldCheck className="w-4 h-4 text-[#48805b]" />
+                          <div><p className="text-xs text-[#88837b]">FSSAI License</p><p className="text-sm font-medium text-[#1f1e1c]">{product.fssai_license}</p></div>
+                        </div>
+                      )}
+                      {product.country_origin && (
+                        <div className="p-3 rounded-lg bg-white border border-[#e3dfd8] flex items-center gap-3">
+                          <Globe className="w-4 h-4 text-[#48805b]" />
+                          <div><p className="text-xs text-[#88837b]">Country of Origin</p><p className="text-sm font-medium text-[#1f1e1c]">{product.country_origin}</p></div>
+                        </div>
+                      )}
+                      {product.shelf_life && (
+                        <div className="p-3 rounded-lg bg-white border border-[#e3dfd8] flex items-center gap-3">
+                          <Clock className="w-4 h-4 text-[#48805b]" />
+                          <div><p className="text-xs text-[#88837b]">Shelf Life</p><p className="text-sm font-medium text-[#1f1e1c]">{product.shelf_life}</p></div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </motion.div>
+          </div>
+
+          {/* Contact Section */}
+          <div className="mt-12 p-6 rounded-2xl bg-white border border-[#e3dfd8]">
+            <h3 className="font-heading font-bold text-lg text-[#1f1e1c] mb-4">Need Help? Contact Us</h3>
+            <div className="grid sm:grid-cols-3 gap-4">
+              <button className="flex items-center gap-3 p-4 rounded-xl bg-[#25D366]/8 border border-[#25D366]/20 hover:bg-[#25D366]/15 transition-all"
+                onClick={() => window.open('https://wa.me/919876543210?text=Hi%2C%20I%20have%20a%20question%20about%20NOTJUST%20Watr', '_blank')}>
+                <div className="w-10 h-10 rounded-lg bg-[#25D366]/15 flex items-center justify-center"><MessageCircle className="w-5 h-5 text-[#25D366]" /></div>
+                <div className="text-left">
+                  <p className="text-sm font-semibold text-[#1f1e1c]">WhatsApp</p>
+                  <p className="text-[11px] text-[#88837b]">Chat with us instantly</p>
+                </div>
+              </button>
+              <button className="flex items-center gap-3 p-4 rounded-xl bg-[#2e91b2]/8 border border-[#2e91b2]/20 hover:bg-[#2e91b2]/15 transition-all"
+                onClick={() => window.open('mailto:hello@notjust.health?subject=Query%20about%20NOTJUST%20Watr', '_blank')}>
+                <div className="w-10 h-10 rounded-lg bg-[#2e91b2]/15 flex items-center justify-center"><Mail className="w-5 h-5 text-[#2e91b2]" /></div>
+                <div className="text-left">
+                  <p className="text-sm font-semibold text-[#1f1e1c]">Email</p>
+                  <p className="text-[11px] text-[#88837b]">hello@notjust.health</p>
+                </div>
+              </button>
+              <button className="flex items-center gap-3 p-4 rounded-xl bg-[#48805b]/8 border border-[#48805b]/20 hover:bg-[#48805b]/15 transition-all"
+                onClick={() => window.open('sms:+919876543210?body=Hi%2C%20I%20have%20a%20question%20about%20NOTJUST%20Watr', '_blank')}>
+                <div className="w-10 h-10 rounded-lg bg-[#48805b]/15 flex items-center justify-center"><Smartphone className="w-5 h-5 text-[#48805b]" /></div>
+                <div className="text-left">
+                  <p className="text-sm font-semibold text-[#1f1e1c]">SMS</p>
+                  <p className="text-[11px] text-[#88837b]">+91 98765 43210</p>
+                </div>
+              </button>
+            </div>
+          </div>
         </motion.div>
       </div>
     </div>
@@ -5213,6 +5622,7 @@ export default function HomePage() {
       case 'learning': return <LearningModule />
       case 'quiz': return <QuizModule />
       case 'products': return <Suspense fallback={<div className="min-h-screen flex items-center justify-center pt-16"><RefreshCw className="w-8 h-8 animate-spin text-[#48805b]" /></div>}><ProductsCatalog /></Suspense>
+      case 'product-detail': return <ProductDetailPage />
       case 'product-learning': return <ProductLearningModule />
       case 'subscriptions': return <SubscriptionView />
       case 'cart': return <CartView />

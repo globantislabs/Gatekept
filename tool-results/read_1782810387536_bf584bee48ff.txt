@@ -1,0 +1,502 @@
+  2100→              {step === 2 && (
+  2101→                <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
+  2102→                  <Card className="border-[#e3dfd8]">
+  2103→                    <CardHeader>
+  2104→                      <div className="flex items-center gap-3">
+  2105→                        <div className="w-10 h-10 rounded-xl bg-[#48805b]/10 flex items-center justify-center">
+  2106→                          <CreditCard className="w-5 h-5 text-[#48805b]" />
+  2107→                        </div>
+  2108→                        <div>
+  2109→                          <CardTitle className="font-heading">Payment Method</CardTitle>
+  2110→                          <p className="text-xs text-[#88837b] mt-0.5">Choose how you want to pay</p>
+  2111→                        </div>
+  2112→                      </div>
+  2113→                    </CardHeader>
+  2114→                    <CardContent className="space-y-4">
+  2115→                      {/* Razorpay Option */}
+  2116→                      <button
+  2117→                        onClick={() => setPaymentMethod('razorpay')}
+  2118→                        className={`w-full p-4 rounded-xl border-2 transition-all text-left ${
+  2119→                          paymentMethod === 'razorpay' ? 'border-[#48805b] bg-[#48805b]/5' : 'border-[#e3dfd8] hover:border-[#48805b]/30'
+  2120→                        }`}
+  2121→                      >
+  2122→                        <div className="flex items-center gap-3">
+  2123→                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+  2124→                            paymentMethod === 'razorpay' ? 'border-[#48805b]' : 'border-[#e3dfd8]'
+  2125→                          }`}>
+  2126→                            {paymentMethod === 'razorpay' && <div className="w-2.5 h-2.5 rounded-full bg-[#48805b]" />}
+  2127→                          </div>
+  2128→                          <div className="flex-1">
+  2129→                            <div className="flex items-center gap-2">
+  2130→                              <span className="font-heading font-semibold text-[#1f1e1c]">Online Payment</span>
+  2131→                              <Badge className="bg-[#2e91b2]/10 text-[#2e91b2] text-[10px]">Razorpay</Badge>
+  2132→                            </div>
+  2133→                            <p className="text-xs text-[#88837b] mt-0.5">Pay securely with UPI, Cards, Net Banking & Wallets</p>
+  2134→                          </div>
+  2135→                          <div className="flex items-center gap-1 text-[#88837b]">
+  2136→                            <Shield className="w-4 h-4" />
+  2137→                            <span className="text-[10px]">Secure</span>
+  2138→                          </div>
+  2139→                        </div>
+  2140→                      </button>
+  2141→
+  2142→                      {/* COD Option */}
+  2143→                      <button
+  2144→                        onClick={() => setPaymentMethod('cod')}
+  2145→                        className={`w-full p-4 rounded-xl border-2 transition-all text-left ${
+  2146→                          paymentMethod === 'cod' ? 'border-[#48805b] bg-[#48805b]/5' : 'border-[#e3dfd8] hover:border-[#48805b]/30'
+  2147→                        }`}
+  2148→                      >
+  2149→                        <div className="flex items-center gap-3">
+  2150→                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+  2151→                            paymentMethod === 'cod' ? 'border-[#48805b]' : 'border-[#e3dfd8]'
+  2152→                          }`}>
+  2153→                            {paymentMethod === 'cod' && <div className="w-2.5 h-2.5 rounded-full bg-[#48805b]" />}
+  2154→                          </div>
+  2155→                          <div className="flex-1">
+  2156→                            <span className="font-heading font-semibold text-[#1f1e1c]">Cash on Delivery</span>
+  2157→                            <p className="text-xs text-[#88837b] mt-0.5">Pay when your order arrives at your doorstep</p>
+  2158→                          </div>
+  2159→                          <Truck className="w-5 h-5 text-[#88837b]" />
+  2160→                        </div>
+  2161→                      </button>
+  2162→                    </CardContent>
+  2163→                    <CardFooter className="flex justify-between px-6 pb-6">
+  2164→                      <Button variant="outline" onClick={() => setStep(1)} className="rounded-xl">
+  2165→                        <ArrowLeft className="w-4 h-4 mr-2" /> Back
+  2166→                      </Button>
+  2167→                      <Button
+  2168→                        onClick={() => {
+  2169→                          if (paymentMethod === 'cod') {
+  2170→                            handlePlaceOrder()
+  2171→                          } else {
+  2172→                            handleRazorpayPayment()
+  2173→                          }
+  2174→                        }}
+  2175→                        disabled={loading}
+  2176→                        className="bg-[#48805b] hover:bg-[#3a6a4a] text-white font-heading font-semibold rounded-xl px-8 h-11"
+  2177→                      >
+  2178→                        {loading ? (
+  2179→                          <><RefreshCw className="w-4 h-4 mr-2 animate-spin" /> Processing...</>
+  2180→                        ) : paymentMethod === 'razorpay' ? (
+  2181→                          <><CreditCard className="w-4 h-4 mr-2" /> Pay ₹{grandTotal.toLocaleString()}</>
+  2182→                        ) : (
+  2183→                          <><Truck className="w-4 h-4 mr-2" /> Place Order (COD)</>
+  2184→                        )}
+  2185→                      </Button>
+  2186→                    </CardFooter>
+  2187→                  </Card>
+  2188→                </motion.div>
+  2189→              )}
+  2190→            </div>
+  2191→
+  2192→            {/* Order Summary Sidebar */}
+  2193→            <div className="md:col-span-2">
+  2194→              <Card className="border-[#e3dfd8] sticky top-24">
+  2195→                <CardHeader className="pb-3">
+  2196→                  <CardTitle className="font-heading text-base">Order Summary</CardTitle>
+  2197→                </CardHeader>
+  2198→                <CardContent className="space-y-3">
+  2199→                  {cart.map(item => (
+  2200→                    <div key={item.productId} className="flex gap-3 items-start">
+  2201→                      <div className="w-12 h-12 rounded-lg bg-[#e3dfd8]/50 flex items-center justify-center flex-shrink-0">
+  2202→                        <Package className="w-5 h-5 text-[#88837b]" />
+  2203→                      </div>
+  2204→                      <div className="flex-1 min-w-0">
+  2205→                        <p className="text-sm font-medium text-[#1f1e1c] truncate">{item.name}</p>
+  2206→                        <p className="text-xs text-[#88837b]">Qty: {item.quantity}</p>
+  2207→                      </div>
+  2208→                      <p className="text-sm font-semibold text-[#1f1e1c]">₹{(item.price * item.quantity).toLocaleString()}</p>
+  2209→                    </div>
+  2210→                  ))}
+  2211→                  <Separator />
+  2212→                  <div className="space-y-1.5 text-sm">
+  2213→                    <div className="flex justify-between"><span className="text-[#88837b]">Subtotal</span><span>₹{total.toLocaleString()}</span></div>
+  2214→                    <div className="flex justify-between"><span className="text-[#88837b]">Shipping</span><span className="text-[#48805b]">Free</span></div>
+  2215→                    <div className="flex justify-between"><span className="text-[#88837b]">Tax (18% GST)</span><span>₹{tax.toLocaleString()}</span></div>
+  2216→                  </div>
+  2217→                  <Separator />
+  2218→                  <div className="flex justify-between font-heading font-bold">
+  2219→                    <span className="text-lg">Total</span>
+  2220→                    <span className="text-lg text-[#48805b]">₹{grandTotal.toLocaleString()}</span>
+  2221→                  </div>
+  2222→
+  2223→                  {/* Address Preview */}
+  2224→                  {step >= 2 && addressValid && (
+  2225→                    <>
+  2226→                      <Separator />
+  2227→                      <div className="text-xs">
+  2228→                        <p className="text-[#88837b] mb-1">Delivering to:</p>
+  2229→                        <p className="text-[#1f1e1c] font-medium">{address.name}</p>
+  2230→                        <p className="text-[#88837b]">{address.line1}, {address.city}, {address.state} - {address.pincode}</p>
+  2231→                      </div>
+  2232→                    </>
+  2233→                  )}
+  2234→                </CardContent>
+  2235→              </Card>
+  2236→            </div>
+  2237→          </div>
+  2238→        </motion.div>
+  2239→      </div>
+  2240→    </div>
+  2241→  )
+  2242→}
+  2243→
+  2244→function OrderSuccess() {
+  2245→  const { lastOrderId, navigateTo } = useAppStore()
+  2246→  return (
+  2247→    <div className="min-h-screen flex items-center justify-center bg-[#f4f3f0] pt-16 px-4">
+  2248→      <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="w-full max-w-md">
+  2249→        <Card className="border-[#e3dfd8] shadow-xl text-center overflow-hidden">
+  2250→          {/* Green header accent */}
+  2251→          <div className="h-2 bg-gradient-to-r from-[#48805b] to-[#afb75d]" />
+  2252→          <CardContent className="p-8">
+  2253→            <motion.div
+  2254→              initial={{ scale: 0 }}
+  2255→              animate={{ scale: 1 }}
+  2256→              transition={{ type: 'spring', stiffness: 200, delay: 0.2 }}
+  2257→              className="w-20 h-20 rounded-full bg-[#48805b]/10 flex items-center justify-center mx-auto mb-6"
+  2258→            >
+  2259→              <CheckCircle className="w-10 h-10 text-[#48805b]" />
+  2260→            </motion.div>
+  2261→            <h2 className="font-heading text-2xl font-bold text-[#1f1e1c] mb-2">Order Placed!</h2>
+  2262→            <p className="text-[#88837b] mb-6">Thank you for your purchase. Your wellness journey begins now.</p>
+  2263→            {lastOrderId && (
+  2264→              <div className="p-3 rounded-xl bg-[#f4f3f0] border border-[#e3dfd8] mb-6">
+  2265→                <p className="text-xs text-[#88837b] mb-1">Order ID</p>
+  2266→                <p className="font-mono text-[#48805b] font-semibold">{lastOrderId}</p>
+  2267→              </div>
+  2268→            )}
+  2269→            <div className="flex flex-col gap-3">
+  2270→              <Button onClick={() => navigateTo('products')} className="bg-[#48805b] hover:bg-[#3a6a4a] text-white font-heading font-semibold rounded-xl h-11">
+  2271→                Continue Shopping
+  2272→              </Button>
+  2273→              <Button variant="outline" onClick={() => navigateTo('landing')} className="rounded-xl h-11">Go Home</Button>
+  2274→            </div>
+  2275→          </CardContent>
+  2276→        </Card>
+  2277→      </motion.div>
+  2278→    </div>
+  2279→  )
+  2280→}
+  2281→
+  2282→// ============================================================
+  2283→// ADMIN DASHBOARD — Jira/Huly Executive Style
+  2284→// ============================================================
+  2285→// CSV Export helper
+  2286→function exportToCSV(data: any[], filename: string, columns: { key: string; label: string }[]) {
+  2287→  const header = columns.map(c => c.label).join(',')
+  2288→  const rows = data.map(row => columns.map(c => {
+  2289→    const val = row[c.key]
+  2290→    const str = val === null || val === undefined ? '' : String(val)
+  2291→    return `"${str.replace(/"/g, '""')}"`
+  2292→  }).join(','))
+  2293→  const csv = [header, ...rows].join('\n')
+  2294→  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+  2295→  const url = URL.createObjectURL(blob)
+  2296→  const a = document.createElement('a')
+  2297→  a.href = url; a.download = `${filename}.csv`; a.click()
+  2298→  URL.revokeObjectURL(url)
+  2299→  toast.success(`Exported ${data.length} rows as CSV`)
+  2300→}
+  2301→
+  2302→// PDF Export helper (simple HTML-to-print)
+  2303→function exportToPDF(title: string) {
+  2304→  const printWindow = window.open('', '_blank')
+  2305→  if (!printWindow) return
+  2306→  printWindow.document.write(`
+  2307→    <html><head><title>${title}</title>
+  2308→    <style>body{font-family:system-ui;margin:40px;}table{width:100%;border-collapse:collapse;margin-top:20px;}th,td{border:1px solid #ddd;padding:8px 12px;text-align:left;font-size:13px;}th{background:#f5f5f5;font-weight:600;}</style>
+  2309→    </head><body><h1>${title}</h1><p>Generated: ${new Date().toLocaleString()}</p>`)
+  2310→  const mainContent = document.querySelector('[data-admin-content]')
+  2311→  if (mainContent) {
+  2312→    const table = mainContent.querySelector('table')
+  2313→    if (table) printWindow.document.write(table.outerHTML)
+  2314→    else printWindow.document.write(mainContent.innerHTML)
+  2315→  }
+  2316→  printWindow.document.write('</body></html>')
+  2317→  printWindow.document.close()
+  2318→  printWindow.print()
+  2319→}
+  2320→
+  2321→
+  2322→// ============================================================
+  2323→// ADMIN DASHBOARD — Jira/Huly Style Light Theme
+  2324→// ============================================================
+  2325→
+  2326→// Admin theme constants
+  2327→const A = {
+  2328→  bg: '#f4f3f0',
+  2329→  surface: '#ffffff',
+  2330→  border: '#e3dfd8',
+  2331→  borderLight: '#eeebe5',
+  2332→  text: '#1f1e1c',
+  2333→  textSecondary: '#6b6560',
+  2334→  textMuted: '#99948d',
+  2335→  green: '#48805b',
+  2336→  greenLight: '#e8f0eb',
+  2337→  lime: '#afb75d',
+  2338→  limeLight: '#f4f5e8',
+  2339→  blue: '#2e91b2',
+  2340→  blueLight: '#e6f2f7',
+  2341→  amber: '#c4880e',
+  2342→  amberLight: '#fdf5e6',
+  2343→  red: '#c44530',
+  2344→  redLight: '#fceeed',
+  2345→  sidebarBg: '#1f1e1c',
+  2346→  sidebarText: '#c8c3bb',
+  2347→  sidebarActive: '#48805b',
+  2348→  sidebarHover: '#2a2926',
+  2349→}
+  2350→
+  2351→function AdminDashboard() {
+  2352→  const { adminTab, setAdminTab, user, navigateTo } = useAppStore()
+  2353→  const [stats, setStats] = useState<any>(null)
+  2354→  const [users, setUsers] = useState<any[]>([])
+  2355→  const [campaigns, setCampaigns] = useState<Campaign[]>([])
+  2356→  const [scans, setScans] = useState<QrScan[]>([])
+  2357→  const [orders, setOrders] = useState<any[]>([])
+  2358→  const [questions, setQuestions] = useState<QuizQuestion[]>([])
+  2359→  const [guarantees, setGuarantees] = useState<GuaranteePlan[]>([])
+  2360→  const [loading, setLoading] = useState(true)
+  2361→  const [userSearch, setUserSearch] = useState('')
+  2362→  const [selectedOrder, setSelectedOrder] = useState<any>(null)
+  2363→  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  2364→  const [orderView, setOrderView] = useState<'kanban' | 'table'>('table')
+  2365→
+  2366→  useEffect(() => {
+  2367→    if (!user?.is_admin) { navigateTo('landing'); return }
+  2368→    const load = async () => {
+  2369→      const [statsR, usersR, campsR, scansR, ordersR, questionsR, guaranteesR] = await Promise.all([
+  2370→        adminStatsService.getDashboardStats(),
+  2371→        userService.getAll(),
+  2372→        campaignService.getAll(),
+  2373→        qrScanService.getAll(),
+  2374→        orderService.getAll(),
+  2375→        quizService.getQuestions(20),
+  2376→        guaranteeService.getAll(),
+  2377→      ])
+  2378→      if (statsR.data) setStats(statsR.data)
+  2379→      if (usersR.data) setUsers(usersR.data)
+  2380→      if (campsR.data) setCampaigns(campsR.data)
+  2381→      if (scansR.data) setScans(scansR.data)
+  2382→      if (ordersR.data) setOrders(ordersR.data)
+  2383→      if (questionsR.data) setQuestions(questionsR.data)
+  2384→      if (guaranteesR.data) setGuarantees(guaranteesR.data)
+  2385→      setLoading(false)
+  2386→    }
+  2387→    load()
+  2388→  }, [user, navigateTo])
+  2389→
+  2390→  const refreshData = async () => {
+  2391→    setLoading(true)
+  2392→    const [statsR, usersR, campsR, scansR, ordersR] = await Promise.all([
+  2393→      adminStatsService.getDashboardStats(),
+  2394→      userService.getAll(),
+  2395→      campaignService.getAll(),
+  2396→      qrScanService.getAll(),
+  2397→      orderService.getAll(),
+  2398→    ])
+  2399→    if (statsR.data) setStats(statsR.data)
+  2400→    if (usersR.data) setUsers(usersR.data)
+  2401→    if (campsR.data) setCampaigns(campsR.data)
+  2402→    if (scansR.data) setScans(scansR.data)
+  2403→    if (ordersR.data) setOrders(ordersR.data)
+  2404→    setLoading(false)
+  2405→  }
+  2406→
+  2407→  if (loading) return (
+  2408→    <div className="min-h-screen flex items-center justify-center font-[family-name:var(--font-admin)]" style={{ background: A.bg }}>
+  2409→      <div className="flex flex-col items-center gap-3">
+  2410→        <div className="w-10 h-10 rounded-lg flex items-center justify-center animate-pulse" style={{ background: A.greenLight }}>
+  2411→          <Leaf className="w-5 h-5" style={{ color: A.green }} />
+  2412→        </div>
+  2413→        <span className="text-sm" style={{ color: A.textMuted }}>Loading dashboard...</span>
+  2414→      </div>
+  2415→    </div>
+  2416→  )
+  2417→  if (!stats) return null
+  2418→
+  2419→  const ordersByStatus = Object.entries(stats.ordersByStatus || {}).map(([name, value]) => ({ name, value: value as number }))
+  2420→  const scansByCampaign = Object.entries(stats.scansByCampaign || {}).map(([name, value]) => ({ name: name.slice(0, 15), value: value as number }))
+  2421→  const campaignsByChannel = Object.entries(stats.campaignsByChannel || {}).map(([name, value]) => ({ name, value: value as number }))
+  2422→
+  2423→  const revenueTrend = [
+  2424→    { month: 'Jan', revenue: Math.round(stats.totalRevenue * 0.1), orders: Math.round(stats.totalOrders * 0.08) },
+  2425→    { month: 'Feb', revenue: Math.round(stats.totalRevenue * 0.12), orders: Math.round(stats.totalOrders * 0.1) },
+  2426→    { month: 'Mar', revenue: Math.round(stats.totalRevenue * 0.18), orders: Math.round(stats.totalOrders * 0.15) },
+  2427→    { month: 'Apr', revenue: Math.round(stats.totalRevenue * 0.22), orders: Math.round(stats.totalOrders * 0.18) },
+  2428→    { month: 'May', revenue: Math.round(stats.totalRevenue * 0.28), orders: Math.round(stats.totalOrders * 0.22) },
+  2429→    { month: 'Jun', revenue: Math.round(stats.totalRevenue * 0.32), orders: Math.round(stats.totalOrders * 0.27) },
+  2430→  ]
+  2431→
+  2432→  const sidebarItems = [
+  2433→    { value: 'dashboard', label: 'Overview', icon: LayoutDashboard, badge: null },
+  2434→    { value: 'users', label: 'Users', icon: Users, badge: users.length },
+  2435→    { value: 'campaigns', label: 'Campaigns', icon: MegaphoneIcon, badge: campaigns.length },
+  2436→    { value: 'qr', label: 'QR Codes', icon: QrCode, badge: campaigns.filter(c => c.status === 'ACTIVE').length },
+  2437→    { value: 'orders', label: 'Orders', icon: Package, badge: orders.length },
+  2438→    { value: 'analytics', label: 'Analytics', icon: TrendingUp, badge: null },
+  2439→    { value: 'content', label: 'Content', icon: FileText, badge: questions.length },
+  2440→    { value: 'guarantees', label: 'Guarantees', icon: Shield, badge: guarantees.length },
+  2441→  ]
+  2442→
+  2443→  const filteredUsers = userSearch
+  2444→    ? users.filter((u: any) => u.name?.toLowerCase().includes(userSearch.toLowerCase()) || u.email?.toLowerCase().includes(userSearch.toLowerCase()))
+  2445→    : users
+  2446→
+  2447→  const orderStatuses = ['PENDING', 'CONFIRMED', 'SHIPPED', 'DELIVERED'] as const
+  2448→  const ordersByKanbanStatus = (status: string) => orders.filter((o: any) => o.status === status)
+  2449→
+  2450→  const statusColors: Record<string, { text: string; bg: string; dot: string }> = {
+  2451→    PENDING: { text: A.amber, bg: A.amberLight, dot: A.amber },
+  2452→    CONFIRMED: { text: A.blue, bg: A.blueLight, dot: A.blue },
+  2453→    SHIPPED: { text: '#7c3aed', bg: '#f3f0ff', dot: '#7c3aed' },
+  2454→    DELIVERED: { text: A.green, bg: A.greenLight, dot: A.green },
+  2455→    CANCELLED: { text: A.red, bg: A.redLight, dot: A.red },
+  2456→  }
+  2457→
+  2458→  const StatusBadge = ({ status }: { status: string }) => {
+  2459→    const c = statusColors[status] || { text: A.textMuted, bg: A.borderLight, dot: A.textMuted }
+  2460→    return (
+  2461→      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-medium" style={{ color: c.text, background: c.bg }}>
+  2462→        <span className="w-1.5 h-1.5 rounded-full" style={{ background: c.dot }} />
+  2463→        {status}
+  2464→      </span>
+  2465→    )
+  2466→  }
+  2467→
+  2468→  const renderContent = () => {
+  2469→    switch (adminTab) {
+  2470→      case 'dashboard':
+  2471→        return (
+  2472→          <div className="space-y-5">
+  2473→            {/* Stat Cards */}
+  2474→            <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+  2475→              {[
+  2476→                { label: 'Total Users', value: stats.totalUsers, icon: Users, color: A.green, bgColor: A.greenLight, trend: '+12%', sub: `${stats.learningCompleted} completed learning` },
+  2477→                { label: 'QR Scans', value: stats.totalScans, icon: QrCode, color: A.blue, bgColor: A.blueLight, trend: '+8%', sub: `${campaigns.filter(c => c.status === 'ACTIVE').length} active campaigns` },
+  2478→                { label: 'Total Orders', value: stats.totalOrders, icon: Package, color: A.lime, bgColor: A.limeLight, trend: '+23%', sub: `${orders.filter((o: any) => o.status === 'DELIVERED').length} delivered` },
+  2479→                { label: 'Revenue', value: `₹${stats.totalRevenue?.toLocaleString()}`, icon: DollarSign, color: A.green, bgColor: A.greenLight, trend: '+15%', sub: `₹${stats.totalRevenue ? Math.round(stats.totalRevenue * 0.3).toLocaleString() : 0} this month` },
+  2480→              ].map(card => (
+  2481→                <div key={card.label} className="bg-white border rounded-lg p-4 hover:shadow-sm transition-shadow" style={{ borderColor: A.border }}>
+  2482→                  <div className="flex items-center justify-between mb-3">
+  2483→                    <div className="w-8 h-8 rounded-md flex items-center justify-center" style={{ backgroundColor: card.bgColor }}>
+  2484→                      <card.icon className="w-4 h-4" style={{ color: card.color }} />
+  2485→                    </div>
+  2486→                    <span className="text-[11px] font-medium px-1.5 py-0.5 rounded" style={{ color: A.green, background: A.greenLight }}>{card.trend}</span>
+  2487→                  </div>
+  2488→                  <p className="text-xl font-bold" style={{ color: A.text }}>{card.value}</p>
+  2489→                  <p className="text-[12px] mt-0.5" style={{ color: A.textSecondary }}>{card.label}</p>
+  2490→                  <p className="text-[11px] mt-1" style={{ color: A.textMuted }}>{card.sub}</p>
+  2491→                </div>
+  2492→              ))}
+  2493→            </div>
+  2494→
+  2495→            {/* Charts Row */}
+  2496→            <div className="grid lg:grid-cols-2 gap-4">
+  2497→              <div className="bg-white border rounded-lg p-5" style={{ borderColor: A.border }}>
+  2498→                <div className="flex items-center justify-between mb-4">
+  2499→                  <h3 className="text-sm font-semibold" style={{ color: A.text }}>Revenue Trend</h3>
+  2500→                  <span className="text-[11px] px-2 py-0.5 rounded" style={{ background: A.greenLight, color: A.green }}>6 months</span>
+  2501→                </div>
+  2502→                <ResponsiveContainer width="100%" height={220}>
+  2503→                  <LineChart data={revenueTrend}>
+  2504→                    <CartesianGrid strokeDasharray="3 3" stroke="#eeebe5" />
+  2505→                    <XAxis dataKey="month" tick={{ fontSize: 11, fill: A.textMuted }} axisLine={{ stroke: A.border }} />
+  2506→                    <YAxis tick={{ fontSize: 11, fill: A.textMuted }} axisLine={{ stroke: A.border }} />
+  2507→                    <Tooltip contentStyle={{ backgroundColor: '#fff', border: `1px solid ${A.border}`, borderRadius: 8, color: A.text, fontSize: 12 }} />
+  2508→                    <Line type="monotone" dataKey="revenue" stroke={A.green} strokeWidth={2} dot={{ r: 3, fill: A.green }} />
+  2509→                    <Line type="monotone" dataKey="orders" stroke={A.lime} strokeWidth={2} dot={{ r: 3, fill: A.lime }} strokeDasharray="5 5" />
+  2510→                  </LineChart>
+  2511→                </ResponsiveContainer>
+  2512→              </div>
+  2513→              <div className="bg-white border rounded-lg p-5" style={{ borderColor: A.border }}>
+  2514→                <div className="flex items-center justify-between mb-4">
+  2515→                  <h3 className="text-sm font-semibold" style={{ color: A.text }}>Orders by Status</h3>
+  2516→                  <span className="text-[11px] px-2 py-0.5 rounded" style={{ background: A.blueLight, color: A.blue }}>{orders.length} total</span>
+  2517→                </div>
+  2518→                <ResponsiveContainer width="100%" height={220}>
+  2519→                  <RechartsPieChart>
+  2520→                    <Pie data={ordersByStatus} cx="50%" cy="50%" innerRadius={55} outerRadius={85} dataKey="value" strokeWidth={0}>
+  2521→                      {ordersByStatus.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
+  2522→                    </Pie>
+  2523→                    <Tooltip contentStyle={{ backgroundColor: '#fff', border: `1px solid ${A.border}`, borderRadius: 8, color: A.text, fontSize: 12 }} />
+  2524→                    <Legend formatter={(value: string) => <span style={{ color: A.textSecondary, fontSize: 12 }}>{value}</span>} />
+  2525→                  </RechartsPieChart>
+  2526→                </ResponsiveContainer>
+  2527→              </div>
+  2528→            </div>
+  2529→
+  2530→            {/* Activity + Quick Stats */}
+  2531→            <div className="grid lg:grid-cols-3 gap-4">
+  2532→              <div className="lg:col-span-2 bg-white border rounded-lg p-5" style={{ borderColor: A.border }}>
+  2533→                <h3 className="text-sm font-semibold mb-4" style={{ color: A.text }}>Recent Activity</h3>
+  2534→                <div className="space-y-1">
+  2535→                  {(stats.recentUsers || []).slice(0, 4).map((u: UserProfile) => (
+  2536→                    <div key={u.id} className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-[#f8f7f5] transition-colors">
+  2537→                      <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: A.greenLight }}>
+  2538→                        <span className="text-[11px] font-bold" style={{ color: A.green }}>{u.name.charAt(0)}</span>
+  2539→                      </div>
+  2540→                      <div className="flex-1 min-w-0">
+  2541→                        <p className="text-sm truncate" style={{ color: A.text }}>{u.name} <span style={{ color: A.textMuted }}>registered</span></p>
+  2542→                        <p className="text-[11px]" style={{ color: A.textMuted }}>{new Date(u.created_at).toLocaleDateString()}</p>
+  2543→                      </div>
+  2544→                      <StatusBadge status={u.learning_completed ? 'DELIVERED' : 'PENDING'} />
+  2545→                    </div>
+  2546→                  ))}
+  2547→                  {orders.slice(0, 3).map((o: any) => (
+  2548→                    <div key={o.id} className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-[#f8f7f5] transition-colors">
+  2549→                      <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: A.blueLight }}>
+  2550→                        <Package className="w-3.5 h-3.5" style={{ color: A.blue }} />
+  2551→                      </div>
+  2552→                      <div className="flex-1 min-w-0">
+  2553→                        <p className="text-sm truncate" style={{ color: A.text }}>Order ₹{o.amount?.toLocaleString()} <span style={{ color: A.textMuted }}>by {o.user?.name || 'Customer'}</span></p>
+  2554→                        <p className="text-[11px]" style={{ color: A.textMuted }}>{new Date(o.created_at).toLocaleDateString()}</p>
+  2555→                      </div>
+  2556→                      <StatusBadge status={o.status} />
+  2557→                    </div>
+  2558→                  ))}
+  2559→                </div>
+  2560→              </div>
+  2561→
+  2562→              <div className="bg-white border rounded-lg p-5" style={{ borderColor: A.border }}>
+  2563→                <h3 className="text-sm font-semibold mb-4" style={{ color: A.text }}>Quick Stats</h3>
+  2564→                <div className="space-y-4">
+  2565→                  <div>
+  2566→                    <div className="flex items-center justify-between mb-1.5">
+  2567→                      <span className="text-[12px]" style={{ color: A.textSecondary }}>Conversion Rate</span>
+  2568→                      <span className="text-[12px] font-semibold" style={{ color: A.green }}>{stats.conversionRate}%</span>
+  2569→                    </div>
+  2570→                    <div className="h-1.5 rounded-full overflow-hidden" style={{ background: A.borderLight }}>
+  2571→                      <div className="h-full rounded-full" style={{ width: `${stats.conversionRate}%`, background: A.green }} />
+  2572→                    </div>
+  2573→                  </div>
+  2574→                  <div>
+  2575→                    <div className="flex items-center justify-between mb-1.5">
+  2576→                      <span className="text-[12px]" style={{ color: A.textSecondary }}>Learning Completion</span>
+  2577→                      <span className="text-[12px] font-semibold" style={{ color: A.blue }}>{stats.totalUsers ? Math.round(stats.learningCompleted / stats.totalUsers * 100) : 0}%</span>
+  2578→                    </div>
+  2579→                    <div className="h-1.5 rounded-full overflow-hidden" style={{ background: A.borderLight }}>
+  2580→                      <div className="h-full rounded-full" style={{ width: `${stats.totalUsers ? Math.round(stats.learningCompleted / stats.totalUsers * 100) : 0}%`, background: A.blue }} />
+  2581→                    </div>
+  2582→                  </div>
+  2583→                  <div>
+  2584→                    <div className="flex items-center justify-between mb-1.5">
+  2585→                      <span className="text-[12px]" style={{ color: A.textSecondary }}>Order Fulfillment</span>
+  2586→                      <span className="text-[12px] font-semibold" style={{ color: A.lime }}>{stats.totalOrders ? Math.round((orders.filter((o: any) => o.status === 'DELIVERED').length / stats.totalOrders) * 100) : 0}%</span>
+  2587→                    </div>
+  2588→                    <div className="h-1.5 rounded-full overflow-hidden" style={{ background: A.borderLight }}>
+  2589→                      <div className="h-full rounded-full" style={{ width: `${stats.totalOrders ? Math.round((orders.filter((o: any) => o.status === 'DELIVERED').length / stats.totalOrders) * 100) : 0}%`, background: A.lime }} />
+  2590→                    </div>
+  2591→                  </div>
+  2592→                  <Separator style={{ background: A.border }} />
+  2593→                  <div className="grid grid-cols-2 gap-3">
+  2594→                    <div className="rounded-lg p-3 text-center" style={{ background: A.bg }}>
+  2595→                      <p className="font-bold text-lg" style={{ color: A.text }}>{stats.learningCompleted}</p>
+  2596→                      <p className="text-[10px]" style={{ color: A.textMuted }}>Completed</p>
+  2597→                    </div>
+  2598→                    <div className="rounded-lg p-3 text-center" style={{ background: A.bg }}>
+  2599→                      <p className="font-bold text-lg" style={{ color: A.text }}>{stats.totalUsers - stats.learningCompleted}</p>
+
+[showing lines 2100-2599 of 3512; use offset=2600 with limit to continue reading]

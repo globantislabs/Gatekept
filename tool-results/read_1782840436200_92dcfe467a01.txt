@@ -1,0 +1,1019 @@
+     1→'use client'
+     2→import React, { useState, useEffect, useRef } from 'react'
+     3→import Image from 'next/image'
+     4→import { motion } from 'framer-motion'
+     5→import { Play, CheckCircle, Lock, ArrowRight, ArrowLeft, RefreshCw, AlertCircle, ChevronRight } from 'lucide-react'
+     6→import { useAppStore } from '@/store/app-store'
+     7→import { productVideoService, productQuizService, productLearningService, productService } from '@/lib/data-service'
+     8→import type { ProductVideo, ProductQuiz, ProductLearningProgress, Product } from '@/lib/data-service'
+     9→import { Button } from '@/components/ui/button'
+    10→import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card'
+    11→import { Badge } from '@/components/ui/badge'
+    12→import { Progress } from '@/components/ui/progress'
+    13→import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+    14→import { Label } from '@/components/ui/label'
+    15→import { toast } from 'sonner'
+    16→
+    17→// ─── Brand Constants ───────────────────────────────────────
+    18→const BRAND = {
+    19→  green: '#48805b',
+    20→  lime: '#afb75d',
+    21→  dark: '#1f1e1c',
+    22→  muted: '#88837b',
+    23→  surface: '#e3dfd8',
+    24→  bg: '#f4f3f0',
+    25→  blue: '#2e91b2',
+    26→} as const
+    27→
+    28→// ─── Animation Helpers ─────────────────────────────────────
+    29→const fadeInUp = {
+    30→  initial: { opacity: 0, y: 20 } as const,
+    31→  animate: { opacity: 1, y: 0 } as const,
+    32→}
+    33→
+    34→// ═══════════════════════════════════════════════════════════
+    35→// ProductLearningModule
+    36→// ═══════════════════════════════════════════════════════════
+    37→export function ProductLearningModule() {
+    38→  const { selectedProductId, user, navigateTo, currentVideoIndex, setCurrentVideoIndex, setCurrentQuizIndex } = useAppStore()
+    39→
+    40→  const [product, setProduct] = useState<Product | null>(null)
+    41→  const [videos, setVideos] = useState<ProductVideo[]>([])
+    42→  const [progress, setProgress] = useState<ProductLearningProgress | null>(null)
+    43→  const [loading, setLoading] = useState(true)
+    44→  const [playing, setPlaying] = useState(false)
+    45→  const [videoProgress, setVideoProgress] = useState(0) // 0-100 for current video
+    46→  const progressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+    47→
+    48→  // ─── Fetch data ────────────────────────────────────────
+    49→  useEffect(() => {
+    50→    if (!selectedProductId) return
+    51→    let cancelled = false
+    52→    async function load() {
+    53→      setLoading(true)
+    54→      try {
+    55→        const [prodRes, vidRes, progRes] = await Promise.all([
+    56→          productService.getById(selectedProductId),
+    57→          productVideoService.getByProduct(selectedProductId),
+    58→          user ? productLearningService.getProgress(user.user_id, selectedProductId) : Promise.resolve({ data: null, error: null }),
+    59→        ])
+    60→        if (cancelled) return
+    61→        setProduct(prodRes.data || null)
+    62→        setVideos(vidRes.data || [])
+    63→        setProgress(progRes.data || null)
+    64→      } catch (err) {
+    65→        console.error('Failed to load learning data:', err)
+    66→      } finally {
+    67→        if (!cancelled) setLoading(false)
+    68→      }
+    69→    }
+    70→    load()
+    71→    return () => { cancelled = true }
+    72→  }, [selectedProductId, user])
+    73→
+    74→  // ─── Video progress for current video from learning progress ──
+    75→  const currentVideo = videos[currentVideoIndex] || null
+    76→  const currentVideoSavedProgress = currentVideo && progress?.video_progress
+    77→    ? (progress.video_progress[currentVideo.id] ?? 0)
+    78→    : 0
+    79→
+    80→  // ─── Reset local state when switching videos ───────────
+    81→  useEffect(() => {
+    82→    setPlaying(false)
+    83→    setVideoProgress(currentVideoSavedProgress)
+    84→    if (progressIntervalRef.current) {
+    85→      clearInterval(progressIntervalRef.current)
+    86→      progressIntervalRef.current = null
+    87→    }
+    88→  }, [currentVideoIndex, currentVideo?.id])
+    89→
+    90→  // ─── Simulated video playback ──────────────────────────
+    91→  useEffect(() => {
+    92→    if (playing && videoProgress < 100) {
+    93→      progressIntervalRef.current = setInterval(() => {
+    94→        setVideoProgress(prev => {
+    95→          const next = Math.min(prev + 2, 100)
+    96→          if (next >= 100) {
+    97→            setPlaying(false)
+    98→            saveProgress(next)
+    99→          }
+   100→          return next
+   101→        })
+   102→      }, 150)
+   103→    }
+   104→    return () => {
+   105→      if (progressIntervalRef.current) {
+   106→        clearInterval(progressIntervalRef.current)
+   107→        progressIntervalRef.current = null
+   108→      }
+   109→    }
+   110→  }, [playing])
+   111→
+   112→  // ─── Save progress to backend ──────────────────────────
+   113→  const saveProgress = async (pct: number) => {
+   114→    if (!user || !selectedProductId || !currentVideo) return
+   115→    const updatedVP = { ...(progress?.video_progress || {}), [currentVideo.id]: pct }
+   116→    const res = await productLearningService.updateVideoProgress(user.user_id, selectedProductId, updatedVP)
+   117→    if (res.data) setProgress(res.data)
+   118→  }
+   119→
+   120→  const handlePause = () => {
+   121→    setPlaying(false)
+   122→    saveProgress(videoProgress)
+   123→  }
+   124→
+   125→  const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
+   126→    const rect = e.currentTarget.getBoundingClientRect()
+   127→    const pct = Math.round(((e.clientX - rect.left) / rect.width) * 100)
+   128→    setVideoProgress(pct)
+   129→    saveProgress(pct)
+   130→  }
+   131→
+   132→  // ─── Overall progress ──────────────────────────────────
+   133→  const overallProgress = videos.length > 0
+   134→    ? Math.round(videos.reduce((sum, v) => sum + (progress?.video_progress?.[v.id] ?? 0), 0) / videos.length)
+   135→    : 0
+   136→
+   137→  const allVideosComplete = videos.length > 0 && videos.every(v => (progress?.video_progress?.[v.id] ?? 0) >= 100)
+   138→
+   139→  // ─── Loading state ─────────────────────────────────────
+   140→  if (loading) {
+   141→    return (
+   142→      <div className="flex items-center justify-center min-h-[60vh]">
+   143→        <div className="flex flex-col items-center gap-3">
+   144→          <RefreshCw className="h-8 w-8 animate-spin" style={{ color: BRAND.green }} />
+   145→          <p className="text-sm" style={{ color: BRAND.muted }}>Loading learning content...</p>
+   146→        </div>
+   147→      </div>
+   148→    )
+   149→  }
+   150→
+   151→  if (!product || videos.length === 0) {
+   152→    return (
+   153→      <div className="flex items-center justify-center min-h-[60vh]">
+   154→        <Card className="max-w-md w-full" style={{ borderColor: BRAND.surface }}>
+   155→          <CardContent className="p-6 text-center">
+   156→            <AlertCircle className="h-10 w-10 mx-auto mb-3" style={{ color: BRAND.muted }} />
+   157→            <p className="font-heading text-lg" style={{ color: BRAND.dark }}>No learning content available</p>
+   158→            <p className="text-sm mt-1" style={{ color: BRAND.muted }}>This product doesn't have learning videos yet.</p>
+   159→            <Button
+   160→              className="mt-4"
+   161→              style={{ backgroundColor: BRAND.green }}
+   162→              onClick={() => navigateTo('products')}
+   163→            >
+   164→              <ArrowLeft className="h-4 w-4 mr-2" /> Back to Products
+   165→            </Button>
+   166→          </CardContent>
+   167→        </Card>
+   168→      </div>
+   169→    )
+   170→  }
+   171→
+   172→  return (
+   173→    <motion.div {...fadeInUp} transition={{ duration: 0.4 }} className="max-w-6xl mx-auto px-4 py-6">
+   174→      {/* ─── Header ────────────────────────────────────── */}
+   175→      <div className="flex items-center gap-3 mb-6">
+   176→        <Button
+   177→          variant="ghost"
+   178→          size="sm"
+   179→          onClick={() => navigateTo('product-detail')}
+   180→          className="p-2"
+   181→        >
+   182→          <ArrowLeft className="h-5 w-5" style={{ color: BRAND.dark }} />
+   183→        </Button>
+   184→        <div className="flex-1">
+   185→          <h1 className="font-heading text-xl sm:text-2xl font-bold" style={{ color: BRAND.dark }}>
+   186→            Learn: {product.name}
+   187→          </h1>
+   188→          <p className="text-sm" style={{ color: BRAND.muted }}>
+   189→            Complete all videos to unlock the quiz
+   190→          </p>
+   191→        </div>
+   192→        <Badge
+   193→          style={{
+   194→            backgroundColor: allVideosComplete ? BRAND.lime : BRAND.surface,
+   195→            color: allVideosComplete ? BRAND.dark : BRAND.muted,
+   196→          }}
+   197→          className="text-xs font-medium"
+   198→        >
+   199→          {overallProgress}% Complete
+   200→        </Badge>
+   201→      </div>
+   202→
+   203→      {/* ─── Overall Progress Bar ──────────────────────── */}
+   204→      <div className="mb-6">
+   205→        <Progress value={overallProgress} className="h-2" />
+   206→      </div>
+   207→
+   208→      {/* ─── Main Content: Video Player + Sidebar ──────── */}
+   209→      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+   210→        {/* ─── Video Player ────────────────────────────── */}
+   211→        <div className="lg:col-span-2">
+   212→          <motion.div {...fadeInUp} transition={{ duration: 0.3, delay: 0.1 }}>
+   213→            <Card className="overflow-hidden" style={{ borderColor: BRAND.surface }}>
+   214→              {/* Simulated video area */}
+   215→              <div
+   216→                className="relative aspect-video bg-gray-900 flex items-center justify-center cursor-pointer"
+   217→                onClick={() => {
+   218→                  if (videoProgress >= 100) return
+   219→                  setPlaying(!playing)
+   220→                }}
+   221→              >
+   222→                {/* Simulated video background */}
+   223→                <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-900">
+   224→                  <div className="absolute inset-0 flex items-center justify-center opacity-10">
+   225→                    <div
+   226→                      className="text-9xl font-heading font-bold select-none"
+   227→                      style={{ color: BRAND.lime }}
+   228→                    >
+   229→                      {product.name.charAt(0)}
+   230→                    </div>
+   231→                  </div>
+   232→                </div>
+   233→
+   234→                {/* Video info overlay */}
+   235→                <div className="absolute top-4 left-4 z-10">
+   236→                  <Badge
+   237→                    className="text-xs"
+   238→                    style={{ backgroundColor: BRAND.green, color: '#fff' }}
+   239→                  >
+   240→                    Video {currentVideoIndex + 1} of {videos.length}
+   241→                  </Badge>
+   242→                </div>
+   243→
+   244→                {/* Play/Pause button */}
+   245→                <motion.div
+   246→                  whileHover={{ scale: 1.1 }}
+   247→                  whileTap={{ scale: 0.95 }}
+   248→                  className="z-10"
+   249→                >
+   250→                  {videoProgress >= 100 ? (
+   251→                    <div className="flex flex-col items-center gap-2">
+   252→                      <CheckCircle className="h-16 w-16" style={{ color: BRAND.lime }} />
+   253→                      <span className="text-sm font-medium" style={{ color: BRAND.lime }}>Completed</span>
+   254→                    </div>
+   255→                  ) : (
+   256→                    <div
+   257→                      className="h-16 w-16 rounded-full flex items-center justify-center backdrop-blur-sm"
+   258→                      style={{ backgroundColor: `${BRAND.green}CC` }}
+   259→                    >
+   260→                      {playing ? (
+   261→                        <div className="flex gap-1.5 items-center">
+   262→                          <div className="w-1.5 h-6 bg-white rounded-sm" />
+   263→                          <div className="w-1.5 h-6 bg-white rounded-sm" />
+   264→                        </div>
+   265→                      ) : (
+   266→                        <Play className="h-7 w-7 text-white ml-1" fill="white" />
+   267→                      )}
+   268→                    </div>
+   269→                  )}
+   270→                </motion.div>
+   271→
+   272→                {/* Duration badge */}
+   273→                <div className="absolute bottom-4 right-4 z-10">
+   274→                  <span className="text-xs text-white/70 bg-black/40 px-2 py-1 rounded">
+   275→                    {currentVideo?.duration || '0:00'}
+   276→                  </span>
+   277→                </div>
+   278→              </div>
+   279→
+   280→              {/* Progress bar (seek bar) */}
+   281→              <div
+   282→                className="h-1.5 cursor-pointer relative"
+   283→                style={{ backgroundColor: BRAND.surface }}
+   284→                onClick={handleSeek}
+   285→              >
+   286→                <div
+   287→                  className="h-full transition-all duration-300"
+   288→                  style={{
+   289→                    width: `${videoProgress}%`,
+   290→                    backgroundColor: videoProgress >= 100 ? BRAND.lime : BRAND.green,
+   291→                  }}
+   292→                />
+   293→              </div>
+   294→
+   295→              {/* Video title & controls */}
+   296→              <CardContent className="p-4">
+   297→                <h3 className="font-heading text-lg font-semibold" style={{ color: BRAND.dark }}>
+   298→                  {currentVideo?.title || 'Select a video'}
+   299→                </h3>
+   300→                <p className="text-sm mt-1" style={{ color: BRAND.muted }}>
+   301→                  {currentVideo?.description || ''}
+   302→                </p>
+   303→
+   304→                <div className="flex items-center justify-between mt-4">
+   305→                  <div className="flex items-center gap-2">
+   306→                    <span className="text-sm font-medium" style={{ color: BRAND.green }}>
+   307→                      {videoProgress}%
+   308→                    </span>
+   309→                    <span className="text-sm" style={{ color: BRAND.muted }}>
+   310→                      watched
+   311→                    </span>
+   312→                  </div>
+   313→
+   314→                  <div className="flex gap-2">
+   315→                    {currentVideoIndex > 0 && (
+   316→                      <Button
+   317→                        variant="outline"
+   318→                        size="sm"
+   319→                        onClick={() => setCurrentVideoIndex(currentVideoIndex - 1)}
+   320→                        style={{ borderColor: BRAND.surface, color: BRAND.dark }}
+   321→                      >
+   322→                        <ArrowLeft className="h-4 w-4 mr-1" /> Previous
+   323→                      </Button>
+   324→                    )}
+   325→                    {currentVideoIndex < videos.length - 1 && (
+   326→                      <Button
+   327→                        size="sm"
+   328→                        onClick={() => setCurrentVideoIndex(currentVideoIndex + 1)}
+   329→                        style={{ backgroundColor: BRAND.green, color: '#fff' }}
+   330→                      >
+   331→                        Next <ArrowRight className="h-4 w-4 ml-1" />
+   332→                      </Button>
+   333→                    )}
+   334→                  </div>
+   335→                </div>
+   336→              </CardContent>
+   337→            </Card>
+   338→          </motion.div>
+   339→
+   340→          {/* ─── Take Quiz CTA ─────────────────────────── */}
+   341→          {allVideosComplete && (
+   342→            <motion.div {...fadeInUp} transition={{ duration: 0.3, delay: 0.2 }} className="mt-6">
+   343→              <Card
+   344→                className="border-2"
+   345→                style={{ borderColor: BRAND.lime, backgroundColor: `${BRAND.lime}15` }}
+   346→              >
+   347→                <CardContent className="p-6 flex flex-col sm:flex-row items-center gap-4">
+   348→                  <div className="flex-1 text-center sm:text-left">
+   349→                    <h3 className="font-heading text-lg font-bold" style={{ color: BRAND.dark }}>
+   350→                      All Videos Complete! 🎉
+   351→                    </h3>
+   352→                    <p className="text-sm" style={{ color: BRAND.muted }}>
+   353→                      You're ready to take the quiz for {product.name}
+   354→                    </p>
+   355→                  </div>
+   356→                  <Button
+   357→                    size="lg"
+   358→                    className="font-heading font-semibold"
+   359→                    style={{ backgroundColor: BRAND.green, color: '#fff' }}
+   360→                    onClick={() => {
+   361→                      setCurrentQuizIndex(0)
+   362→                      navigateTo('product-quiz')
+   363→                    }}
+   364→                  >
+   365→                    Take Quiz <ChevronRight className="h-5 w-5 ml-1" />
+   366→                  </Button>
+   367→                </CardContent>
+   368→              </Card>
+   369→            </motion.div>
+   370→          )}
+   371→        </div>
+   372→
+   373→        {/* ─── Video List Sidebar ──────────────────────── */}
+   374→        <div className="lg:col-span-1">
+   375→          <Card style={{ borderColor: BRAND.surface }}>
+   376→            <CardHeader className="pb-3">
+   377→              <CardTitle className="font-heading text-base" style={{ color: BRAND.dark }}>
+   378→                Video Lessons
+   379→              </CardTitle>
+   380→              <CardDescription className="text-xs" style={{ color: BRAND.muted }}>
+   381→                {videos.filter(v => (progress?.video_progress?.[v.id] ?? 0) >= 100).length} of {videos.length} completed
+   382→              </CardDescription>
+   383→            </CardHeader>
+   384→            <CardContent className="p-0">
+   385→              <div className="max-h-96 overflow-y-auto">
+   386→                {videos.map((video, idx) => {
+   387→                  const vp = progress?.video_progress?.[video.id] ?? 0
+   388→                  const isComplete = vp >= 100
+   389→                  const isCurrent = idx === currentVideoIndex
+   390→                  const isLocked = idx > 0 && (progress?.video_progress?.[videos[idx - 1]?.id] ?? 0) < 100
+   391→
+   392→                  return (
+   393→                    <motion.button
+   394→                      key={video.id}
+   395→                      {...fadeInUp}
+   396→                      transition={{ duration: 0.2, delay: idx * 0.05 }}
+   397→                      disabled={isLocked}
+   398→                      onClick={() => {
+   399→                        if (!isLocked) {
+   400→                          setCurrentVideoIndex(idx)
+   401→                          setVideoProgress(vp)
+   402→                        }
+   403→                      }}
+   404→                      className={`w-full text-left px-4 py-3 border-b transition-colors ${
+   405→                        isCurrent
+   406→                          ? 'bg-opacity-10'
+   407→                          : isLocked
+   408→                            ? 'opacity-50 cursor-not-allowed'
+   409→                            : 'hover:bg-opacity-5'
+   410→                      }`}
+   411→                      style={{
+   412→                        backgroundColor: isCurrent ? `${BRAND.green}15` : 'transparent',
+   413→                        borderColor: BRAND.surface,
+   414→                        cursor: isLocked ? 'not-allowed' : 'pointer',
+   415→                      }}
+   416→                    >
+   417→                      <div className="flex items-start gap-3">
+   418→                        {/* Status icon */}
+   419→                        <div className="mt-0.5 shrink-0">
+   420→                          {isComplete ? (
+   421→                            <CheckCircle className="h-5 w-5" style={{ color: BRAND.lime }} />
+   422→                          ) : isLocked ? (
+   423→                            <Lock className="h-5 w-5" style={{ color: BRAND.muted }} />
+   424→                          ) : isCurrent ? (
+   425→                            <Play className="h-5 w-5" style={{ color: BRAND.green }} fill={BRAND.green} />
+   426→                          ) : (
+   427→                            <div
+   428→                              className="h-5 w-5 rounded-full border-2 flex items-center justify-center text-xs font-bold"
+   429→                              style={{ borderColor: BRAND.muted, color: BRAND.muted }}
+   430→                            >
+   431→                              {idx + 1}
+   432→                            </div>
+   433→                          )}
+   434→                        </div>
+   435→
+   436→                        {/* Video info */}
+   437→                        <div className="flex-1 min-w-0">
+   438→                          <p
+   439→                            className={`text-sm font-medium truncate ${isCurrent ? 'font-semibold' : ''}`}
+   440→                            style={{ color: isCurrent ? BRAND.green : BRAND.dark }}
+   441→                          >
+   442→                            {video.title}
+   443→                          </p>
+   444→                          <div className="flex items-center gap-2 mt-1">
+   445→                            <span className="text-xs" style={{ color: BRAND.muted }}>
+   446→                              {video.duration}
+   447→                            </span>
+   448→                            {vp > 0 && vp < 100 && (
+   449→                              <span className="text-xs" style={{ color: BRAND.green }}>
+   450→                                {vp}%
+   451→                              </span>
+   452→                            )}
+   453→                          </div>
+   454→                          {/* Mini progress bar */}
+   455→                          {vp > 0 && (
+   456→                            <div className="mt-1.5 h-1 rounded-full" style={{ backgroundColor: BRAND.surface }}>
+   457→                              <div
+   458→                                className="h-full rounded-full transition-all duration-300"
+   459→                                style={{
+   460→                                  width: `${vp}%`,
+   461→                                  backgroundColor: isComplete ? BRAND.lime : BRAND.green,
+   462→                                }}
+   463→                              />
+   464→                            </div>
+   465→                          )}
+   466→                        </div>
+   467→
+   468→                        {/* Chevron */}
+   469→                        {!isLocked && (
+   470→                          <ChevronRight className="h-4 w-4 shrink-0 mt-1" style={{ color: BRAND.muted }} />
+   471→                        )}
+   472→                      </div>
+   473→                    </motion.button>
+   474→                  )
+   475→                })}
+   476→              </div>
+   477→            </CardContent>
+   478→          </Card>
+   479→
+   480→          {/* ─── Learning Status Card ──────────────────── */}
+   481→          {progress && (
+   482→            <Card className="mt-4" style={{ borderColor: BRAND.surface }}>
+   483→              <CardContent className="p-4">
+   484→                <h4 className="font-heading text-sm font-semibold mb-2" style={{ color: BRAND.dark }}>
+   485→                  Learning Status
+   486→                </h4>
+   487→                <div className="space-y-2">
+   488→                  <div className="flex items-center justify-between">
+   489→                    <span className="text-xs" style={{ color: BRAND.muted }}>Status</span>
+   490→                    <Badge
+   491→                      className="text-xs"
+   492→                      style={{
+   493→                        backgroundColor:
+   494→                          progress.status === 'UNLOCKED' || progress.status === 'COMPLETED'
+   495→                            ? BRAND.lime
+   496→                            : progress.status === 'IN_PROGRESS'
+   497→                              ? `${BRAND.blue}20`
+   498→                              : progress.status === 'PENDING_REEVALUATION'
+   499→                                ? `${BRAND.green}20`
+   500→                                : BRAND.surface,
+   501→                        color:
+   502→                          progress.status === 'UNLOCKED' || progress.status === 'COMPLETED'
+   503→                            ? BRAND.dark
+   504→                            : progress.status === 'IN_PROGRESS'
+   505→                              ? BRAND.blue
+   506→                              : progress.status === 'PENDING_REEVALUATION'
+   507→                                ? BRAND.green
+   508→                                : BRAND.muted,
+   509→                      }}
+   510→                    >
+   511→                      {progress.status.replace(/_/g, ' ')}
+   512→                    </Badge>
+   513→                  </div>
+   514→                  <div className="flex items-center justify-between">
+   515→                    <span className="text-xs" style={{ color: BRAND.muted }}>Quiz</span>
+   516→                    <span className="text-xs font-medium" style={{ color: progress.quiz_completed ? BRAND.lime : BRAND.muted }}>
+   517→                      {progress.quiz_completed ? 'Passed' : 'Not taken'}
+   518→                    </span>
+   519→                  </div>
+   520→                </div>
+   521→              </CardContent>
+   522→            </Card>
+   523→          )}
+   524→        </div>
+   525→      </div>
+   526→    </motion.div>
+   527→  )
+   528→}
+   529→
+   530→// ═══════════════════════════════════════════════════════════
+   531→// ProductQuizModule
+   532→// ═══════════════════════════════════════════════════════════
+   533→export function ProductQuizModule() {
+   534→  const { selectedProductId, user, navigateTo, setCurrentVideoIndex } = useAppStore()
+   535→
+   536→  const [product, setProduct] = useState<Product | null>(null)
+   537→  const [quizzes, setQuizzes] = useState<ProductQuiz[]>([])
+   538→  const [progress, setProgress] = useState<ProductLearningProgress | null>(null)
+   539→  const [loading, setLoading] = useState(true)
+   540→
+   541→  // Quiz state
+   542→  const [current, setCurrent] = useState(0)
+   543→  const [answers, setAnswers] = useState<Record<number, number>>({})
+   544→  const [showResults, setShowResults] = useState(false)
+   545→  const [submitting, setSubmitting] = useState(false)
+   546→
+   547→  // Results
+   548→  const [score, setScore] = useState(0)
+   549→  const [allCorrect, setAllCorrect] = useState(false)
+   550→  const [incorrectVideos, setIncorrectVideos] = useState<string[]>([])
+   551→
+   552→  // ─── Fetch data ────────────────────────────────────────
+   553→  useEffect(() => {
+   554→    if (!selectedProductId) return
+   555→    let cancelled = false
+   556→    async function load() {
+   557→      setLoading(true)
+   558→      try {
+   559→        const [prodRes, quizRes, progRes] = await Promise.all([
+   560→          productService.getById(selectedProductId),
+   561→          productQuizService.getByProduct(selectedProductId),
+   562→          user ? productLearningService.getProgress(user.user_id, selectedProductId) : Promise.resolve({ data: null, error: null }),
+   563→        ])
+   564→        if (cancelled) return
+   565→        setProduct(prodRes.data || null)
+   566→        setQuizzes(quizRes.data || [])
+   567→        setProgress(progRes.data || null)
+   568→      } catch (err) {
+   569→        console.error('Failed to load quiz data:', err)
+   570→      } finally {
+   571→        if (!cancelled) setLoading(false)
+   572→      }
+   573→    }
+   574→    load()
+   575→    return () => { cancelled = true }
+   576→  }, [selectedProductId, user])
+   577→
+   578→  // ─── Computed ──────────────────────────────────────────
+   579→  const currentQuiz = quizzes[current] || null
+   580→  const totalQuestions = quizzes.length
+   581→  const answeredCount = Object.keys(answers).length
+   582→
+   583→  // ─── Handle answer selection ───────────────────────────
+   584→  const handleAnswer = (questionIndex: number, optionIndex: number) => {
+   585→    setAnswers(prev => ({ ...prev, [questionIndex]: optionIndex }))
+   586→  }
+   587→
+   588→  // ─── Submit quiz ───────────────────────────────────────
+   589→  const handleSubmit = async () => {
+   590→    if (!user || !selectedProductId) return
+   591→    setSubmitting(true)
+   592→
+   593→    try {
+   594→      // Calculate score
+   595→      let correctCount = 0
+   596→      const wrongVideoIds: string[] = []
+   597→      const quizAnswersMap: Record<string, number> = {}
+   598→
+   599→      quizzes.forEach((quiz, idx) => {
+   600→        const userAnswer = answers[idx]
+   601→        quizAnswersMap[quiz.id] = userAnswer ?? -1
+   602→        if (userAnswer === quiz.answer) {
+   603→          correctCount++
+   604→        } else {
+   605→          // Track which videos need review
+   606→          if (!wrongVideoIds.includes(quiz.video_id)) {
+   607→            wrongVideoIds.push(quiz.video_id)
+   608→          }
+   609→        }
+   610→      })
+   611→
+   612→      const finalScore = Math.round((correctCount / totalQuestions) * 100)
+   613→      const isAllCorrect = correctCount === totalQuestions
+   614→
+   615→      setScore(finalScore)
+   616→      setAllCorrect(isAllCorrect)
+   617→      setIncorrectVideos(wrongVideoIds)
+   618→
+   619→      // Submit via service (handles smart remediation)
+   620→      const res = await productLearningService.submitQuiz(
+   621→        user.user_id,
+   622→        selectedProductId,
+   623→        quizAnswersMap,
+   624→        finalScore,
+   625→        isAllCorrect
+   626→      )
+   627→
+   628→      if (res.data) {
+   629→        setProgress(res.data)
+   630→      }
+   631→
+   632→      setShowResults(true)
+   633→      toast(isAllCorrect ? 'Congratulations! You passed!' : 'Review needed — some answers were incorrect', {
+   634→        style: { background: isAllCorrect ? BRAND.lime : BRAND.surface, color: BRAND.dark },
+   635→      })
+   636→    } catch (err) {
+   637→      console.error('Quiz submit failed:', err)
+   638→      toast.error('Failed to submit quiz. Please try again.')
+   639→    } finally {
+   640→      setSubmitting(false)
+   641→    }
+   642→  }
+   643→
+   644→  // ─── Loading state ─────────────────────────────────────
+   645→  if (loading) {
+   646→    return (
+   647→      <div className="flex items-center justify-center min-h-[60vh]">
+   648→        <div className="flex flex-col items-center gap-3">
+   649→          <RefreshCw className="h-8 w-8 animate-spin" style={{ color: BRAND.green }} />
+   650→          <p className="text-sm" style={{ color: BRAND.muted }}>Loading quiz...</p>
+   651→        </div>
+   652→      </div>
+   653→    )
+   654→  }
+   655→
+   656→  if (!product || quizzes.length === 0) {
+   657→    return (
+   658→      <div className="flex items-center justify-center min-h-[60vh]">
+   659→        <Card className="max-w-md w-full" style={{ borderColor: BRAND.surface }}>
+   660→          <CardContent className="p-6 text-center">
+   661→            <AlertCircle className="h-10 w-10 mx-auto mb-3" style={{ color: BRAND.muted }} />
+   662→            <p className="font-heading text-lg" style={{ color: BRAND.dark }}>No quiz available</p>
+   663→            <p className="text-sm mt-1" style={{ color: BRAND.muted }}>Complete the learning videos first.</p>
+   664→            <Button
+   665→              className="mt-4"
+   666→              style={{ backgroundColor: BRAND.green, color: '#fff' }}
+   667→              onClick={() => navigateTo('product-learning')}
+   668→            >
+   669→              <ArrowLeft className="h-4 w-4 mr-2" /> Back to Learning
+   670→            </Button>
+   671→          </CardContent>
+   672→        </Card>
+   673→      </div>
+   674→    )
+   675→  }
+   676→
+   677→  // ─── Results Screen ────────────────────────────────────
+   678→  if (showResults) {
+   679→    return (
+   680→      <motion.div {...fadeInUp} transition={{ duration: 0.4 }} className="max-w-2xl mx-auto px-4 py-6">
+   681→        {/* Back button */}
+   682→        <Button
+   683→          variant="ghost"
+   684→          size="sm"
+   685→          onClick={() => navigateTo('product-learning')}
+   686→          className="mb-4 p-2"
+   687→        >
+   688→          <ArrowLeft className="h-5 w-5 mr-1" style={{ color: BRAND.dark }} />
+   689→          <span style={{ color: BRAND.dark }}>Back</span>
+   690→        </Button>
+   691→
+   692→        {/* Result card */}
+   693→        <motion.div {...fadeInUp} transition={{ duration: 0.3, delay: 0.1 }}>
+   694→          <Card
+   695→            className="border-2"
+   696→            style={{
+   697→              borderColor: allCorrect ? BRAND.lime : BRAND.green,
+   698→            }}
+   699→          >
+   700→            <CardHeader className="text-center pb-2">
+   701→              <motion.div
+   702→                initial={{ scale: 0 }}
+   703→                animate={{ scale: 1 }}
+   704→                transition={{ type: 'spring', stiffness: 200, delay: 0.2 }}
+   705→              >
+   706→                {allCorrect ? (
+   707→                  <CheckCircle className="h-16 w-16 mx-auto" style={{ color: BRAND.lime }} />
+   708→                ) : (
+   709→                  <AlertCircle className="h-16 w-16 mx-auto" style={{ color: BRAND.green }} />
+   710→                )}
+   711→              </motion.div>
+   712→              <CardTitle className="font-heading text-2xl mt-3" style={{ color: BRAND.dark }}>
+   713→                {allCorrect ? 'Congratulations!' : 'Almost There!'}
+   714→              </CardTitle>
+   715→              <CardDescription style={{ color: BRAND.muted }}>
+   716→                {allCorrect
+   717→                  ? `You've unlocked ${product.name}!`
+   718→                  : 'Review the highlighted videos and try again'}
+   719→              </CardDescription>
+   720→            </CardHeader>
+   721→
+   722→            <CardContent className="space-y-4">
+   723→              {/* Score */}
+   724→              <div
+   725→                className="text-center py-4 rounded-lg"
+   726→                style={{ backgroundColor: allCorrect ? `${BRAND.lime}20` : `${BRAND.green}15` }}
+   727→              >
+   728→                <p className="font-heading text-4xl font-bold" style={{ color: allCorrect ? BRAND.lime : BRAND.green }}>
+   729→                  {score}%
+   730→                </p>
+   731→                <p className="text-sm mt-1" style={{ color: BRAND.muted }}>
+   732→                  {allCorrect ? 'Perfect Score!' : `You got ${Math.round(score * quizzes.length / 100)} of ${quizzes.length} correct`}
+   733→                </p>
+   734→              </div>
+   735→
+   736→              {/* Incorrect questions detail */}
+   737→              {!allCorrect && (
+   738→                <div className="space-y-3">
+   739→                  <h4 className="font-heading text-sm font-semibold" style={{ color: BRAND.dark }}>
+   740→                    Questions to Review
+   741→                  </h4>
+   742→                  {quizzes.map((quiz, idx) => {
+   743→                    const userAnswer = answers[idx]
+   744→                    const isCorrect = userAnswer === quiz.answer
+   745→                    if (isCorrect) return null
+   746→
+   747→                    return (
+   748→                      <motion.div
+   749→                        key={quiz.id}
+   750→                        {...fadeInUp}
+   751→                        transition={{ duration: 0.2, delay: idx * 0.05 }}
+   752→                        className="rounded-lg p-3"
+   753→                        style={{ backgroundColor: `${BRAND.green}10`, borderLeft: `3px solid ${BRAND.green}` }}
+   754→                      >
+   755→                        <p className="text-sm font-medium" style={{ color: BRAND.dark }}>
+   756→                          {quiz.question}
+   757→                        </p>
+   758→                        <div className="mt-1.5 flex flex-wrap gap-2">
+   759→                          <span className="text-xs px-2 py-0.5 rounded" style={{ backgroundColor: `${BRAND.green}20`, color: BRAND.green }}>
+   760→                            Your answer: {userAnswer !== undefined ? quiz.options[userAnswer] : 'Not answered'}
+   761→                          </span>
+   762→                          <span className="text-xs px-2 py-0.5 rounded" style={{ backgroundColor: `${BRAND.lime}30`, color: BRAND.dark }}>
+   763→                            Correct: {quiz.options[quiz.answer]}
+   764→                          </span>
+   765→                        </div>
+   766→                      </motion.div>
+   767→                    )
+   768→                  })}
+   769→                </div>
+   770→              )}
+   771→
+   772→              {/* Videos needing review */}
+   773→              {!allCorrect && incorrectVideos.length > 0 && (
+   774→                <div
+   775→                  className="rounded-lg p-4"
+   776→                  style={{ backgroundColor: `${BRAND.blue}10`, borderLeft: `3px solid ${BRAND.blue}` }}
+   777→                >
+   778→                  <h4 className="font-heading text-sm font-semibold mb-2" style={{ color: BRAND.dark }}>
+   779→                    Videos to Re-watch
+   780→                  </h4>
+   781→                  <p className="text-xs mb-3" style={{ color: BRAND.muted }}>
+   782→                    These video lessons cover the topics you missed. Re-watch them before retaking the quiz.
+   783→                  </p>
+   784→                  <div className="space-y-1.5">
+   785→                    {incorrectVideos.map((videoId, idx) => {
+   786→                      const quizForVideo = quizzes.find(q => q.video_id === videoId)
+   787→                      // Try to find video title from the quiz's video link
+   788→                      const videoLabel = quizForVideo
+   789→                        ? `Video: ${quizForVideo.category || quizForVideo.question.split(' ').slice(0, 4).join(' ')}...`
+   790→                        : `Video ${idx + 1}`
+   791→                      return (
+   792→                        <div key={videoId} className="flex items-center gap-2">
+   793→                          <ArrowRight className="h-3 w-3 shrink-0" style={{ color: BRAND.blue }} />
+   794→                          <span className="text-xs" style={{ color: BRAND.dark }}>{videoLabel}</span>
+   795→                        </div>
+   796→                      )
+   797→                    })}
+   798→                  </div>
+   799→                </div>
+   800→              )}
+   801→            </CardContent>
+   802→
+   803→            <CardFooter className="flex flex-col sm:flex-row gap-3 p-6 pt-2">
+   804→              {!allCorrect && (
+   805→                <Button
+   806→                  className="flex-1 font-heading"
+   807→                  style={{ backgroundColor: BRAND.blue, color: '#fff' }}
+   808→                  onClick={() => {
+   809→                    setCurrentVideoIndex(0)
+   810→                    navigateTo('product-learning')
+   811→                  }}
+   812→                >
+   813→                  <Play className="h-4 w-4 mr-2" /> Review Videos
+   814→                </Button>
+   815→              )}
+   816→              <Button
+   817→                className="flex-1 font-heading"
+   818→                style={{ backgroundColor: allCorrect ? BRAND.lime : BRAND.green, color: BRAND.dark }}
+   819→                onClick={() => navigateTo('products')}
+   820→              >
+   821→                {allCorrect ? (
+   822→                  <>
+   823→                    Browse Products <ChevronRight className="h-4 w-4 ml-1" />
+   824→                  </>
+   825→                ) : (
+   826→                  <>
+   827→                    Back to Products <ChevronRight className="h-4 w-4 ml-1" />
+   828→                  </>
+   829→                )}
+   830→              </Button>
+   831→            </CardFooter>
+   832→          </Card>
+   833→        </motion.div>
+   834→      </motion.div>
+   835→    )
+   836→  }
+   837→
+   838→  // ─── Quiz Questions Screen ─────────────────────────────
+   839→  return (
+   840→    <motion.div {...fadeInUp} transition={{ duration: 0.4 }} className="max-w-2xl mx-auto px-4 py-6">
+   841→      {/* Header */}
+   842→      <div className="flex items-center gap-3 mb-6">
+   843→        <Button
+   844→          variant="ghost"
+   845→          size="sm"
+   846→          onClick={() => navigateTo('product-learning')}
+   847→          className="p-2"
+   848→        >
+   849→          <ArrowLeft className="h-5 w-5" style={{ color: BRAND.dark }} />
+   850→        </Button>
+   851→        <div className="flex-1">
+   852→          <h1 className="font-heading text-xl sm:text-2xl font-bold" style={{ color: BRAND.dark }}>
+   853→            Quiz: {product.name}
+   854→          </h1>
+   855→          <p className="text-sm" style={{ color: BRAND.muted }}>
+   856→            Answer all questions to unlock this product
+   857→          </p>
+   858→        </div>
+   859→      </div>
+   860→
+   861→      {/* Progress indicator */}
+   862→      <div className="flex items-center gap-3 mb-6">
+   863→        <Progress
+   864→          value={totalQuestions > 0 ? (answeredCount / totalQuestions) * 100 : 0}
+   865→          className="h-2 flex-1"
+   866→        />
+   867→        <span className="text-xs font-medium whitespace-nowrap" style={{ color: BRAND.muted }}>
+   868→          {answeredCount}/{totalQuestions} answered
+   869→        </span>
+   870→      </div>
+   871→
+   872→      {/* Question navigation dots */}
+   873→      <div className="flex items-center justify-center gap-2 mb-6">
+   874→        {quizzes.map((_, idx) => (
+   875→          <button
+   876→            key={idx}
+   877→            onClick={() => setCurrent(idx)}
+   878→            className={`h-2.5 w-2.5 rounded-full transition-all ${
+   879→              idx === current ? 'scale-125' : ''
+   880→            }`}
+   881→            style={{
+   882→              backgroundColor:
+   883→                idx === current
+   884→                  ? BRAND.green
+   885→                  : answers[idx] !== undefined
+   886→                    ? BRAND.lime
+   887→                    : BRAND.surface,
+   888→            }}
+   889→            aria-label={`Go to question ${idx + 1}`}
+   890→          />
+   891→        ))}
+   892→      </div>
+   893→
+   894→      {/* Question card */}
+   895→      {currentQuiz && (
+   896→        <motion.div
+   897→          key={current}
+   898→          initial={{ opacity: 0, x: 20 }}
+   899→          animate={{ opacity: 1, x: 0 }}
+   900→          transition={{ duration: 0.25 }}
+   901→        >
+   902→          <Card style={{ borderColor: BRAND.surface }}>
+   903→            <CardHeader>
+   904→              <div className="flex items-center justify-between">
+   905→                <Badge
+   906→                  className="text-xs"
+   907→                  style={{ backgroundColor: `${BRAND.green}20`, color: BRAND.green }}
+   908→                >
+   909→                  Question {current + 1} of {totalQuestions}
+   910→                </Badge>
+   911→                {currentQuiz.difficulty && (
+   912→                  <Badge
+   913→                    variant="outline"
+   914→                    className="text-xs"
+   915→                    style={{ borderColor: BRAND.surface, color: BRAND.muted }}
+   916→                  >
+   917→                    {currentQuiz.difficulty}
+   918→                  </Badge>
+   919→                )}
+   920→              </div>
+   921→              <CardTitle className="font-heading text-lg mt-3" style={{ color: BRAND.dark }}>
+   922→                {currentQuiz.question}
+   923→              </CardTitle>
+   924→            </CardHeader>
+   925→
+   926→            <CardContent>
+   927→              <RadioGroup
+   928→                value={answers[current] !== undefined ? answers[current].toString() : ''}
+   929→                onValueChange={(val) => handleAnswer(current, parseInt(val, 10))}
+   930→                className="space-y-3"
+   931→              >
+   932→                {currentQuiz.options.map((option, optIdx) => (
+   933→                  <motion.div
+   934→                    key={optIdx}
+   935→                    initial={{ opacity: 0, y: 10 }}
+   936→                    animate={{ opacity: 1, y: 0 }}
+   937→                    transition={{ duration: 0.15, delay: optIdx * 0.05 }}
+   938→                    className={`flex items-center gap-3 p-3 rounded-lg border transition-colors cursor-pointer ${
+   939→                      answers[current] === optIdx ? 'border-current' : ''
+   940→                    }`}
+   941→                    style={{
+   942→                      borderColor: answers[current] === optIdx ? BRAND.green : BRAND.surface,
+   943→                      backgroundColor: answers[current] === optIdx ? `${BRAND.green}10` : 'transparent',
+   944→                    }}
+   945→                    onClick={() => handleAnswer(current, optIdx)}
+   946→                  >
+   947→                    <RadioGroupItem
+   948→                      value={optIdx.toString()}
+   949→                      id={`q-${current}-${optIdx}`}
+   950→                      style={{ color: BRAND.green }}
+   951→                    />
+   952→                    <Label
+   953→                      htmlFor={`q-${current}-${optIdx}`}
+   954→                      className="flex-1 cursor-pointer text-sm"
+   955→                      style={{ color: BRAND.dark }}
+   956→                    >
+   957→                      {option}
+   958→                    </Label>
+   959→                  </motion.div>
+   960→                ))}
+   961→              </RadioGroup>
+   962→            </CardContent>
+   963→
+   964→            <CardFooter className="flex justify-between p-6 pt-2">
+   965→              <Button
+   966→                variant="outline"
+   967→                disabled={current === 0}
+   968→                onClick={() => setCurrent(Math.max(0, current - 1))}
+   969→                style={{ borderColor: BRAND.surface, color: BRAND.dark }}
+   970→              >
+   971→                <ArrowLeft className="h-4 w-4 mr-1" /> Previous
+   972→              </Button>
+   973→
+   974→              {current < totalQuestions - 1 ? (
+   975→                <Button
+   976→                  onClick={() => setCurrent(current + 1)}
+   977→                  style={{ backgroundColor: BRAND.green, color: '#fff' }}
+   978→                >
+   979→                  Next <ArrowRight className="h-4 w-4 ml-1" />
+   980→                </Button>
+   981→              ) : (
+   982→                <Button
+   983→                  onClick={handleSubmit}
+   984→                  disabled={answeredCount < totalQuestions || submitting}
+   985→                  style={{
+   986→                    backgroundColor: answeredCount < totalQuestions ? BRAND.surface : BRAND.green,
+   987→                    color: answeredCount < totalQuestions ? BRAND.muted : '#fff',
+   988→                  }}
+   989→                >
+   990→                  {submitting ? (
+   991→                    <>
+   992→                      <RefreshCw className="h-4 w-4 mr-1 animate-spin" /> Submitting...
+   993→                    </>
+   994→                  ) : (
+   995→                    <>
+   996→                      Submit Quiz <CheckCircle className="h-4 w-4 ml-1" />
+   997→                    </>
+   998→                  )}
+   999→                </Button>
+  1000→              )}
+  1001→            </CardFooter>
+  1002→          </Card>
+  1003→        </motion.div>
+  1004→      )}
+  1005→
+  1006→      {/* Submit hint */}
+  1007→      {current === totalQuestions - 1 && answeredCount < totalQuestions && (
+  1008→        <motion.p
+  1009→          {...fadeInUp}
+  1010→          className="text-center text-xs mt-4"
+  1011→          style={{ color: BRAND.muted }}
+  1012→        >
+  1013→          Please answer all {totalQuestions} questions before submitting ({totalQuestions - answeredCount} remaining)
+  1014→        </motion.p>
+  1015→      )}
+  1016→    </motion.div>
+  1017→  )
+  1018→}
+  1019→

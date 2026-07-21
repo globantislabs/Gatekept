@@ -1545,7 +1545,7 @@ function AuthRegister() {
 }
 
 function AuthOTP() {
-  const { navigateTo, setUser, pendingOtpContact, pendingOtpType } = useAppStore()
+  const { navigateTo, setUser, pendingOtpContact, pendingOtpType, redirectAfterLogin, setRedirectAfterLogin } = useAppStore()
   const [otp, setOtp] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -1558,7 +1558,10 @@ function AuthOTP() {
       const userData = result.data as UserProfile
       setUser(userData)
       toast.success(`Welcome, ${userData.name}!`)
-      navigateTo(userData.is_admin ? 'admin-dashboard' : 'landing')
+      // Redirect to saved destination or default
+      const destination = redirectAfterLogin
+      if (destination) { setRedirectAfterLogin(null); navigateTo(destination) }
+      else navigateTo(userData.is_admin ? 'admin-dashboard' : 'landing')
     } catch { toast.error('Verification failed') }
     finally { setLoading(false) }
   }
@@ -2186,7 +2189,7 @@ function ProductsCatalog() {
 
 // ── Product Detail Page ──────────────────────────────────────
 function ProductDetailPage() {
-  const { user, selectedProductId, navigateTo, addToCart, setSelectedProductId, goBack } = useAppStore()
+  const { user, selectedProductId, navigateTo, addToCart, setSelectedProductId, goBack, setRedirectAfterLogin } = useAppStore()
   const [product, setProduct] = useState<Product | null>(null)
   const [loading, setLoading] = useState(true)
   const [purchaseMode, setPurchaseMode] = useState<'one-time' | 'subscription'>('one-time')
@@ -2342,15 +2345,16 @@ function ProductDetailPage() {
                       </div>
                     </div>
                     <Button
-                      onClick={() => { setSelectedProductId(product.id); navigateTo('product-learning') }}
+                      onClick={() => {
+                        setSelectedProductId(product.id)
+                        if (!user) { setRedirectAfterLogin('product-learning'); navigateTo('auth-login'); toast.info('Please login to start learning') }
+                        else navigateTo('product-learning')
+                      }}
                       className="bg-[#48805b] hover:bg-[#3a6a4a] text-white rounded-lg w-full h-12 text-base"
                     >
                       <GraduationCap className="w-5 h-5 mr-2" /> Start Learning
                     </Button>
                   </div>
-                  {!user && (
-                    <p className="text-xs text-center text-[#88837b]">Sign in to save your progress · <button onClick={() => navigateTo('auth-login')} className="text-[#2e91b2] underline font-medium">Login</button></p>
-                  )}
                 </div>
               )}
 

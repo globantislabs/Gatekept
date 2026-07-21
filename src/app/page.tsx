@@ -4687,6 +4687,13 @@ function AdminDashboard() {
                         }}>
                           <Edit className="w-3 h-3" /> Edit
                         </Button>
+                        <Button variant="ghost" size="sm" className="h-7 text-[11px] gap-1 flex-1 hover:bg-purple-50" style={{ color: '#7c3aed' }} onClick={() => {
+                          const slug = product.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+                          const url = `${window.location.origin}${window.location.pathname}?product=${slug}`
+                          navigator.clipboard.writeText(url).then(() => toast.success('Product link copied!')).catch(() => toast.error('Failed to copy'))
+                        }}>
+                          <Link className="w-3 h-3" /> Copy Link
+                        </Button>
                         <Button variant="ghost" size="sm" className="h-7 text-[11px] gap-1 flex-1 hover:bg-green-50" style={{ color: A.green }} onClick={() => loadLearningContent(product.id)}>
                           <BookOpen className="w-3 h-3" /> Learning
                         </Button>

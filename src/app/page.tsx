@@ -2327,16 +2327,19 @@ function ProductDetailPage() {
               {/* Not unlocked — show Start Learning */}
               {!isUnlocked && (
                 <div className="space-y-3">
-                  <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 flex flex-col sm:flex-row items-start sm:items-center gap-3">
-                    <div className="flex items-center gap-3 flex-1">
+                  <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 space-y-3">
+                    <div className="flex items-center gap-3">
                       <Lock className="w-5 h-5 text-amber-600 flex-shrink-0" />
                       <div>
                         <p className="text-sm font-semibold text-amber-900">Complete Learning to Purchase</p>
                         <p className="text-xs text-amber-700 mt-0.5">Take the learning module and quiz — no account needed</p>
                       </div>
                     </div>
-                    <Button onClick={() => { setSelectedProductId(product.id); navigateTo('product-learning') }} className="bg-[#48805b] hover:bg-[#3a6a4a] text-white rounded-lg w-full sm:w-auto">
-                      <GraduationCap className="w-4 h-4 mr-2" /> Start Learning
+                    <Button
+                      onClick={() => { setSelectedProductId(product.id); navigateTo('product-learning') }}
+                      className="bg-[#48805b] hover:bg-[#3a6a4a] text-white rounded-lg w-full h-12 text-base"
+                    >
+                      <GraduationCap className="w-5 h-5 mr-2" /> Start Learning
                     </Button>
                   </div>
                   {!user && (
@@ -2347,15 +2350,18 @@ function ProductDetailPage() {
 
               {/* Unlocked but not logged in — prompt login */}
               {!user && isUnlocked && (
-                <div className="p-4 rounded-xl bg-blue-50 border border-blue-200 flex flex-col sm:flex-row items-start sm:items-center gap-3">
-                  <div className="flex items-center gap-3 flex-1">
+                <div className="p-4 rounded-xl bg-blue-50 border border-blue-200 space-y-3">
+                  <div className="flex items-center gap-3">
                     <User className="w-5 h-5 text-blue-600 flex-shrink-0" />
                     <div>
                       <p className="text-sm font-semibold text-blue-900">Sign in to purchase</p>
                       <p className="text-xs text-blue-700 mt-0.5">Login or create an account to complete your order</p>
                     </div>
                   </div>
-                  <Button onClick={() => navigateTo('auth-login')} className="bg-[#2e91b2] hover:bg-[#237a98] text-white rounded-lg w-full sm:w-auto">
+                  <Button
+                    onClick={() => navigateTo('auth-login')}
+                    className="bg-[#2e91b2] hover:bg-[#237a98] text-white rounded-lg w-full h-12 text-base"
+                  >
                     Login / Register
                   </Button>
                 </div>
@@ -2466,14 +2472,14 @@ function ProductDetailPage() {
                   <div className="flex gap-3">
                     <Button
                       onClick={handleAddToCart}
-                      className="flex-1 h-13 bg-[#48805b] hover:bg-[#3a6a4a] text-white font-heading font-semibold text-base rounded-xl"
+                      className="flex-1 h-12 bg-[#48805b] hover:bg-[#3a6a4a] text-white font-heading font-semibold text-base rounded-xl"
                     >
                       <ShoppingCart className="w-5 h-5 mr-2" />
                       {purchaseMode === 'subscription' ? 'Add Subscription to Cart' : 'Add to Cart'}
                     </Button>
                     <Button
                       variant="outline"
-                      className="h-13 rounded-xl border-[#e3dfd8]"
+                      className="h-12 w-12 rounded-xl border-[#e3dfd8] flex-shrink-0"
                       onClick={async () => {
                         const slug = product.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
                         const url = `${window.location.origin}${window.location.pathname}?product=${slug}`

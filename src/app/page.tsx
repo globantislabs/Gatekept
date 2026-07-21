@@ -16,7 +16,7 @@ import {
   DollarSign, Activity, PieChart, BarChart, Globe, Mail, Phone as PhoneIcon,
   Facebook, Twitter, Instagram, Linkedin, Youtube, Send,
   LayoutDashboard, CreditCard, Truck, Kanban, Columns3, Tag, Copy, ExternalLink, Utensils, Save, Edit, EyeOff,
-  Upload, Check, Sparkles, Layers, ArrowUpRight, MessageCircle, Share2, ShieldCheck
+  Upload, Check, Sparkles, Layers, ArrowUpRight, MessageCircle, Share2, ShieldCheck, Link2 as LinkIcon
 } from 'lucide-react'
 import { useAppStore, type AppView, type CartItem } from '@/store/app-store'
 import {
@@ -2883,7 +2883,7 @@ function CartView() {
 }
 
 function CheckoutView() {
-  const { user, cart, cartTotal, navigateTo, clearCart, setLastOrderId } = useAppStore()
+  const { user, cart, cartTotal, navigateTo, clearCart, setLastOrderId, lastOrderId } = useAppStore()
   const [step, setStep] = useState(1) // 1=Address, 2=Payment, 3=Confirm
   const [address, setAddress] = useState({ name: user?.name || '', line1: '', city: '', state: '', pincode: '' })
   const [paymentMethod, setPaymentMethod] = useState<'razorpay' | 'cod'>('razorpay')
@@ -4692,7 +4692,7 @@ function AdminDashboard() {
                           const url = `${window.location.origin}${window.location.pathname}?product=${slug}`
                           navigator.clipboard.writeText(url).then(() => toast.success('Product link copied!')).catch(() => toast.error('Failed to copy'))
                         }}>
-                          <Link className="w-3 h-3" /> Copy Link
+                          <LinkIcon className="w-3 h-3" /> Copy Link
                         </Button>
                         <Button variant="ghost" size="sm" className="h-7 text-[11px] gap-1 flex-1 hover:bg-green-50" style={{ color: A.green }} onClick={() => loadLearningContent(product.id)}>
                           <BookOpen className="w-3 h-3" /> Learning

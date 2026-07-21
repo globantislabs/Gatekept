@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback, useRef, Suspense } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { motion, AnimatePresence, useInView } from 'framer-motion'
 import {
   ChevronDown, ChevronLeft, Menu, X, ShoppingCart, User, LogOut, Shield, Play,
@@ -2023,7 +2023,6 @@ const PACK_TYPES = [
 
 function ProductsCatalog() {
   const { user, navigateTo, addToCart, setSelectedProductId } = useAppStore()
-  const searchParams = useSearchParams()
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedType, setSelectedType] = useState<string>('ALL')
@@ -2035,21 +2034,6 @@ function ProductsCatalog() {
       setLoading(false)
     })
   }, [])
-
-  // Handle URL search params - auto-navigate to product detail page
-  useEffect(() => {
-    if (!user || products.length === 0) return
-    const productSlug = searchParams.get('product')
-    if (!productSlug) return
-    const matchedProduct = products.find(p => {
-      const slug = p.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
-      return slug === productSlug.toLowerCase()
-    })
-    if (matchedProduct) {
-      setSelectedProductId(matchedProduct.id)
-      navigateTo('product-detail')
-    }
-  }, [searchParams, user, products, navigateTo, setSelectedProductId])
 
   useEffect(() => {
     if (!user) return
@@ -2221,6 +2205,24 @@ function ProductDetailPage() {
       setLoading(false)
     })
   }, [selectedProductId])
+
+  // ─── Sync URL with product slug for shareable links ────
+  useEffect(() => {
+    if (product) {
+      const slug = product.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+      const url = new URL(window.location.href)
+      url.searchParams.set('product', slug)
+      window.history.replaceState({}, '', url.toString())
+    }
+    // Clean up URL on unmount
+    return () => {
+      const url = new URL(window.location.href)
+      if (url.searchParams.has('product')) {
+        url.searchParams.delete('product')
+        window.history.replaceState({}, '', url.toString())
+      }
+    }
+  }, [product?.id])
 
   useEffect(() => {
     if (!user || !selectedProductId) return
@@ -2448,10 +2450,18 @@ function ProductDetailPage() {
                     <Button
                       variant="outline"
                       className="h-13 rounded-xl border-[#e3dfd8]"
-                      onClick={() => {
+                      onClick={async () => {
                         const slug = product.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
                         const url = `${window.location.origin}${window.location.pathname}?product=${slug}`
-                        navigator.clipboard.writeText(url).then(() => toast.success('Link copied!')).catch(() => toast.error('Failed to copy'))
+                        if (navigator.share) {
+                          try {
+                            await navigator.share({ title: product.name, text: `Check out ${product.name} on NOTJUST Watr!`, url })
+                          } catch {
+                            navigator.clipboard.writeText(url).then(() => toast.success('Link copied!')).catch(() => toast.error('Failed to copy'))
+                          }
+                        } else {
+                          navigator.clipboard.writeText(url).then(() => toast.success('Link copied!')).catch(() => toast.error('Failed to copy'))
+                        }
                       }}
                     >
                       <Share2 className="w-5 h-5" />
@@ -5596,6 +5606,42 @@ function ProfileView() {
 }
 
 // ============================================================
+// URL SYNC HANDLER — reads ?product=slug from URL on load
+// and auto-navigates to product-detail for shareable links
+// ============================================================
+function UrlSyncHandler() {
+  const searchParams = useSearchParams()
+  const { user, navigateTo, setSelectedProductId, currentView } = useAppStore()
+  const [products, setProducts] = useState<Product[]>([])
+
+  // Load products once
+  useEffect(() => {
+    productService.getAll().then(r => {
+      if (r.data) setProducts(r.data)
+    })
+  }, [])
+
+  // On mount or when products load, check for ?product=slug
+  useEffect(() => {
+    const productSlug = searchParams.get('product')
+    if (!productSlug || products.length === 0) return
+    // Only navigate if we're on landing or products view (not already on product-detail)
+    if (currentView !== 'landing' && currentView !== 'products') return
+
+    const matchedProduct = products.find(p => {
+      const slug = p.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+      return slug === productSlug.toLowerCase()
+    })
+    if (matchedProduct) {
+      setSelectedProductId(matchedProduct.id)
+      navigateTo('product-detail')
+    }
+  }, [searchParams, products, currentView, navigateTo, setSelectedProductId])
+
+  return null
+}
+
+// ============================================================
 // MAIN APP
 // ============================================================
 export default function HomePage() {
@@ -5645,6 +5691,9 @@ export default function HomePage() {
 
   return (
     <>
+      <Suspense fallback={null}>
+        <UrlSyncHandler />
+      </Suspense>
       <Navbar />
       <AnimatePresence mode="wait">
         <motion.main

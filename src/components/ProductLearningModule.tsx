@@ -1101,9 +1101,9 @@ export function ProductLearningModule() {
                   size="lg"
                   className="font-heading font-semibold"
                   style={{ backgroundColor: BRAND.lime, color: BRAND.dark }}
-                  onClick={() => navigateTo('products')}
+                  onClick={() => navigateTo('product-detail')}
                 >
-                  Browse Products <ChevronRight className="h-5 w-5 ml-1" />
+                  Continue to Product <ChevronRight className="h-5 w-5 ml-1" />
                 </Button>
               </CardFooter>
             </Card>

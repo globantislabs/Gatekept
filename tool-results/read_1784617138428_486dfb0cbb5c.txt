@@ -1,0 +1,1116 @@
+     1→'use client'
+     2→import React, { useState, useEffect, useRef, useCallback } from 'react'
+     3→import { motion, AnimatePresence } from 'framer-motion'
+     4→import {
+     5→  Play, CheckCircle, Lock, ArrowRight, ArrowLeft, RefreshCw,
+     6→  AlertCircle, ChevronRight, Trophy, Video, FileQuestion, RotateCcw,
+     7→} from 'lucide-react'
+     8→import { useAppStore } from '@/store/app-store'
+     9→import { productVideoService, productQuizService, productLearningService, productService } from '@/lib/data-service'
+    10→import type { ProductVideo, ProductQuiz, ProductLearningProgress, Product } from '@/lib/data-service'
+    11→import { Button } from '@/components/ui/button'
+    12→import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card'
+    13→import { Badge } from '@/components/ui/badge'
+    14→import { Progress } from '@/components/ui/progress'
+    15→import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+    16→import { Label } from '@/components/ui/label'
+    17→import { toast } from 'sonner'
+    18→
+    19→// ─── Brand Constants ───────────────────────────────────────
+    20→const BRAND = {
+    21→  green: '#48805b',
+    22→  lime: '#afb75d',
+    23→  dark: '#1f1e1c',
+    24→  muted: '#88837b',
+    25→  surface: '#e3dfd8',
+    26→  bg: '#f4f3f0',
+    27→  blue: '#2e91b2',
+    28→} as const
+    29→
+    30→const PASS_THRESHOLD = 4 // need 4 out of 5 correct (80%)
+    31→
+    32→// ─── Step Types ────────────────────────────────────────────
+    33→type LearningStep =
+    34→  | { type: 'video'; videoIndex: number }
+    35→  | { type: 'quiz'; videoIndex: number }
+    36→  | { type: 'completed' }
+    37→
+    38→// ─── Animation Helpers ─────────────────────────────────────
+    39→const fadeInUp = {
+    40→  initial: { opacity: 0, y: 20 } as const,
+    41→  animate: { opacity: 1, y: 0 } as const,
+    42→}
+    43→
+    44→// ─── Quiz result for a specific video ──────────────────────
+    45→interface QuizResult {
+    46→  correct: number
+    47→  total: number
+    48→  passed: boolean
+    49→  answers: Record<number, number>
+    50→}
+    51→
+    52→// ═══════════════════════════════════════════════════════════
+    53→// ProductLearningModule — Unified sequential learning flow
+    54→// Video 1 → Quiz 1 → Video 2 → Quiz 2 → Video 3 → Quiz 3 → Unlocked
+    55→// ═══════════════════════════════════════════════════════════
+    56→export function ProductLearningModule() {
+    57→  const { selectedProductId, user, navigateTo } = useAppStore()
+    58→
+    59→  // ─── Data state ───────────────────────────────────────
+    60→  const [product, setProduct] = useState<Product | null>(null)
+    61→  const [videos, setVideos] = useState<ProductVideo[]>([])
+    62→  const [progress, setProgress] = useState<ProductLearningProgress | null>(null)
+    63→  const [loading, setLoading] = useState(true)
+    64→
+    65→  // ─── Learning step state ──────────────────────────────
+    66→  const [currentStep, setCurrentStep] = useState<LearningStep>({ type: 'video', videoIndex: 0 })
+    67→  const [passedQuizzes, setPassedQuizzes] = useState<Record<number, boolean>>({})
+    68→
+    69→  // ─── Video player state ───────────────────────────────
+    70→  const [playing, setPlaying] = useState(false)
+    71→  const [videoProgress, setVideoProgress] = useState(0) // 0-100 for current video
+    72→  const progressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+    73→
+    74→  // ─── Quiz state ───────────────────────────────────────
+    75→  const [quizQuestions, setQuizQuestions] = useState<ProductQuiz[]>([])
+    76→  const [quizLoading, setQuizLoading] = useState(false)
+    77→  const [currentQuestionIdx, setCurrentQuestionIdx] = useState(0)
+    78→  const [answers, setAnswers] = useState<Record<number, number>>({})
+    79→  const [quizResult, setQuizResult] = useState<QuizResult | null>(null)
+    80→  const [submitting, setSubmitting] = useState(false)
+    81→
+    82→  // ─── Derived ──────────────────────────────────────────
+    83→  const currentVideo = currentStep.type === 'video' || currentStep.type === 'quiz'
+    84→    ? videos[currentStep.videoIndex] || null
+    85→    : null
+    86→
+    87→  // ─── Build the step list for the progress indicator ───
+    88→  const stepList: { type: 'video' | 'quiz'; videoIndex: number; label: string }[] = []
+    89→  for (let i = 0; i < videos.length; i++) {
+    90→    stepList.push({ type: 'video', videoIndex: i, label: `Video ${i + 1}` })
+    91→    stepList.push({ type: 'quiz', videoIndex: i, label: `Quiz ${i + 1}` })
+    92→  }
+    93→  const currentStepIndex = stepList.findIndex((s) => {
+    94→    if (currentStep.type === 'completed') return false
+    95→    return s.type === currentStep.type && s.videoIndex === currentStep.videoIndex
+    96→  })
+    97→
+    98→  // ─── Fetch data ───────────────────────────────────────
+    99→  useEffect(() => {
+   100→    if (!selectedProductId) return
+   101→    let cancelled = false
+   102→    async function load() {
+   103→      setLoading(true)
+   104→      try {
+   105→        const [prodRes, vidRes, progRes] = await Promise.all([
+   106→          productService.getById(selectedProductId),
+   107→          productVideoService.getByProduct(selectedProductId),
+   108→          user
+   109→            ? productLearningService.getProgress(user.user_id, selectedProductId)
+   110→            : Promise.resolve({ data: null, error: null }),
+   111→        ])
+   112→        if (cancelled) return
+   113→        setProduct(prodRes.data || null)
+   114→        const loadedVideos = vidRes.data || []
+   115→        setVideos(loadedVideos)
+   116→        setProgress(progRes.data || null)
+   117→
+   118→        // Determine which step to start on based on saved progress
+   119→        if (progRes.data && loadedVideos.length > 0) {
+   120→          const savedProgress = progRes.data as ProductLearningProgress
+   121→          // Check quiz_answers to see which quizzes were already passed
+   122→          // We'll reconstruct the step from the progress
+   123→          const vp = savedProgress.video_progress || {}
+   124→          const qa = savedProgress.quiz_answers || {}
+   125→
+   126→          // Find the first video that is not 100% complete
+   127→          let startVideoIdx = 0
+   128→          for (let i = 0; i < loadedVideos.length; i++) {
+   129→            const vidProg = vp[loadedVideos[i].id] ?? 0
+   130→            if (vidProg < 100) {
+   131→              startVideoIdx = i
+   132→              break
+   133→            }
+   134→            if (i === loadedVideos.length - 1) {
+   135→              startVideoIdx = loadedVideos.length - 1
+   136→            }
+   137→          }
+   138→
+   139→          // If the status is already UNLOCKED or COMPLETED, go to completed
+   140→          if (savedProgress.status === 'UNLOCKED' || savedProgress.status === 'COMPLETED') {
+   141→            const allPassed: Record<number, boolean> = {}
+   142→            for (let i = 0; i < loadedVideos.length; i++) {
+   143→              allPassed[i] = true
+   144→            }
+   145→            setPassedQuizzes(allPassed)
+   146→            setCurrentStep({ type: 'completed' })
+   147→          } else {
+   148→            // Start on the appropriate video
+   149→            setCurrentStep({ type: 'video', videoIndex: startVideoIdx })
+   150→          }
+   151→        }
+   152→      } catch (err) {
+   153→        console.error('Failed to load learning data:', err)
+   154→      } finally {
+   155→        if (!cancelled) setLoading(false)
+   156→      }
+   157→    }
+   158→    load()
+   159→    return () => { cancelled = true }
+   160→  }, [selectedProductId, user])
+   161→
+   162→  // ─── Reset video player when step changes ─────────────
+   163→  useEffect(() => {
+   164→    setPlaying(false)
+   165→    setQuizResult(null)
+   166→    setAnswers({})
+   167→    setCurrentQuestionIdx(0)
+   168→    if (progressIntervalRef.current) {
+   169→      clearInterval(progressIntervalRef.current)
+   170→      progressIntervalRef.current = null
+   171→    }
+   172→
+   173→    // Set video progress from saved data
+   174→    if (currentStep.type === 'video' && currentVideo) {
+   175→      const savedProg = progress?.video_progress?.[currentVideo.id] ?? 0
+   176→      setVideoProgress(savedProg)
+   177→    } else {
+   178→      setVideoProgress(0)
+   179→    }
+   180→  }, [currentStep.type, currentStep.type === 'video' || currentStep.type === 'quiz' ? currentStep.videoIndex : null, currentVideo?.id])
+   181→
+   182→  // ─── Fetch quiz questions when entering a quiz step ───
+   183→  useEffect(() => {
+   184→    if (currentStep.type !== 'quiz') return
+   185→    const video = videos[currentStep.videoIndex]
+   186→    if (!video) return
+   187→
+   188→    let cancelled = false
+   189→    async function loadQuiz() {
+   190→      setQuizLoading(true)
+   191→      try {
+   192→        const res = await productQuizService.getByVideo(video.id)
+   193→        if (!cancelled) {
+   194→          setQuizQuestions(res.data || [])
+   195→        }
+   196→      } catch (err) {
+   197→        console.error('Failed to load quiz questions:', err)
+   198→      } finally {
+   199→        if (!cancelled) setQuizLoading(false)
+   200→      }
+   201→    }
+   202→    loadQuiz()
+   203→    return () => { cancelled = true }
+   204→  }, [currentStep.type === 'quiz' ? currentStep.videoIndex : -1, videos])
+   205→
+   206→  // ─── Simulated video playback ─────────────────────────
+   207→  useEffect(() => {
+   208→    if (playing && videoProgress < 100) {
+   209→      progressIntervalRef.current = setInterval(() => {
+   210→        setVideoProgress((prev) => {
+   211→          const next = Math.min(prev + 2, 100)
+   212→          if (next >= 100) {
+   213→            setPlaying(false)
+   214→          }
+   215→          return next
+   216→        })
+   217→      }, 150)
+   218→    }
+   219→    return () => {
+   220→      if (progressIntervalRef.current) {
+   221→        clearInterval(progressIntervalRef.current)
+   222→        progressIntervalRef.current = null
+   223→      }
+   224→    }
+   225→  }, [playing])
+   226→
+   227→  // ─── Save video progress to backend ───────────────────
+   228→  const saveVideoProgress = useCallback(async (pct: number) => {
+   229→    if (!user || !selectedProductId || !currentVideo) return
+   230→    const updatedVP = { ...(progress?.video_progress || {}), [currentVideo.id]: pct }
+   231→    const res = await productLearningService.updateVideoProgress(user.user_id, selectedProductId, updatedVP)
+   232→    if (res.data) setProgress(res.data)
+   233→  }, [user, selectedProductId, currentVideo, progress?.video_progress])
+   234→
+   235→  // ─── Auto-save when video completes ───────────────────
+   236→  useEffect(() => {
+   237→    if (videoProgress >= 100 && currentStep.type === 'video' && currentVideo) {
+   238→      saveVideoProgress(100)
+   239→    }
+   240→  }, [videoProgress, currentStep.type, currentVideo?.id, saveVideoProgress])
+   241→
+   242→  // ─── Video player handlers ────────────────────────────
+   243→  const handlePlayPause = () => {
+   244→    if (videoProgress >= 100) return
+   245→    setPlaying(!playing)
+   246→    if (playing) {
+   247→      saveVideoProgress(videoProgress)
+   248→    }
+   249→  }
+   250→
+   251→  const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
+   252→    const rect = e.currentTarget.getBoundingClientRect()
+   253→    const pct = Math.round(((e.clientX - rect.left) / rect.width) * 100)
+   254→    setVideoProgress(pct)
+   255→    saveVideoProgress(pct)
+   256→  }
+   257→
+   258→  // ─── Advance to next step after video completes ───────
+   259→  const handleVideoComplete = () => {
+   260→    if (currentStep.type !== 'video') return
+   261→    // Move to quiz for this video
+   262→    setCurrentStep({ type: 'quiz', videoIndex: currentStep.videoIndex })
+   263→  }
+   264→
+   265→  // ─── Handle answer selection ──────────────────────────
+   266→  const handleAnswer = (questionIndex: number, optionIndex: number) => {
+   267→    setAnswers((prev) => ({ ...prev, [questionIndex]: optionIndex }))
+   268→  }
+   269→
+   270→  // ─── Submit quiz ──────────────────────────────────────
+   271→  const handleSubmitQuiz = async () => {
+   272→    if (!user || !selectedProductId) return
+   273→    setSubmitting(true)
+   274→
+   275→    try {
+   276→      let correctCount = 0
+   277→      const quizAnswersMap: Record<string, number> = {}
+   278→
+   279→      quizQuestions.forEach((quiz, idx) => {
+   280→        const userAnswer = answers[idx]
+   281→        quizAnswersMap[quiz.id] = userAnswer ?? -1
+   282→        if (userAnswer === quiz.answer) {
+   283→          correctCount++
+   284→        }
+   285→      })
+   286→
+   287→      const totalQuestions = quizQuestions.length
+   288→      const passed = correctCount >= PASS_THRESHOLD
+   289→
+   290→      const result: QuizResult = {
+   291→        correct: correctCount,
+   292→        total: totalQuestions,
+   293→        passed,
+   294→        answers: { ...answers },
+   295→      }
+   296→      setQuizResult(result)
+   297→
+   298→      // Submit via service
+   299→      const overallScore = totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0
+   300→      const res = await productLearningService.submitQuiz(
+   301→        user.user_id,
+   302→        selectedProductId,
+   303→        quizAnswersMap,
+   304→        overallScore,
+   305→        passed
+   306→      )
+   307→
+   308→      if (res.data) {
+   309→        setProgress(res.data)
+   310→      }
+   311→
+   312→      if (passed) {
+   313→        // Mark this quiz as passed
+   314→        setPassedQuizzes((prev) => ({
+   315→          ...prev,
+   316→          [currentStep.type === 'quiz' ? currentStep.videoIndex : -1]: true,
+   317→        }))
+   318→        toast.success('Quiz passed! Moving to the next lesson.')
+   319→      } else {
+   320→        toast.error(`You got ${correctCount}/${totalQuestions} correct. You need ${PASS_THRESHOLD} to pass. Please re-watch the video and try again.`)
+   321→      }
+   322→    } catch (err) {
+   323→      console.error('Quiz submit failed:', err)
+   324→      toast.error('Failed to submit quiz. Please try again.')
+   325→    } finally {
+   326→      setSubmitting(false)
+   327→    }
+   328→  }
+   329→
+   330→  // ─── Advance after passing quiz ───────────────────────
+   331→  const handleQuizPassContinue = () => {
+   332→    if (currentStep.type !== 'quiz') return
+   333→    const nextVideoIndex = currentStep.videoIndex + 1
+   334→    if (nextVideoIndex < videos.length) {
+   335→      setCurrentStep({ type: 'video', videoIndex: nextVideoIndex })
+   336→    } else {
+   337→      // All quizzes passed — unlock the product
+   338→      setCurrentStep({ type: 'completed' })
+   339→    }
+   340→  }
+   341→
+   342→  // ─── Retry after failing quiz ─────────────────────────
+   343→  const handleRetryQuiz = () => {
+   344→    if (currentStep.type !== 'quiz') return
+   345→    // Go back to the video for this quiz
+   346→    setCurrentStep({ type: 'video', videoIndex: currentStep.videoIndex })
+   347→  }
+   348→
+   349→  // ─── Check if a step is unlocked ──────────────────────
+   350→  const isStepUnlocked = (step: { type: 'video' | 'quiz'; videoIndex: number }): boolean => {
+   351→    // Step 0 (Video 1) is always unlocked
+   352→    if (step.videoIndex === 0 && step.type === 'video') return true
+   353→    // Quiz for video 0 is unlocked if video 0 is 100% complete
+   354→    if (step.videoIndex === 0 && step.type === 'quiz') {
+   355→      return (progress?.video_progress?.[videos[0]?.id] ?? 0) >= 100
+   356→    }
+   357→    // Video N is unlocked if quiz for video N-1 is passed
+   358→    if (step.type === 'video' && step.videoIndex > 0) {
+   359→      return !!passedQuizzes[step.videoIndex - 1]
+   360→    }
+   361→    // Quiz N is unlocked if video N is 100% complete
+   362→    if (step.type === 'quiz' && step.videoIndex > 0) {
+   363→      const videoComplete = (progress?.video_progress?.[videos[step.videoIndex]?.id] ?? 0) >= 100
+   364→      const prevQuizPassed = !!passedQuizzes[step.videoIndex - 1]
+   365→      return videoComplete && prevQuizPassed
+   366→    }
+   367→    return false
+   368→  }
+   369→
+   370→  // ─── Overall progress percentage ──────────────────────
+   371→  const totalSteps = videos.length * 2 // each video + quiz
+   372→  const completedSteps = Object.keys(passedQuizzes).filter((k) => passedQuizzes[Number(k)]).length * 2
+   373→    + videos.filter((v) => (progress?.video_progress?.[v.id] ?? 0) >= 100 && !passedQuizzes[videos.indexOf(v)]).length
+   374→  const overallPct = totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0
+   375→
+   376→  // ─── Loading state ─────────────────────────────────────
+   377→  if (loading) {
+   378→    return (
+   379→      <div className="flex items-center justify-center min-h-[60vh]">
+   380→        <div className="flex flex-col items-center gap-3">
+   381→          <RefreshCw className="h-8 w-8 animate-spin" style={{ color: BRAND.green }} />
+   382→          <p className="text-sm" style={{ color: BRAND.muted }}>Loading learning content...</p>
+   383→        </div>
+   384→      </div>
+   385→    )
+   386→  }
+   387→
+   388→  if (!product || videos.length === 0) {
+   389→    return (
+   390→      <div className="flex items-center justify-center min-h-[60vh]">
+   391→        <Card className="max-w-md w-full" style={{ borderColor: BRAND.surface }}>
+   392→          <CardContent className="p-6 text-center">
+   393→            <AlertCircle className="h-10 w-10 mx-auto mb-3" style={{ color: BRAND.muted }} />
+   394→            <p className="font-heading text-lg" style={{ color: BRAND.dark }}>No learning content available</p>
+   395→            <p className="text-sm mt-1" style={{ color: BRAND.muted }}>This product doesn't have learning videos yet.</p>
+   396→            <Button
+   397→              className="mt-4"
+   398→              style={{ backgroundColor: BRAND.green, color: '#fff' }}
+   399→              onClick={() => navigateTo('products')}
+   400→            >
+   401→              <ArrowLeft className="h-4 w-4 mr-2" /> Back to Products
+   402→            </Button>
+   403→          </CardContent>
+   404→        </Card>
+   405→      </div>
+   406→    )
+   407→  }
+   408→
+   409→  // ═══════════════════════════════════════════════════════
+   410→  // RENDER
+   411→  // ═══════════════════════════════════════════════════════
+   412→  return (
+   413→    <motion.div {...fadeInUp} transition={{ duration: 0.4 }} className="max-w-4xl mx-auto px-4 py-6">
+   414→      {/* ─── Header ────────────────────────────────────── */}
+   415→      <div className="flex items-center gap-3 mb-4">
+   416→        <Button
+   417→          variant="ghost"
+   418→          size="sm"
+   419→          onClick={() => navigateTo('products')}
+   420→          className="p-2"
+   421→        >
+   422→          <ArrowLeft className="h-5 w-5" style={{ color: BRAND.dark }} />
+   423→        </Button>
+   424→        <div className="flex-1">
+   425→          <h1 className="font-heading text-xl sm:text-2xl font-bold" style={{ color: BRAND.dark }}>
+   426→            Learn: {product.name}
+   427→          </h1>
+   428→          <p className="text-sm" style={{ color: BRAND.muted }}>
+   429→            Complete each video and quiz to unlock this product
+   430→          </p>
+   431→        </div>
+   432→        <Badge
+   433→          style={{
+   434→            backgroundColor: currentStep.type === 'completed' ? BRAND.lime : BRAND.surface,
+   435→            color: currentStep.type === 'completed' ? BRAND.dark : BRAND.muted,
+   436→          }}
+   437→          className="text-xs font-medium"
+   438→        >
+   439→          {currentStep.type === 'completed' ? 'Unlocked' : `${overallPct}% Progress`}
+   440→        </Badge>
+   441→      </div>
+   442→
+   443→      {/* ─── Step Progress Indicator ───────────────────── */}
+   444→      <Card className="mb-6" style={{ borderColor: BRAND.surface }}>
+   445→        <CardContent className="p-4">
+   446→          <div className="flex items-center justify-between gap-1 overflow-x-auto pb-1">
+   447→            {stepList.map((step, idx) => {
+   448→              const isCurrent =
+   449→                currentStep.type !== 'completed' &&
+   450→                step.type === currentStep.type &&
+   451→                step.videoIndex === currentStep.videoIndex
+   452→              const isPast = idx < currentStepIndex || currentStep.type === 'completed'
+   453→              const isUnlocked = isStepUnlocked(step)
+   454→              const isQuizPassed = step.type === 'quiz' && !!passedQuizzes[step.videoIndex]
+   455→              const isVideoComplete =
+   456→                step.type === 'video' &&
+   457→                (progress?.video_progress?.[videos[step.videoIndex]?.id] ?? 0) >= 100
+   458→
+   459→              // Determine icon and color
+   460→              let stepIcon: React.ReactNode
+   461→              let bgColor: string
+   462→              let iconColor: string
+   463→              let textColor: string
+   464→
+   465→              if (isQuizPassed || (isPast && step.type === 'quiz')) {
+   466→                stepIcon = <CheckCircle className="h-4 w-4" />
+   467→                bgColor = BRAND.lime
+   468→                iconColor = BRAND.dark
+   469→                textColor = BRAND.dark
+   470→              } else if (isPast && step.type === 'video') {
+   471→                stepIcon = <CheckCircle className="h-4 w-4" />
+   472→                bgColor = BRAND.lime
+   473→                iconColor = BRAND.dark
+   474→                textColor = BRAND.dark
+   475→              } else if (isVideoComplete && step.type === 'video') {
+   476→                stepIcon = <CheckCircle className="h-4 w-4" />
+   477→                bgColor = BRAND.lime
+   478→                iconColor = BRAND.dark
+   479→                textColor = BRAND.dark
+   480→              } else if (isCurrent) {
+   481→                stepIcon =
+   482→                  step.type === 'video' ? (
+   483→                    <Play className="h-4 w-4" fill="white" />
+   484→                  ) : (
+   485→                    <FileQuestion className="h-4 w-4" />
+   486→                  )
+   487→                bgColor = BRAND.green
+   488→                iconColor = '#fff'
+   489→                textColor = BRAND.green
+   490→              } else if (isUnlocked) {
+   491→                stepIcon =
+   492→                  step.type === 'video' ? (
+   493→                    <Video className="h-4 w-4" />
+   494→                  ) : (
+   495→                    <FileQuestion className="h-4 w-4" />
+   496→                  )
+   497→                bgColor = `${BRAND.green}20`
+   498→                iconColor = BRAND.green
+   499→                textColor = BRAND.green
+   500→              } else {
+   501→                stepIcon = <Lock className="h-3.5 w-3.5" />
+   502→                bgColor = BRAND.surface
+   503→                iconColor = BRAND.muted
+   504→                textColor = BRAND.muted
+   505→              }
+   506→
+   507→              return (
+   508→                <React.Fragment key={`${step.type}-${step.videoIndex}`}>
+   509→                  {idx > 0 && (
+   510→                    <div
+   511→                      className="h-0.5 flex-1 min-w-[8px] max-w-[32px] rounded-full"
+   512→                      style={{
+   513→                        backgroundColor:
+   514→                          isPast || isCurrent ? BRAND.lime : BRAND.surface,
+   515→                      }}
+   516→                    />
+   517→                  )}
+   518→                  <div className="flex flex-col items-center gap-1 min-w-[48px]">
+   519→                    <div
+   520→                      className="h-8 w-8 rounded-full flex items-center justify-center transition-all"
+   521→                      style={{ backgroundColor: bgColor, color: iconColor }}
+   522→                    >
+   523→                      {stepIcon}
+   524→                    </div>
+   525→                    <span
+   526→                      className="text-[10px] font-medium whitespace-nowrap"
+   527→                      style={{ color: textColor }}
+   528→                    >
+   529→                      {step.type === 'video' ? `V${step.videoIndex + 1}` : `Q${step.videoIndex + 1}`}
+   530→                    </span>
+   531→                  </div>
+   532→                </React.Fragment>
+   533→              )
+   534→            })}
+   535→          </div>
+   536→        </CardContent>
+   537→      </Card>
+   538→
+   539→      {/* ─── Main Content Area ─────────────────────────── */}
+   540→      <AnimatePresence mode="wait">
+   541→        {/* ═══ VIDEO STEP ═══ */}
+   542→        {currentStep.type === 'video' && (
+   543→          <motion.div
+   544→            key={`video-${currentStep.videoIndex}`}
+   545→            initial={{ opacity: 0, x: -20 }}
+   546→            animate={{ opacity: 1, x: 0 }}
+   547→            exit={{ opacity: 0, x: 20 }}
+   548→            transition={{ duration: 0.3 }}
+   549→          >
+   550→            <Card className="overflow-hidden" style={{ borderColor: BRAND.surface }}>
+   551→              {/* Simulated video area */}
+   552→              <div
+   553→                className="relative aspect-video bg-gray-900 flex items-center justify-center cursor-pointer"
+   554→                onClick={handlePlayPause}
+   555→              >
+   556→                {/* Gradient background */}
+   557→                <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-900">
+   558→                  <div className="absolute inset-0 flex items-center justify-center opacity-10">
+   559→                    <div
+   560→                      className="text-9xl font-heading font-bold select-none"
+   561→                      style={{ color: BRAND.lime }}
+   562→                    >
+   563→                      {product.name.charAt(0)}
+   564→                    </div>
+   565→                  </div>
+   566→                </div>
+   567→
+   568→                {/* Video info overlay */}
+   569→                <div className="absolute top-4 left-4 z-10">
+   570→                  <Badge
+   571→                    className="text-xs"
+   572→                    style={{ backgroundColor: BRAND.green, color: '#fff' }}
+   573→                  >
+   574→                    Video {currentStep.videoIndex + 1} of {videos.length}
+   575→                  </Badge>
+   576→                </div>
+   577→
+   578→                {/* Play/Pause button */}
+   579→                <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }} className="z-10">
+   580→                  {videoProgress >= 100 ? (
+   581→                    <div className="flex flex-col items-center gap-2">
+   582→                      <CheckCircle className="h-16 w-16" style={{ color: BRAND.lime }} />
+   583→                      <span className="text-sm font-medium" style={{ color: BRAND.lime }}>Video Complete</span>
+   584→                    </div>
+   585→                  ) : (
+   586→                    <div
+   587→                      className="h-16 w-16 rounded-full flex items-center justify-center backdrop-blur-sm"
+   588→                      style={{ backgroundColor: `${BRAND.green}CC` }}
+   589→                    >
+   590→                      {playing ? (
+   591→                        <div className="flex gap-1.5 items-center">
+   592→                          <div className="w-1.5 h-6 bg-white rounded-sm" />
+   593→                          <div className="w-1.5 h-6 bg-white rounded-sm" />
+   594→                        </div>
+   595→                      ) : (
+   596→                        <Play className="h-7 w-7 text-white ml-1" fill="white" />
+   597→                      )}
+   598→                    </div>
+   599→                  )}
+   600→                </motion.div>
+   601→
+   602→                {/* Duration badge */}
+   603→                <div className="absolute bottom-4 right-4 z-10">
+   604→                  <span className="text-xs text-white/70 bg-black/40 px-2 py-1 rounded">
+   605→                    {currentVideo?.duration || '0:00'}
+   606→                  </span>
+   607→                </div>
+   608→              </div>
+   609→
+   610→              {/* Progress bar (seek bar) */}
+   611→              <div
+   612→                className="h-1.5 cursor-pointer relative"
+   613→                style={{ backgroundColor: BRAND.surface }}
+   614→                onClick={handleSeek}
+   615→              >
+   616→                <div
+   617→                  className="h-full transition-all duration-300"
+   618→                  style={{
+   619→                    width: `${videoProgress}%`,
+   620→                    backgroundColor: videoProgress >= 100 ? BRAND.lime : BRAND.green,
+   621→                  }}
+   622→                />
+   623→              </div>
+   624→
+   625→              {/* Video title & controls */}
+   626→              <CardContent className="p-4">
+   627→                <h3 className="font-heading text-lg font-semibold" style={{ color: BRAND.dark }}>
+   628→                  {currentVideo?.title || 'Video'}
+   629→                </h3>
+   630→                <p className="text-sm mt-1" style={{ color: BRAND.muted }}>
+   631→                  {currentVideo?.description || ''}
+   632→                </p>
+   633→
+   634→                <div className="flex items-center justify-between mt-4">
+   635→                  <div className="flex items-center gap-2">
+   636→                    <span className="text-sm font-medium" style={{ color: BRAND.green }}>
+   637→                      {videoProgress}%
+   638→                    </span>
+   639→                    <span className="text-sm" style={{ color: BRAND.muted }}>
+   640→                      watched
+   641→                    </span>
+   642→                  </div>
+   643→
+   644→                  {videoProgress >= 100 && (
+   645→                    <Button
+   646→                      size="sm"
+   647→                      style={{ backgroundColor: BRAND.green, color: '#fff' }}
+   648→                      onClick={handleVideoComplete}
+   649→                    >
+   650→                      Take Quiz {currentStep.videoIndex + 1} <ChevronRight className="h-4 w-4 ml-1" />
+   651→                    </Button>
+   652→                  )}
+   653→                </div>
+   654→              </CardContent>
+   655→            </Card>
+   656→
+   657→            {/* Instruction card */}
+   658→            <Card className="mt-4" style={{ borderColor: BRAND.surface, backgroundColor: `${BRAND.blue}08` }}>
+   659→              <CardContent className="p-4 flex items-start gap-3">
+   660→                <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" style={{ color: BRAND.blue }} />
+   661→                <div>
+   662→                  <p className="text-sm font-medium" style={{ color: BRAND.dark }}>
+   663→                    Watch the full video to unlock the quiz
+   664→                  </p>
+   665→                  <p className="text-xs mt-1" style={{ color: BRAND.muted }}>
+   666→                    You must watch the entire video before taking Quiz {currentStep.videoIndex + 1}.
+   667→                    You need {PASS_THRESHOLD} out of 5 correct answers (80%) to pass.
+   668→                  </p>
+   669→                </div>
+   670→              </CardContent>
+   671→            </Card>
+   672→          </motion.div>
+   673→        )}
+   674→
+   675→        {/* ═══ QUIZ STEP ═══ */}
+   676→        {currentStep.type === 'quiz' && (
+   677→          <motion.div
+   678→            key={`quiz-${currentStep.videoIndex}`}
+   679→            initial={{ opacity: 0, x: -20 }}
+   680→            animate={{ opacity: 1, x: 0 }}
+   681→            exit={{ opacity: 0, x: 20 }}
+   682→            transition={{ duration: 0.3 }}
+   683→          >
+   684→            {quizLoading ? (
+   685→              <div className="flex items-center justify-center min-h-[40vh]">
+   686→                <div className="flex flex-col items-center gap-3">
+   687→                  <RefreshCw className="h-8 w-8 animate-spin" style={{ color: BRAND.green }} />
+   688→                  <p className="text-sm" style={{ color: BRAND.muted }}>Loading quiz questions...</p>
+   689→                </div>
+   690→              </div>
+   691→            ) : quizQuestions.length === 0 ? (
+   692→              <Card style={{ borderColor: BRAND.surface }}>
+   693→                <CardContent className="p-6 text-center">
+   694→                  <AlertCircle className="h-10 w-10 mx-auto mb-3" style={{ color: BRAND.muted }} />
+   695→                  <p className="font-heading text-lg" style={{ color: BRAND.dark }}>No quiz questions available</p>
+   696→                  <p className="text-sm mt-1" style={{ color: BRAND.muted }}>
+   697→                    There are no quiz questions for this video yet.
+   698→                  </p>
+   699→                  <Button
+   700→                    className="mt-4"
+   701→                    style={{ backgroundColor: BRAND.green, color: '#fff' }}
+   702→                    onClick={handleQuizPassContinue}
+   703→                  >
+   704→                    Continue <ArrowRight className="h-4 w-4 ml-1" />
+   705→                  </Button>
+   706→                </CardContent>
+   707→              </Card>
+   708→            ) : quizResult ? (
+   709→              /* ═══ QUIZ RESULT ═══ */
+   710→              <Card
+   711→                className="border-2"
+   712→                style={{ borderColor: quizResult.passed ? BRAND.lime : BRAND.green }}
+   713→              >
+   714→                <CardHeader className="text-center pb-2">
+   715→                  <motion.div
+   716→                    initial={{ scale: 0 }}
+   717→                    animate={{ scale: 1 }}
+   718→                    transition={{ type: 'spring', stiffness: 200, delay: 0.2 }}
+   719→                  >
+   720→                    {quizResult.passed ? (
+   721→                      <CheckCircle className="h-16 w-16 mx-auto" style={{ color: BRAND.lime }} />
+   722→                    ) : (
+   723→                      <AlertCircle className="h-16 w-16 mx-auto" style={{ color: BRAND.green }} />
+   724→                    )}
+   725→                  </motion.div>
+   726→                  <CardTitle className="font-heading text-2xl mt-3" style={{ color: BRAND.dark }}>
+   727→                    {quizResult.passed ? 'Quiz Passed!' : 'Not Quite!'}
+   728→                  </CardTitle>
+   729→                  <CardDescription style={{ color: BRAND.muted }}>
+   730→                    {quizResult.passed
+   731→                      ? `You scored ${quizResult.correct}/${quizResult.total} on Quiz ${currentStep.videoIndex + 1}`
+   732→                      : `You got ${quizResult.correct}/${quizResult.total} correct — you need ${PASS_THRESHOLD} to pass`}
+   733→                  </CardDescription>
+   734→                </CardHeader>
+   735→
+   736→                <CardContent className="space-y-4">
+   737→                  {/* Score display */}
+   738→                  <div
+   739→                    className="text-center py-4 rounded-lg"
+   740→                    style={{
+   741→                      backgroundColor: quizResult.passed ? `${BRAND.lime}20` : `${BRAND.green}15`,
+   742→                    }}
+   743→                  >
+   744→                    <p
+   745→                      className="font-heading text-4xl font-bold"
+   746→                      style={{ color: quizResult.passed ? BRAND.lime : BRAND.green }}
+   747→                    >
+   748→                      {quizResult.correct}/{quizResult.total}
+   749→                    </p>
+   750→                    <p className="text-sm mt-1" style={{ color: BRAND.muted }}>
+   751→                      {quizResult.passed
+   752→                        ? quizResult.correct === quizResult.total
+   753→                          ? 'Perfect Score!'
+   754→                          : 'You passed!'
+   755→                        : `${PASS_THRESHOLD - quizResult.correct} more correct answer${PASS_THRESHOLD - quizResult.correct !== 1 ? 's' : ''} needed`}
+   756→                    </p>
+   757→                  </div>
+   758→
+   759→                  {/* Review incorrect answers */}
+   760→                  {!quizResult.passed && (
+   761→                    <div className="space-y-3">
+   762→                      <h4 className="font-heading text-sm font-semibold" style={{ color: BRAND.dark }}>
+   763→                        Questions to Review
+   764→                      </h4>
+   765→                      {quizQuestions.map((quiz, idx) => {
+   766→                        const userAnswer = quizResult.answers[idx]
+   767→                        const isCorrect = userAnswer === quiz.answer
+   768→                        if (isCorrect) return null
+   769→
+   770→                        return (
+   771→                          <motion.div
+   772→                            key={quiz.id}
+   773→                            initial={{ opacity: 0, y: 10 }}
+   774→                            animate={{ opacity: 1, y: 0 }}
+   775→                            transition={{ duration: 0.2, delay: idx * 0.05 }}
+   776→                            className="rounded-lg p-3"
+   777→                            style={{
+   778→                              backgroundColor: `${BRAND.green}10`,
+   779→                              borderLeft: `3px solid ${BRAND.green}`,
+   780→                            }}
+   781→                          >
+   782→                            <p className="text-sm font-medium" style={{ color: BRAND.dark }}>
+   783→                              {quiz.question}
+   784→                            </p>
+   785→                            <div className="mt-1.5 flex flex-wrap gap-2">
+   786→                              <span
+   787→                                className="text-xs px-2 py-0.5 rounded"
+   788→                                style={{ backgroundColor: `${BRAND.green}20`, color: BRAND.green }}
+   789→                              >
+   790→                                Your answer: {userAnswer !== undefined ? quiz.options[userAnswer] : 'Not answered'}
+   791→                              </span>
+   792→                              <span
+   793→                                className="text-xs px-2 py-0.5 rounded"
+   794→                                style={{ backgroundColor: `${BRAND.lime}30`, color: BRAND.dark }}
+   795→                              >
+   796→                                Correct: {quiz.options[quiz.answer]}
+   797→                              </span>
+   798→                            </div>
+   799→                          </motion.div>
+   800→                        )
+   801→                      })}
+   802→                    </div>
+   803→                  )}
+   804→                </CardContent>
+   805→
+   806→                <CardFooter className="flex flex-col sm:flex-row gap-3 p-6 pt-2">
+   807→                  {quizResult.passed ? (
+   808→                    <Button
+   809→                      className="flex-1 font-heading"
+   810→                      style={{ backgroundColor: BRAND.lime, color: BRAND.dark }}
+   811→                      onClick={handleQuizPassContinue}
+   812→                    >
+   813→                      {currentStep.videoIndex < videos.length - 1 ? (
+   814→                        <>
+   815→                          Continue to Video {currentStep.videoIndex + 2}{' '}
+   816→                          <ArrowRight className="h-4 w-4 ml-1" />
+   817→                        </>
+   818→                      ) : (
+   819→                        <>
+   820→                          Unlock Product <Trophy className="h-4 w-4 ml-1" />
+   821→                        </>
+   822→                      )}
+   823→                    </Button>
+   824→                  ) : (
+   825→                    <Button
+   826→                      className="flex-1 font-heading"
+   827→                      style={{ backgroundColor: BRAND.blue, color: '#fff' }}
+   828→                      onClick={handleRetryQuiz}
+   829→                    >
+   830→                      <RotateCcw className="h-4 w-4 mr-2" /> Re-watch Video & Retry Quiz
+   831→                    </Button>
+   832→                  )}
+   833→                </CardFooter>
+   834→              </Card>
+   835→            ) : (
+   836→              /* ═══ QUIZ QUESTIONS ═══ */
+   837→              <>
+   838→                {/* Quiz header */}
+   839→                <div className="flex items-center gap-3 mb-4">
+   840→                  <div className="flex-1">
+   841→                    <h2 className="font-heading text-lg font-semibold" style={{ color: BRAND.dark }}>
+   842→                      Quiz {currentStep.videoIndex + 1}: {currentVideo?.title || `Video ${currentStep.videoIndex + 1}`}
+   843→                    </h2>
+   844→                    <p className="text-xs" style={{ color: BRAND.muted }}>
+   845→                      Answer all {quizQuestions.length} questions — need {PASS_THRESHOLD}/{quizQuestions.length} correct to pass
+   846→                    </p>
+   847→                  </div>
+   848→                </div>
+   849→
+   850→                {/* Progress indicator */}
+   851→                <div className="flex items-center gap-3 mb-6">
+   852→                  <Progress
+   853→                    value={
+   854→                      quizQuestions.length > 0
+   855→                        ? (Object.keys(answers).length / quizQuestions.length) * 100
+   856→                        : 0
+   857→                    }
+   858→                    className="h-2 flex-1"
+   859→                  />
+   860→                  <span className="text-xs font-medium whitespace-nowrap" style={{ color: BRAND.muted }}>
+   861→                    {Object.keys(answers).length}/{quizQuestions.length} answered
+   862→                  </span>
+   863→                </div>
+   864→
+   865→                {/* Question navigation dots */}
+   866→                <div className="flex items-center justify-center gap-2 mb-6">
+   867→                  {quizQuestions.map((_, idx) => (
+   868→                    <button
+   869→                      key={idx}
+   870→                      onClick={() => setCurrentQuestionIdx(idx)}
+   871→                      className={`h-2.5 w-2.5 rounded-full transition-all ${
+   872→                        idx === currentQuestionIdx ? 'scale-125' : ''
+   873→                      }`}
+   874→                      style={{
+   875→                        backgroundColor:
+   876→                          idx === currentQuestionIdx
+   877→                            ? BRAND.green
+   878→                            : answers[idx] !== undefined
+   879→                              ? BRAND.lime
+   880→                              : BRAND.surface,
+   881→                      }}
+   882→                      aria-label={`Go to question ${idx + 1}`}
+   883→                    />
+   884→                  ))}
+   885→                </div>
+   886→
+   887→                {/* Current question card */}
+   888→                <AnimatePresence mode="wait">
+   889→                  {quizQuestions[currentQuestionIdx] && (
+   890→                    <motion.div
+   891→                      key={currentQuestionIdx}
+   892→                      initial={{ opacity: 0, x: 20 }}
+   893→                      animate={{ opacity: 1, x: 0 }}
+   894→                      exit={{ opacity: 0, x: -20 }}
+   895→                      transition={{ duration: 0.2 }}
+   896→                    >
+   897→                      <Card style={{ borderColor: BRAND.surface }}>
+   898→                        <CardHeader>
+   899→                          <div className="flex items-center justify-between">
+   900→                            <Badge
+   901→                              className="text-xs"
+   902→                              style={{ backgroundColor: `${BRAND.green}20`, color: BRAND.green }}
+   903→                            >
+   904→                              Question {currentQuestionIdx + 1} of {quizQuestions.length}
+   905→                            </Badge>
+   906→                            {quizQuestions[currentQuestionIdx].difficulty && (
+   907→                              <Badge
+   908→                                variant="outline"
+   909→                                className="text-xs"
+   910→                                style={{ borderColor: BRAND.surface, color: BRAND.muted }}
+   911→                              >
+   912→                                {quizQuestions[currentQuestionIdx].difficulty}
+   913→                              </Badge>
+   914→                            )}
+   915→                          </div>
+   916→                          <CardTitle
+   917→                            className="font-heading text-lg mt-3"
+   918→                            style={{ color: BRAND.dark }}
+   919→                          >
+   920→                            {quizQuestions[currentQuestionIdx].question}
+   921→                          </CardTitle>
+   922→                        </CardHeader>
+   923→
+   924→                        <CardContent>
+   925→                          <RadioGroup
+   926→                            value={
+   927→                              answers[currentQuestionIdx] !== undefined
+   928→                                ? answers[currentQuestionIdx].toString()
+   929→                                : ''
+   930→                            }
+   931→                            onValueChange={(val) =>
+   932→                              handleAnswer(currentQuestionIdx, parseInt(val, 10))
+   933→                            }
+   934→                            className="space-y-3"
+   935→                          >
+   936→                            {quizQuestions[currentQuestionIdx].options.map((option, optIdx) => (
+   937→                              <motion.div
+   938→                                key={optIdx}
+   939→                                initial={{ opacity: 0, y: 10 }}
+   940→                                animate={{ opacity: 1, y: 0 }}
+   941→                                transition={{ duration: 0.15, delay: optIdx * 0.05 }}
+   942→                                className={`flex items-center gap-3 p-3 rounded-lg border transition-colors cursor-pointer ${
+   943→                                  answers[currentQuestionIdx] === optIdx ? 'border-current' : ''
+   944→                                }`}
+   945→                                style={{
+   946→                                  borderColor:
+   947→                                    answers[currentQuestionIdx] === optIdx
+   948→                                      ? BRAND.green
+   949→                                      : BRAND.surface,
+   950→                                  backgroundColor:
+   951→                                    answers[currentQuestionIdx] === optIdx
+   952→                                      ? `${BRAND.green}10`
+   953→                                      : 'transparent',
+   954→                                }}
+   955→                                onClick={() => handleAnswer(currentQuestionIdx, optIdx)}
+   956→                              >
+   957→                                <RadioGroupItem
+   958→                                  value={optIdx.toString()}
+   959→                                  id={`q-${currentQuestionIdx}-${optIdx}`}
+   960→                                  style={{ color: BRAND.green }}
+   961→                                />
+   962→                                <Label
+   963→                                  htmlFor={`q-${currentQuestionIdx}-${optIdx}`}
+   964→                                  className="flex-1 cursor-pointer text-sm"
+   965→                                  style={{ color: BRAND.dark }}
+   966→                                >
+   967→                                  {option}
+   968→                                </Label>
+   969→                              </motion.div>
+   970→                            ))}
+   971→                          </RadioGroup>
+   972→                        </CardContent>
+   973→
+   974→                        <CardFooter className="flex justify-between p-6 pt-2">
+   975→                          <Button
+   976→                            variant="outline"
+   977→                            disabled={currentQuestionIdx === 0}
+   978→                            onClick={() =>
+   979→                              setCurrentQuestionIdx(Math.max(0, currentQuestionIdx - 1))
+   980→                            }
+   981→                            style={{ borderColor: BRAND.surface, color: BRAND.dark }}
+   982→                          >
+   983→                            <ArrowLeft className="h-4 w-4 mr-1" /> Previous
+   984→                          </Button>
+   985→
+   986→                          {currentQuestionIdx < quizQuestions.length - 1 ? (
+   987→                            <Button
+   988→                              onClick={() => setCurrentQuestionIdx(currentQuestionIdx + 1)}
+   989→                              style={{ backgroundColor: BRAND.green, color: '#fff' }}
+   990→                            >
+   991→                              Next <ArrowRight className="h-4 w-4 ml-1" />
+   992→                            </Button>
+   993→                          ) : (
+   994→                            <Button
+   995→                              onClick={handleSubmitQuiz}
+   996→                              disabled={
+   997→                                Object.keys(answers).length < quizQuestions.length || submitting
+   998→                              }
+   999→                              style={{
+  1000→                                backgroundColor:
+  1001→                                  Object.keys(answers).length < quizQuestions.length
+  1002→                                    ? BRAND.surface
+  1003→                                    : BRAND.green,
+  1004→                                color:
+  1005→                                  Object.keys(answers).length < quizQuestions.length
+  1006→                                    ? BRAND.muted
+  1007→                                    : '#fff',
+  1008→                              }}
+  1009→                            >
+  1010→                              {submitting ? (
+  1011→                                <>
+  1012→                                  <RefreshCw className="h-4 w-4 mr-1 animate-spin" /> Submitting...
+  1013→                                </>
+  1014→                              ) : (
+  1015→                                <>
+  1016→                                  Submit Quiz <CheckCircle className="h-4 w-4 ml-1" />
+  1017→                                </>
+  1018→                              )}
+  1019→                            </Button>
+  1020→                          )}
+  1021→                        </CardFooter>
+  1022→                      </Card>
+  1023→                    </motion.div>
+  1024→                  )}
+  1025→                </AnimatePresence>
+  1026→
+  1027→                {/* Submit hint */}
+  1028→                {currentQuestionIdx === quizQuestions.length - 1 &&
+  1029→                  Object.keys(answers).length < quizQuestions.length && (
+  1030→                    <motion.p
+  1031→                      initial={{ opacity: 0 }}
+  1032→                      animate={{ opacity: 1 }}
+  1033→                      className="text-center text-xs mt-4"
+  1034→                      style={{ color: BRAND.muted }}
+  1035→                    >
+  1036→                      Please answer all {quizQuestions.length} questions before submitting (
+  1037→                      {quizQuestions.length - Object.keys(answers).length} remaining)
+  1038→                    </motion.p>
+  1039→                  )}
+  1040→              </>
+  1041→            )}
+  1042→          </motion.div>
+  1043→        )}
+  1044→
+  1045→        {/* ═══ COMPLETED STEP ═══ */}
+  1046→        {currentStep.type === 'completed' && (
+  1047→          <motion.div
+  1048→            key="completed"
+  1049→            initial={{ opacity: 0, scale: 0.95 }}
+  1050→            animate={{ opacity: 1, scale: 1 }}
+  1051→            transition={{ duration: 0.5 }}
+  1052→          >
+  1053→            <Card
+  1054→              className="border-2 text-center"
+  1055→              style={{ borderColor: BRAND.lime, backgroundColor: `${BRAND.lime}08` }}
+  1056→            >
+  1057→              <CardHeader className="pb-2">
+  1058→                <motion.div
+  1059→                  initial={{ scale: 0 }}
+  1060→                  animate={{ scale: 1 }}
+  1061→                  transition={{ type: 'spring', stiffness: 200, delay: 0.3 }}
+  1062→                >
+  1063→                  <Trophy className="h-20 w-20 mx-auto" style={{ color: BRAND.lime }} />
+  1064→                </motion.div>
+  1065→                <CardTitle className="font-heading text-3xl mt-4" style={{ color: BRAND.dark }}>
+  1066→                  Product Unlocked!
+  1067→                </CardTitle>
+  1068→                <CardDescription className="text-base mt-2" style={{ color: BRAND.muted }}>
+  1069→                  Congratulations! You have completed all learning modules and quizzes for{' '}
+  1070→                  <span className="font-semibold" style={{ color: BRAND.dark }}>
+  1071→                    {product.name}
+  1072→                  </span>
+  1073→                  .
+  1074→                </CardDescription>
+  1075→              </CardHeader>
+  1076→
+  1077→              <CardContent className="space-y-4">
+  1078→                {/* Completed steps summary */}
+  1079→                <div
+  1080→                  className="rounded-lg p-4 mx-auto max-w-sm"
+  1081→                  style={{ backgroundColor: `${BRAND.lime}15` }}
+  1082→                >
+  1083→                  <h4 className="font-heading text-sm font-semibold mb-3" style={{ color: BRAND.dark }}>
+  1084→                    Learning Journey Complete
+  1085→                  </h4>
+  1086→                  <div className="space-y-2">
+  1087→                    {videos.map((video, idx) => (
+  1088→                      <div key={video.id} className="flex items-center gap-2">
+  1089→                        <CheckCircle className="h-4 w-4 shrink-0" style={{ color: BRAND.lime }} />
+  1090→                        <span className="text-sm" style={{ color: BRAND.dark }}>
+  1091→                          Video {idx + 1} & Quiz {idx + 1}
+  1092→                        </span>
+  1093→                      </div>
+  1094→                    ))}
+  1095→                  </div>
+  1096→                </div>
+  1097→              </CardContent>
+  1098→
+  1099→              <CardFooter className="flex flex-col sm:flex-row gap-3 p-6 pt-2 justify-center">
+  1100→                <Button
+  1101→                  size="lg"
+  1102→                  className="font-heading font-semibold"
+  1103→                  style={{ backgroundColor: BRAND.lime, color: BRAND.dark }}
+  1104→                  onClick={() => navigateTo('products')}
+  1105→                >
+  1106→                  Browse Products <ChevronRight className="h-5 w-5 ml-1" />
+  1107→                </Button>
+  1108→              </CardFooter>
+  1109→            </Card>
+  1110→          </motion.div>
+  1111→        )}
+  1112→      </AnimatePresence>
+  1113→    </motion.div>
+  1114→  )
+  1115→}
+  1116→

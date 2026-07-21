@@ -2323,30 +2323,40 @@ function ProductDetailPage() {
 
               <Separator />
 
-              {/* Unlock / Learning status — always show Start Learning button */}
+              {/* Action area based on login + unlock status */}
+              {/* Not unlocked — show Start Learning */}
               {!isUnlocked && (
-                <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 flex items-center gap-3">
-                  <Lock className="w-5 h-5 text-amber-600 flex-shrink-0" />
-                  <div className="flex-1">
-                    <p className="text-sm font-semibold text-amber-900">Complete Learning to Purchase</p>
-                    <p className="text-xs text-amber-700 mt-0.5">Take the product learning module and quiz first — no account needed</p>
+                <div className="space-y-3">
+                  <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                    <div className="flex items-center gap-3 flex-1">
+                      <Lock className="w-5 h-5 text-amber-600 flex-shrink-0" />
+                      <div>
+                        <p className="text-sm font-semibold text-amber-900">Complete Learning to Purchase</p>
+                        <p className="text-xs text-amber-700 mt-0.5">Take the learning module and quiz — no account needed</p>
+                      </div>
+                    </div>
+                    <Button onClick={() => { setSelectedProductId(product.id); navigateTo('product-learning') }} className="bg-[#48805b] hover:bg-[#3a6a4a] text-white rounded-lg w-full sm:w-auto">
+                      <GraduationCap className="w-4 h-4 mr-2" /> Start Learning
+                    </Button>
                   </div>
-                  <Button size="sm" onClick={() => { setSelectedProductId(product.id); navigateTo('product-learning') }} className="bg-[#48805b] text-white rounded-lg flex-shrink-0">
-                    Start <ArrowRight className="w-3 h-3 ml-1" />
-                  </Button>
+                  {!user && (
+                    <p className="text-xs text-center text-[#88837b]">Sign in to save your progress · <button onClick={() => navigateTo('auth-login')} className="text-[#2e91b2] underline font-medium">Login</button></p>
+                  )}
                 </div>
               )}
 
-              {/* Not logged in — prompt to login for purchasing */}
+              {/* Unlocked but not logged in — prompt login */}
               {!user && isUnlocked && (
-                <div className="p-4 rounded-xl bg-blue-50 border border-blue-200 flex items-center gap-3">
-                  <User className="w-5 h-5 text-blue-600 flex-shrink-0" />
-                  <div className="flex-1">
-                    <p className="text-sm font-semibold text-blue-900">Sign in to purchase</p>
-                    <p className="text-xs text-blue-700 mt-0.5">Login or create an account to complete your order</p>
+                <div className="p-4 rounded-xl bg-blue-50 border border-blue-200 flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                  <div className="flex items-center gap-3 flex-1">
+                    <User className="w-5 h-5 text-blue-600 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm font-semibold text-blue-900">Sign in to purchase</p>
+                      <p className="text-xs text-blue-700 mt-0.5">Login or create an account to complete your order</p>
+                    </div>
                   </div>
-                  <Button size="sm" onClick={() => navigateTo('auth-login')} className="bg-[#2e91b2] text-white rounded-lg flex-shrink-0">
-                    Login <ArrowRight className="w-3 h-3 ml-1" />
+                  <Button onClick={() => navigateTo('auth-login')} className="bg-[#2e91b2] hover:bg-[#237a98] text-white rounded-lg w-full sm:w-auto">
+                    Login / Register
                   </Button>
                 </div>
               )}

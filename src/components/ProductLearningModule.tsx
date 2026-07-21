@@ -226,7 +226,8 @@ export function ProductLearningModule() {
 
   // ─── Save video progress to backend ───────────────────
   const saveVideoProgress = useCallback(async (pct: number) => {
-    if (!user || !selectedProductId || !currentVideo) return
+    if (!selectedProductId || !currentVideo) return
+    if (!user) return // Skip backend save if not logged in
     const updatedVP = { ...(progress?.video_progress || {}), [currentVideo.id]: pct }
     const res = await productLearningService.updateVideoProgress(user.user_id, selectedProductId, updatedVP)
     if (res.data) setProgress(res.data)
@@ -269,7 +270,7 @@ export function ProductLearningModule() {
 
   // ─── Submit quiz ──────────────────────────────────────
   const handleSubmitQuiz = async () => {
-    if (!user || !selectedProductId) return
+    if (!selectedProductId) return
     setSubmitting(true)
 
     try {
@@ -295,18 +296,20 @@ export function ProductLearningModule() {
       }
       setQuizResult(result)
 
-      // Submit via service
-      const overallScore = totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0
-      const res = await productLearningService.submitQuiz(
-        user.user_id,
-        selectedProductId,
-        quizAnswersMap,
-        overallScore,
-        passed
-      )
+      // Submit via service (only if logged in — otherwise just check locally)
+      if (user) {
+        const overallScore = totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0
+        const res = await productLearningService.submitQuiz(
+          user.user_id,
+          selectedProductId,
+          quizAnswersMap,
+          overallScore,
+          passed
+        )
 
-      if (res.data) {
-        setProgress(res.data)
+        if (res.data) {
+          setProgress(res.data)
+        }
       }
 
       if (passed) {

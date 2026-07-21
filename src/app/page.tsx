@@ -2211,10 +2211,16 @@ function ProductDetailPage() {
     if (product) {
       const slug = product.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
       const url = new URL(window.location.href)
-      url.searchParams.set('product', slug)
-      window.history.replaceState({}, '', url.toString())
+      // Only update if not already set to avoid triggering UrlSyncHandler
+      if (url.searchParams.get('product') !== slug) {
+        url.searchParams.set('product', slug)
+        window.history.replaceState({}, '', url.toString())
+      }
     }
-    // Clean up URL on unmount
+  }, [product?.id])
+
+  // Clean up URL on unmount
+  useEffect(() => {
     return () => {
       const url = new URL(window.location.href)
       if (url.searchParams.has('product')) {
@@ -2222,7 +2228,7 @@ function ProductDetailPage() {
         window.history.replaceState({}, '', url.toString())
       }
     }
-  }, [product?.id])
+  }, [])
 
   useEffect(() => {
     if (!user || !selectedProductId) return
@@ -2332,7 +2338,7 @@ function ProductDetailPage() {
                       <Lock className="w-5 h-5 text-amber-600 flex-shrink-0" />
                       <div>
                         <p className="text-sm font-semibold text-amber-900">Complete Learning to Purchase</p>
-                        <p className="text-xs text-amber-700 mt-0.5">Take the learning module and quiz — no account needed</p>
+                        <p className="text-xs text-amber-700 mt-0.5">Watch videos and take the quiz to unlock purchasing</p>
                       </div>
                     </div>
                     <Button
@@ -5650,6 +5656,7 @@ function UrlSyncHandler() {
   const searchParams = useSearchParams()
   const { user, navigateTo, setSelectedProductId, currentView } = useAppStore()
   const [products, setProducts] = useState<Product[]>([])
+  const [handled, setHandled] = useState(false)
 
   // Load products once
   useEffect(() => {
@@ -5661,9 +5668,9 @@ function UrlSyncHandler() {
   // On mount or when products load, check for ?product=slug
   useEffect(() => {
     const productSlug = searchParams.get('product')
-    if (!productSlug || products.length === 0) return
-    // Navigate from any view except already on product-detail
-    if (currentView === 'product-detail') return
+    if (!productSlug || products.length === 0 || handled) return
+    // Navigate from any view except already on product-detail or learning
+    if (currentView === 'product-detail' || currentView === 'product-learning') return
 
     const matchedProduct = products.find(p => {
       const slug = p.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
@@ -5672,8 +5679,9 @@ function UrlSyncHandler() {
     if (matchedProduct) {
       setSelectedProductId(matchedProduct.id)
       navigateTo('product-detail')
+      setHandled(true)
     }
-  }, [searchParams, products, currentView, navigateTo, setSelectedProductId])
+  }, [searchParams, products, currentView, navigateTo, setSelectedProductId, handled])
 
   return null
 }

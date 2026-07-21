@@ -2323,13 +2323,13 @@ function ProductDetailPage() {
 
               <Separator />
 
-              {/* Unlock status */}
+              {/* Unlock / Learning status — always show Start Learning button */}
               {!isUnlocked && (
                 <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 flex items-center gap-3">
                   <Lock className="w-5 h-5 text-amber-600 flex-shrink-0" />
                   <div className="flex-1">
                     <p className="text-sm font-semibold text-amber-900">Complete Learning to Purchase</p>
-                    <p className="text-xs text-amber-700 mt-0.5">Take the product learning module and quiz first</p>
+                    <p className="text-xs text-amber-700 mt-0.5">Take the product learning module and quiz first — no account needed</p>
                   </div>
                   <Button size="sm" onClick={() => { setSelectedProductId(product.id); navigateTo('product-learning') }} className="bg-[#48805b] text-white rounded-lg flex-shrink-0">
                     Start <ArrowRight className="w-3 h-3 ml-1" />
@@ -2337,8 +2337,22 @@ function ProductDetailPage() {
                 </div>
               )}
 
-              {/* Purchase Mode Selector */}
-              {isUnlocked && (
+              {/* Not logged in — prompt to login for purchasing */}
+              {!user && isUnlocked && (
+                <div className="p-4 rounded-xl bg-blue-50 border border-blue-200 flex items-center gap-3">
+                  <User className="w-5 h-5 text-blue-600 flex-shrink-0" />
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-blue-900">Sign in to purchase</p>
+                    <p className="text-xs text-blue-700 mt-0.5">Login or create an account to complete your order</p>
+                  </div>
+                  <Button size="sm" onClick={() => navigateTo('auth-login')} className="bg-[#2e91b2] text-white rounded-lg flex-shrink-0">
+                    Login <ArrowRight className="w-3 h-3 ml-1" />
+                  </Button>
+                </div>
+              )}
+
+              {/* Purchase Mode Selector — only when logged in AND unlocked */}
+              {user && isUnlocked && (
                 <>
                   <div>
                     <Label className="text-sm font-heading font-semibold text-[#1f1e1c] mb-3 block">Choose Purchase Option</Label>
@@ -5632,8 +5646,8 @@ function UrlSyncHandler() {
   useEffect(() => {
     const productSlug = searchParams.get('product')
     if (!productSlug || products.length === 0) return
-    // Only navigate if we're on landing or products view (not already on product-detail)
-    if (currentView !== 'landing' && currentView !== 'products') return
+    // Navigate from any view except already on product-detail
+    if (currentView === 'product-detail') return
 
     const matchedProduct = products.find(p => {
       const slug = p.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')

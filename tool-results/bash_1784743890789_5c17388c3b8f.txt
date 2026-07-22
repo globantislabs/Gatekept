@@ -1,0 +1,263 @@
+🌱 Seeding database...
+prisma:query BEGIN IMMEDIATE
+prisma:query SELECT `main`.`UserProfile`.`id` FROM `main`.`UserProfile` WHERE (`main`.`UserProfile`.`user_id` = ? AND 1=1) LIMIT ? OFFSET ?
+prisma:query INSERT INTO `main`.`UserProfile` (`id`, `user_id`, `name`, `age`, `gender`, `phone`, `email`, `country`, `state`, `learning_completed`, `is_admin`, `password_hash`, `created_at`, `updated_at`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?) RETURNING `id` AS `id`
+prisma:query SELECT `main`.`UserProfile`.`id`, `main`.`UserProfile`.`user_id`, `main`.`UserProfile`.`name`, `main`.`UserProfile`.`age`, `main`.`UserProfile`.`gender`, `main`.`UserProfile`.`phone`, `main`.`UserProfile`.`email`, `main`.`UserProfile`.`country`, `main`.`UserProfile`.`state`, `main`.`UserProfile`.`avatar_url`, `main`.`UserProfile`.`learning_completed`, `main`.`UserProfile`.`is_admin`, `main`.`UserProfile`.`password_hash`, `main`.`UserProfile`.`created_at`, `main`.`UserProfile`.`updated_at` FROM `main`.`UserProfile` WHERE `main`.`UserProfile`.`id` = ? LIMIT ? OFFSET ?
+prisma:query COMMIT
+prisma:query BEGIN IMMEDIATE
+prisma:query SELECT `main`.`UserProfile`.`id` FROM `main`.`UserProfile` WHERE (`main`.`UserProfile`.`user_id` = ? AND 1=1) LIMIT ? OFFSET ?
+prisma:query INSERT INTO `main`.`UserProfile` (`id`, `user_id`, `name`, `age`, `gender`, `phone`, `email`, `country`, `state`, `learning_completed`, `is_admin`, `created_at`, `updated_at`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?) RETURNING `id` AS `id`
+prisma:query SELECT `main`.`UserProfile`.`id`, `main`.`UserProfile`.`user_id`, `main`.`UserProfile`.`name`, `main`.`UserProfile`.`age`, `main`.`UserProfile`.`gender`, `main`.`UserProfile`.`phone`, `main`.`UserProfile`.`email`, `main`.`UserProfile`.`country`, `main`.`UserProfile`.`state`, `main`.`UserProfile`.`avatar_url`, `main`.`UserProfile`.`learning_completed`, `main`.`UserProfile`.`is_admin`, `main`.`UserProfile`.`password_hash`, `main`.`UserProfile`.`created_at`, `main`.`UserProfile`.`updated_at` FROM `main`.`UserProfile` WHERE `main`.`UserProfile`.`id` = ? LIMIT ? OFFSET ?
+prisma:query COMMIT
+prisma:query BEGIN IMMEDIATE
+prisma:query SELECT `main`.`UserProfile`.`id` FROM `main`.`UserProfile` WHERE (`main`.`UserProfile`.`user_id` = ? AND 1=1) LIMIT ? OFFSET ?
+prisma:query INSERT INTO `main`.`UserProfile` (`id`, `user_id`, `name`, `age`, `gender`, `phone`, `email`, `country`, `state`, `learning_completed`, `is_admin`, `created_at`, `updated_at`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?) RETURNING `id` AS `id`
+prisma:query SELECT `main`.`UserProfile`.`id`, `main`.`UserProfile`.`user_id`, `main`.`UserProfile`.`name`, `main`.`UserProfile`.`age`, `main`.`UserProfile`.`gender`, `main`.`UserProfile`.`phone`, `main`.`UserProfile`.`email`, `main`.`UserProfile`.`country`, `main`.`UserProfile`.`state`, `main`.`UserProfile`.`avatar_url`, `main`.`UserProfile`.`learning_completed`, `main`.`UserProfile`.`is_admin`, `main`.`UserProfile`.`password_hash`, `main`.`UserProfile`.`created_at`, `main`.`UserProfile`.`updated_at` FROM `main`.`UserProfile` WHERE `main`.`UserProfile`.`id` = ? LIMIT ? OFFSET ?
+prisma:query COMMIT
+prisma:query BEGIN IMMEDIATE
+prisma:query SELECT `main`.`UserProfile`.`id` FROM `main`.`UserProfile` WHERE (`main`.`UserProfile`.`user_id` = ? AND 1=1) LIMIT ? OFFSET ?
+prisma:query INSERT INTO `main`.`UserProfile` (`id`, `user_id`, `name`, `age`, `gender`, `phone`, `email`, `country`, `state`, `learning_completed`, `is_admin`, `created_at`, `updated_at`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?) RETURNING `id` AS `id`
+prisma:query SELECT `main`.`UserProfile`.`id`, `main`.`UserProfile`.`user_id`, `main`.`UserProfile`.`name`, `main`.`UserProfile`.`age`, `main`.`UserProfile`.`gender`, `main`.`UserProfile`.`phone`, `main`.`UserProfile`.`email`, `main`.`UserProfile`.`country`, `main`.`UserProfile`.`state`, `main`.`UserProfile`.`avatar_url`, `main`.`UserProfile`.`learning_completed`, `main`.`UserProfile`.`is_admin`, `main`.`UserProfile`.`password_hash`, `main`.`UserProfile`.`created_at`, `main`.`UserProfile`.`updated_at` FROM `main`.`UserProfile` WHERE `main`.`UserProfile`.`id` = ? LIMIT ? OFFSET ?
+prisma:query COMMIT
+prisma:query BEGIN IMMEDIATE
+prisma:query SELECT `main`.`UserProfile`.`id` FROM `main`.`UserProfile` WHERE (`main`.`UserProfile`.`user_id` = ? AND 1=1) LIMIT ? OFFSET ?
+prisma:query INSERT INTO `main`.`UserProfile` (`id`, `user_id`, `name`, `age`, `gender`, `phone`, `email`, `country`, `state`, `learning_completed`, `is_admin`, `created_at`, `updated_at`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?) RETURNING `id` AS `id`
+prisma:query SELECT `main`.`UserProfile`.`id`, `main`.`UserProfile`.`user_id`, `main`.`UserProfile`.`name`, `main`.`UserProfile`.`age`, `main`.`UserProfile`.`gender`, `main`.`UserProfile`.`phone`, `main`.`UserProfile`.`email`, `main`.`UserProfile`.`country`, `main`.`UserProfile`.`state`, `main`.`UserProfile`.`avatar_url`, `main`.`UserProfile`.`learning_completed`, `main`.`UserProfile`.`is_admin`, `main`.`UserProfile`.`password_hash`, `main`.`UserProfile`.`created_at`, `main`.`UserProfile`.`updated_at` FROM `main`.`UserProfile` WHERE `main`.`UserProfile`.`id` = ? LIMIT ? OFFSET ?
+prisma:query COMMIT
+prisma:query BEGIN IMMEDIATE
+prisma:query SELECT `main`.`UserProfile`.`id` FROM `main`.`UserProfile` WHERE (`main`.`UserProfile`.`user_id` = ? AND 1=1) LIMIT ? OFFSET ?
+prisma:query INSERT INTO `main`.`UserProfile` (`id`, `user_id`, `name`, `age`, `gender`, `email`, `country`, `state`, `learning_completed`, `is_admin`, `created_at`, `updated_at`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?) RETURNING `id` AS `id`
+prisma:query SELECT `main`.`UserProfile`.`id`, `main`.`UserProfile`.`user_id`, `main`.`UserProfile`.`name`, `main`.`UserProfile`.`age`, `main`.`UserProfile`.`gender`, `main`.`UserProfile`.`phone`, `main`.`UserProfile`.`email`, `main`.`UserProfile`.`country`, `main`.`UserProfile`.`state`, `main`.`UserProfile`.`avatar_url`, `main`.`UserProfile`.`learning_completed`, `main`.`UserProfile`.`is_admin`, `main`.`UserProfile`.`password_hash`, `main`.`UserProfile`.`created_at`, `main`.`UserProfile`.`updated_at` FROM `main`.`UserProfile` WHERE `main`.`UserProfile`.`id` = ? LIMIT ? OFFSET ?
+prisma:query COMMIT
+prisma:query BEGIN IMMEDIATE
+prisma:query SELECT `main`.`UserProfile`.`id` FROM `main`.`UserProfile` WHERE (`main`.`UserProfile`.`user_id` = ? AND 1=1) LIMIT ? OFFSET ?
+prisma:query INSERT INTO `main`.`UserProfile` (`id`, `user_id`, `name`, `age`, `gender`, `phone`, `email`, `country`, `state`, `learning_completed`, `is_admin`, `created_at`, `updated_at`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?) RETURNING `id` AS `id`
+prisma:query SELECT `main`.`UserProfile`.`id`, `main`.`UserProfile`.`user_id`, `main`.`UserProfile`.`name`, `main`.`UserProfile`.`age`, `main`.`UserProfile`.`gender`, `main`.`UserProfile`.`phone`, `main`.`UserProfile`.`email`, `main`.`UserProfile`.`country`, `main`.`UserProfile`.`state`, `main`.`UserProfile`.`avatar_url`, `main`.`UserProfile`.`learning_completed`, `main`.`UserProfile`.`is_admin`, `main`.`UserProfile`.`password_hash`, `main`.`UserProfile`.`created_at`, `main`.`UserProfile`.`updated_at` FROM `main`.`UserProfile` WHERE `main`.`UserProfile`.`id` = ? LIMIT ? OFFSET ?
+prisma:query COMMIT
+prisma:query BEGIN IMMEDIATE
+prisma:query SELECT `main`.`UserProfile`.`id` FROM `main`.`UserProfile` WHERE (`main`.`UserProfile`.`user_id` = ? AND 1=1) LIMIT ? OFFSET ?
+prisma:query INSERT INTO `main`.`UserProfile` (`id`, `user_id`, `name`, `age`, `gender`, `phone`, `country`, `state`, `learning_completed`, `is_admin`, `created_at`, `updated_at`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?) RETURNING `id` AS `id`
+prisma:query SELECT `main`.`UserProfile`.`id`, `main`.`UserProfile`.`user_id`, `main`.`UserProfile`.`name`, `main`.`UserProfile`.`age`, `main`.`UserProfile`.`gender`, `main`.`UserProfile`.`phone`, `main`.`UserProfile`.`email`, `main`.`UserProfile`.`country`, `main`.`UserProfile`.`state`, `main`.`UserProfile`.`avatar_url`, `main`.`UserProfile`.`learning_completed`, `main`.`UserProfile`.`is_admin`, `main`.`UserProfile`.`password_hash`, `main`.`UserProfile`.`created_at`, `main`.`UserProfile`.`updated_at` FROM `main`.`UserProfile` WHERE `main`.`UserProfile`.`id` = ? LIMIT ? OFFSET ?
+prisma:query COMMIT
+prisma:query BEGIN IMMEDIATE
+prisma:query SELECT `main`.`UserProfile`.`id` FROM `main`.`UserProfile` WHERE (`main`.`UserProfile`.`user_id` = ? AND 1=1) LIMIT ? OFFSET ?
+prisma:query INSERT INTO `main`.`UserProfile` (`id`, `user_id`, `name`, `age`, `gender`, `phone`, `email`, `country`, `state`, `learning_completed`, `is_admin`, `created_at`, `updated_at`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?) RETURNING `id` AS `id`
+prisma:query SELECT `main`.`UserProfile`.`id`, `main`.`UserProfile`.`user_id`, `main`.`UserProfile`.`name`, `main`.`UserProfile`.`age`, `main`.`UserProfile`.`gender`, `main`.`UserProfile`.`phone`, `main`.`UserProfile`.`email`, `main`.`UserProfile`.`country`, `main`.`UserProfile`.`state`, `main`.`UserProfile`.`avatar_url`, `main`.`UserProfile`.`learning_completed`, `main`.`UserProfile`.`is_admin`, `main`.`UserProfile`.`password_hash`, `main`.`UserProfile`.`created_at`, `main`.`UserProfile`.`updated_at` FROM `main`.`UserProfile` WHERE `main`.`UserProfile`.`id` = ? LIMIT ? OFFSET ?
+prisma:query COMMIT
+prisma:query BEGIN IMMEDIATE
+prisma:query SELECT `main`.`UserProfile`.`id` FROM `main`.`UserProfile` WHERE (`main`.`UserProfile`.`user_id` = ? AND 1=1) LIMIT ? OFFSET ?
+prisma:query INSERT INTO `main`.`UserProfile` (`id`, `user_id`, `name`, `age`, `gender`, `phone`, `email`, `country`, `state`, `learning_completed`, `is_admin`, `created_at`, `updated_at`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?) RETURNING `id` AS `id`
+prisma:query SELECT `main`.`UserProfile`.`id`, `main`.`UserProfile`.`user_id`, `main`.`UserProfile`.`name`, `main`.`UserProfile`.`age`, `main`.`UserProfile`.`gender`, `main`.`UserProfile`.`phone`, `main`.`UserProfile`.`email`, `main`.`UserProfile`.`country`, `main`.`UserProfile`.`state`, `main`.`UserProfile`.`avatar_url`, `main`.`UserProfile`.`learning_completed`, `main`.`UserProfile`.`is_admin`, `main`.`UserProfile`.`password_hash`, `main`.`UserProfile`.`created_at`, `main`.`UserProfile`.`updated_at` FROM `main`.`UserProfile` WHERE `main`.`UserProfile`.`id` = ? LIMIT ? OFFSET ?
+prisma:query COMMIT
+prisma:query BEGIN IMMEDIATE
+prisma:query SELECT `main`.`Product`.`id` FROM `main`.`Product` WHERE (`main`.`Product`.`slug` = ? AND 1=1) LIMIT ? OFFSET ?
+prisma:query INSERT INTO `main`.`Product` (`id`, `name`, `slug`, `description`, `short_description`, `price`, `mrp`, `stock`, `image_url`, `type`, `category`, `sku`, `weight`, `ingredients`, `nutrition_info`, `tags`, `active`, `featured`, `brand`, `flavor`, `serving_size`, `allergen_info`, `storage_info`, `shelf_life`, `country_origin`, `fssai_license`, `hsn_code`, `gst_rate`, `min_order_qty`, `max_order_qty`, `discount_label`, `highlights`, `created_at`, `updated_at`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) RETURNING `id` AS `id`
+prisma:query SELECT `main`.`Product`.`id`, `main`.`Product`.`name`, `main`.`Product`.`slug`, `main`.`Product`.`description`, `main`.`Product`.`short_description`, `main`.`Product`.`price`, `main`.`Product`.`mrp`, `main`.`Product`.`stock`, `main`.`Product`.`image_url`, `main`.`Product`.`gallery_images`, `main`.`Product`.`type`, `main`.`Product`.`category`, `main`.`Product`.`sku`, `main`.`Product`.`weight`, `main`.`Product`.`ingredients`, `main`.`Product`.`nutrition_info`, `main`.`Product`.`tags`, `main`.`Product`.`active`, `main`.`Product`.`featured`, `main`.`Product`.`brand`, `main`.`Product`.`flavor`, `main`.`Product`.`serving_size`, `main`.`Product`.`allergen_info`, `main`.`Product`.`storage_info`, `main`.`Product`.`shelf_life`, `main`.`Product`.`country_origin`, `main`.`Product`.`fssai_license`, `main`.`Product`.`hsn_code`, `main`.`Product`.`gst_rate`, `main`.`Product`.`min_order_qty`, `main`.`Product`.`max_order_qty`, `main`.`Product`.`discount_label`, `main`.`Product`.`highlights`, `main`.`Product`.`created_at`, `main`.`Product`.`updated_at` FROM `main`.`Product` WHERE `main`.`Product`.`id` = ? LIMIT ? OFFSET ?
+prisma:query COMMIT
+prisma:query BEGIN IMMEDIATE
+prisma:query SELECT `main`.`Product`.`id` FROM `main`.`Product` WHERE (`main`.`Product`.`slug` = ? AND 1=1) LIMIT ? OFFSET ?
+prisma:query INSERT INTO `main`.`Product` (`id`, `name`, `slug`, `description`, `short_description`, `price`, `mrp`, `stock`, `image_url`, `type`, `category`, `sku`, `weight`, `ingredients`, `nutrition_info`, `tags`, `active`, `featured`, `brand`, `flavor`, `serving_size`, `allergen_info`, `storage_info`, `shelf_life`, `country_origin`, `fssai_license`, `hsn_code`, `gst_rate`, `min_order_qty`, `max_order_qty`, `discount_label`, `highlights`, `created_at`, `updated_at`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) RETURNING `id` AS `id`
+prisma:query SELECT `main`.`Product`.`id`, `main`.`Product`.`name`, `main`.`Product`.`slug`, `main`.`Product`.`description`, `main`.`Product`.`short_description`, `main`.`Product`.`price`, `main`.`Product`.`mrp`, `main`.`Product`.`stock`, `main`.`Product`.`image_url`, `main`.`Product`.`gallery_images`, `main`.`Product`.`type`, `main`.`Product`.`category`, `main`.`Product`.`sku`, `main`.`Product`.`weight`, `main`.`Product`.`ingredients`, `main`.`Product`.`nutrition_info`, `main`.`Product`.`tags`, `main`.`Product`.`active`, `main`.`Product`.`featured`, `main`.`Product`.`brand`, `main`.`Product`.`flavor`, `main`.`Product`.`serving_size`, `main`.`Product`.`allergen_info`, `main`.`Product`.`storage_info`, `main`.`Product`.`shelf_life`, `main`.`Product`.`country_origin`, `main`.`Product`.`fssai_license`, `main`.`Product`.`hsn_code`, `main`.`Product`.`gst_rate`, `main`.`Product`.`min_order_qty`, `main`.`Product`.`max_order_qty`, `main`.`Product`.`discount_label`, `main`.`Product`.`highlights`, `main`.`Product`.`created_at`, `main`.`Product`.`updated_at` FROM `main`.`Product` WHERE `main`.`Product`.`id` = ? LIMIT ? OFFSET ?
+prisma:query COMMIT
+prisma:query BEGIN IMMEDIATE
+prisma:query SELECT `main`.`ProductVideo`.`id` FROM `main`.`ProductVideo` WHERE (`main`.`ProductVideo`.`id` = ? AND 1=1) LIMIT ? OFFSET ?
+prisma:query INSERT INTO `main`.`ProductVideo` (`id`, `product_id`, `title`, `duration`, `description`, `order`, `video_url`, `active`, `created_at`, `updated_at`) VALUES (?,?,?,?,?,?,?,?,?,?) RETURNING `id` AS `id`
+prisma:query SELECT `main`.`ProductVideo`.`id`, `main`.`ProductVideo`.`product_id`, `main`.`ProductVideo`.`title`, `main`.`ProductVideo`.`duration`, `main`.`ProductVideo`.`description`, `main`.`ProductVideo`.`order`, `main`.`ProductVideo`.`video_url`, `main`.`ProductVideo`.`thumbnail_url`, `main`.`ProductVideo`.`active`, `main`.`ProductVideo`.`created_at`, `main`.`ProductVideo`.`updated_at` FROM `main`.`ProductVideo` WHERE `main`.`ProductVideo`.`id` = ? LIMIT ? OFFSET ?
+prisma:query COMMIT
+prisma:query BEGIN IMMEDIATE
+prisma:query SELECT `main`.`ProductVideo`.`id` FROM `main`.`ProductVideo` WHERE (`main`.`ProductVideo`.`id` = ? AND 1=1) LIMIT ? OFFSET ?
+prisma:query INSERT INTO `main`.`ProductVideo` (`id`, `product_id`, `title`, `duration`, `description`, `order`, `video_url`, `active`, `created_at`, `updated_at`) VALUES (?,?,?,?,?,?,?,?,?,?) RETURNING `id` AS `id`
+prisma:query SELECT `main`.`ProductVideo`.`id`, `main`.`ProductVideo`.`product_id`, `main`.`ProductVideo`.`title`, `main`.`ProductVideo`.`duration`, `main`.`ProductVideo`.`description`, `main`.`ProductVideo`.`order`, `main`.`ProductVideo`.`video_url`, `main`.`ProductVideo`.`thumbnail_url`, `main`.`ProductVideo`.`active`, `main`.`ProductVideo`.`created_at`, `main`.`ProductVideo`.`updated_at` FROM `main`.`ProductVideo` WHERE `main`.`ProductVideo`.`id` = ? LIMIT ? OFFSET ?
+prisma:query COMMIT
+prisma:query BEGIN IMMEDIATE
+prisma:query SELECT `main`.`ProductVideo`.`id` FROM `main`.`ProductVideo` WHERE (`main`.`ProductVideo`.`id` = ? AND 1=1) LIMIT ? OFFSET ?
+prisma:query INSERT INTO `main`.`ProductVideo` (`id`, `product_id`, `title`, `duration`, `description`, `order`, `video_url`, `active`, `created_at`, `updated_at`) VALUES (?,?,?,?,?,?,?,?,?,?) RETURNING `id` AS `id`
+prisma:query SELECT `main`.`ProductVideo`.`id`, `main`.`ProductVideo`.`product_id`, `main`.`ProductVideo`.`title`, `main`.`ProductVideo`.`duration`, `main`.`ProductVideo`.`description`, `main`.`ProductVideo`.`order`, `main`.`ProductVideo`.`video_url`, `main`.`ProductVideo`.`thumbnail_url`, `main`.`ProductVideo`.`active`, `main`.`ProductVideo`.`created_at`, `main`.`ProductVideo`.`updated_at` FROM `main`.`ProductVideo` WHERE `main`.`ProductVideo`.`id` = ? LIMIT ? OFFSET ?
+prisma:query COMMIT
+prisma:query BEGIN IMMEDIATE
+prisma:query SELECT `main`.`ProductVideo`.`id` FROM `main`.`ProductVideo` WHERE (`main`.`ProductVideo`.`id` = ? AND 1=1) LIMIT ? OFFSET ?
+prisma:query INSERT INTO `main`.`ProductVideo` (`id`, `product_id`, `title`, `duration`, `description`, `order`, `video_url`, `active`, `created_at`, `updated_at`) VALUES (?,?,?,?,?,?,?,?,?,?) RETURNING `id` AS `id`
+prisma:query SELECT `main`.`ProductVideo`.`id`, `main`.`ProductVideo`.`product_id`, `main`.`ProductVideo`.`title`, `main`.`ProductVideo`.`duration`, `main`.`ProductVideo`.`description`, `main`.`ProductVideo`.`order`, `main`.`ProductVideo`.`video_url`, `main`.`ProductVideo`.`thumbnail_url`, `main`.`ProductVideo`.`active`, `main`.`ProductVideo`.`created_at`, `main`.`ProductVideo`.`updated_at` FROM `main`.`ProductVideo` WHERE `main`.`ProductVideo`.`id` = ? LIMIT ? OFFSET ?
+prisma:query COMMIT
+prisma:query BEGIN IMMEDIATE
+prisma:query SELECT `main`.`ProductVideo`.`id` FROM `main`.`ProductVideo` WHERE (`main`.`ProductVideo`.`id` = ? AND 1=1) LIMIT ? OFFSET ?
+prisma:query INSERT INTO `main`.`ProductVideo` (`id`, `product_id`, `title`, `duration`, `description`, `order`, `video_url`, `active`, `created_at`, `updated_at`) VALUES (?,?,?,?,?,?,?,?,?,?) RETURNING `id` AS `id`
+prisma:query SELECT `main`.`ProductVideo`.`id`, `main`.`ProductVideo`.`product_id`, `main`.`ProductVideo`.`title`, `main`.`ProductVideo`.`duration`, `main`.`ProductVideo`.`description`, `main`.`ProductVideo`.`order`, `main`.`ProductVideo`.`video_url`, `main`.`ProductVideo`.`thumbnail_url`, `main`.`ProductVideo`.`active`, `main`.`ProductVideo`.`created_at`, `main`.`ProductVideo`.`updated_at` FROM `main`.`ProductVideo` WHERE `main`.`ProductVideo`.`id` = ? LIMIT ? OFFSET ?
+prisma:query COMMIT
+prisma:query BEGIN IMMEDIATE
+prisma:query SELECT `main`.`ProductVideo`.`id` FROM `main`.`ProductVideo` WHERE (`main`.`ProductVideo`.`id` = ? AND 1=1) LIMIT ? OFFSET ?
+prisma:query INSERT INTO `main`.`ProductVideo` (`id`, `product_id`, `title`, `duration`, `description`, `order`, `video_url`, `active`, `created_at`, `updated_at`) VALUES (?,?,?,?,?,?,?,?,?,?) RETURNING `id` AS `id`
+prisma:query SELECT `main`.`ProductVideo`.`id`, `main`.`ProductVideo`.`product_id`, `main`.`ProductVideo`.`title`, `main`.`ProductVideo`.`duration`, `main`.`ProductVideo`.`description`, `main`.`ProductVideo`.`order`, `main`.`ProductVideo`.`video_url`, `main`.`ProductVideo`.`thumbnail_url`, `main`.`ProductVideo`.`active`, `main`.`ProductVideo`.`created_at`, `main`.`ProductVideo`.`updated_at` FROM `main`.`ProductVideo` WHERE `main`.`ProductVideo`.`id` = ? LIMIT ? OFFSET ?
+prisma:query COMMIT
+prisma:query BEGIN IMMEDIATE
+prisma:query SELECT `main`.`ProductQuiz`.`id` FROM `main`.`ProductQuiz` WHERE (`main`.`ProductQuiz`.`id` = ? AND 1=1) LIMIT ? OFFSET ?
+prisma:query INSERT INTO `main`.`ProductQuiz` (`id`, `product_id`, `video_id`, `question`, `options`, `answer`, `category`, `difficulty`, `order`, `active`, `created_at`, `updated_at`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?) RETURNING `id` AS `id`
+prisma:query SELECT `main`.`ProductQuiz`.`id`, `main`.`ProductQuiz`.`product_id`, `main`.`ProductQuiz`.`video_id`, `main`.`ProductQuiz`.`question`, `main`.`ProductQuiz`.`options`, `main`.`ProductQuiz`.`answer`, `main`.`ProductQuiz`.`category`, `main`.`ProductQuiz`.`difficulty`, `main`.`ProductQuiz`.`order`, `main`.`ProductQuiz`.`active`, `main`.`ProductQuiz`.`created_at`, `main`.`ProductQuiz`.`updated_at` FROM `main`.`ProductQuiz` WHERE `main`.`ProductQuiz`.`id` = ? LIMIT ? OFFSET ?
+prisma:query COMMIT
+prisma:query BEGIN IMMEDIATE
+prisma:query SELECT `main`.`ProductQuiz`.`id` FROM `main`.`ProductQuiz` WHERE (`main`.`ProductQuiz`.`id` = ? AND 1=1) LIMIT ? OFFSET ?
+prisma:query INSERT INTO `main`.`ProductQuiz` (`id`, `product_id`, `video_id`, `question`, `options`, `answer`, `category`, `difficulty`, `order`, `active`, `created_at`, `updated_at`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?) RETURNING `id` AS `id`
+prisma:query SELECT `main`.`ProductQuiz`.`id`, `main`.`ProductQuiz`.`product_id`, `main`.`ProductQuiz`.`video_id`, `main`.`ProductQuiz`.`question`, `main`.`ProductQuiz`.`options`, `main`.`ProductQuiz`.`answer`, `main`.`ProductQuiz`.`category`, `main`.`ProductQuiz`.`difficulty`, `main`.`ProductQuiz`.`order`, `main`.`ProductQuiz`.`active`, `main`.`ProductQuiz`.`created_at`, `main`.`ProductQuiz`.`updated_at` FROM `main`.`ProductQuiz` WHERE `main`.`ProductQuiz`.`id` = ? LIMIT ? OFFSET ?
+prisma:query COMMIT
+prisma:query BEGIN IMMEDIATE
+prisma:query SELECT `main`.`ProductQuiz`.`id` FROM `main`.`ProductQuiz` WHERE (`main`.`ProductQuiz`.`id` = ? AND 1=1) LIMIT ? OFFSET ?
+prisma:query INSERT INTO `main`.`ProductQuiz` (`id`, `product_id`, `video_id`, `question`, `options`, `answer`, `category`, `difficulty`, `order`, `active`, `created_at`, `updated_at`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?) RETURNING `id` AS `id`
+prisma:query SELECT `main`.`ProductQuiz`.`id`, `main`.`ProductQuiz`.`product_id`, `main`.`ProductQuiz`.`video_id`, `main`.`ProductQuiz`.`question`, `main`.`ProductQuiz`.`options`, `main`.`ProductQuiz`.`answer`, `main`.`ProductQuiz`.`category`, `main`.`ProductQuiz`.`difficulty`, `main`.`ProductQuiz`.`order`, `main`.`ProductQuiz`.`active`, `main`.`ProductQuiz`.`created_at`, `main`.`ProductQuiz`.`updated_at` FROM `main`.`ProductQuiz` WHERE `main`.`ProductQuiz`.`id` = ? LIMIT ? OFFSET ?
+prisma:query COMMIT
+prisma:query BEGIN IMMEDIATE
+prisma:query SELECT `main`.`ProductQuiz`.`id` FROM `main`.`ProductQuiz` WHERE (`main`.`ProductQuiz`.`id` = ? AND 1=1) LIMIT ? OFFSET ?
+prisma:query INSERT INTO `main`.`ProductQuiz` (`id`, `product_id`, `video_id`, `question`, `options`, `answer`, `category`, `difficulty`, `order`, `active`, `created_at`, `updated_at`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?) RETURNING `id` AS `id`
+prisma:query SELECT `main`.`ProductQuiz`.`id`, `main`.`ProductQuiz`.`product_id`, `main`.`ProductQuiz`.`video_id`, `main`.`ProductQuiz`.`question`, `main`.`ProductQuiz`.`options`, `main`.`ProductQuiz`.`answer`, `main`.`ProductQuiz`.`category`, `main`.`ProductQuiz`.`difficulty`, `main`.`ProductQuiz`.`order`, `main`.`ProductQuiz`.`active`, `main`.`ProductQuiz`.`created_at`, `main`.`ProductQuiz`.`updated_at` FROM `main`.`ProductQuiz` WHERE `main`.`ProductQuiz`.`id` = ? LIMIT ? OFFSET ?
+prisma:query COMMIT
+prisma:query BEGIN IMMEDIATE
+prisma:query SELECT `main`.`ProductQuiz`.`id` FROM `main`.`ProductQuiz` WHERE (`main`.`ProductQuiz`.`id` = ? AND 1=1) LIMIT ? OFFSET ?
+prisma:query INSERT INTO `main`.`ProductQuiz` (`id`, `product_id`, `video_id`, `question`, `options`, `answer`, `category`, `difficulty`, `order`, `active`, `created_at`, `updated_at`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?) RETURNING `id` AS `id`
+prisma:query SELECT `main`.`ProductQuiz`.`id`, `main`.`ProductQuiz`.`product_id`, `main`.`ProductQuiz`.`video_id`, `main`.`ProductQuiz`.`question`, `main`.`ProductQuiz`.`options`, `main`.`ProductQuiz`.`answer`, `main`.`ProductQuiz`.`category`, `main`.`ProductQuiz`.`difficulty`, `main`.`ProductQuiz`.`order`, `main`.`ProductQuiz`.`active`, `main`.`ProductQuiz`.`created_at`, `main`.`ProductQuiz`.`updated_at` FROM `main`.`ProductQuiz` WHERE `main`.`ProductQuiz`.`id` = ? LIMIT ? OFFSET ?
+prisma:query COMMIT
+prisma:query BEGIN IMMEDIATE
+prisma:query SELECT `main`.`ProductQuiz`.`id` FROM `main`.`ProductQuiz` WHERE (`main`.`ProductQuiz`.`id` = ? AND 1=1) LIMIT ? OFFSET ?
+prisma:query INSERT INTO `main`.`ProductQuiz` (`id`, `product_id`, `video_id`, `question`, `options`, `answer`, `category`, `difficulty`, `order`, `active`, `created_at`, `updated_at`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?) RETURNING `id` AS `id`
+prisma:query SELECT `main`.`ProductQuiz`.`id`, `main`.`ProductQuiz`.`product_id`, `main`.`ProductQuiz`.`video_id`, `main`.`ProductQuiz`.`question`, `main`.`ProductQuiz`.`options`, `main`.`ProductQuiz`.`answer`, `main`.`ProductQuiz`.`category`, `main`.`ProductQuiz`.`difficulty`, `main`.`ProductQuiz`.`order`, `main`.`ProductQuiz`.`active`, `main`.`ProductQuiz`.`created_at`, `main`.`ProductQuiz`.`updated_at` FROM `main`.`ProductQuiz` WHERE `main`.`ProductQuiz`.`id` = ? LIMIT ? OFFSET ?
+prisma:query COMMIT
+prisma:query BEGIN IMMEDIATE
+prisma:query SELECT `main`.`ProductQuiz`.`id` FROM `main`.`ProductQuiz` WHERE (`main`.`ProductQuiz`.`id` = ? AND 1=1) LIMIT ? OFFSET ?
+prisma:query INSERT INTO `main`.`ProductQuiz` (`id`, `product_id`, `video_id`, `question`, `options`, `answer`, `category`, `difficulty`, `order`, `active`, `created_at`, `updated_at`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?) RETURNING `id` AS `id`
+prisma:query SELECT `main`.`ProductQuiz`.`id`, `main`.`ProductQuiz`.`product_id`, `main`.`ProductQuiz`.`video_id`, `main`.`ProductQuiz`.`question`, `main`.`ProductQuiz`.`options`, `main`.`ProductQuiz`.`answer`, `main`.`ProductQuiz`.`category`, `main`.`ProductQuiz`.`difficulty`, `main`.`ProductQuiz`.`order`, `main`.`ProductQuiz`.`active`, `main`.`ProductQuiz`.`created_at`, `main`.`ProductQuiz`.`updated_at` FROM `main`.`ProductQuiz` WHERE `main`.`ProductQuiz`.`id` = ? LIMIT ? OFFSET ?
+prisma:query COMMIT
+prisma:query BEGIN IMMEDIATE
+prisma:query SELECT `main`.`ProductQuiz`.`id` FROM `main`.`ProductQuiz` WHERE (`main`.`ProductQuiz`.`id` = ? AND 1=1) LIMIT ? OFFSET ?
+prisma:query INSERT INTO `main`.`ProductQuiz` (`id`, `product_id`, `video_id`, `question`, `options`, `answer`, `category`, `difficulty`, `order`, `active`, `created_at`, `updated_at`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?) RETURNING `id` AS `id`
+prisma:query SELECT `main`.`ProductQuiz`.`id`, `main`.`ProductQuiz`.`product_id`, `main`.`ProductQuiz`.`video_id`, `main`.`ProductQuiz`.`question`, `main`.`ProductQuiz`.`options`, `main`.`ProductQuiz`.`answer`, `main`.`ProductQuiz`.`category`, `main`.`ProductQuiz`.`difficulty`, `main`.`ProductQuiz`.`order`, `main`.`ProductQuiz`.`active`, `main`.`ProductQuiz`.`created_at`, `main`.`ProductQuiz`.`updated_at` FROM `main`.`ProductQuiz` WHERE `main`.`ProductQuiz`.`id` = ? LIMIT ? OFFSET ?
+prisma:query COMMIT
+prisma:query BEGIN IMMEDIATE
+prisma:query SELECT `main`.`ProductQuiz`.`id` FROM `main`.`ProductQuiz` WHERE (`main`.`ProductQuiz`.`id` = ? AND 1=1) LIMIT ? OFFSET ?
+prisma:query INSERT INTO `main`.`ProductQuiz` (`id`, `product_id`, `video_id`, `question`, `options`, `answer`, `category`, `difficulty`, `order`, `active`, `created_at`, `updated_at`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?) RETURNING `id` AS `id`
+prisma:query SELECT `main`.`ProductQuiz`.`id`, `main`.`ProductQuiz`.`product_id`, `main`.`ProductQuiz`.`video_id`, `main`.`ProductQuiz`.`question`, `main`.`ProductQuiz`.`options`, `main`.`ProductQuiz`.`answer`, `main`.`ProductQuiz`.`category`, `main`.`ProductQuiz`.`difficulty`, `main`.`ProductQuiz`.`order`, `main`.`ProductQuiz`.`active`, `main`.`ProductQuiz`.`created_at`, `main`.`ProductQuiz`.`updated_at` FROM `main`.`ProductQuiz` WHERE `main`.`ProductQuiz`.`id` = ? LIMIT ? OFFSET ?
+prisma:query COMMIT
+prisma:query BEGIN IMMEDIATE
+prisma:query SELECT `main`.`ProductQuiz`.`id` FROM `main`.`ProductQuiz` WHERE (`main`.`ProductQuiz`.`id` = ? AND 1=1) LIMIT ? OFFSET ?
+prisma:query INSERT INTO `main`.`ProductQuiz` (`id`, `product_id`, `video_id`, `question`, `options`, `answer`, `category`, `difficulty`, `order`, `active`, `created_at`, `updated_at`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?) RETURNING `id` AS `id`
+prisma:query SELECT `main`.`ProductQuiz`.`id`, `main`.`ProductQuiz`.`product_id`, `main`.`ProductQuiz`.`video_id`, `main`.`ProductQuiz`.`question`, `main`.`ProductQuiz`.`options`, `main`.`ProductQuiz`.`answer`, `main`.`ProductQuiz`.`category`, `main`.`ProductQuiz`.`difficulty`, `main`.`ProductQuiz`.`order`, `main`.`ProductQuiz`.`active`, `main`.`ProductQuiz`.`created_at`, `main`.`ProductQuiz`.`updated_at` FROM `main`.`ProductQuiz` WHERE `main`.`ProductQuiz`.`id` = ? LIMIT ? OFFSET ?
+prisma:query COMMIT
+prisma:query BEGIN IMMEDIATE
+prisma:query SELECT `main`.`Campaign`.`id` FROM `main`.`Campaign` WHERE (`main`.`Campaign`.`id` = ? AND 1=1) LIMIT ? OFFSET ?
+prisma:query INSERT INTO `main`.`Campaign` (`id`, `name`, `channel`, `partner_name`, `location`, `start_date`, `end_date`, `status`, `created_at`, `updated_at`) VALUES (?,?,?,?,?,?,?,?,?,?) RETURNING `id` AS `id`
+prisma:query SELECT `main`.`Campaign`.`id`, `main`.`Campaign`.`name`, `main`.`Campaign`.`channel`, `main`.`Campaign`.`partner_name`, `main`.`Campaign`.`location`, `main`.`Campaign`.`start_date`, `main`.`Campaign`.`end_date`, `main`.`Campaign`.`status`, `main`.`Campaign`.`qr_code_url`, `main`.`Campaign`.`created_at`, `main`.`Campaign`.`updated_at` FROM `main`.`Campaign` WHERE `main`.`Campaign`.`id` = ? LIMIT ? OFFSET ?
+prisma:query COMMIT
+prisma:query BEGIN IMMEDIATE
+prisma:query SELECT `main`.`Campaign`.`id` FROM `main`.`Campaign` WHERE (`main`.`Campaign`.`id` = ? AND 1=1) LIMIT ? OFFSET ?
+prisma:query INSERT INTO `main`.`Campaign` (`id`, `name`, `channel`, `partner_name`, `location`, `start_date`, `end_date`, `status`, `created_at`, `updated_at`) VALUES (?,?,?,?,?,?,?,?,?,?) RETURNING `id` AS `id`
+prisma:query SELECT `main`.`Campaign`.`id`, `main`.`Campaign`.`name`, `main`.`Campaign`.`channel`, `main`.`Campaign`.`partner_name`, `main`.`Campaign`.`location`, `main`.`Campaign`.`start_date`, `main`.`Campaign`.`end_date`, `main`.`Campaign`.`status`, `main`.`Campaign`.`qr_code_url`, `main`.`Campaign`.`created_at`, `main`.`Campaign`.`updated_at` FROM `main`.`Campaign` WHERE `main`.`Campaign`.`id` = ? LIMIT ? OFFSET ?
+prisma:query COMMIT
+prisma:query BEGIN IMMEDIATE
+prisma:query SELECT `main`.`Campaign`.`id` FROM `main`.`Campaign` WHERE (`main`.`Campaign`.`id` = ? AND 1=1) LIMIT ? OFFSET ?
+prisma:query INSERT INTO `main`.`Campaign` (`id`, `name`, `channel`, `partner_name`, `location`, `start_date`, `end_date`, `status`, `created_at`, `updated_at`) VALUES (?,?,?,?,?,?,?,?,?,?) RETURNING `id` AS `id`
+prisma:query SELECT `main`.`Campaign`.`id`, `main`.`Campaign`.`name`, `main`.`Campaign`.`channel`, `main`.`Campaign`.`partner_name`, `main`.`Campaign`.`location`, `main`.`Campaign`.`start_date`, `main`.`Campaign`.`end_date`, `main`.`Campaign`.`status`, `main`.`Campaign`.`qr_code_url`, `main`.`Campaign`.`created_at`, `main`.`Campaign`.`updated_at` FROM `main`.`Campaign` WHERE `main`.`Campaign`.`id` = ? LIMIT ? OFFSET ?
+prisma:query COMMIT
+prisma:query BEGIN IMMEDIATE
+prisma:query SELECT `main`.`Campaign`.`id` FROM `main`.`Campaign` WHERE (`main`.`Campaign`.`id` = ? AND 1=1) LIMIT ? OFFSET ?
+prisma:query INSERT INTO `main`.`Campaign` (`id`, `name`, `channel`, `partner_name`, `location`, `start_date`, `end_date`, `status`, `created_at`, `updated_at`) VALUES (?,?,?,?,?,?,?,?,?,?) RETURNING `id` AS `id`
+prisma:query SELECT `main`.`Campaign`.`id`, `main`.`Campaign`.`name`, `main`.`Campaign`.`channel`, `main`.`Campaign`.`partner_name`, `main`.`Campaign`.`location`, `main`.`Campaign`.`start_date`, `main`.`Campaign`.`end_date`, `main`.`Campaign`.`status`, `main`.`Campaign`.`qr_code_url`, `main`.`Campaign`.`created_at`, `main`.`Campaign`.`updated_at` FROM `main`.`Campaign` WHERE `main`.`Campaign`.`id` = ? LIMIT ? OFFSET ?
+prisma:query COMMIT
+prisma:query BEGIN IMMEDIATE
+prisma:query SELECT `main`.`Campaign`.`id` FROM `main`.`Campaign` WHERE (`main`.`Campaign`.`id` = ? AND 1=1) LIMIT ? OFFSET ?
+prisma:query INSERT INTO `main`.`Campaign` (`id`, `name`, `channel`, `partner_name`, `location`, `start_date`, `end_date`, `status`, `created_at`, `updated_at`) VALUES (?,?,?,?,?,?,?,?,?,?) RETURNING `id` AS `id`
+prisma:query SELECT `main`.`Campaign`.`id`, `main`.`Campaign`.`name`, `main`.`Campaign`.`channel`, `main`.`Campaign`.`partner_name`, `main`.`Campaign`.`location`, `main`.`Campaign`.`start_date`, `main`.`Campaign`.`end_date`, `main`.`Campaign`.`status`, `main`.`Campaign`.`qr_code_url`, `main`.`Campaign`.`created_at`, `main`.`Campaign`.`updated_at` FROM `main`.`Campaign` WHERE `main`.`Campaign`.`id` = ? LIMIT ? OFFSET ?
+prisma:query COMMIT
+prisma:query BEGIN IMMEDIATE
+prisma:query SELECT `main`.`Campaign`.`id` FROM `main`.`Campaign` WHERE (`main`.`Campaign`.`id` = ? AND 1=1) LIMIT ? OFFSET ?
+prisma:query INSERT INTO `main`.`Campaign` (`id`, `name`, `channel`, `partner_name`, `location`, `start_date`, `end_date`, `status`, `created_at`, `updated_at`) VALUES (?,?,?,?,?,?,?,?,?,?) RETURNING `id` AS `id`
+prisma:query SELECT `main`.`Campaign`.`id`, `main`.`Campaign`.`name`, `main`.`Campaign`.`channel`, `main`.`Campaign`.`partner_name`, `main`.`Campaign`.`location`, `main`.`Campaign`.`start_date`, `main`.`Campaign`.`end_date`, `main`.`Campaign`.`status`, `main`.`Campaign`.`qr_code_url`, `main`.`Campaign`.`created_at`, `main`.`Campaign`.`updated_at` FROM `main`.`Campaign` WHERE `main`.`Campaign`.`id` = ? LIMIT ? OFFSET ?
+prisma:query COMMIT
+prisma:query BEGIN IMMEDIATE
+prisma:query SELECT `main`.`Campaign`.`id` FROM `main`.`Campaign` WHERE (`main`.`Campaign`.`id` = ? AND 1=1) LIMIT ? OFFSET ?
+prisma:query INSERT INTO `main`.`Campaign` (`id`, `name`, `channel`, `partner_name`, `location`, `start_date`, `end_date`, `status`, `created_at`, `updated_at`) VALUES (?,?,?,?,?,?,?,?,?,?) RETURNING `id` AS `id`
+prisma:query SELECT `main`.`Campaign`.`id`, `main`.`Campaign`.`name`, `main`.`Campaign`.`channel`, `main`.`Campaign`.`partner_name`, `main`.`Campaign`.`location`, `main`.`Campaign`.`start_date`, `main`.`Campaign`.`end_date`, `main`.`Campaign`.`status`, `main`.`Campaign`.`qr_code_url`, `main`.`Campaign`.`created_at`, `main`.`Campaign`.`updated_at` FROM `main`.`Campaign` WHERE `main`.`Campaign`.`id` = ? LIMIT ? OFFSET ?
+prisma:query COMMIT
+prisma:query BEGIN IMMEDIATE
+prisma:query SELECT `main`.`Campaign`.`id` FROM `main`.`Campaign` WHERE (`main`.`Campaign`.`id` = ? AND 1=1) LIMIT ? OFFSET ?
+prisma:query INSERT INTO `main`.`Campaign` (`id`, `name`, `channel`, `partner_name`, `location`, `start_date`, `end_date`, `status`, `created_at`, `updated_at`) VALUES (?,?,?,?,?,?,?,?,?,?) RETURNING `id` AS `id`
+prisma:query SELECT `main`.`Campaign`.`id`, `main`.`Campaign`.`name`, `main`.`Campaign`.`channel`, `main`.`Campaign`.`partner_name`, `main`.`Campaign`.`location`, `main`.`Campaign`.`start_date`, `main`.`Campaign`.`end_date`, `main`.`Campaign`.`status`, `main`.`Campaign`.`qr_code_url`, `main`.`Campaign`.`created_at`, `main`.`Campaign`.`updated_at` FROM `main`.`Campaign` WHERE `main`.`Campaign`.`id` = ? LIMIT ? OFFSET ?
+prisma:query COMMIT
+prisma:query BEGIN IMMEDIATE
+prisma:query SELECT `main`.`Campaign`.`id` FROM `main`.`Campaign` WHERE (`main`.`Campaign`.`id` = ? AND 1=1) LIMIT ? OFFSET ?
+prisma:query INSERT INTO `main`.`Campaign` (`id`, `name`, `channel`, `partner_name`, `location`, `start_date`, `end_date`, `status`, `created_at`, `updated_at`) VALUES (?,?,?,?,?,?,?,?,?,?) RETURNING `id` AS `id`
+prisma:query SELECT `main`.`Campaign`.`id`, `main`.`Campaign`.`name`, `main`.`Campaign`.`channel`, `main`.`Campaign`.`partner_name`, `main`.`Campaign`.`location`, `main`.`Campaign`.`start_date`, `main`.`Campaign`.`end_date`, `main`.`Campaign`.`status`, `main`.`Campaign`.`qr_code_url`, `main`.`Campaign`.`created_at`, `main`.`Campaign`.`updated_at` FROM `main`.`Campaign` WHERE `main`.`Campaign`.`id` = ? LIMIT ? OFFSET ?
+prisma:query COMMIT
+prisma:query SELECT `main`.`UserProfile`.`id`, `main`.`UserProfile`.`user_id`, `main`.`UserProfile`.`name`, `main`.`UserProfile`.`age`, `main`.`UserProfile`.`gender`, `main`.`UserProfile`.`phone`, `main`.`UserProfile`.`email`, `main`.`UserProfile`.`country`, `main`.`UserProfile`.`state`, `main`.`UserProfile`.`avatar_url`, `main`.`UserProfile`.`learning_completed`, `main`.`UserProfile`.`is_admin`, `main`.`UserProfile`.`password_hash`, `main`.`UserProfile`.`created_at`, `main`.`UserProfile`.`updated_at` FROM `main`.`UserProfile` WHERE (`main`.`UserProfile`.`id` = ? AND 1=1) LIMIT ? OFFSET ?
+prisma:query INSERT INTO `main`.`ProductLearningProgress` (`id`, `user_id`, `product_id`, `video_progress`, `quiz_answers`, `quiz_completed`, `quiz_score`, `status`, `completed_at`, `created_at`, `updated_at`) VALUES (?,?,?,?,?,?,?,?,?,?,?) RETURNING `id` AS `id`, `user_id` AS `user_id`, `product_id` AS `product_id`, `video_progress` AS `video_progress`, `quiz_answers` AS `quiz_answers`, `quiz_completed` AS `quiz_completed`, `quiz_score` AS `quiz_score`, `status` AS `status`, `completed_at` AS `completed_at`, `created_at` AS `created_at`, `updated_at` AS `updated_at`
+prisma:query SELECT `main`.`UserProfile`.`id`, `main`.`UserProfile`.`user_id`, `main`.`UserProfile`.`name`, `main`.`UserProfile`.`age`, `main`.`UserProfile`.`gender`, `main`.`UserProfile`.`phone`, `main`.`UserProfile`.`email`, `main`.`UserProfile`.`country`, `main`.`UserProfile`.`state`, `main`.`UserProfile`.`avatar_url`, `main`.`UserProfile`.`learning_completed`, `main`.`UserProfile`.`is_admin`, `main`.`UserProfile`.`password_hash`, `main`.`UserProfile`.`created_at`, `main`.`UserProfile`.`updated_at` FROM `main`.`UserProfile` WHERE (`main`.`UserProfile`.`id` = ? AND 1=1) LIMIT ? OFFSET ?
+prisma:query INSERT INTO `main`.`ProductLearningProgress` (`id`, `user_id`, `product_id`, `video_progress`, `quiz_answers`, `quiz_completed`, `quiz_score`, `status`, `completed_at`, `created_at`, `updated_at`) VALUES (?,?,?,?,?,?,?,?,?,?,?) RETURNING `id` AS `id`, `user_id` AS `user_id`, `product_id` AS `product_id`, `video_progress` AS `video_progress`, `quiz_answers` AS `quiz_answers`, `quiz_completed` AS `quiz_completed`, `quiz_score` AS `quiz_score`, `status` AS `status`, `completed_at` AS `completed_at`, `created_at` AS `created_at`, `updated_at` AS `updated_at`
+prisma:query SELECT `main`.`UserProfile`.`id`, `main`.`UserProfile`.`user_id`, `main`.`UserProfile`.`name`, `main`.`UserProfile`.`age`, `main`.`UserProfile`.`gender`, `main`.`UserProfile`.`phone`, `main`.`UserProfile`.`email`, `main`.`UserProfile`.`country`, `main`.`UserProfile`.`state`, `main`.`UserProfile`.`avatar_url`, `main`.`UserProfile`.`learning_completed`, `main`.`UserProfile`.`is_admin`, `main`.`UserProfile`.`password_hash`, `main`.`UserProfile`.`created_at`, `main`.`UserProfile`.`updated_at` FROM `main`.`UserProfile` WHERE (`main`.`UserProfile`.`id` = ? AND 1=1) LIMIT ? OFFSET ?
+prisma:query INSERT INTO `main`.`ProductLearningProgress` (`id`, `user_id`, `product_id`, `video_progress`, `quiz_answers`, `quiz_completed`, `quiz_score`, `status`, `completed_at`, `created_at`, `updated_at`) VALUES (?,?,?,?,?,?,?,?,?,?,?) RETURNING `id` AS `id`, `user_id` AS `user_id`, `product_id` AS `product_id`, `video_progress` AS `video_progress`, `quiz_answers` AS `quiz_answers`, `quiz_completed` AS `quiz_completed`, `quiz_score` AS `quiz_score`, `status` AS `status`, `completed_at` AS `completed_at`, `created_at` AS `created_at`, `updated_at` AS `updated_at`
+prisma:query SELECT `main`.`UserProfile`.`id`, `main`.`UserProfile`.`user_id`, `main`.`UserProfile`.`name`, `main`.`UserProfile`.`age`, `main`.`UserProfile`.`gender`, `main`.`UserProfile`.`phone`, `main`.`UserProfile`.`email`, `main`.`UserProfile`.`country`, `main`.`UserProfile`.`state`, `main`.`UserProfile`.`avatar_url`, `main`.`UserProfile`.`learning_completed`, `main`.`UserProfile`.`is_admin`, `main`.`UserProfile`.`password_hash`, `main`.`UserProfile`.`created_at`, `main`.`UserProfile`.`updated_at` FROM `main`.`UserProfile` WHERE (`main`.`UserProfile`.`id` = ? AND 1=1) LIMIT ? OFFSET ?
+prisma:query INSERT INTO `main`.`ProductLearningProgress` (`id`, `user_id`, `product_id`, `video_progress`, `quiz_answers`, `quiz_completed`, `quiz_score`, `status`, `completed_at`, `created_at`, `updated_at`) VALUES (?,?,?,?,?,?,?,?,?,?,?) RETURNING `id` AS `id`, `user_id` AS `user_id`, `product_id` AS `product_id`, `video_progress` AS `video_progress`, `quiz_answers` AS `quiz_answers`, `quiz_completed` AS `quiz_completed`, `quiz_score` AS `quiz_score`, `status` AS `status`, `completed_at` AS `completed_at`, `created_at` AS `created_at`, `updated_at` AS `updated_at`
+prisma:query SELECT `main`.`UserProfile`.`id`, `main`.`UserProfile`.`user_id`, `main`.`UserProfile`.`name`, `main`.`UserProfile`.`age`, `main`.`UserProfile`.`gender`, `main`.`UserProfile`.`phone`, `main`.`UserProfile`.`email`, `main`.`UserProfile`.`country`, `main`.`UserProfile`.`state`, `main`.`UserProfile`.`avatar_url`, `main`.`UserProfile`.`learning_completed`, `main`.`UserProfile`.`is_admin`, `main`.`UserProfile`.`password_hash`, `main`.`UserProfile`.`created_at`, `main`.`UserProfile`.`updated_at` FROM `main`.`UserProfile` WHERE (`main`.`UserProfile`.`id` = ? AND 1=1) LIMIT ? OFFSET ?
+prisma:query INSERT INTO `main`.`ProductLearningProgress` (`id`, `user_id`, `product_id`, `video_progress`, `quiz_answers`, `quiz_completed`, `quiz_score`, `status`, `completed_at`, `created_at`, `updated_at`) VALUES (?,?,?,?,?,?,?,?,?,?,?) RETURNING `id` AS `id`, `user_id` AS `user_id`, `product_id` AS `product_id`, `video_progress` AS `video_progress`, `quiz_answers` AS `quiz_answers`, `quiz_completed` AS `quiz_completed`, `quiz_score` AS `quiz_score`, `status` AS `status`, `completed_at` AS `completed_at`, `created_at` AS `created_at`, `updated_at` AS `updated_at`
+prisma:query SELECT `main`.`UserProfile`.`id`, `main`.`UserProfile`.`user_id`, `main`.`UserProfile`.`name`, `main`.`UserProfile`.`age`, `main`.`UserProfile`.`gender`, `main`.`UserProfile`.`phone`, `main`.`UserProfile`.`email`, `main`.`UserProfile`.`country`, `main`.`UserProfile`.`state`, `main`.`UserProfile`.`avatar_url`, `main`.`UserProfile`.`learning_completed`, `main`.`UserProfile`.`is_admin`, `main`.`UserProfile`.`password_hash`, `main`.`UserProfile`.`created_at`, `main`.`UserProfile`.`updated_at` FROM `main`.`UserProfile` WHERE (`main`.`UserProfile`.`id` = ? AND 1=1) LIMIT ? OFFSET ?
+prisma:query INSERT INTO `main`.`ProductLearningProgress` (`id`, `user_id`, `product_id`, `video_progress`, `quiz_answers`, `quiz_completed`, `quiz_score`, `status`, `completed_at`, `created_at`, `updated_at`) VALUES (?,?,?,?,?,?,?,?,?,?,?) RETURNING `id` AS `id`, `user_id` AS `user_id`, `product_id` AS `product_id`, `video_progress` AS `video_progress`, `quiz_answers` AS `quiz_answers`, `quiz_completed` AS `quiz_completed`, `quiz_score` AS `quiz_score`, `status` AS `status`, `completed_at` AS `completed_at`, `created_at` AS `created_at`, `updated_at` AS `updated_at`
+prisma:query BEGIN IMMEDIATE
+prisma:query SELECT `main`.`QrScan`.`id` FROM `main`.`QrScan` WHERE (`main`.`QrScan`.`id` = ? AND 1=1) LIMIT ? OFFSET ?
+prisma:query INSERT INTO `main`.`QrScan` (`id`, `campaign_id`, `user_id`, `device`, `location`, `created_at`) VALUES (?,?,?,?,?,?) RETURNING `id` AS `id`
+prisma:query SELECT `main`.`QrScan`.`id`, `main`.`QrScan`.`campaign_id`, `main`.`QrScan`.`user_id`, `main`.`QrScan`.`device`, `main`.`QrScan`.`location`, `main`.`QrScan`.`created_at` FROM `main`.`QrScan` WHERE `main`.`QrScan`.`id` = ? LIMIT ? OFFSET ?
+prisma:query COMMIT
+prisma:query BEGIN IMMEDIATE
+prisma:query SELECT `main`.`QrScan`.`id` FROM `main`.`QrScan` WHERE (`main`.`QrScan`.`id` = ? AND 1=1) LIMIT ? OFFSET ?
+prisma:query INSERT INTO `main`.`QrScan` (`id`, `campaign_id`, `device`, `location`, `created_at`) VALUES (?,?,?,?,?) RETURNING `id` AS `id`
+prisma:query SELECT `main`.`QrScan`.`id`, `main`.`QrScan`.`campaign_id`, `main`.`QrScan`.`user_id`, `main`.`QrScan`.`device`, `main`.`QrScan`.`location`, `main`.`QrScan`.`created_at` FROM `main`.`QrScan` WHERE `main`.`QrScan`.`id` = ? LIMIT ? OFFSET ?
+prisma:query COMMIT
+prisma:query BEGIN IMMEDIATE
+prisma:query SELECT `main`.`QrScan`.`id` FROM `main`.`QrScan` WHERE (`main`.`QrScan`.`id` = ? AND 1=1) LIMIT ? OFFSET ?
+prisma:query INSERT INTO `main`.`QrScan` (`id`, `campaign_id`, `user_id`, `device`, `location`, `created_at`) VALUES (?,?,?,?,?,?) RETURNING `id` AS `id`
+prisma:query SELECT `main`.`QrScan`.`id`, `main`.`QrScan`.`campaign_id`, `main`.`QrScan`.`user_id`, `main`.`QrScan`.`device`, `main`.`QrScan`.`location`, `main`.`QrScan`.`created_at` FROM `main`.`QrScan` WHERE `main`.`QrScan`.`id` = ? LIMIT ? OFFSET ?
+prisma:query COMMIT
+prisma:query BEGIN IMMEDIATE
+prisma:query SELECT `main`.`QrScan`.`id` FROM `main`.`QrScan` WHERE (`main`.`QrScan`.`id` = ? AND 1=1) LIMIT ? OFFSET ?
+prisma:query INSERT INTO `main`.`QrScan` (`id`, `campaign_id`, `user_id`, `device`, `location`, `created_at`) VALUES (?,?,?,?,?,?) RETURNING `id` AS `id`
+prisma:query SELECT `main`.`QrScan`.`id`, `main`.`QrScan`.`campaign_id`, `main`.`QrScan`.`user_id`, `main`.`QrScan`.`device`, `main`.`QrScan`.`location`, `main`.`QrScan`.`created_at` FROM `main`.`QrScan` WHERE `main`.`QrScan`.`id` = ? LIMIT ? OFFSET ?
+prisma:query COMMIT
+prisma:query BEGIN IMMEDIATE
+prisma:query SELECT `main`.`QrScan`.`id` FROM `main`.`QrScan` WHERE (`main`.`QrScan`.`id` = ? AND 1=1) LIMIT ? OFFSET ?
+prisma:query INSERT INTO `main`.`QrScan` (`id`, `campaign_id`, `user_id`, `device`, `location`, `created_at`) VALUES (?,?,?,?,?,?) RETURNING `id` AS `id`
+prisma:query SELECT `main`.`QrScan`.`id`, `main`.`QrScan`.`campaign_id`, `main`.`QrScan`.`user_id`, `main`.`QrScan`.`device`, `main`.`QrScan`.`location`, `main`.`QrScan`.`created_at` FROM `main`.`QrScan` WHERE `main`.`QrScan`.`id` = ? LIMIT ? OFFSET ?
+prisma:query COMMIT
+prisma:query BEGIN IMMEDIATE
+prisma:query SELECT `main`.`QrScan`.`id` FROM `main`.`QrScan` WHERE (`main`.`QrScan`.`id` = ? AND 1=1) LIMIT ? OFFSET ?
+prisma:query INSERT INTO `main`.`QrScan` (`id`, `campaign_id`, `user_id`, `device`, `location`, `created_at`) VALUES (?,?,?,?,?,?) RETURNING `id` AS `id`
+prisma:query SELECT `main`.`QrScan`.`id`, `main`.`QrScan`.`campaign_id`, `main`.`QrScan`.`user_id`, `main`.`QrScan`.`device`, `main`.`QrScan`.`location`, `main`.`QrScan`.`created_at` FROM `main`.`QrScan` WHERE `main`.`QrScan`.`id` = ? LIMIT ? OFFSET ?
+prisma:query COMMIT
+prisma:query BEGIN IMMEDIATE
+prisma:query SELECT `main`.`QrScan`.`id` FROM `main`.`QrScan` WHERE (`main`.`QrScan`.`id` = ? AND 1=1) LIMIT ? OFFSET ?
+prisma:query INSERT INTO `main`.`QrScan` (`id`, `campaign_id`, `user_id`, `device`, `location`, `created_at`) VALUES (?,?,?,?,?,?) RETURNING `id` AS `id`
+prisma:query SELECT `main`.`QrScan`.`id`, `main`.`QrScan`.`campaign_id`, `main`.`QrScan`.`user_id`, `main`.`QrScan`.`device`, `main`.`QrScan`.`location`, `main`.`QrScan`.`created_at` FROM `main`.`QrScan` WHERE `main`.`QrScan`.`id` = ? LIMIT ? OFFSET ?
+prisma:query COMMIT
+prisma:query BEGIN IMMEDIATE
+prisma:query SELECT `main`.`QrScan`.`id` FROM `main`.`QrScan` WHERE (`main`.`QrScan`.`id` = ? AND 1=1) LIMIT ? OFFSET ?
+prisma:query INSERT INTO `main`.`QrScan` (`id`, `campaign_id`, `user_id`, `device`, `location`, `created_at`) VALUES (?,?,?,?,?,?) RETURNING `id` AS `id`
+prisma:query SELECT `main`.`QrScan`.`id`, `main`.`QrScan`.`campaign_id`, `main`.`QrScan`.`user_id`, `main`.`QrScan`.`device`, `main`.`QrScan`.`location`, `main`.`QrScan`.`created_at` FROM `main`.`QrScan` WHERE `main`.`QrScan`.`id` = ? LIMIT ? OFFSET ?
+prisma:query COMMIT
+prisma:query BEGIN IMMEDIATE
+prisma:query SELECT `main`.`QrScan`.`id` FROM `main`.`QrScan` WHERE (`main`.`QrScan`.`id` = ? AND 1=1) LIMIT ? OFFSET ?
+prisma:query INSERT INTO `main`.`QrScan` (`id`, `campaign_id`, `device`, `location`, `created_at`) VALUES (?,?,?,?,?) RETURNING `id` AS `id`
+prisma:query SELECT `main`.`QrScan`.`id`, `main`.`QrScan`.`campaign_id`, `main`.`QrScan`.`user_id`, `main`.`QrScan`.`device`, `main`.`QrScan`.`location`, `main`.`QrScan`.`created_at` FROM `main`.`QrScan` WHERE `main`.`QrScan`.`id` = ? LIMIT ? OFFSET ?
+prisma:query COMMIT
+prisma:query BEGIN IMMEDIATE
+prisma:query SELECT `main`.`QrScan`.`id` FROM `main`.`QrScan` WHERE (`main`.`QrScan`.`id` = ? AND 1=1) LIMIT ? OFFSET ?
+prisma:query INSERT INTO `main`.`QrScan` (`id`, `campaign_id`, `device`, `location`, `created_at`) VALUES (?,?,?,?,?) RETURNING `id` AS `id`
+prisma:query SELECT `main`.`QrScan`.`id`, `main`.`QrScan`.`campaign_id`, `main`.`QrScan`.`user_id`, `main`.`QrScan`.`device`, `main`.`QrScan`.`location`, `main`.`QrScan`.`created_at` FROM `main`.`QrScan` WHERE `main`.`QrScan`.`id` = ? LIMIT ? OFFSET ?
+prisma:query COMMIT
+✅ Seeding complete!
+prisma:query SELECT COUNT(*) AS `_count$_all` FROM (SELECT `main`.`UserProfile`.`id` FROM `main`.`UserProfile` WHERE 1=1 LIMIT ? OFFSET ?) AS `sub`
+  Users: 10
+prisma:query SELECT COUNT(*) AS `_count$_all` FROM (SELECT `main`.`Product`.`id` FROM `main`.`Product` WHERE 1=1 LIMIT ? OFFSET ?) AS `sub`
+  Products: 2
+prisma:query SELECT COUNT(*) AS `_count$_all` FROM (SELECT `main`.`ProductVideo`.`id` FROM `main`.`ProductVideo` WHERE 1=1 LIMIT ? OFFSET ?) AS `sub`
+  Videos: 6
+prisma:query SELECT COUNT(*) AS `_count$_all` FROM (SELECT `main`.`ProductQuiz`.`id` FROM `main`.`ProductQuiz` WHERE 1=1 LIMIT ? OFFSET ?) AS `sub`
+  Quizzes: 10
+prisma:query SELECT COUNT(*) AS `_count$_all` FROM (SELECT `main`.`Campaign`.`id` FROM `main`.`Campaign` WHERE 1=1 LIMIT ? OFFSET ?) AS `sub`
+  Campaigns: 9
+prisma:query SELECT COUNT(*) AS `_count$_all` FROM (SELECT `main`.`QrScan`.`id` FROM `main`.`QrScan` WHERE 1=1 LIMIT ? OFFSET ?) AS `sub`
+  QR Scans: 10
+prisma:query SELECT COUNT(*) AS `_count$_all` FROM (SELECT `main`.`ProductLearningProgress`.`id` FROM `main`.`ProductLearningProgress` WHERE 1=1 LIMIT ? OFFSET ?) AS `sub`
+  Learning Progress: 6

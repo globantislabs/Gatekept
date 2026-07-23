@@ -307,7 +307,7 @@ export function ProfilePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-[72px]">
             <button onClick={() => navigateTo('landing')} className="flex items-center gap-2 cursor-pointer group">
-              <Image src="/images/notjust-logo-clean.png" alt="NotJust Watr" width={120} height={40} className="h-9 w-auto object-contain transition-all duration-300 group-hover:scale-105 brightness-0" loading="eager" />
+              <Image src="/images/notjust-logo-clean.png" alt="NotJust Watr" width={120} height={40} className="h-9 w-auto object-contain transition-all duration-300 group-hover:scale-105" loading="eager" />
             </button>
             <div className="hidden md:flex items-center gap-1">
               <button onClick={() => navigateTo('landing')} className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium text-[#88837b] hover:text-[#48805b] hover:bg-[#48805b]/5 transition-all min-h-[44px]">
@@ -743,7 +743,7 @@ export function ProfilePage() {
       <footer className="bg-[#1f1e1c] py-8 mt-auto">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between">
-            <Image src="/images/notjust-logo-clean.png" alt="NotJust" width={100} height={32} className="h-8 w-auto object-contain brightness-0 invert" />
+            <Image src="/images/notjust-logo-clean.png" alt="NotJust" width={100} height={32} className="h-8 w-auto object-contain" />
             <p className="text-white/30 text-xs">© 2025 NOTJUST HEALTH™</p>
           </div>
         </div>

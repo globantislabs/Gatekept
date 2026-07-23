@@ -584,10 +584,25 @@ export const orderService = {
     return res.data
   },
 
-  async cancel(orderId: string): Promise<Order> {
+  async cancel(orderId: string, otpVerifiedId: string): Promise<Order> {
     const res = await apiFetch<{ data: Order }>(`/api/orders/${orderId}`, {
       method: 'PATCH',
-      body: JSON.stringify({ status: 'CANCELLED' }),
+      body: JSON.stringify({ status: 'CANCELLED', otp_verified_id: otpVerifiedId }),
+    })
+    return res.data
+  },
+
+  async updateAddress(orderId: string, addressData: {
+    shipping_name?: string
+    shipping_phone?: string
+    shipping_address?: string
+    shipping_city?: string
+    shipping_state?: string
+    shipping_pincode?: string
+  }, otpVerifiedId: string): Promise<Order> {
+    const res = await apiFetch<{ data: Order }>(`/api/orders/${orderId}/address`, {
+      method: 'PATCH',
+      body: JSON.stringify({ otp_verified_id: otpVerifiedId, ...addressData }),
     })
     return res.data
   },
@@ -634,28 +649,68 @@ export const subscriptionService = {
     return res.data
   },
 
-  async pause(subId: string): Promise<Subscription> {
+  async pause(subId: string, otpVerifiedId: string): Promise<Subscription> {
     const res = await apiFetch<{ data: Subscription }>(`/api/subscriptions/${subId}`, {
       method: 'PATCH',
-      body: JSON.stringify({ action: 'pause' }),
+      body: JSON.stringify({ action: 'pause', otp_verified_id: otpVerifiedId }),
     })
     return res.data
   },
 
-  async resume(subId: string): Promise<Subscription> {
+  async resume(subId: string, otpVerifiedId: string): Promise<Subscription> {
     const res = await apiFetch<{ data: Subscription }>(`/api/subscriptions/${subId}`, {
       method: 'PATCH',
-      body: JSON.stringify({ action: 'resume' }),
+      body: JSON.stringify({ action: 'resume', otp_verified_id: otpVerifiedId }),
     })
     return res.data
   },
 
-  async cancel(subId: string): Promise<Subscription> {
+  async cancel(subId: string, otpVerifiedId: string): Promise<Subscription> {
     const res = await apiFetch<{ data: Subscription }>(`/api/subscriptions/${subId}`, {
       method: 'PATCH',
-      body: JSON.stringify({ action: 'cancel' }),
+      body: JSON.stringify({ action: 'cancel', otp_verified_id: otpVerifiedId }),
     })
     return res.data
+  },
+}
+
+// ─── OTP Service ────────────────────────────────────────────
+
+export type OtpPurpose =
+  | 'CANCEL_ORDER'
+  | 'CANCEL_SUB'
+  | 'PAUSE_SUB'
+  | 'RESUME_SUB'
+  | 'MODIFY_ADDRESS'
+  | 'VERIFY_PHONE'
+
+export interface OtpSendResponse {
+  success: boolean
+  otp_id: string
+  message: string
+  phone_masked: string
+}
+
+export interface OtpVerifyResponse {
+  success: boolean
+  message: string
+  purpose?: OtpPurpose
+  reference_id?: string
+}
+
+export const otpService = {
+  async send(userId: string, purpose: OtpPurpose, referenceId?: string): Promise<OtpSendResponse> {
+    return apiFetch('/api/otp/send', {
+      method: 'POST',
+      body: JSON.stringify({ user_id: userId, purpose, reference_id: referenceId }),
+    })
+  },
+
+  async verify(otpId: string, otpCode: string): Promise<OtpVerifyResponse> {
+    return apiFetch('/api/otp/verify', {
+      method: 'POST',
+      body: JSON.stringify({ otp_id: otpId, otp_code: otpCode }),
+    })
   },
 }
 

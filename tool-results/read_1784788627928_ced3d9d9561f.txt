@@ -1,0 +1,705 @@
+     1→'use client'
+     2→
+     3→import React, { useState, useEffect } from 'react'
+     4→import { motion, AnimatePresence } from 'framer-motion'
+     5→import Image from 'next/image'
+     6→import {
+     7→  User, Mail, Phone, MapPin, Shield, Edit, LogOut, ArrowLeft,
+     8→  CheckCircle, Award, Globe, RefreshCw, Package, Truck, Clock,
+     9→  CreditCard, ChevronRight, AlertCircle, Calendar, Pause, Play,
+    10→  XCircle, ShoppingBag, Repeat, Eye, Home, Store, Menu,
+    11→} from 'lucide-react'
+    12→import { useAppStore } from '@/store/app-store'
+    13→import { userService, productLearningService, productService, orderService, subscriptionService } from '@/lib/data-service'
+    14→import type { UserProfile, ProductLearningProgress, Product, Order, Subscription, OrderTracking } from '@/lib/data-service'
+    15→
+    16→import { Button } from '@/components/ui/button'
+    17→import { Input } from '@/components/ui/input'
+    18→import { Label } from '@/components/ui/label'
+    19→import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+    20→import { Badge } from '@/components/ui/badge'
+    21→import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+    22→import { Separator } from '@/components/ui/separator'
+    23→import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+    24→import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+    25→import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from '@/components/ui/sheet'
+    26→import { Progress } from '@/components/ui/progress'
+    27→import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+    28→import { toast } from 'sonner'
+    29→
+    30→// ─── Brand Constants ──────────────────────────────────────
+    31→const BRAND = {
+    32→  green: '#48805b',
+    33→  lime: '#afb75d',
+    34→  dark: '#1f1e1c',
+    35→  muted: '#88837b',
+    36→  surface: '#e3dfd8',
+    37→  bg: '#f4f3f0',
+    38→  blue: '#2e91b2',
+    39→}
+    40→
+    41→const INDIAN_STATES = [
+    42→  'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh',
+    43→  'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jharkhand',
+    44→  'Karnataka', 'Kerala', 'Madhya Pradesh', 'Maharashtra', 'Manipur',
+    45→  'Meghalaya', 'Mizoram', 'Nagaland', 'Odisha', 'Punjab',
+    46→  'Rajasthan', 'Sikkim', 'Tamil Nadu', 'Telangana', 'Tripura',
+    47→  'Uttar Pradesh', 'Uttarakhand', 'West Bengal',
+    48→  'Andaman and Nicobar Islands', 'Chandigarh',
+    49→  'Dadra and Nagar Haveli and Daman and Diu', 'Delhi',
+    50→  'Jammu and Kashmir', 'Ladakh', 'Lakshadweep', 'Puducherry',
+    51→]
+    52→
+    53→// ─── Status Helpers ──────────────────────────────────────
+    54→const ORDER_STATUS_CONFIG: Record<string, { label: string; color: string; icon: any }> = {
+    55→  PLACED:        { label: 'Placed',        color: '#88837b', icon: Clock },
+    56→  CONFIRMED:     { label: 'Confirmed',     color: BRAND.blue, icon: CheckCircle },
+    57→  PROCESSING:    { label: 'Processing',    color: BRAND.lime, icon: Package },
+    58→  SHIPPED:       { label: 'Shipped',       color: BRAND.blue, icon: Truck },
+    59→  OUT_FOR_DELIVERY: { label: 'Out for Delivery', color: BRAND.lime, icon: Truck },
+    60→  DELIVERED:     { label: 'Delivered',     color: BRAND.green, icon: CheckCircle },
+    61→  CANCELLED:     { label: 'Cancelled',     color: '#ef4444', icon: XCircle },
+    62→}
+    63→
+    64→const SUBSCRIPTION_STATUS_CONFIG: Record<string, { label: string; color: string; icon: any }> = {
+    65→  ACTIVE:    { label: 'Active',    color: BRAND.green, icon: Play },
+    66→  PAUSED:    { label: 'Paused',    color: BRAND.lime,  icon: Pause },
+    67→  CANCELLED: { label: 'Cancelled', color: '#ef4444',    icon: XCircle },
+    68→  EXPIRED:   { label: 'Expired',   color: BRAND.muted,  icon: Clock },
+    69→}
+    70→
+    71→const PACK_TYPE_LABELS: Record<string, string> = {
+    72→  '30_DAY':  '30-Day Pack (5% off)',
+    73→  '60_DAY':  '60-Day Pack (8% off)',
+    74→  '90_DAY':  '90-Day Pack (12% off)',
+    75→  '180_DAY': '180-Day Pack (15% off)',
+    76→}
+    77→
+    78→const TRACKING_STEPS = ['PLACED', 'CONFIRMED', 'PROCESSING', 'SHIPPED', 'OUT_FOR_DELIVERY', 'DELIVERED']
+    79→
+    80→function getInitials(name: string): string {
+    81→  return name.split(' ').map(w => w.charAt(0)).join('').toUpperCase().slice(0, 2)
+    82→}
+    83→
+    84→function formatDate(dateStr: string | null | undefined): string {
+    85→  if (!dateStr) return '—'
+    86→  return new Date(dateStr).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+    87→}
+    88→
+    89→// ─── StatusIcon — Renders the appropriate icon for an order status ──
+    90→function StatusIcon({ status, className }: { status: string; className?: string }) {
+    91→  const config = ORDER_STATUS_CONFIG[status]
+    92→  const Icon = config?.icon || Package
+    93→  const color = config?.color || BRAND.muted
+    94→  return <Icon className={className} style={{ color }} />
+    95→}
+    96→
+    97→// ─── Animation ────────────────────────────────────────────
+    98→const fadeInUp = {
+    99→  hidden: { opacity: 0, y: 24 },
+   100→  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' } },
+   101→}
+   102→
+   103→// ============================================================
+   104→// PROFILE PAGE — Tabbed: Profile / Orders / Subscriptions
+   105→// ============================================================
+   106→export function ProfilePage() {
+   107→  const { user, navigateTo, setUser, goBack } = useAppStore()
+   108→  const [activeTab, setActiveTab] = useState('profile')
+   109→  const [learningProgress, setLearningProgress] = useState<ProductLearningProgress[]>([])
+   110→  const [products, setProducts] = useState<Product[]>([])
+   111→  const [orders, setOrders] = useState<Order[]>([])
+   112→  const [subscriptions, setSubscriptions] = useState<Subscription[]>([])
+   113→  const [loadingProgress, setLoadingProgress] = useState(true)
+   114→  const [loadingOrders, setLoadingOrders] = useState(true)
+   115→  const [loadingSubs, setLoadingSubs] = useState(true)
+   116→  const [expandedOrder, setExpandedOrder] = useState<string | null>(null)
+   117→  const [editOpen, setEditOpen] = useState(false)
+   118→  const [subActionLoading, setSubActionLoading] = useState<string | null>(null)
+   119→
+   120→  // Fetch all data
+   121→  useEffect(() => {
+   122→    if (!user) return
+   123→    const fetchData = async () => {
+   124→      setLoadingProgress(true)
+   125→      setLoadingOrders(true)
+   126→      setLoadingSubs(true)
+   127→
+   128→      try {
+   129→        const progress = await productLearningService.get(user.user_id)
+   130→        setLearningProgress(progress)
+   131→        const prods = await productService.list({ active: true })
+   132→        setProducts(prods)
+   133→      } catch { /* silent */ } finally { setLoadingProgress(false) }
+   134→
+   135→      try {
+   136→        const orderList = await orderService.list(user.id)
+   137→        setOrders(orderList)
+   138→      } catch { /* silent */ } finally { setLoadingOrders(false) }
+   139→
+   140→      try {
+   141→        const subList = await subscriptionService.list(user.id)
+   142→        setSubscriptions(subList)
+   143→      } catch { /* silent */ } finally { setLoadingSubs(false) }
+   144→    }
+   145→    fetchData()
+   146→  }, [user])
+   147→
+   148→  if (!user) {
+   149→    navigateTo('auth-login')
+   150→    return null
+   151→  }
+   152→
+   153→  const handleLogout = () => {
+   154→    setUser(null)
+   155→    navigateTo('landing')
+   156→    toast.info('You have been logged out')
+   157→  }
+   158→
+   159→  const getProductById = (productId: string) => products.find(p => p.id === productId)
+   160→
+   161→  // ── Subscription actions ──
+   162→  const handleSubPause = async (subId: string) => {
+   163→    setSubActionLoading(subId)
+   164→    try {
+   165→      const updated = await subscriptionService.pause(subId)
+   166→      setSubscriptions(prev => prev.map(s => s.id === subId ? updated : s))
+   167→      toast.success('Subscription paused')
+   168→    } catch { toast.error('Failed to pause subscription') }
+   169→    finally { setSubActionLoading(null) }
+   170→  }
+   171→
+   172→  const handleSubResume = async (subId: string) => {
+   173→    setSubActionLoading(subId)
+   174→    try {
+   175→      const updated = await subscriptionService.resume(subId)
+   176→      setSubscriptions(prev => prev.map(s => s.id === subId ? updated : s))
+   177→      toast.success('Subscription resumed')
+   178→    } catch { toast.error('Failed to resume subscription') }
+   179→    finally { setSubActionLoading(null) }
+   180→  }
+   181→
+   182→  const handleSubCancel = async (subId: string) => {
+   183→    setSubActionLoading(subId)
+   184→    try {
+   185→      const updated = await subscriptionService.cancel(subId)
+   186→      setSubscriptions(prev => prev.map(s => s.id === subId ? updated : s))
+   187→      toast.success('Subscription cancelled')
+   188→    } catch { toast.error('Failed to cancel subscription') }
+   189→    finally { setSubActionLoading(null) }
+   190→  }
+   191→
+   192→  // ── Order cancel ──
+   193→  const handleOrderCancel = async (orderId: string) => {
+   194→    try {
+   195→      const updated = await orderService.cancel(orderId)
+   196→      setOrders(prev => prev.map(o => o.id === orderId ? updated : o))
+   197→      toast.success('Order cancelled')
+   198→    } catch { toast.error('Failed to cancel order') }
+   199→  }
+   200→
+   201→  return (
+   202→    <div className="min-h-screen bg-[#f4f3f0] flex flex-col">
+   203→      {/* ── Navbar ── */}
+   204→      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-xl shadow-[0_1px_0_0_rgba(0,0,0,0.06)]">
+   205→        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+   206→          <div className="flex items-center justify-between h-[72px]">
+   207→            <button onClick={() => navigateTo('landing')} className="flex items-center gap-2 cursor-pointer group">
+   208→              <Image src="/images/notjust-logo-clean.png" alt="NotJust Watr" width={120} height={40} className="h-9 w-auto object-contain transition-all duration-300 group-hover:scale-105 brightness-0" loading="eager" />
+   209→            </button>
+   210→            <div className="hidden md:flex items-center gap-1">
+   211→              <button onClick={() => navigateTo('landing')} className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium text-[#88837b] hover:text-[#48805b] hover:bg-[#48805b]/5 transition-all min-h-[44px]">
+   212→                <Home className="w-4 h-4" /> Home
+   213→              </button>
+   214→              <button onClick={() => navigateTo('products')} className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium text-[#88837b] hover:text-[#48805b] hover:bg-[#48805b]/5 transition-all min-h-[44px]">
+   215→                <Store className="w-4 h-4" /> Product
+   216→              </button>
+   217→              <button onClick={() => navigateTo('our-journey')} className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium text-[#88837b] hover:text-[#48805b] hover:bg-[#48805b]/5 transition-all min-h-[44px]">
+   218→                <Globe className="w-4 h-4" /> Our Journey
+   219→              </button>
+   220→            </div>
+   221→            <div className="flex items-center gap-3">
+   222→              <button onClick={() => navigateTo('profile')} className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-[#48805b] bg-[#48805b]/10 transition-all min-h-[44px]">
+   223→                <div className="w-7 h-7 rounded-full bg-[#48805b] flex items-center justify-center text-white text-xs font-bold">{getInitials(user.name)}</div>
+   224→                {user.name}
+   225→              </button>
+   226→            </div>
+   227→          </div>
+   228→        </div>
+   229→      </nav>
+   230→
+   231→      {/* ── Main Content ── */}
+   232→      <main className="flex-1 pt-[72px] pb-12">
+   233→        <div className="max-w-4xl mx-auto px-4 sm:px-6">
+   234→          <motion.div initial="hidden" animate="visible" variants={fadeInUp}>
+   235→            {/* ── Header ── */}
+   236→            <div className="flex items-center justify-between mb-4 mt-6">
+   237→              <h1 className="font-heading text-2xl font-bold text-[#1f1e1c]">My Account</h1>
+   238→              <Button variant="ghost" onClick={handleLogout} className="flex items-center gap-2 text-[#88837b] hover:text-red-600 min-h-[44px]">
+   239→                <LogOut className="w-4 h-4" /> Logout
+   240→              </Button>
+   241→            </div>
+   242→
+   243→            {/* ── Tabs ── */}
+   244→            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+   245→              <TabsList className="w-full grid grid-cols-3 bg-[#e3dfd8]/50 rounded-xl h-12 mb-6">
+   246→                <TabsTrigger value="profile" className="rounded-lg data-[state=active]:bg-[#48805b] data-[state=active]:text-white font-heading font-semibold text-sm min-h-[44px]">
+   247→                  <User className="w-4 h-4 mr-1.5" /> Profile
+   248→                </TabsTrigger>
+   249→                <TabsTrigger value="orders" className="rounded-lg data-[state=active]:bg-[#48805b] data-[state=active]:text-white font-heading font-semibold text-sm min-h-[44px]">
+   250→                  <ShoppingBag className="w-4 h-4 mr-1.5" /> Orders
+   251→                </TabsTrigger>
+   252→                <TabsTrigger value="subscriptions" className="rounded-lg data-[state=active]:bg-[#48805b] data-[state=active]:text-white font-heading font-semibold text-sm min-h-[44px]">
+   253→                  <Repeat className="w-4 h-4 mr-1.5" /> Subscriptions
+   254→                </TabsTrigger>
+   255→              </TabsList>
+   256→
+   257→              {/* ═══════════════════════════════════════════════════════
+   258→                  PROFILE TAB
+   259→                  ═══════════════════════════════════════════════════════ */}
+   260→              <TabsContent value="profile">
+   261→                <div className="grid md:grid-cols-3 gap-6">
+   262→                  {/* ─── User Info Card ─── */}
+   263→                  <Card className="border-[#e3dfd8] md:col-span-1">
+   264→                    <CardContent className="p-6">
+   265→                      <div className="flex flex-col items-center mb-6">
+   266→                        <Avatar className="w-20 h-20 mb-3">
+   267→                          <AvatarFallback className="bg-[#48805b] text-white text-2xl font-bold font-heading">
+   268→                            {getInitials(user.name)}
+   269→                          </AvatarFallback>
+   270→                        </Avatar>
+   271→                        <h2 className="font-bold text-xl text-[#1f1e1c] text-center">{user.name}</h2>
+   272→                        <div className="flex items-center gap-2 mt-1">
+   273→                          {user.is_admin && <Badge className="bg-[#2e91b2]/10 text-[#2e91b2] border-[#2e91b2]/20"><Shield className="w-3 h-3 mr-1" />Admin</Badge>}
+   274→                          {user.learning_completed && <Badge className="bg-[#48805b]/10 text-[#48805b] border-[#48805b]/20"><CheckCircle className="w-3 h-3 mr-1" />Learning Complete</Badge>}
+   275→                        </div>
+   276→                      </div>
+   277→                      <Separator className="bg-[#e3dfd8] mb-4" />
+   278→                      <div className="space-y-3">
+   279→                        {user.email && <div className="flex items-center gap-3 text-sm"><Mail className="w-4 h-4 text-[#48805b]" /><span className="text-[#88837b]">Email:</span><span className="text-[#1f1e1c] font-medium">{user.email}</span></div>}
+   280→                        {user.phone && <div className="flex items-center gap-3 text-sm"><Phone className="w-4 h-4 text-[#48805b]" /><span className="text-[#88837b]">Phone:</span><span className="text-[#1f1e1c] font-medium">{user.phone}</span></div>}
+   281→                        {user.age && <div className="flex items-center gap-3 text-sm"><User className="w-4 h-4 text-[#48805b]" /><span className="text-[#88837b]">Age:</span><span className="text-[#1f1e1c] font-medium">{user.age}</span></div>}
+   282→                        {user.gender && <div className="flex items-center gap-3 text-sm"><User className="w-4 h-4 text-[#48805b]" /><span className="text-[#88837b]">Gender:</span><span className="text-[#1f1e1c] font-medium">{user.gender}</span></div>}
+   283→                        {user.country && <div className="flex items-center gap-3 text-sm"><Globe className="w-4 h-4 text-[#48805b]" /><span className="text-[#88837b]">Country:</span><span className="text-[#1f1e1c] font-medium">{user.country}</span></div>}
+   284→                        {user.state && <div className="flex items-center gap-3 text-sm"><MapPin className="w-4 h-4 text-[#48805b]" /><span className="text-[#88837b]">State:</span><span className="text-[#1f1e1c] font-medium">{user.state}</span></div>}
+   285→                      </div>
+   286→                      <Separator className="bg-[#e3dfd8] mt-4 mb-4" />
+   287→                      <EditProfileButton user={user} setUser={setUser} editOpen={editOpen} setEditOpen={setEditOpen} />
+   288→                    </CardContent>
+   289→                  </Card>
+   290→
+   291→                  {/* ─── Learning + Account ─── */}
+   292→                  <div className="md:col-span-2 space-y-6">
+   293→                    <Card className="border-[#e3dfd8]">
+   294→                      <CardHeader className="pb-3"><CardTitle className="text-base font-heading font-bold flex items-center gap-2"><Award className="w-5 h-5 text-[#48805b]" />Learning Progress</CardTitle></CardHeader>
+   295→                      <CardContent>
+   296→                        {loadingProgress ? (
+   297→                          <div className="flex items-center justify-center py-8"><RefreshCw className="w-5 h-5 animate-spin text-[#48805b]" /><span className="ml-2 text-sm text-[#88837b]">Loading...</span></div>
+   298→                        ) : learningProgress.length === 0 ? (
+   299→                          <div className="text-center py-8"><Award className="w-10 h-10 text-[#e3dfd8] mx-auto mb-3" /><p className="text-sm text-[#88837b]">No learning progress yet.</p><Button onClick={() => navigateTo('products')} variant="outline" className="mt-3 border-[#48805b] text-[#48805b] min-h-[44px]">Start Learning</Button></div>
+   300→                        ) : (
+   301→                          <div className="space-y-4 max-h-[300px] overflow-y-auto">
+   302→                            {learningProgress.map(lp => {
+   303→                              const product = getProductById(lp.product_id)
+   304→                              return (
+   305→                                <div key={lp.id} className="p-4 rounded-xl bg-[#f4f3f0] border border-[#e3dfd8]">
+   306→                                  <div className="flex items-center justify-between mb-3">
+   307→                                    <span className="font-medium text-[#1f1e1c]">{product?.name || 'Unknown Product'}</span>
+   308→                                    <Badge className={lp.status === 'COMPLETED' ? 'bg-[#48805b]/10 text-[#48805b] border-[#48805b]/20' : lp.status === 'IN_PROGRESS' ? 'bg-[#2e91b2]/10 text-[#2e91b2] border-[#2e91b2]/20' : 'bg-[#e3dfd8] text-[#88837b]'}>{lp.status === 'COMPLETED' ? 'Completed' : lp.status === 'IN_PROGRESS' ? 'In Progress' : 'Not Started'}</Badge>
+   309→                                  </div>
+   310→                                  {lp.video_progress && Object.keys(lp.video_progress).length > 0 && (
+   311→                                    <div className="space-y-2 mb-2">{Object.entries(lp.video_progress).map(([vidId, prog]) => (
+   312→                                      <div key={vidId} className="flex items-center gap-2"><span className="text-xs text-[#88837b] w-24 truncate">Video {vidId.slice(-3)}</span><Progress value={prog} className="flex-1 h-2 bg-[#e3dfd8]" /><span className="text-xs text-[#88837b] w-8 text-right">{prog}%</span></div>
+   313→                                    ))}</div>
+   314→                                  )}
+   315→                                  {lp.quiz_completed && <div className="flex items-center gap-2 mt-2"><CheckCircle className="w-4 h-4 text-[#48805b]" /><span className="text-sm text-[#1f1e1c]">Quiz Score: <strong>{lp.quiz_score}%</strong></span>{lp.quiz_score >= 80 && <Badge className="bg-[#afb75d]/10 text-[#afb75d] border-[#afb75d]/20 text-xs"><Award className="w-3 h-3 mr-1" />Passed</Badge>}</div>}
+   316→                                  {lp.completed_at && <p className="text-xs text-[#88837b] mt-2">Completed on {formatDate(lp.completed_at)}</p>}
+   317→                                </div>
+   318→                              )
+   319→                            })}
+   320→                          </div>
+   321→                        )}
+   322→                      </CardContent>
+   323→                    </Card>
+   324→
+   325→                    <Card className="border-[#e3dfd8]">
+   326→                      <CardHeader className="pb-3"><CardTitle className="text-base font-heading font-bold flex items-center gap-2"><User className="w-5 h-5 text-[#48805b]" />Account Details</CardTitle></CardHeader>
+   327→                      <CardContent>
+   328→                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+   329→                          {[
+   330→                            { label: 'User ID', value: user.user_id, icon: <User className="w-4 h-4" /> },
+   331→                            { label: 'Email', value: user.email || 'Not provided', icon: <Mail className="w-4 h-4" /> },
+   332→                            { label: 'Phone', value: user.phone || 'Not provided', icon: <Phone className="w-4 h-4" /> },
+   333→                            { label: 'Joined', value: formatDate(user.created_at), icon: <Calendar className="w-4 h-4" /> },
+   334→                            { label: 'Admin', value: user.is_admin ? 'Yes' : 'No', icon: <Shield className="w-4 h-4" /> },
+   335→                          ].map(item => (
+   336→                            <DetailItem key={item.label} {...item} />
+   337→                          ))}
+   338→                        </div>
+   339→                      </CardContent>
+   340→                    </Card>
+   341→                  </div>
+   342→                </div>
+   343→              </TabsContent>
+   344→
+   345→              {/* ═══════════════════════════════════════════════════════
+   346→                  ORDERS TAB
+   347→                  ═══════════════════════════════════════════════════════ */}
+   348→              <TabsContent value="orders">
+   349→                {loadingOrders ? (
+   350→                  <div className="flex items-center justify-center py-20"><RefreshCw className="w-6 h-6 animate-spin text-[#48805b]" /><span className="ml-2 text-sm text-[#88837b]">Loading orders...</span></div>
+   351→                ) : orders.length === 0 ? (
+   352→                  <Card className="border-[#e3dfd8]">
+   353→                    <CardContent className="py-16 text-center">
+   354→                      <ShoppingBag className="w-12 h-12 text-[#e3dfd8] mx-auto mb-4" />
+   355→                      <h3 className="font-heading text-lg font-bold text-[#1f1e1c] mb-2">No orders yet</h3>
+   356→                      <p className="text-sm text-[#88837b] mb-4">Start your wellness journey by placing your first order.</p>
+   357→                      <Button onClick={() => navigateTo('products')} className="bg-[#48805b] hover:bg-[#3a6a4a] text-white font-heading min-h-[44px]">
+   358→                        <Store className="w-4 h-4 mr-2" /> Browse Products
+   359→                      </Button>
+   360→                    </CardContent>
+   361→                  </Card>
+   362→                ) : (
+   363→                  <div className="space-y-4 max-h-[calc(100vh-200px)] overflow-y-auto">
+   364→                    {orders.map(order => (
+   365→                      <Card key={order.id} className="border-[#e3dfd8] overflow-hidden">
+   366→                        {/* ── Order Header ── */}
+   367→                        <CardContent className="p-0">
+   368→                          <button
+   369→                            onClick={() => setExpandedOrder(expandedOrder === order.id ? null : order.id)}
+   370→                            className="w-full p-4 sm:p-5 flex items-center justify-between hover:bg-[#f4f3f0]/50 transition-colors min-h-[44px]"
+   371→                          >
+   372→                            <div className="flex items-center gap-3 sm:gap-4">
+   373→                              <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-[#48805b]/10">
+   374→                                <StatusIcon status={order.status} className="w-5 h-5" />
+   375→                              </div>
+   376→                              <div>
+   377→                                <p className="font-heading font-bold text-sm text-[#1f1e1c]">{order.order_number}</p>
+   378→                                <p className="text-xs text-[#88837b]">{formatDate(order.created_at)}</p>
+   379→                              </div>
+   380→                            </div>
+   381→                            <div className="flex items-center gap-3">
+   382→                              <Badge className={`${ORDER_STATUS_CONFIG[order.status]?.color === BRAND.green ? 'bg-[#48805b]/10 text-[#48805b] border-[#48805b]/20' : ORDER_STATUS_CONFIG[order.status]?.color === '#ef4444' ? 'bg-red-50 text-red-600 border-red-200' : 'bg-[#e3dfd8] text-[#88837b]'} text-xs font-semibold`}>
+   383→                                {ORDER_STATUS_CONFIG[order.status]?.label || order.status}
+   384→                              </Badge>
+   385→                              <p className="font-heading font-bold text-[#1f1e1c]">₹{order.total_amount.toLocaleString()}</p>
+   386→                              <ChevronRight className={`w-4 h-4 text-[#88837b] transition-transform ${expandedOrder === order.id ? 'rotate-90' : ''}`} />
+   387→                            </div>
+   388→                          </button>
+   389→
+   390→                          {/* ── Expanded Details ── */}
+   391→                          <AnimatePresence>
+   392→                            {expandedOrder === order.id && (
+   393→                              <motion.div
+   394→                                initial={{ height: 0, opacity: 0 }}
+   395→                                animate={{ height: 'auto', opacity: 1 }}
+   396→                                exit={{ height: 0, opacity: 0 }}
+   397→                                transition={{ duration: 0.3 }}
+   398→                                className="overflow-hidden"
+   399→                              >
+   400→                                <div className="px-4 sm:px-5 pb-5 border-t border-[#e3dfd8]">
+   401→                                  {/* ── Items ── */}
+   402→                                  <div className="mt-4">
+   403→                                    <h4 className="text-xs font-semibold uppercase tracking-wider text-[#88837b] mb-3">Order Items</h4>
+   404→                                    <div className="space-y-2">
+   405→                                      {order.items?.map(item => (
+   406→                                        <div key={item.id} className="flex items-center justify-between p-3 rounded-lg bg-[#f4f3f0]">
+   407→                                          <div className="flex items-center gap-3">
+   408→                                            <div className="w-8 h-8 rounded-md bg-[#1f1e1c] flex items-center justify-center text-[#afb75d] text-xs font-bold">{item.product_type === 'STILL' ? 'S' : 'F'}</div>
+   409→                                            <div>
+   410→                                              <p className="text-sm font-medium text-[#1f1e1c]">{item.product_name}</p>
+   411→                                              {item.pack_type && <p className="text-xs text-[#48805b]">{PACK_TYPE_LABELS[item.pack_type] || item.pack_type}</p>}
+   412→                                            </div>
+   413→                                          </div>
+   414→                                          <div className="text-right">
+   415→                                            <p className="text-sm font-semibold text-[#1f1e1c]">₹{item.total_price.toLocaleString()}</p>
+   416→                                            <p className="text-xs text-[#88837b]">Qty: {item.quantity}</p>
+   417→                                          </div>
+   418→                                        </div>
+   419→                                      ))}
+   420→                                    </div>
+   421→                                  </div>
+   422→
+   423→                                  {/* ── Amount Breakdown ── */}
+   424→                                  <div className="mt-4 p-3 rounded-lg bg-[#f4f3f0]">
+   425→                                    <div className="space-y-1.5 text-sm">
+   426→                                      <div className="flex justify-between"><span className="text-[#88837b]">Subtotal</span><span className="text-[#1f1e1c]">₹{order.subtotal.toLocaleString()}</span></div>
+   427→                                      <div className="flex justify-between"><span className="text-[#88837b]">Tax (GST)</span><span className="text-[#1f1e1c]">₹{order.tax_amount.toLocaleString()}</span></div>
+   428→                                      {order.discount_amount > 0 && <div className="flex justify-between"><span className="text-[#48805b]">Discount</span><span className="text-[#48805b]">-₹{order.discount_amount.toLocaleString()}</span></div>}
+   429→                                      <Separator className="bg-[#e3dfd8]" />
+   430→                                      <div className="flex justify-between font-bold"><span className="text-[#1f1e1c]">Total</span><span className="text-[#1f1e1c]">₹{order.total_amount.toLocaleString()}</span></div>
+   431→                                    </div>
+   432→                                  </div>
+   433→
+   434→                                  {/* ── Shipping ── */}
+   435→                                  {order.shipping_address && (
+   436→                                    <div className="mt-4">
+   437→                                      <h4 className="text-xs font-semibold uppercase tracking-wider text-[#88837b] mb-2">Shipping Address</h4>
+   438→                                      <div className="p-3 rounded-lg bg-[#f4f3f0] text-sm text-[#1f1e1c]">
+   439→                                        <p>{order.shipping_name}</p>
+   440→                                        <p>{order.shipping_address}</p>
+   441→                                        <p>{order.shipping_city}, {order.shipping_state} {order.shipping_pincode}</p>
+   442→                                        {order.shipping_phone && <p className="text-[#88837b]">Phone: {order.shipping_phone}</p>}
+   443→                                      </div>
+   444→                                    </div>
+   445→                                  )}
+   446→
+   447→                                  {/* ── Payment ── */}
+   448→                                  <div className="mt-4 flex items-center gap-4">
+   449→                                    <div className="flex items-center gap-2">
+   450→                                      <CreditCard className="w-4 h-4 text-[#88837b]" />
+   451→                                      <span className="text-xs text-[#88837b]">Payment:</span>
+   452→                                      <Badge className={order.payment_status === 'COMPLETED' ? 'bg-[#48805b]/10 text-[#48805b] border-[#48805b]/20' : 'bg-[#e3dfd8] text-[#88837b]'}>{order.payment_status} · {order.payment_method || 'UPI'}</Badge>
+   453→                                    </div>
+   454→                                  </div>
+   455→
+   456→                                  {/* ── Tracking Timeline ── */}
+   457→                                  {order.tracking && order.tracking.length > 0 && (
+   458→                                    <div className="mt-4">
+   459→                                      <h4 className="text-xs font-semibold uppercase tracking-wider text-[#88837b] mb-3">
+   460→                                        <Truck className="w-3 h-3 mr-1 inline" /> Delivery Tracking
+   461→                                      </h4>
+   462→                                      <TrackingTimeline tracking={order.tracking} currentStatus={order.status} />
+   463→                                    </div>
+   464→                                  )}
+   465→
+   466→                                  {/* ── Actions ── */}
+   467→                                  {order.status === 'PLACED' && order.payment_status === 'PENDING' && (
+   468→                                    <div className="mt-4">
+   469→                                      <Button onClick={() => handleOrderCancel(order.id)} variant="outline" className="border-red-200 text-red-600 hover:bg-red-50 min-h-[44px]">
+   470→                                        <XCircle className="w-4 h-4 mr-2" /> Cancel Order
+   471→                                      </Button>
+   472→                                    </div>
+   473→                                  )}
+   474→                                </div>
+   475→                              </motion.div>
+   476→                            )}
+   477→                          </AnimatePresence>
+   478→                        </CardContent>
+   479→                      </Card>
+   480→                    ))}
+   481→                  </div>
+   482→                )}
+   483→              </TabsContent>
+   484→
+   485→              {/* ═══════════════════════════════════════════════════════
+   486→                  SUBSCRIPTIONS TAB
+   487→                  ═══════════════════════════════════════════════════════ */}
+   488→              <TabsContent value="subscriptions">
+   489→                {loadingSubs ? (
+   490→                  <div className="flex items-center justify-center py-20"><RefreshCw className="w-6 h-6 animate-spin text-[#48805b]" /><span className="ml-2 text-sm text-[#88837b]">Loading subscriptions...</span></div>
+   491→                ) : subscriptions.length === 0 ? (
+   492→                  <Card className="border-[#e3dfd8]">
+   493→                    <CardContent className="py-16 text-center">
+   494→                      <Repeat className="w-12 h-12 text-[#e3dfd8] mx-auto mb-4" />
+   495→                      <h3 className="font-heading text-lg font-bold text-[#1f1e1c] mb-2">No subscriptions yet</h3>
+   496→                      <p className="text-sm text-[#88837b] mb-4">Subscribe to regular deliveries and save more.</p>
+   497→                      <Button onClick={() => navigateTo('products')} className="bg-[#48805b] hover:bg-[#3a6a4a] text-white font-heading min-h-[44px]">
+   498→                        <Store className="w-4 h-4 mr-2" /> Browse Products
+   499→                      </Button>
+   500→                    </CardContent>
+   501→                  </Card>
+   502→                ) : (
+   503→                  <div className="space-y-4 max-h-[calc(100vh-200px)] overflow-y-auto">
+   504→                    {subscriptions.map(sub => {
+   505→                      const statusConfig = SUBSCRIPTION_STATUS_CONFIG[sub.status] || { label: sub.status, color: BRAND.muted, icon: Clock }
+   506→                      const isActionLoading = subActionLoading === sub.id
+   507→                      return (
+   508→                        <Card key={sub.id} className="border-[#e3dfd8] overflow-hidden">
+   509→                          <CardContent className="p-5">
+   510→                            <div className="flex items-start justify-between gap-4">
+   511→                              <div className="flex items-center gap-3">
+   512→                                <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-[#1f1e1c]">
+   513→                                  <span className="text-[#afb75d] text-xs font-bold">{sub.product_type === 'STILL' ? 'S' : 'F'}</span>
+   514→                                </div>
+   515→                                <div>
+   516→                                  <p className="font-heading font-bold text-sm text-[#1f1e1c]">{sub.product_name}</p>
+   517→                                  <p className="text-xs text-[#48805b]">{PACK_TYPE_LABELS[sub.pack_type] || sub.pack_type}</p>
+   518→                                </div>
+   519→                              </div>
+   520→                              <Badge className={`${statusConfig.color === BRAND.green ? 'bg-[#48805b]/10 text-[#48805b] border-[#48805b]/20' : statusConfig.color === '#ef4444' ? 'bg-red-50 text-red-600 border-red-200' : 'bg-[#e3dfd8] text-[#88837b]'} text-xs font-semibold`}>
+   521→                                {statusConfig.label}
+   522→                              </Badge>
+   523→                            </div>
+   524→
+   525→                            <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
+   526→                              <div className="p-3 rounded-lg bg-[#f4f3f0]">
+   527→                                <p className="text-xs text-[#88837b]">Price</p>
+   528→                                <p className="text-sm font-bold text-[#1f1e1c]">₹{sub.unit_price.toLocaleString()}</p>
+   529→                              </div>
+   530→                              <div className="p-3 rounded-lg bg-[#f4f3f0]">
+   531→                                <p className="text-xs text-[#88837b]">Frequency</p>
+   532→                                <p className="text-sm font-bold text-[#1f1e1c]">Every {sub.frequency_days} days</p>
+   533→                              </div>
+   534→                              <div className="p-3 rounded-lg bg-[#f4f3f0]">
+   535→                                <p className="text-xs text-[#88837b]">Cycles</p>
+   536→                                <p className="text-sm font-bold text-[#1f1e1c]">{sub.completed_cycles}/{sub.total_cycles}</p>
+   537→                              </div>
+   538→                              <div className="p-3 rounded-lg bg-[#f4f3f0]">
+   539→                                <p className="text-xs text-[#88837b]">Next Delivery</p>
+   540→                                <p className="text-sm font-bold text-[#1f1e1c]">{formatDate(sub.next_delivery)}</p>
+   541→                              </div>
+   542→                            </div>
+   543→
+   544→                            {/* ── Dates ── */}
+   545→                            <div className="mt-3 flex items-center gap-4 text-xs text-[#88837b]">
+   546→                              <span>Started: {formatDate(sub.start_date)}</span>
+   547→                              {sub.end_date && <span>Ends: {formatDate(sub.end_date)}</span>}
+   548→                              {sub.paused_at && <span>Paused: {formatDate(sub.paused_at)}</span>}
+   549→                              {sub.cancelled_at && <span>Cancelled: {formatDate(sub.cancelled_at)}</span>}
+   550→                            </div>
+   551→
+   552→                            {/* ── Actions ── */}
+   553→                            <div className="mt-4 flex gap-2">
+   554→                              {sub.status === 'ACTIVE' && (
+   555→                                <Button onClick={() => handleSubPause(sub.id)} disabled={isActionLoading} variant="outline" className="border-[#e3dfd8] text-[#88837b] hover:text-[#1f1e1c] min-h-[44px]" >
+   556→                                  {isActionLoading ? <RefreshCw className="w-4 h-4 animate-spin mr-2" /> : <Pause className="w-4 h-4 mr-2" />} Pause
+   557→                                </Button>
+   558→                              )}
+   559→                              {sub.status === 'PAUSED' && (
+   560→                                <Button onClick={() => handleSubResume(sub.id)} disabled={isActionLoading} className="bg-[#48805b] hover:bg-[#3a6a4a] text-white min-h-[44px]">
+   561→                                  {isActionLoading ? <RefreshCw className="w-4 h-4 animate-spin mr-2" /> : <Play className="w-4 h-4 mr-2" />} Resume
+   562→                                </Button>
+   563→                              )}
+   564→                              {(sub.status === 'ACTIVE' || sub.status === 'PAUSED') && (
+   565→                                <Button onClick={() => handleSubCancel(sub.id)} disabled={isActionLoading} variant="outline" className="border-red-200 text-red-600 hover:bg-red-50 min-h-[44px]">
+   566→                                  <XCircle className="w-4 h-4 mr-2" /> Cancel
+   567→                                </Button>
+   568→                              )}
+   569→                              {sub.status === 'CANCELLED' && (
+   570→                                <Badge className="bg-red-50 text-red-600 border-red-200">Subscription ended</Badge>
+   571→                              )}
+   572→                            </div>
+   573→                          </CardContent>
+   574→                        </Card>
+   575→                      )
+   576→                    })}
+   577→                  </div>
+   578→                )}
+   579→              </TabsContent>
+   580→            </Tabs>
+   581→          </motion.div>
+   582→        </div>
+   583→      </main>
+   584→
+   585→      {/* ── Footer ── */}
+   586→      <footer className="bg-[#1f1e1c] py-8 mt-auto">
+   587→        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+   588→          <div className="flex items-center justify-between">
+   589→            <Image src="/images/notjust-logo-clean.png" alt="NotJust" width={100} height={32} className="h-8 w-auto object-contain brightness-0 invert" />
+   590→            <p className="text-white/30 text-xs">© 2025 NOTJUST HEALTH™</p>
+   591→          </div>
+   592→        </div>
+   593→      </footer>
+   594→    </div>
+   595→  )
+   596→}
+   597→
+   598→// ─── Detail Item ──────────────────────────────────────────
+   599→function DetailItem({ label, value, icon }: { label: string; value: string; icon: React.ReactNode }) {
+   600→  const isNotProvided = value === 'Not provided'
+   601→  return (
+   602→    <div className="flex items-start gap-3 p-3 rounded-lg bg-[#f4f3f0]/50 border border-[#e3dfd8]/50">
+   603→      <div className="text-[#48805b] mt-0.5">{icon}</div>
+   604→      <div><p className="text-xs text-[#88837b] font-medium">{label}</p><p className={`text-sm font-medium ${isNotProvided ? 'text-[#88837b]' : 'text-[#1f1e1c]'}`}>{value}</p></div>
+   605→    </div>
+   606→  )
+   607→}
+   608→
+   609→// ─── Tracking Timeline ────────────────────────────────────
+   610→function TrackingTimeline({ tracking, currentStatus }: { tracking: OrderTracking[]; currentStatus: string }) {
+   611→  const currentStepIndex = TRACKING_STEPS.indexOf(currentStatus)
+   612→  const sortedTracking = [...tracking].sort((a, b) => new Date(a.tracked_at).getTime() - new Date(b.tracked_at).getTime())
+   613→
+   614→  return (
+   615→    <div className="relative pl-6">
+   616→      {/* Vertical line */}
+   617→      <div className="absolute left-[11px] top-0 bottom-0 w-[2px] bg-[#e3dfd8]" />
+   618→
+   619→      {sortedTracking.map((step, idx) => {
+   620→        const stepIndex = TRACKING_STEPS.indexOf(step.status)
+   621→        const isCompleted = stepIndex <= currentStepIndex && currentStepIndex >= 0
+   622→        const isCurrent = step.status === currentStatus
+   623→
+   624→        return (
+   625→          <div key={step.id} className="relative pb-4 last:pb-0">
+   626→            {/* Dot */}
+   627→            <div className={`absolute -left-[6px] top-1 w-3 h-3 rounded-full border-2 ${isCompleted ? 'bg-[#48805b] border-[#48805b]' : isCurrent ? 'bg-[#afb75d] border-[#afb75d]' : 'bg-white border-[#e3dfd8]'}`} />
+   628→
+   629→            <div className="ml-4">
+   630→              <div className="flex items-center gap-2">
+   631→                <p className={`text-sm font-semibold ${isCompleted ? 'text-[#48805b]' : isCurrent ? 'text-[#afb75d]' : 'text-[#88837b]'}`}>
+   632→                  {ORDER_STATUS_CONFIG[step.status]?.label || step.status}
+   633→                </p>
+   634→                {isCurrent && <Badge className="bg-[#48805b]/10 text-[#48805b] border-[#48805b]/20 text-xs">Current</Badge>}
+   635→              </div>
+   636→              {step.description && <p className="text-xs text-[#88837b] mt-0.5">{step.description}</p>}
+   637→              {step.location && <p className="text-xs text-[#88837b]">{step.location}</p>}
+   638→              <p className="text-xs text-[#88837b] mt-0.5">{formatDate(step.tracked_at)}</p>
+   639→            </div>
+   640→          </div>
+   641→        )
+   642→      })}
+   643→    </div>
+   644→  )
+   645→}
+   646→
+   647→// ─── Edit Profile ─────────────────────────────────────────
+   648→function EditProfileButton({ user, setUser, editOpen, setEditOpen }: { user: UserProfile; setUser: (u: UserProfile | null) => void; editOpen: boolean; setEditOpen: (o: boolean) => void }) {
+   649→  const [form, setForm] = useState({ name: user.name || '', email: user.email || '', phone: user.phone || '', age: user.age ? String(user.age) : '', gender: user.gender || '', state: user.state || '' })
+   650→  const [loading, setLoading] = useState(false)
+   651→  const [error, setError] = useState<string | null>(null)
+   652→
+   653→  useEffect(() => { if (editOpen) { setForm({ name: user.name || '', email: user.email || '', phone: user.phone || '', age: user.age ? String(user.age) : '', gender: user.gender || '', state: user.state || '' }); setError(null) } }, [editOpen, user])
+   654→
+   655→  const updateField = (field: string, value: string) => { setForm(prev => ({ ...prev, [field]: value })); setError(null) }
+   656→
+   657→  const handleSave = async () => {
+   658→    setError(null)
+   659→    if (!form.name.trim()) { setError('Name is required'); return }
+   660→    setLoading(true)
+   661→    try {
+   662→      const updatedUser = await userService.update(user.id, { name: form.name.trim(), email: form.email.trim() || null, phone: form.phone.trim() || null, age: form.age ? parseInt(form.age) : null, gender: form.gender || null, state: form.state || null }, user.id)
+   663→      setUser(updatedUser)
+   664→      setEditOpen(false)
+   665→      toast.success('Profile updated successfully!')
+   666→    } catch { setError('Failed to update profile.') } finally { setLoading(false) }
+   667→  }
+   668→
+   669→  const editFormContent = (
+   670→    <div className="space-y-4">
+   671→      {error && <div className="flex items-center gap-2 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm"><AlertCircle className="w-4 h-4 shrink-0" /><span>{error}</span></div>}
+   672→      <div className="space-y-2"><Label className="text-sm font-medium">Full Name <span className="text-[#48805b]">*</span></Label><Input value={form.name} onChange={e => updateField('name', e.target.value)} className="h-11 border-[#e3dfd8] focus:border-[#48805b]" /></div>
+   673→      <div className="space-y-2"><Label className="text-sm font-medium">Email</Label><Input type="email" value={form.email} onChange={e => updateField('email', e.target.value)} className="h-11 border-[#e3dfd8] focus:border-[#48805b]" /></div>
+   674→      <div className="space-y-2"><Label className="text-sm font-medium">Phone</Label><Input type="tel" value={form.phone} onChange={e => updateField('phone', e.target.value)} className="h-11 border-[#e3dfd8] focus:border-[#48805b]" /></div>
+   675→      <div className="space-y-2"><Label className="text-sm font-medium">Age</Label><Input type="number" value={form.age} onChange={e => updateField('age', e.target.value)} className="h-11 border-[#e3dfd8] focus:border-[#48805b]" min={1} max={120} /></div>
+   676→      <div className="space-y-2"><Label className="text-sm font-medium">Gender</Label><Select value={form.gender} onValueChange={v => updateField('gender', v)}><SelectTrigger className="h-11 border-[#e3dfd8] w-full"><SelectValue placeholder="Select gender" /></SelectTrigger><SelectContent><SelectItem value="Male">Male</SelectItem><SelectItem value="Female">Female</SelectItem><SelectItem value="Other">Other</SelectItem></SelectContent></Select></div>
+   677→      <div className="space-y-2"><Label className="text-sm font-medium">State</Label><Select value={form.state} onValueChange={v => updateField('state', v)}><SelectTrigger className="h-11 border-[#e3dfd8] w-full"><SelectValue placeholder="Select your state" /></SelectTrigger><SelectContent className="max-h-48">{INDIAN_STATES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent></Select></div>
+   678→      <div className="flex gap-3 pt-2">
+   679→        <Button onClick={handleSave} disabled={loading} className="flex-1 h-11 bg-[#48805b] hover:bg-[#3a6a4a] text-white font-heading font-semibold min-h-[44px]">{loading ? <span className="flex items-center gap-2"><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Saving...</span> : 'Save Changes'}</Button>
+   680→        <Button variant="outline" onClick={() => setEditOpen(false)} disabled={loading} className="flex-1 h-11 border-[#e3dfd8] text-[#88837b] min-h-[44px]">Cancel</Button>
+   681→      </div>
+   682→    </div>
+   683→  )
+   684→
+   685→  return (
+   686→    <>
+   687→      <Button onClick={() => setEditOpen(true)} className="w-full h-11 bg-[#48805b] hover:bg-[#3a6a4a] text-white font-heading font-semibold min-h-[44px] flex items-center gap-2"><Edit className="w-4 h-4" />Edit Profile</Button>
+   688→      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+   689→        <DialogContent className="sm:max-w-md border-[#e3dfd8] max-h-[85vh] overflow-y-auto hidden md:block">
+   690→          <DialogHeader><DialogTitle className="font-heading text-lg font-bold flex items-center gap-2"><Edit className="w-5 h-5 text-[#48805b]" />Edit Profile</DialogTitle><DialogDescription className="text-[#88837b]">Update your personal information</DialogDescription></DialogHeader>
+   691→          <Separator className="bg-[#e3dfd8]" />
+   692→          {editFormContent}
+   693→        </DialogContent>
+   694→      </Dialog>
+   695→      <Sheet open={editOpen} onOpenChange={setEditOpen}>
+   696→        <SheetContent side="bottom" className="h-[90vh] md:hidden rounded-t-2xl border-[#e3dfd8] overflow-y-auto">
+   697→          <SheetHeader className="px-6 pt-4 pb-2"><SheetTitle className="font-heading text-lg font-bold flex items-center gap-2"><Edit className="w-5 h-5 text-[#48805b]" />Edit Profile</SheetTitle><SheetDescription className="text-[#88837b]">Update your personal information</SheetDescription></SheetHeader>
+   698→          <Separator className="bg-[#e3dfd8]" />
+   699→          <div className="px-6 pt-4 pb-6">{editFormContent}</div>
+   700→        </SheetContent>
+   701→      </Sheet>
+   702→    </>
+   703→  )
+   704→}
+   705→

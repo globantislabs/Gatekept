@@ -24,15 +24,60 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   }
 }
 
-// PATCH /api/orders/[id] — Update order (status, cancel)
+// PATCH /api/orders/[id] — Update order (OTP-gated for cancellation)
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
     const body = await req.json()
+    const { status, otp_verified_id, ...restData } = body
+
+    // For cancellation, require OTP verification
+    if (status === 'CANCELLED') {
+      if (!otp_verified_id) {
+        return NextResponse.json(
+          { error: 'OTP verification required to cancel an order. Send otp_verified_id from a verified OTP record.' },
+          { status: 403 }
+        )
+      }
+      // Verify that the OTP was actually verified for this specific order
+      const otpRecord = await db.otpVerification.findUnique({
+        where: { id: otp_verified_id },
+      })
+      if (
+        !otpRecord ||
+        otpRecord.status !== 'VERIFIED' ||
+        otpRecord.purpose !== 'CANCEL_ORDER' ||
+        otpRecord.reference_id !== id
+      ) {
+        return NextResponse.json(
+          { error: 'Invalid or unverified OTP for cancelling this order' },
+          { status: 403 }
+        )
+      }
+      // Clean up — mark OTP record as consumed (one-time use)
+      await db.otpVerification.update({
+        where: { id: otp_verified_id },
+        data: { status: 'EXPIRED' }, // Re-purpose expired to mean "consumed"
+      })
+    }
+
+    const updateData: any = { ...restData }
+    if (status) updateData.status = status
+
+    // Add tracking event for cancellation
+    if (status === 'CANCELLED') {
+      await db.orderTracking.create({
+        data: {
+          order_id: id,
+          status: 'CANCELLED',
+          description: 'Order cancelled by customer (OTP verified)',
+        },
+      })
+    }
 
     const order = await db.order.update({
       where: { id },
-      data: body,
+      data: updateData,
       include: {
         items: true,
         tracking: { orderBy: { tracked_at: 'desc' } },

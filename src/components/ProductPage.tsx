@@ -74,7 +74,6 @@ export default function ProductPage() {
 
   // ── Fetch products on mount ──
   useEffect(() => {
-    setLoading(true)
     productService.list({ active: true })
       .then((data) => {
         setLocalProducts(data)

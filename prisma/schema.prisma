@@ -34,6 +34,7 @@ model UserProfile {
   qrScans             QrScan[]
   orders              Order[]
   subscriptions       Subscription[]
+  otpVerifications    OtpVerification[]
 }
 
 // ─── Products ───────────────────────────────────────────────
@@ -269,4 +270,29 @@ model Subscription {
   user            UserProfile @relation(fields: [user_id], references: [id], onDelete: Cascade)
   order           Order      @relation(fields: [order_id], references: [id], onDelete: Cascade)
   product         Product    @relation(fields: [product_id], references: [id])
+}
+
+// ─── OTP Verification ──────────────────────────────────────────
+
+model OtpVerification {
+  id            String   @id @default(cuid())
+  phone         String
+  otp_code      String                    // SHA-256 hashed OTP (never plaintext)
+  purpose       String                    // CANCEL_ORDER, CANCEL_SUB, PAUSE_SUB, RESUME_SUB, MODIFY_ADDRESS, VERIFY_PHONE
+  reference_id  String?                   // order_id or subscription_id
+  user_id       String?                   // Link to user profile
+  status        String   @default("PENDING")  // PENDING, VERIFIED, EXPIRED, FAILED
+  attempts      Int      @default(0)
+  max_attempts  Int      @default(3)
+  sms_sent      Boolean  @default(false)
+  sms_reference String?                   // SMSAlert delivery reference
+  expires_at    DateTime
+  verified_at   DateTime?
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  user          UserProfile? @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([phone, purpose, status])
+  @@index([reference_id])
 }

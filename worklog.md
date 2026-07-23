@@ -214,3 +214,73 @@ Stage Summary:
 - All code pushed to production-ready-v2 branch (not main)
 - 30 files changed, 9225 insertions, 8331 deletions
 - Pull request available at GitHub
+---
+Task ID: 7
+Agent: full-stack-developer
+Task: Rewrite ProfilePage with OTP-gated actions, enhanced tracking, re-order, address edit, delivery schedule
+
+Work Log:
+- Read existing ProfilePage.tsx (705 lines) to understand all sections: Profile/Orders/Subscriptions tabs, navbar, footer, EditProfileButton, TrackingTimeline, DetailItem
+- Read OtpVerifyModal.tsx to understand OTP component props (open, onOpenChange, userId, purpose, referenceId, purposeLabel, onVerified)
+- Read data-service.ts to understand updated service signatures: orderService.cancel(orderId, otpVerifiedId), orderService.updateAddress(orderId, addressData, otpVerifiedId), subscriptionService.pause/resume/cancel(subId, otpVerifiedId)
+- Read app-store.ts to understand addToCart function signature (CartItem with productId, name, price, quantity, type, purchaseType, packType, packDays, packDiscount)
+- Completely rewrote ProfilePage.tsx (~1235 lines) with all 6 enhancements:
+  1. OTP-gated actions: Created OtpAction type system with getOtpPurpose/getOtpReferenceId/getOtpLabel helpers. All sensitive actions (cancel order, pause/resume/cancel subscription, modify address) trigger OTP verification via OtpVerifyModal before execution. onOtpVerified callback dispatches action based on otpAction type.
+  2. Enhanced Tracking Timeline: Created EnhancedTrackingTimeline component with horizontal progress bar (animated with Framer Motion) showing delivery progress percentage, step markers with CheckCircle icons for completed steps, plus improved vertical timeline with animated entries.
+  3. Re-order button: On DELIVERED orders, added "Re-order" button that calls handleReorder which adds all order items back to cart via addToCart and navigates to cart view.
+  4. Modify shipping address: For PLACED/CONFIRMED orders, added "Edit Address" button that triggers OTP (MODIFY_ADDRESS purpose), then on verification opens AddressEditModal (Dialog on desktop, Sheet on mobile) with full address form (name, phone, address, city, state dropdown, pincode) and validation.
+  5. Delivery Schedule Timeline: Created DeliveryScheduleTimeline component for ACTIVE/PAUSED subscriptions showing cycle progress bar, past/next/future delivery entries with icons (CheckCircle/Truck/Calendar), "Paused" badges for paused subscriptions.
+  6. All managed from profile page: User manages everything (orders, subscriptions, address edits) from the single profile page.
+- Fixed lint error: Moved useCallback(onOtpVerified) definition before the conditional early return (if !user) to comply with React hooks rules-of-hooks.
+- Verified lint passes with no new errors (only pre-existing errors in other files remain).
+- Dev server compiles and runs successfully (200 status).
+
+Stage Summary:
+- Complete ProfilePage rewrite with 6 major enhancements
+- OTP-gated actions for all sensitive operations (cancel order, pause/resume/cancel subscription, modify address)
+- Enhanced tracking with horizontal progress bar + vertical animated timeline
+- Re-order button on delivered orders
+- Address edit modal (OTP-gated) for PLACED/CONFIRMED orders
+- Delivery schedule timeline for subscriptions
+- All existing styling preserved (brand colors, font-heading, min-h-[44px] touch targets)
+- Dialog/Sheet responsive pattern maintained for all modals
+- Sticky footer pattern preserved (min-h-screen flex flex-col wrapper, mt-auto footer)
+- Zero new lint errors introduced
+---
+Task ID: 8
+Agent: Main orchestrator
+Task: SMS OTP integration via SMSAlert.co.in + ProfilePage enhancements with subscription/order tracking
+
+Work Log:
+- Added OtpVerification model to Prisma schema with fields: phone, otp_code (SHA-256 hashed), purpose, reference_id, status, attempts, max_attempts, expires_at, verified_at
+- Added reverse relation to UserProfile model (otpVerifications)
+- Ran prisma db:push successfully
+- Added SMSALERT_USER, SMSALERT_PWD, SMSALERT_SENDER env vars to .env
+- Created src/lib/smsalert-service.ts with sendOtp, verifyOtp, sendSms functions using SMSAlert.co.in API (mverify.json + push.json endpoints)
+- Created src/app/api/otp/send/route.ts - validates user, phone, purpose, reference ownership, then sends OTP
+- Created src/app/api/otp/verify/route.ts - verifies OTP hash, checks expiry, attempt limits
+- Created src/app/api/orders/[id]/address/route.ts - OTP-gated address modification for PLACED/CONFIRMED orders
+- Updated src/app/api/orders/[id]/route.ts PATCH - requires otp_verified_id for cancellation
+- Updated src/app/api/subscriptions/[id]/route.ts PATCH - requires otp_verified_id for cancel/pause/resume
+- Added OTP types (OtpPurpose, OtpSendResponse, OtpVerifyResponse) and otpService to data-service.ts
+- Updated orderService.cancel to require otpVerifiedId, added orderService.updateAddress
+- Updated subscriptionService.pause/resume/cancel to require otpVerifiedId
+- Created src/components/OtpVerifyModal.tsx with InputOTP component, Dialog+Sheet responsive pattern, countdown timer, resend functionality, dev mode OTP display
+- Rewrote src/components/ProfilePage.tsx (1238 lines) with:
+  - OtpAction type system for gating: CANCEL_ORDER, CANCEL_SUB, PAUSE_SUB, RESUME_SUB, MODIFY_ADDRESS
+  - EnhancedTrackingTimeline with horizontal progress bar + animated vertical timeline
+  - Re-order button on DELIVERED orders (adds items to cart)
+  - AddressEditModal (OTP-gated) for PLACED/CONFIRMED orders
+  - DeliveryScheduleTimeline for ACTIVE/PAUSED subscriptions
+  - All actions controllable from within profile
+- Fixed lint errors: removed setLoading(true) from effects in LandingPage and ProductPage, restructured OtpVerifyModal to avoid setState-in-effect lint violation
+- Verified dev server compiles and returns 200 status
+- Verified lint passes (only pre-existing error in Gatekept examples folder)
+
+Stage Summary:
+- Complete SMS OTP system via SMSAlert.co.in integrated
+- OTP-gated actions for: cancel order, pause/resume/cancel subscription, modify address
+- Enhanced profile page with tracking progress bars, delivery schedule, re-order, address edit
+- SHA-256 hashed OTP storage, 5-minute expiry, 3 attempt limit, purpose+reference binding
+- Graceful dev mode fallback (OTP recorded even without SMS gateway credentials)
+- All new API routes properly validate ownership and OTP verification before executing actions

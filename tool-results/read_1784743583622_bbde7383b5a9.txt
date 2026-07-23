@@ -1,0 +1,1024 @@
+     1→// Unified Data Service Layer
+     2→// Abstracts over mock Supabase and real Supabase
+     3→// When real Supabase tables don't exist yet, gracefully falls back to mock data
+     4→// All data operations go through this module
+     5→
+     6→import { getMockStore, shouldUseMockSupabase } from './mock-supabase'
+     7→import type { UserProfile, Campaign, QrScan, LearningProgress, QuizQuestion, Product, Order, OrderItem, ProductVideo, ProductQuiz, ProductLearningProgress, Subscription, ReorderReminder } from './mock-supabase'
+     8→import { isSupabaseConfigured, supabase, testSupabaseConnection } from './supabase-client'
+     9→
+    10→// Re-export types
+    11→export type { UserProfile, Campaign, QrScan, LearningProgress, QuizQuestion, Product, Order, OrderItem, ProductVideo, ProductQuiz, ProductLearningProgress, Subscription, ReorderReminder }
+    12→
+    13→// Whether to use real Supabase (only if configured AND tables exist)
+    14→let _useReal = false
+    15→
+    16→export async function initDataService(): Promise<boolean> {
+    17→  if (shouldUseMockSupabase()) {
+    18→    _useReal = false
+    19→    return false
+    20→  }
+    21→  const connected = await testSupabaseConnection()
+    22→  _useReal = connected
+    23→  return connected
+    24→}
+    25→
+    26→export function isUsingRealSupabase(): boolean {
+    27→  return _useReal
+    28→}
+    29→
+    30→// Helper: try real Supabase, fall back to mock on error
+    31→async function tryRealOrMock<T>(realFn: () => Promise<T>, mockFn: () => T): Promise<T> {
+    32→  if (!_useReal) return mockFn()
+    33→  try {
+    34→    return await realFn()
+    35→  } catch (err) {
+    36→    console.warn('[DataService] Real Supabase query failed, falling back to mock:', err)
+    37→    return mockFn()
+    38→  }
+    39→}
+    40→
+    41→// ============================================================
+    42→// AUTH SERVICE
+    43→// ============================================================
+    44→export const authService = {
+    45→  async loginWithPhone(phone: string) {
+    46→    return tryRealOrMock(
+    47→      async () => {
+    48→        const { data, error } = await supabase.auth.signInWithOtp({ phone })
+    49→        return { data, error }
+    50→      },
+    51→      () => {
+    52→        const store = getMockStore()
+    53→        let user = store.findOne<UserProfile>('users_profile', { phone } as any)
+    54→        // Demo: auto-create user if not found
+    55→        if (!user) {
+    56→          const id = 'usr_' + Date.now()
+    57→          user = store.insert('users_profile', {
+    58→            id,
+    59→            user_id: id,
+    60→            name: 'Demo User',
+    61→            phone,
+    62→            country: 'India',
+    63→            learning_completed: false,
+    64→            is_admin: false,
+    65→            created_at: new Date().toISOString(),
+    66→            updated_at: new Date().toISOString(),
+    67→          }) as UserProfile
+    68→          // Create learning_progress record for new user
+    69→          store.insert('learning_progress', {
+    70→            user_id: id,
+    71→            video_progress: {},
+    72→            quiz_completed: false,
+    73→            quiz_score: 0,
+    74→            created_at: new Date().toISOString(),
+    75→          })
+    76→        }
+    77→        return { data: { user, demoOtp: '123456' }, error: null }
+    78→      }
+    79→    )
+    80→  },
+    81→
+    82→  async loginWithEmail(email: string) {
+    83→    return tryRealOrMock(
+    84→      async () => {
+    85→        const { data, error } = await supabase.auth.signInWithOtp({ email })
+    86→        return { data, error }
+    87→      },
+    88→      () => {
+    89→        const store = getMockStore()
+    90→        let user = store.findOne<UserProfile>('users_profile', { email } as any)
+    91→        // Demo: auto-create user if not found
+    92→        if (!user) {
+    93→          const id = 'usr_' + Date.now()
+    94→          user = store.insert('users_profile', {
+    95→            id,
+    96→            user_id: id,
+    97→            name: email.split('@')[0],
+    98→            email,
+    99→            country: 'India',
+   100→            learning_completed: false,
+   101→            is_admin: email === 'admin@notjust.com',
+   102→            created_at: new Date().toISOString(),
+   103→            updated_at: new Date().toISOString(),
+   104→          }) as UserProfile
+   105→          // Create learning_progress record for new user
+   106→          store.insert('learning_progress', {
+   107→            user_id: id,
+   108→            video_progress: {},
+   109→            quiz_completed: false,
+   110→            quiz_score: 0,
+   111→            created_at: new Date().toISOString(),
+   112→          })
+   113→        }
+   114→        return { data: { user, demoOtp: '123456' }, error: null }
+   115→      }
+   116→    )
+   117→  },
+   118→
+   119→  async verifyOtp(phoneOrEmail: string, otp: string, type: 'phone' | 'email' = 'phone') {
+   120→    return tryRealOrMock(
+   121→      async () => {
+   122→        const { data, error } = await supabase.auth.verifyOtp({
+   123→          [type]: phoneOrEmail,
+   124→          token: otp,
+   125→          type: type === 'phone' ? 'sms' : 'email',
+   126→        })
+   127→        return { data, error }
+   128→      },
+   129→      () => {
+   130→        if (otp !== '123456') return { error: 'Invalid OTP', data: null }
+   131→        const store = getMockStore()
+   132→        const field = type === 'phone' ? 'phone' : 'email'
+   133→        let user = store.findOne<UserProfile>('users_profile', { [field]: phoneOrEmail } as any)
+   134→        // Demo: auto-create user if not found during OTP verify
+   135→        if (!user) {
+   136→          const id = 'usr_' + Date.now()
+   137→          user = store.insert('users_profile', {
+   138→            id,
+   139→            user_id: id,
+   140→            name: type === 'email' ? phoneOrEmail.split('@')[0] : 'Demo User',
+   141→            [field]: phoneOrEmail,
+   142→            country: 'India',
+   143→            learning_completed: false,
+   144→            is_admin: phoneOrEmail === 'admin@notjust.com' || phoneOrEmail === '+919876543210',
+   145→            created_at: new Date().toISOString(),
+   146→            updated_at: new Date().toISOString(),
+   147→          }) as UserProfile
+   148→          // Create learning_progress record for new user
+   149→          store.insert('learning_progress', {
+   150→            user_id: id,
+   151→            video_progress: {},
+   152→            quiz_completed: false,
+   153→            quiz_score: 0,
+   154→            created_at: new Date().toISOString(),
+   155→          })
+   156→        }
+   157→        return { data: user, error: null }
+   158→      }
+   159→    )
+   160→  },
+   161→
+   162→  async register(userData: Partial<UserProfile>) {
+   163→    return tryRealOrMock(
+   164→      async () => {
+   165→        const { data, error } = await supabase.from('users_profile').insert([userData]).select().single()
+   166→        return { data, error }
+   167→      },
+   168→      () => {
+   169→        const store = getMockStore()
+   170→        const userId = `user_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`
+   171→        const now = new Date().toISOString()
+   172→        const user: UserProfile = {
+   173→          id: `usr_${Date.now()}`,
+   174→          user_id: userId,
+   175→          name: userData.name || 'New User',
+   176→          age: userData.age,
+   177→          gender: userData.gender,
+   178→          phone: userData.phone || undefined,
+   179→          email: userData.email || undefined,
+   180→          country: userData.country || 'India',
+   181→          state: userData.state,
+   182→          learning_completed: false,
+   183→          is_admin: false,
+   184→          created_at: now,
+   185→          updated_at: now,
+   186→        }
+   187→        store.insert('users_profile', user)
+   188→        store.insert('learning_progress', {
+   189→          id: `lp_${user.id}`,
+   190→          user_id: user.user_id,
+   191→          video_progress: {},
+   192→          quiz_completed: false,
+   193→          quiz_score: 0,
+   194→          created_at: now,
+   195→        })
+   196→        return { data: user, error: null }
+   197→      }
+   198→    )
+   199→  },
+   200→
+   201→  async getUser(userId: string) {
+   202→    return tryRealOrMock(
+   203→      async () => {
+   204→        const { data, error } = await supabase.from('users_profile').select('*').eq('user_id', userId).single()
+   205→        return { data, error }
+   206→      },
+   207→      () => {
+   208→        const store = getMockStore()
+   209→        const user = store.findOne<UserProfile>('users_profile', { user_id: userId } as any)
+   210→        return { data: user || null, error: user ? null : 'User not found' }
+   211→      }
+   212→    )
+   213→  },
+   214→}
+   215→
+   216→// ============================================================
+   217→// CAMPAIGN SERVICE
+   218→// ============================================================
+   219→export const campaignService = {
+   220→  async getAll() {
+   221→    return tryRealOrMock(
+   222→      async () => {
+   223→        const { data, error } = await supabase.from('campaigns').select('*').order('created_at', { ascending: false })
+   224→        return { data, error }
+   225→      },
+   226→      () => ({ data: getMockStore().getAll<Campaign>('campaigns'), error: null })
+   227→    )
+   228→  },
+   229→
+   230→  async getActive() {
+   231→    return tryRealOrMock(
+   232→      async () => {
+   233→        const { data, error } = await supabase.from('campaigns').select('*').eq('status', 'ACTIVE')
+   234→        return { data, error }
+   235→      },
+   236→      () => ({ data: getMockStore().find<Campaign>('campaigns', { status: 'ACTIVE' } as any), error: null })
+   237→    )
+   238→  },
+   239→
+   240→  async create(campaign: Partial<Campaign>) {
+   241→    return tryRealOrMock(
+   242→      async () => {
+   243→        const { data, error } = await supabase.from('campaigns').insert([campaign]).select().single()
+   244→        return { data, error }
+   245→      },
+   246→      () => ({ data: getMockStore().insert('campaigns', { ...campaign, status: 'ACTIVE', created_at: new Date().toISOString() }), error: null })
+   247→    )
+   248→  },
+   249→
+   250→  async updateStatus(id: string, status: string) {
+   251→    return tryRealOrMock(
+   252→      async () => {
+   253→        const { data, error } = await supabase.from('campaigns').update({ status }).eq('id', id).select().single()
+   254→        return { data, error }
+   255→      },
+   256→      () => ({ data: getMockStore().update('campaigns', id, { status }), error: null })
+   257→    )
+   258→  },
+   259→
+   260→  async getScanCounts() {
+   261→    return tryRealOrMock(
+   262→      async () => {
+   263→        const { data, error } = await supabase.from('qr_scans').select('campaign_id')
+   264→        return { data, error }
+   265→      },
+   266→      () => {
+   267→        const scans = getMockStore().getAll<QrScan>('qr_scans')
+   268→        const counts: Record<string, number> = {}
+   269→        scans.forEach(s => {
+   270→          if (s.campaign_id) counts[s.campaign_id] = (counts[s.campaign_id] || 0) + 1
+   271→        })
+   272→        return { data: counts, error: null }
+   273→      }
+   274→    )
+   275→  },
+   276→
+   277→  async getSalesCount(campaignId: string) {
+   278→    return tryRealOrMock(
+   279→      async () => {
+   280→        // Get QR scans for this campaign that have user_ids
+   281→        const { data: scans } = await supabase.from('qr_scans').select('user_id').eq('campaign_id', campaignId).not('user_id', 'is', null)
+   282→        if (!scans || scans.length === 0) return { data: 0, error: null }
+   283→        const userIds = [...new Set(scans.map(s => s.user_id))]
+   284→        // Count orders from these users
+   285→        const { count, error } = await supabase.from('orders').select('*', { count: 'exact', head: true }).in('user_id', userIds).in('status', ['CONFIRMED', 'SHIPPED', 'DELIVERED'])
+   286→        return { data: count || 0, error }
+   287→      },
+   288→      () => {
+   289→        const store = getMockStore()
+   290→        const scans = store.find<QrScan>('qr_scans', { campaign_id: campaignId } as any)
+   291→        const userIds = [...new Set(scans.filter(s => s.user_id).map(s => s.user_id))]
+   292→        const orders = store.getAll<Order>('orders').filter(o => userIds.includes(o.user_id) && ['CONFIRMED', 'SHIPPED', 'DELIVERED'].includes(o.status))
+   293→        return { data: orders.length, error: null }
+   294→      }
+   295→    )
+   296→  },
+   297→
+   298→  async getCampaignSales() {
+   299→    return tryRealOrMock(
+   300→      async () => {
+   301→        // For real Supabase: join qr_scans -> users -> orders
+   302→        const { data: scans } = await supabase.from('qr_scans').select('campaign_id, user_id')
+   303→        const { data: orders } = await supabase.from('orders').select('user_id, amount, status')
+   304→        const salesByCampaign: Record<string, { orderCount: number; revenue: number }> = {}
+   305→        if (scans && orders) {
+   306→          // Build user -> latest campaign mapping from scans
+   307→          const userCampaignMap: Record<string, string> = {}
+   308→          scans.forEach((s: any) => {
+   309→            if (s.user_id && s.campaign_id) userCampaignMap[s.user_id] = s.campaign_id
+   310→          })
+   311→          // Attribute orders to campaigns
+   312→          orders.forEach((o: any) => {
+   313→            const campId = userCampaignMap[o.user_id]
+   314→            if (campId && ['CONFIRMED', 'SHIPPED', 'DELIVERED'].includes(o.status)) {
+   315→              if (!salesByCampaign[campId]) salesByCampaign[campId] = { orderCount: 0, revenue: 0 }
+   316→              salesByCampaign[campId].orderCount++
+   317→              salesByCampaign[campId].revenue += o.amount || 0
+   318→            }
+   319→          })
+   320→        }
+   321→        return { data: salesByCampaign, error: null }
+   322→      },
+   323→      () => {
+   324→        const store = getMockStore()
+   325→        const scans = store.getAll<QrScan>('qr_scans')
+   326→        const orders = store.getAll<Order>('orders')
+   327→        const salesByCampaign: Record<string, { orderCount: number; revenue: number; users: string[] }> = {}
+   328→
+   329→        // Build user -> campaign mapping from scans (most recent scan wins)
+   330→        const userScans = scans.filter(s => s.user_id && s.campaign_id)
+   331→        const userCampaignMap: Record<string, string> = {}
+   332→        userScans.forEach(s => {
+   333→          userCampaignMap[s.user_id!] = s.campaign_id!
+   334→        })
+   335→
+   336→        // Attribute orders to campaigns
+   337→        orders.forEach(o => {
+   338→          const campId = userCampaignMap[o.user_id]
+   339→          if (campId && ['CONFIRMED', 'SHIPPED', 'DELIVERED'].includes(o.status)) {
+   340→            if (!salesByCampaign[campId]) salesByCampaign[campId] = { orderCount: 0, revenue: 0, users: [] }
+   341→            salesByCampaign[campId].orderCount++
+   342→            salesByCampaign[campId].revenue += o.amount || 0
+   343→            if (!salesByCampaign[campId].users.includes(o.user_id)) {
+   344→              salesByCampaign[campId].users.push(o.user_id)
+   345→            }
+   346→          }
+   347→        })
+   348→
+   349→        return { data: salesByCampaign, error: null }
+   350→      }
+   351→    )
+   352→  },
+   353→}
+   354→
+   355→// ============================================================
+   356→// QR SCAN SERVICE
+   357→// ============================================================
+   358→export const qrScanService = {
+   359→  async recordScan(scan: Partial<QrScan>) {
+   360→    return tryRealOrMock(
+   361→      async () => {
+   362→        const { data, error } = await supabase.from('qr_scans').insert([scan]).select().single()
+   363→        return { data, error }
+   364→      },
+   365→      () => ({ data: getMockStore().insert('qr_scans', { ...scan, created_at: new Date().toISOString() }), error: null })
+   366→    )
+   367→  },
+   368→
+   369→  async getAll() {
+   370→    return tryRealOrMock(
+   371→      async () => {
+   372→        const { data, error } = await supabase.from('qr_scans').select('*').order('created_at', { ascending: false })
+   373→        return { data, error }
+   374→      },
+   375→      () => ({ data: getMockStore().getAll<QrScan>('qr_scans'), error: null })
+   376→    )
+   377→  },
+   378→}
+   379→
+   380→// ============================================================
+   381→// LEARNING SERVICE
+   382→// ============================================================
+   383→export const learningService = {
+   384→  async getProgress(userId: string) {
+   385→    return tryRealOrMock(
+   386→      async () => {
+   387→        const { data, error } = await supabase.from('learning_progress').select('*').eq('user_id', userId).single()
+   388→        return { data, error }
+   389→      },
+   390→      () => {
+   391→        const progress = getMockStore().findOne<LearningProgress>('learning_progress', { user_id: userId } as any)
+   392→        return { data: progress || null, error: null }
+   393→      }
+   394→    )
+   395→  },
+   396→
+   397→  async updateVideoProgress(userId: string, videoProgress: Record<string, number>) {
+   398→    return tryRealOrMock(
+   399→      async () => {
+   400→        const { data, error } = await supabase.from('learning_progress').upsert({ user_id: userId, video_progress: videoProgress }).eq('user_id', userId).select().single()
+   401→        return { data, error }
+   402→      },
+   403→      () => {
+   404→        const existing = getMockStore().findOne<LearningProgress>('learning_progress', { user_id: userId } as any)
+   405→        if (existing) {
+   406→          return { data: getMockStore().update('learning_progress', existing.id, { video_progress: videoProgress }), error: null }
+   407→        }
+   408→        return { data: getMockStore().insert('learning_progress', { user_id: userId, video_progress: videoProgress, quiz_completed: false, quiz_score: 0, created_at: new Date().toISOString() }), error: null }
+   409→      }
+   410→    )
+   411→  },
+   412→
+   413→  async completeQuiz(userId: string, score: number) {
+   414→    return tryRealOrMock(
+   415→      async () => {
+   416→        // Try update first, if no row exists then insert
+   417→        const { data: existing } = await supabase.from('learning_progress').select('id').eq('user_id', userId).single()
+   418→        if (existing) {
+   419→          const { data, error } = await supabase.from('learning_progress').update({
+   420→            quiz_completed: true, quiz_score: score, completed_at: new Date().toISOString(),
+   421→          }).eq('user_id', userId).select().single()
+   422→          return { data, error }
+   423→        }
+   424→        const { data, error } = await supabase.from('learning_progress').insert([{
+   425→          user_id: userId, quiz_completed: true, quiz_score: score, video_progress: {},
+   426→          completed_at: new Date().toISOString(),
+   427→        }]).select().single()
+   428→        return { data, error }
+   429→      },
+   430→      () => {
+   431→        const existing = getMockStore().findOne<LearningProgress>('learning_progress', { user_id: userId } as any)
+   432→        if (existing) {
+   433→          getMockStore().update('learning_progress', existing.id, {
+   434→            quiz_completed: true, quiz_score: score, completed_at: new Date().toISOString(),
+   435→          })
+   436→        } else {
+   437→          // Create learning_progress record if it doesn't exist (e.g. for auto-created users)
+   438→          getMockStore().insert('learning_progress', {
+   439→            user_id: userId, video_progress: {}, quiz_completed: true, quiz_score: score,
+   440→            completed_at: new Date().toISOString(), created_at: new Date().toISOString(),
+   441→          })
+   442→        }
+   443→        const user = getMockStore().findOne<UserProfile>('users_profile', { user_id: userId } as any)
+   444→        if (user) {
+   445→          getMockStore().update('users_profile', user.id, { learning_completed: true })
+   446→        }
+   447→        return { data: { success: true }, error: null }
+   448→      }
+   449→    )
+   450→  },
+   451→}
+   452→
+   453→// ============================================================
+   454→// QUIZ SERVICE
+   455→// ============================================================
+   456→export const quizService = {
+   457→  async getQuestions(count: number = 5) {
+   458→    return tryRealOrMock(
+   459→      async () => {
+   460→        const { data, error } = await supabase.from('quiz_questions').select('*').eq('active', true).limit(count)
+   461→        return { data, error }
+   462→      },
+   463→      () => {
+   464→        const all = getMockStore().find<QuizQuestion>('quiz_questions', { active: true } as any)
+   465→        const shuffled = [...all].sort(() => Math.random() - 0.5)
+   466→        return { data: shuffled.slice(0, count), error: null }
+   467→      }
+   468→    )
+   469→  },
+   470→
+   471→  async createQuestion(question: Partial<QuizQuestion>) {
+   472→    return tryRealOrMock(
+   473→      async () => {
+   474→        const { data, error } = await supabase.from('quiz_questions').insert([question]).select().single()
+   475→        return { data, error }
+   476→      },
+   477→      () => ({ data: getMockStore().insert('quiz_questions', { ...question, active: true }), error: null })
+   478→    )
+   479→  },
+   480→}
+   481→
+   482→// ============================================================
+   483→// PRODUCT SERVICE
+   484→// ============================================================
+   485→export const productService = {
+   486→  async getAll() {
+   487→    return tryRealOrMock(
+   488→      async () => {
+   489→        const { data, error } = await supabase.from('products').select('*').eq('active', true).order('created_at', { ascending: true })
+   490→        return { data, error }
+   491→      },
+   492→      () => ({ data: getMockStore().find<Product>('products', { active: true } as any), error: null })
+   493→    )
+   494→  },
+   495→
+   496→  async getAllForAdmin() {
+   497→    return tryRealOrMock(
+   498→      async () => {
+   499→        const { data, error } = await supabase.from('products').select('*').order('created_at', { ascending: true })
+   500→        return { data, error }
+   501→      },
+   502→      () => ({ data: getMockStore().getAll<Product>('products'), error: null })
+   503→    )
+   504→  },
+   505→
+   506→  async getById(id: string) {
+   507→    return tryRealOrMock(
+   508→      async () => {
+   509→        const { data, error } = await supabase.from('products').select('*').eq('id', id).single()
+   510→        return { data, error }
+   511→      },
+   512→      () => ({ data: getMockStore().getById<Product>('products', id) || null, error: null })
+   513→    )
+   514→  },
+   515→
+   516→  async create(data: Omit<Product, 'id' | 'created_at'>) {
+   517→    return tryRealOrMock(
+   518→      async () => {
+   519→        const { data: product, error } = await supabase.from('products').insert([data]).select().single()
+   520→        return { data: product, error }
+   521→      },
+   522→      () => {
+   523→        const product = getMockStore().insert<Product>('products', {
+   524→          ...data,
+   525→          created_at: new Date().toISOString(),
+   526→        })
+   527→        return { data: product, error: null }
+   528→      }
+   529→    )
+   530→  },
+   531→
+   532→  async update(id: string, updates: Partial<Product>) {
+   533→    return tryRealOrMock(
+   534→      async () => {
+   535→        const { data, error } = await supabase.from('products').update(updates).eq('id', id).select().single()
+   536→        return { data, error }
+   537→      },
+   538→      () => {
+   539→        const product = getMockStore().update<Product>('products', id, updates)
+   540→        return { data: product || null, error: product ? null : { message: 'Product not found' } }
+   541→      }
+   542→    )
+   543→  },
+   544→
+   545→  async delete(id: string) {
+   546→    return tryRealOrMock(
+   547→      async () => {
+   548→        const { data, error } = await supabase.from('products').update({ active: false }).eq('id', id).select().single()
+   549→        return { data, error }
+   550→      },
+   551→      () => {
+   552→        const product = getMockStore().update<Product>('products', id, { active: false } as Partial<Product>)
+   553→        return { data: product || null, error: product ? null : { message: 'Product not found' } }
+   554→      }
+   555→    )
+   556→  },
+   557→
+   558→  async toggleActive(id: string) {
+   559→    return tryRealOrMock(
+   560→      async () => {
+   561→        const { data: current } = await supabase.from('products').select('active').eq('id', id).single()
+   562→        if (!current) return { data: null, error: { message: 'Product not found' } }
+   563→        const { data, error } = await supabase.from('products').update({ active: !current.active }).eq('id', id).select().single()
+   564→        return { data, error }
+   565→      },
+   566→      () => {
+   567→        const current = getMockStore().getById<Product>('products', id)
+   568→        if (!current) return { data: null, error: { message: 'Product not found' } }
+   569→        const product = getMockStore().update<Product>('products', id, { active: !current.active } as Partial<Product>)
+   570→        return { data: product || null, error: product ? null : { message: 'Product not found' } }
+   571→      }
+   572→    )
+   573→  },
+   574→}
+   575→
+   576→// ============================================================
+   577→// ORDER SERVICE
+   578→// ============================================================
+   579→export const orderService = {
+   580→  async create(userId: string, items: { productId: string; quantity: number }[], shippingAddress: any, paymentGateway: string = 'RAZORPAY') {
+   581→    return tryRealOrMock(
+   582→      async () => {
+   583→        const { data, error } = await supabase.from('orders').insert([{
+   584→          user_id: userId, status: 'CONFIRMED', amount: 0, payment_gateway: paymentGateway, shipping_address: shippingAddress,
+   585→        }]).select().single()
+   586→        return { data, error }
+   587→      },
+   588→      () => {
+   589→        const store = getMockStore()
+   590→        let totalAmount = 0
+   591→        const orderItems: any[] = []
+   592→        for (const item of items) {
+   593→          const product = store.getById<Product>('products', item.productId)
+   594→          if (!product) continue
+   595→          totalAmount += product.price * item.quantity
+   596→          orderItems.push({ product_id: product.id, quantity: item.quantity, price: product.price })
+   597→        }
+   598→        const paymentId = `pay_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`
+   599→        const now = new Date().toISOString()
+   600→        const order = store.insert('orders', {
+   601→          user_id: userId, status: 'CONFIRMED', amount: totalAmount,
+   602→          payment_gateway: paymentGateway, payment_id: paymentId,
+   603→          shipping_address: shippingAddress, created_at: now, updated_at: now,
+   604→        })
+   605→        for (const oi of orderItems) {
+   606→          store.insert('order_items', { order_id: order.id, ...oi })
+   607→        }
+   608→        return { data: order, error: null }
+   609→      }
+   610→    )
+   611→  },
+   612→
+   613→  async getByUser(userId: string) {
+   614→    return tryRealOrMock(
+   615→      async () => {
+   616→        const { data, error } = await supabase.from('orders').select('*, items:order_items(*, product:products(*))').eq('user_id', userId).order('created_at', { ascending: false })
+   617→        return { data, error }
+   618→      },
+   619→      () => {
+   620→        const store = getMockStore()
+   621→        const orders = store.find<Order>('orders', { user_id: userId } as any)
+   622→        const withItems = orders.map(o => ({
+   623→          ...o,
+   624→          items: store.find<OrderItem>('order_items', { order_id: o.id } as any).map(oi => ({
+   625→            ...oi, product: store.getById<Product>('products', oi.product_id),
+   626→          })),
+   627→        }))
+   628→        return { data: withItems, error: null }
+   629→      }
+   630→    )
+   631→  },
+   632→
+   633→  async getAll() {
+   634→    return tryRealOrMock(
+   635→      async () => {
+   636→        const { data, error } = await supabase.from('orders').select('*, items:order_items(*, product:products(*)), user:users_profile(name, email, phone)').order('created_at', { ascending: false })
+   637→        return { data, error }
+   638→      },
+   639→      () => {
+   640→        const store = getMockStore()
+   641→        const orders = store.getAll<Order>('orders')
+   642→        const withItems = orders.map(o => ({
+   643→          ...o,
+   644→          user: store.findOne<UserProfile>('users_profile', { user_id: o.user_id } as any),
+   645→          items: store.find<OrderItem>('order_items', { order_id: o.id } as any).map(oi => ({
+   646→            ...oi, product: store.getById<Product>('products', oi.product_id),
+   647→          })),
+   648→        }))
+   649→        return { data: withItems, error: null }
+   650→      }
+   651→    )
+   652→  },
+   653→
+   654→  async updateStatus(orderId: string, status: string) {
+   655→    return tryRealOrMock(
+   656→      async () => {
+   657→        const { data, error } = await supabase.from('orders').update({ status }).eq('id', orderId).select().single()
+   658→        return { data, error }
+   659→      },
+   660→      () => ({ data: getMockStore().update('orders', orderId, { status, updated_at: new Date().toISOString() }), error: null })
+   661→    )
+   662→  },
+   663→}
+   664→
+   665→// ============================================================
+   666→// ADMIN STATS SERVICE
+   667→// ============================================================
+   668→export const adminStatsService = {
+   669→  async getDashboardStats() {
+   670→    return tryRealOrMock(
+   671→      async () => {
+   672→        const [users, scans, orders, campaigns] = await Promise.all([
+   673→          supabase.from('users_profile').select('*', { count: 'exact', head: true }),
+   674→          supabase.from('qr_scans').select('*', { count: 'exact', head: true }),
+   675→          supabase.from('orders').select('status, amount'),
+   676→          supabase.from('campaigns').select('channel, status'),
+   677→        ])
+   678→        return { data: { totalUsers: users.count, totalScans: scans.count, totalOrders: orders.data?.length, totalCampaigns: campaigns.data?.length }, error: null }
+   679→      },
+   680→      () => {
+   681→        const store = getMockStore()
+   682→        const totalUsers = store.count('users_profile')
+   683→        const totalScans = store.count('qr_scans')
+   684→        const totalOrders = store.count('orders')
+   685→        const learningCompleted = store.count('users_profile', { learning_completed: true } as any)
+   686→        const totalCampaigns = store.count('campaigns')
+   687→        const orders = store.getAll<Order>('orders')
+   688→        const totalRevenue = orders.filter(o => ['CONFIRMED', 'SHIPPED', 'DELIVERED'].includes(o.status)).reduce((sum, o) => sum + o.amount, 0)
+   689→        const conversionRate = totalUsers > 0 ? ((learningCompleted / totalUsers) * 100).toFixed(1) : '0'
+   690→
+   691→        const ordersByStatus: Record<string, number> = {}
+   692→        orders.forEach(o => { ordersByStatus[o.status] = (ordersByStatus[o.status] || 0) + 1 })
+   693→
+   694→        const scans = store.getAll<QrScan>('qr_scans')
+   695→        const scansByCampaign: Record<string, number> = {}
+   696→        scans.forEach(s => { if (s.campaign_id) scansByCampaign[s.campaign_id] = (scansByCampaign[s.campaign_id] || 0) + 1 })
+   697→
+   698→        const campaigns = store.getAll<Campaign>('campaigns')
+   699→        const campaignsByChannel: Record<string, number> = {}
+   700→        campaigns.forEach(c => { campaignsByChannel[c.channel] = (campaignsByChannel[c.channel] || 0) + 1 })
+   701→
+   702→        const recentUsers = [...store.getAll<UserProfile>('users_profile')].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 5)
+   703→
+   704→        const recentOrders = [...orders].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 5).map(o => ({
+   705→          ...o,
+   706→          user: store.findOne<UserProfile>('users_profile', { user_id: o.user_id } as any),
+   707→          items: store.find<OrderItem>('order_items', { order_id: o.id } as any).map(oi => ({
+   708→            ...oi, product: store.getById<Product>('products', oi.product_id),
+   709→          })),
+   710→        }))
+   711→
+   712→        return {
+   713→          data: {
+   714→            totalUsers, totalScans, totalOrders, learningCompleted, totalCampaigns, totalRevenue,
+   715→            conversionRate, ordersByStatus, scansByCampaign, campaignsByChannel, recentUsers, recentOrders,
+   716→          }, error: null,
+   717→        }
+   718→      }
+   719→    )
+   720→  },
+   721→}
+   722→
+   723→// ============================================================
+   724→// USER SERVICE (Admin)
+   725→// ============================================================
+   726→export const userService = {
+   727→  async getAll() {
+   728→    return tryRealOrMock(
+   729→      async () => {
+   730→        const { data, error } = await supabase.from('users_profile').select('*, learning_progress(*)').order('created_at', { ascending: false })
+   731→        return { data, error }
+   732→      },
+   733→      () => {
+   734→        const store = getMockStore()
+   735→        const users = store.getAll<UserProfile>('users_profile')
+   736→        return { data: users.map(u => ({
+   737→          ...u,
+   738→          learning_progress: store.findOne<LearningProgress>('learning_progress', { user_id: u.user_id } as any),
+   739→          _count: {
+   740→            orders: store.find('orders', { user_id: u.user_id } as any).length,
+   741→            qr_scans: store.find('qr_scans', { user_id: u.user_id } as any).length,
+   742→          },
+   743→        })), error: null }
+   744→      }
+   745→    )
+   746→  },
+   747→
+   748→  async updateLearningCompleted(userId: string, completed: boolean) {
+   749→    return tryRealOrMock(
+   750→      async () => {
+   751→        const { data, error } = await supabase.from('users_profile').update({ learning_completed: completed }).eq('user_id', userId)
+   752→        return { data, error }
+   753→      },
+   754→      () => {
+   755→        const store = getMockStore()
+   756→        const user = store.findOne<UserProfile>('users_profile', { user_id: userId } as any)
+   757→        if (user) store.update('users_profile', user.id, { learning_completed: completed })
+   758→        return { data: { success: true }, error: null }
+   759→      }
+   760→    )
+   761→  },
+   762→}
+   763→
+   764→// ============================================================
+   765→// PRODUCT VIDEO SERVICE
+   766→// ============================================================
+   767→export const productVideoService = {
+   768→  async getByProduct(productId: string) {
+   769→    return tryRealOrMock(
+   770→      async () => {
+   771→        const { data, error } = await supabase.from('product_videos').select('*').eq('product_id', productId).eq('active', true).order('order', { ascending: true })
+   772→        return { data, error }
+   773→      },
+   774→      () => ({ data: getMockStore().find<ProductVideo>('product_videos', { product_id: productId, active: true } as any).sort((a, b) => a.order - b.order), error: null })
+   775→    )
+   776→  },
+   777→  async create(video: Partial<ProductVideo>) {
+   778→    return tryRealOrMock(
+   779→      async () => {
+   780→        const { data, error } = await supabase.from('product_videos').insert([video]).select().single()
+   781→        return { data, error }
+   782→      },
+   783→      () => ({ data: getMockStore().insert('product_videos', { ...video, active: true }), error: null })
+   784→    )
+   785→  },
+   786→  async update(id: string, updates: Partial<ProductVideo>) {
+   787→    return tryRealOrMock(
+   788→      async () => {
+   789→        const { data, error } = await supabase.from('product_videos').update(updates).eq('id', id).select().single()
+   790→        return { data, error }
+   791→      },
+   792→      () => ({ data: getMockStore().update('product_videos', id, updates), error: null })
+   793→    )
+   794→  },
+   795→  async delete(id: string) {
+   796→    return tryRealOrMock(
+   797→      async () => {
+   798→        const { data, error } = await supabase.from('product_videos').update({ active: false }).eq('id', id).select().single()
+   799→        return { data, error }
+   800→      },
+   801→      () => ({ data: getMockStore().update('product_videos', id, { active: false }), error: null })
+   802→    )
+   803→  },
+   804→}
+   805→
+   806→// ============================================================
+   807→// PRODUCT QUIZ SERVICE
+   808→// ============================================================
+   809→export const productQuizService = {
+   810→  async getByProduct(productId: string) {
+   811→    return tryRealOrMock(
+   812→      async () => {
+   813→        const { data, error } = await supabase.from('product_quizzes').select('*').eq('product_id', productId).eq('active', true).order('order', { ascending: true })
+   814→        return { data, error }
+   815→      },
+   816→      () => ({ data: getMockStore().find<ProductQuiz>('product_quizzes', { product_id: productId, active: true } as any).sort((a, b) => a.order - b.order), error: null })
+   817→    )
+   818→  },
+   819→  async getByVideo(videoId: string) {
+   820→    return tryRealOrMock(
+   821→      async () => {
+   822→        const { data, error } = await supabase.from('product_quizzes').select('*').eq('video_id', videoId).eq('active', true)
+   823→        return { data, error }
+   824→      },
+   825→      () => ({ data: getMockStore().find<ProductQuiz>('product_quizzes', { video_id: videoId, active: true } as any), error: null })
+   826→    )
+   827→  },
+   828→  async create(question: Partial<ProductQuiz>) {
+   829→    return tryRealOrMock(
+   830→      async () => {
+   831→        const { data, error } = await supabase.from('product_quizzes').insert([question]).select().single()
+   832→        return { data, error }
+   833→      },
+   834→      () => ({ data: getMockStore().insert('product_quizzes', { ...question, active: true }), error: null })
+   835→    )
+   836→  },
+   837→  async update(id: string, updates: Partial<ProductQuiz>) {
+   838→    return tryRealOrMock(
+   839→      async () => {
+   840→        const { data, error } = await supabase.from('product_quizzes').update(updates).eq('id', id).select().single()
+   841→        return { data, error }
+   842→      },
+   843→      () => ({ data: getMockStore().update('product_quizzes', id, updates), error: null })
+   844→    )
+   845→  },
+   846→  async delete(id: string) {
+   847→    return tryRealOrMock(
+   848→      async () => {
+   849→        const { data, error } = await supabase.from('product_quizzes').update({ active: false }).eq('id', id).select().single()
+   850→        return { data, error }
+   851→      },
+   852→      () => ({ data: getMockStore().update('product_quizzes', id, { active: false }), error: null })
+   853→    )
+   854→  },
+   855→}
+   856→
+   857→// ============================================================
+   858→// PRODUCT LEARNING SERVICE
+   859→// ============================================================
+   860→export const productLearningService = {
+   861→  async getProgress(userId: string, productId: string) {
+   862→    return tryRealOrMock(
+   863→      async () => {
+   864→        const { data, error } = await supabase.from('product_learning_progress').select('*').eq('user_id', userId).eq('product_id', productId).single()
+   865→        return { data, error }
+   866→      },
+   867→      () => {
+   868→        const progress = getMockStore().findOne<ProductLearningProgress>('product_learning_progress', { user_id: userId, product_id: productId } as any)
+   869→        return { data: progress || null, error: null }
+   870→      }
+   871→    )
+   872→  },
+   873→  async getAllProgress(userId: string) {
+   874→    return tryRealOrMock(
+   875→      async () => {
+   876→        const { data, error } = await supabase.from('product_learning_progress').select('*').eq('user_id', userId)
+   877→        return { data, error }
+   878→      },
+   879→      () => ({ data: getMockStore().find<ProductLearningProgress>('product_learning_progress', { user_id: userId } as any), error: null })
+   880→    )
+   881→  },
+   882→  async updateVideoProgress(userId: string, productId: string, videoProgress: Record<string, number>) {
+   883→    return tryRealOrMock(
+   884→      async () => {
+   885→        const { data, error } = await supabase.from('product_learning_progress').upsert({ user_id: userId, product_id: productId, video_progress: videoProgress, status: 'IN_PROGRESS' }).eq('user_id', userId).eq('product_id', productId).select().single()
+   886→        return { data, error }
+   887→      },
+   888→      () => {
+   889→        const existing = getMockStore().findOne<ProductLearningProgress>('product_learning_progress', { user_id: userId, product_id: productId } as any)
+   890→        const now = new Date().toISOString()
+   891→        if (existing) {
+   892→          return { data: getMockStore().update('product_learning_progress', existing.id, { video_progress: videoProgress, status: 'IN_PROGRESS', updated_at: now }), error: null }
+   893→        }
+   894→        return { data: getMockStore().insert('product_learning_progress', { user_id: userId, product_id: productId, video_progress: videoProgress, quiz_answers: {}, quiz_completed: false, quiz_score: 0, status: 'IN_PROGRESS', created_at: now, updated_at: now }), error: null }
+   895→      }
+   896→    )
+   897→  },
+   898→  async submitQuiz(userId: string, productId: string, quizAnswers: Record<string, number>, score: number, isPassed: boolean) {
+   899→    return tryRealOrMock(
+   900→      async () => {
+   901→        const status = isPassed ? 'UNLOCKED' : 'PENDING_REEVALUATION'
+   902→        const { data, error } = await supabase.from('product_learning_progress').update({
+   903→          quiz_answers: quizAnswers, quiz_completed: isPassed, quiz_score: score, status, completed_at: isPassed ? new Date().toISOString() : null,
+   904→        }).eq('user_id', userId).eq('product_id', productId).select().single()
+   905→        return { data, error }
+   906→      },
+   907→      () => {
+   908→        const existing = getMockStore().findOne<ProductLearningProgress>('product_learning_progress', { user_id: userId, product_id: productId } as any)
+   909→        const now = new Date().toISOString()
+   910→        const status = isPassed ? 'UNLOCKED' : 'PENDING_REEVALUATION'
+   911→        if (existing) {
+   912→          // Smart remediation: if not passed (score < 80%), mark only incorrect video modules as incomplete
+   913→          if (!isPassed && existing.video_progress) {
+   914→            // Get quizzes for this product to find which videos need review
+   915→            const quizzes = getMockStore().find<ProductQuiz>('product_quizzes', { product_id: productId, active: true } as any)
+   916→            const updatedVideoProgress = { ...existing.video_progress }
+   917→            for (const quiz of quizzes) {
+   918→              const userAnswer = quizAnswers[quiz.id]
+   919→              if (userAnswer !== undefined && userAnswer !== quiz.answer) {
+   920→                // Mark this quiz's linked video as incomplete (0%)
+   921→                updatedVideoProgress[quiz.video_id] = 0
+   922→              }
+   923→            }
+   924→            return { data: getMockStore().update('product_learning_progress', existing.id, {
+   925→              quiz_answers: quizAnswers, quiz_completed: false, quiz_score: score, status, video_progress: updatedVideoProgress, updated_at: now,
+   926→            }), error: null }
+   927→          }
+   928→          return { data: getMockStore().update('product_learning_progress', existing.id, {
+   929→            quiz_answers: quizAnswers, quiz_completed: isPassed, quiz_score: score, status, completed_at: isPassed ? now : undefined, updated_at: now,
+   930→          }), error: null }
+   931→        }
+   932→        return { data: getMockStore().insert('product_learning_progress', {
+   933→          user_id: userId, product_id: productId, video_progress: {}, quiz_answers: quizAnswers, quiz_completed: isPassed, quiz_score: score, status, completed_at: isPassed ? now : undefined, created_at: now, updated_at: now,
+   934→        }), error: null }
+   935→      }
+   936→    )
+   937→  },
+   938→}
+   939→
+   940→// ============================================================
+   941→// SUBSCRIPTION SERVICE
+   942→// ============================================================
+   943→export const subscriptionService = {
+   944→  async getByUser(userId: string) {
+   945→    return tryRealOrMock(
+   946→      async () => {
+   947→        const { data, error } = await supabase.from('subscriptions').select('*').eq('user_id', userId).order('created_at', { ascending: false })
+   948→        return { data, error }
+   949→      },
+   950→      () => ({ data: getMockStore().find<Subscription>('subscriptions', { user_id: userId } as any), error: null })
+   951→    )
+   952→  },
+   953→  async create(subscription: Partial<Subscription>) {
+   954→    return tryRealOrMock(
+   955→      async () => {
+   956→        const { data, error } = await supabase.from('subscriptions').insert([subscription]).select().single()
+   957→        return { data, error }
+   958→      },
+   959→      () => ({ data: getMockStore().insert('subscriptions', { ...subscription, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }), error: null })
+   960→    )
+   961→  },
+   962→  async updateStatus(id: string, status: string) {
+   963→    return tryRealOrMock(
+   964→      async () => {
+   965→        const { data, error } = await supabase.from('subscriptions').update({ status, updated_at: new Date().toISOString() }).eq('id', id).select().single()
+   966→        return { data, error }
+   967→      },
+   968→      () => ({ data: getMockStore().update('subscriptions', id, { status, updated_at: new Date().toISOString() }), error: null })
+   969→    )
+   970→  },
+   971→  async toggleAutoRenew(id: string, autoRenew: boolean) {
+   972→    return tryRealOrMock(
+   973→      async () => {
+   974→        const { data, error } = await supabase.from('subscriptions').update({ auto_renew: autoRenew, updated_at: new Date().toISOString() }).eq('id', id).select().single()
+   975→        return { data, error }
+   976→      },
+   977→      () => ({ data: getMockStore().update('subscriptions', id, { auto_renew: autoRenew, updated_at: new Date().toISOString() }), error: null })
+   978→    )
+   979→  },
+   980→  async getAll() {
+   981→    return tryRealOrMock(
+   982→      async () => {
+   983→        const { data, error } = await supabase.from('subscriptions').select('*').order('created_at', { ascending: false })
+   984→        return { data, error }
+   985→      },
+   986→      () => ({ data: getMockStore().getAll<Subscription>('subscriptions'), error: null })
+   987→    )
+   988→  },
+   989→}
+   990→
+   991→// ============================================================
+   992→// REORDER REMINDER SERVICE
+   993→// ============================================================
+   994→export const reorderReminderService = {
+   995→  async getByUser(userId: string) {
+   996→    return tryRealOrMock(
+   997→      async () => {
+   998→        const { data, error } = await supabase.from('reorder_reminders').select('*').eq('user_id', userId).order('reminder_date', { ascending: false })
+   999→        return { data, error }
+  1000→      },
+  1001→      () => ({ data: getMockStore().find<ReorderReminder>('reorder_reminders', { user_id: userId } as any), error: null })
+  1002→    )
+  1003→  },
+  1004→  async getAll() {
+  1005→    return tryRealOrMock(
+  1006→      async () => {
+  1007→        const { data, error } = await supabase.from('reorder_reminders').select('*').order('reminder_date', { ascending: false })
+  1008→        return { data, error }
+  1009→      },
+  1010→      () => ({ data: getMockStore().getAll<ReorderReminder>('reorder_reminders'), error: null })
+  1011→    )
+  1012→  },
+  1013→  async create(reminder: Partial<ReorderReminder>) {
+  1014→    return tryRealOrMock(
+  1015→      async () => {
+  1016→        const { data, error } = await supabase.from('reorder_reminders').insert([reminder]).select().single()
+  1017→        return { data, error }
+  1018→      },
+  1019→      () => ({ data: getMockStore().insert('reorder_reminders', { ...reminder, created_at: new Date().toISOString() }), error: null })
+  1020→    )
+  1021→  },
+  1022→}
+  1023→
+  1024→

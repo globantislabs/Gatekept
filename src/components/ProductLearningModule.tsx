@@ -6,7 +6,7 @@ import {
   AlertCircle, ChevronRight, Trophy, Video, FileQuestion, RotateCcw,
 } from 'lucide-react'
 import { useAppStore } from '@/store/app-store'
-import { productVideoService, productQuizService, productLearningService, productService } from '@/lib/data-service'
+import { productVideoService, productQuizService, productLearningService, productService, productServiceCompat, productVideoServiceCompat, productLearningServiceCompat } from '@/lib/data-service'
 import type { ProductVideo, ProductQuiz, ProductLearningProgress, Product } from '@/lib/data-service'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card'
@@ -103,10 +103,10 @@ export function ProductLearningModule() {
       setLoading(true)
       try {
         const [prodRes, vidRes, progRes] = await Promise.all([
-          productService.getById(selectedProductId),
-          productVideoService.getByProduct(selectedProductId),
+          productServiceCompat.getById(selectedProductId),
+          productVideoServiceCompat.getByProduct(selectedProductId),
           user
-            ? productLearningService.getProgress(user.user_id, selectedProductId)
+            ? productLearningServiceCompat.getProgress(user.id, selectedProductId)
             : Promise.resolve({ data: null, error: null }),
         ])
         if (cancelled) return
@@ -189,9 +189,11 @@ export function ProductLearningModule() {
     async function loadQuiz() {
       setQuizLoading(true)
       try {
-        const res = await productQuizService.getByVideo(video.id)
+        const res = await productQuizService.list(selectedProductId)
         if (!cancelled) {
-          setQuizQuestions(res.data || [])
+          // Filter quizzes for this specific video
+          const filtered = res.filter(q => q.video_id === video.id)
+          setQuizQuestions(filtered)
         }
       } catch (err) {
         console.error('Failed to load quiz questions:', err)
@@ -563,7 +565,7 @@ export function ProductLearningModule() {
                       className="text-9xl font-heading font-bold select-none"
                       style={{ color: BRAND.lime }}
                     >
-                      {product.name.charAt(0)}
+                      {product?.name?.charAt(0) ?? '?'}
                     </div>
                   </div>
                 </div>

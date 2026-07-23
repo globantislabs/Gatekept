@@ -4,29 +4,24 @@ import type { UserProfile, Product } from '@/lib/data-service'
 
 export type AppView =
   | 'landing'
-  | 'auth-login'
-  | 'auth-register'
-  | 'auth-otp'
-  | 'learning'
-  | 'quiz'
+  | 'our-journey'
   | 'products'
   | 'product-detail'
   | 'product-learning'
-  | 'product-quiz'
-  | 'subscriptions'
+  | 'auth-login'
+  | 'auth-register'
   | 'cart'
   | 'checkout'
   | 'order-success'
+  | 'subscriptions'
+  | 'profile'
   | 'admin-dashboard'
+  | 'admin-products'
   | 'admin-users'
   | 'admin-campaigns'
-  | 'admin-qr'
-  | 'admin-orders'
-  | 'admin-analytics'
-  | 'admin-content'
-  | 'admin-products'
-  | 'admin-subscriptions'
-  | 'profile'
+  | 'admin-learning'
+  | 'learning'
+  | 'quiz'
 
 export interface CartItem {
   productId: string
@@ -34,9 +29,8 @@ export interface CartItem {
   price: number
   quantity: number
   imageUrl?: string
-  type: string
+  type?: string
   purchaseType: 'one-time' | 'subscription'
-  // Subscription metadata (only when purchaseType === 'subscription')
   packType?: string
   packDays?: number
   packDiscount?: number
@@ -52,9 +46,6 @@ interface AppState {
   // Auth
   user: UserProfile | null
   setUser: (user: UserProfile | null) => void
-  pendingOtpContact: string | null
-  pendingOtpType: 'phone' | 'email'
-  setPendingOtp: (contact: string | null, type: 'phone' | 'email') => void
 
   // Product Learning
   selectedProductId: string | null
@@ -66,22 +57,6 @@ interface AppState {
   currentQuizIndex: number
   setCurrentQuizIndex: (idx: number) => void
 
-  // Subscription
-  selectedSubscriptionId: string | null
-  setSelectedSubscriptionId: (id: string | null) => void
-
-  // Commerce
-  cart: CartItem[]
-  addToCart: (item: CartItem) => void
-  removeFromCart: (productId: string) => void
-  updateCartQuantity: (productId: string, quantity: number) => void
-  clearCart: () => void
-  cartTotal: () => number
-
-  // Campaign
-  scannedCampaignId: string | null
-  setScannedCampaignId: (id: string | null) => void
-
   // Admin tab
   adminTab: string
   setAdminTab: (tab: string) => void
@@ -90,7 +65,23 @@ interface AppState {
   products: Product[]
   setProducts: (products: Product[]) => void
 
-  // Last order ID for success page
+  // Redirect after login
+  redirectAfterLogin: AppView | null
+  setRedirectAfterLogin: (view: AppView | null) => void
+
+  // URL share slug
+  shareSlug: string | null
+  setShareSlug: (slug: string | null) => void
+
+  // Cart
+  cart: CartItem[]
+  addToCart: (item: CartItem) => void
+  removeFromCart: (productId: string) => void
+  updateCartQuantity: (productId: string, quantity: number) => void
+  cartTotal: () => number
+  clearCart: () => void
+
+  // Orders
   lastOrderId: string | null
   setLastOrderId: (id: string | null) => void
 
@@ -115,9 +106,6 @@ export const useAppStore = create<AppState>()(
       // Auth
       user: null,
       setUser: (user) => set({ user }),
-      pendingOtpContact: null,
-      pendingOtpType: 'phone',
-      setPendingOtp: (contact, type) => set({ pendingOtpContact: contact, pendingOtpType: type }),
 
       // Product Learning
       selectedProductId: null,
@@ -129,39 +117,6 @@ export const useAppStore = create<AppState>()(
       currentQuizIndex: 0,
       setCurrentQuizIndex: (idx) => set({ currentQuizIndex: idx }),
 
-      // Subscription
-      selectedSubscriptionId: null,
-      setSelectedSubscriptionId: (id) => set({ selectedSubscriptionId: id }),
-
-      // Commerce
-      cart: [],
-      addToCart: (item) =>
-        set((state) => {
-          const existing = state.cart.find((i) => i.productId === item.productId)
-          if (existing) {
-            return {
-              cart: state.cart.map((i) =>
-                i.productId === item.productId ? { ...i, quantity: i.quantity + item.quantity } : i
-              ),
-            }
-          }
-          return { cart: [...state.cart, item] }
-        }),
-      removeFromCart: (productId) =>
-        set((state) => ({ cart: state.cart.filter((i) => i.productId !== productId) })),
-      updateCartQuantity: (productId, quantity) =>
-        set((state) => ({
-          cart: quantity <= 0
-            ? state.cart.filter((i) => i.productId !== productId)
-            : state.cart.map((i) => i.productId === productId ? { ...i, quantity } : i),
-        })),
-      clearCart: () => set({ cart: [] }),
-      cartTotal: () => get().cart.reduce((sum, i) => sum + i.price * i.quantity, 0),
-
-      // Campaign
-      scannedCampaignId: null,
-      setScannedCampaignId: (id) => set({ scannedCampaignId: id }),
-
       // Admin
       adminTab: 'dashboard',
       setAdminTab: (tab) => set({ adminTab: tab }),
@@ -170,7 +125,37 @@ export const useAppStore = create<AppState>()(
       products: [],
       setProducts: (products) => set({ products }),
 
-      // Last order
+      // Redirect after login
+      redirectAfterLogin: null,
+      setRedirectAfterLogin: (view) => set({ redirectAfterLogin: view }),
+
+      // URL share slug
+      shareSlug: null,
+      setShareSlug: (slug) => set({ shareSlug: slug }),
+
+      // Cart
+      cart: [],
+      addToCart: (item) => {
+        const cart = get().cart
+        const existing = cart.find(i => i.productId === item.productId)
+        if (existing) {
+          set({ cart: cart.map(i => i.productId === item.productId ? { ...i, quantity: i.quantity + item.quantity } : i) })
+        } else {
+          set({ cart: [...cart, item] })
+        }
+      },
+      removeFromCart: (productId) => set({ cart: get().cart.filter(i => i.productId !== productId) }),
+      updateCartQuantity: (productId, quantity) => {
+        if (quantity <= 0) {
+          set({ cart: get().cart.filter(i => i.productId !== productId) })
+        } else {
+          set({ cart: get().cart.map(i => i.productId === productId ? { ...i, quantity } : i) })
+        }
+      },
+      cartTotal: () => get().cart.reduce((sum, item) => sum + item.price * item.quantity, 0),
+      clearCart: () => set({ cart: [] }),
+
+      // Orders
       lastOrderId: null,
       setLastOrderId: (id) => set({ lastOrderId: id }),
 
@@ -182,10 +167,11 @@ export const useAppStore = create<AppState>()(
       name: 'notjust-app-store',
       partialize: (state) => ({
         user: state.user,
-        cart: state.cart,
         currentView: state.currentView,
         products: state.products,
         selectedProductId: state.selectedProductId,
+        cart: state.cart,
+        lastOrderId: state.lastOrderId,
       }),
     }
   )

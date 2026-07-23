@@ -186,7 +186,8 @@ export default function LandingPage() {
 
   // ── Nav links ──
   const navLinks = [
-    { label: 'Products', view: 'products' as AppView, icon: Store },
+    { label: 'Home', view: 'landing' as AppView, icon: Home },
+    { label: 'Product', view: 'products' as AppView, icon: Store },
     { label: 'Our Journey', view: 'our-journey' as AppView, icon: Globe },
   ]
 
@@ -230,9 +231,15 @@ export default function LandingPage() {
                 <button
                   key={link.label}
                   onClick={() => {
-                    if (!user && link.view !== 'landing') {
-                      navigateTo('auth-login')
-                      toast.info('Please login first')
+                    if (link.view === 'products') {
+                      // Products are on the landing page — scroll to the carousel
+                      navigateTo('landing')
+                      setTimeout(() => scrollToSection('product-carousel'), 100)
+                      return
+                    }
+                    if (link.view === 'landing') {
+                      scrollToSection('hero')
+                      navigateTo('landing')
                       return
                     }
                     navigateTo(link.view)
@@ -299,9 +306,9 @@ export default function LandingPage() {
                   <div className="flex flex-col gap-2 mt-6 px-2">
                     {/* Nav links */}
                     {[
-                      { label: 'Products', icon: Store, action: () => { navigateTo('products'); setMobileNavOpen(false) } },
+                      { label: 'Home', icon: Home, action: () => { navigateTo('landing'); setMobileNavOpen(false) } },
+                      { label: 'Product', icon: Store, action: () => { navigateTo('landing'); setMobileNavOpen(false); setTimeout(() => scrollToSection('product-carousel'), 100) } },
                       { label: 'Our Journey', icon: Globe, action: () => { navigateTo('our-journey'); setMobileNavOpen(false) } },
-                      { label: 'Learning', icon: GraduationCap, action: () => { navigateTo('product-learning'); setMobileNavOpen(false) } },
                     ].map(item => (
                       <button
                         key={item.label}

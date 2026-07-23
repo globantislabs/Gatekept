@@ -32,6 +32,8 @@ model UserProfile {
   // Relations
   learningProgress    ProductLearningProgress[]
   qrScans             QrScan[]
+  orders              Order[]
+  subscriptions       Subscription[]
 }
 
 // ─── Products ───────────────────────────────────────────────
@@ -77,6 +79,8 @@ model Product {
   videos          ProductVideo[]
   quizzes         ProductQuiz[]
   learningProgress ProductLearningProgress[]
+  orderItems      OrderItem[]
+  subscriptions   Subscription[]
 }
 
 // ─── Product Videos (Learning Content) ──────────────────────
@@ -170,4 +174,99 @@ model QrScan {
 
   campaign        Campaign? @relation(fields: [campaign_id], references: [id])
   user            UserProfile? @relation(fields: [user_id], references: [id])
+}
+
+// ─── Orders ────────────────────────────────────────────────────
+
+model Order {
+  id              String   @id @default(cuid())
+  user_id         String
+  order_number    String   @unique
+  status          String   @default("PLACED")  // PLACED, CONFIRMED, PROCESSING, SHIPPED, DELIVERED, CANCELLED
+  total_amount    Float
+  subtotal        Float
+  tax_amount      Float    @default(0)
+  discount_amount Float    @default(0)
+  currency        String   @default("INR")
+  shipping_name   String?
+  shipping_phone  String?
+  shipping_address String?
+  shipping_city   String?
+  shipping_state  String?
+  shipping_pincode String?
+  payment_method  String?  @default("UPI")
+  payment_status  String   @default("PENDING") // PENDING, COMPLETED, FAILED, REFUNDED
+  payment_ref     String?
+  notes           String?
+  delivered_at    DateTime?
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+
+  // Relations
+  user            UserProfile @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  items           OrderItem[]
+  tracking        OrderTracking[]
+  subscription    Subscription?
+}
+
+model OrderItem {
+  id              String   @id @default(cuid())
+  order_id        String
+  product_id      String
+  product_name    String
+  product_type    String   @default("FIZZ")
+  quantity        Int      @default(1)
+  unit_price      Float
+  total_price     Float
+  pack_type       String?  // 30_DAY, 60_DAY, 90_DAY, 180_DAY
+  pack_days       Int?
+  pack_discount   Float?   @default(0)
+  created_at      DateTime @default(now())
+
+  order           Order    @relation(fields: [order_id], references: [id], onDelete: Cascade)
+  product         Product  @relation(fields: [product_id], references: [id])
+}
+
+// ─── Order Tracking ────────────────────────────────────────────
+
+model OrderTracking {
+  id              String   @id @default(cuid())
+  order_id        String
+  status          String   // PLACED, CONFIRMED, PROCESSING, SHIPPED, OUT_FOR_DELIVERY, DELIVERED, CANCELLED
+  location        String?
+  description     String?
+  tracked_at      DateTime @default(now())
+
+  order           Order    @relation(fields: [order_id], references: [id], onDelete: Cascade)
+}
+
+// ─── Subscriptions ──────────────────────────────────────────────
+
+model Subscription {
+  id              String   @id @default(cuid())
+  user_id         String
+  order_id        String   @unique
+  product_id      String
+  product_name    String
+  product_type    String   @default("FIZZ")
+  pack_type       String   // 30_DAY, 60_DAY, 90_DAY, 180_DAY
+  pack_days       Int
+  pack_discount   Float    @default(0)
+  quantity        Int      @default(1)
+  unit_price      Float
+  frequency_days  Int      @default(30)  // delivery every N days
+  status          String   @default("ACTIVE") // ACTIVE, PAUSED, CANCELLED, EXPIRED
+  next_delivery   DateTime?
+  start_date      DateTime @default(now())
+  end_date        DateTime?
+  paused_at       DateTime?
+  cancelled_at    DateTime?
+  total_cycles    Int      @default(0)
+  completed_cycles Int     @default(0)
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+
+  user            UserProfile @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  order           Order      @relation(fields: [order_id], references: [id], onDelete: Cascade)
+  product         Product    @relation(fields: [product_id], references: [id])
 }

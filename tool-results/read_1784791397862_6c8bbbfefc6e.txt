@@ -1,0 +1,2002 @@
+     1→'use client'
+     2→
+     3→import React, { useState, useEffect, useCallback } from 'react'
+     4→import { motion, AnimatePresence } from 'framer-motion'
+     5→import {
+     6→  LayoutDashboard, Package, BookOpen, Users, Megaphone,
+     7→  Plus, Pencil, Trash2, Copy, Search, Filter,
+     8→  ArrowLeft, Eye, Loader2,
+     9→  Shield, CheckCircle, XCircle, ChevronLeft, ChevronRight,
+    10→  RefreshCw, Leaf, Video,
+    11→  HelpCircle
+    12→} from 'lucide-react'
+    13→import { useAppStore } from '@/store/app-store'
+    14→import {
+    15→  productService, productVideoService, productQuizService,
+    16→  adminStatsService, userService, campaignService,
+    17→  type Product, type ProductVideo, type ProductQuiz,
+    18→  type Campaign, type UserProfile,
+    19→  type AdminStatsResponse, type UsersListResponse,
+    20→} from '@/lib/data-service'
+    21→import { Button } from '@/components/ui/button'
+    22→import { Input } from '@/components/ui/input'
+    23→import { Label } from '@/components/ui/label'
+    24→import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+    25→import { Badge } from '@/components/ui/badge'
+    26→import { Separator } from '@/components/ui/separator'
+    27→import {
+    28→  Dialog, DialogContent, DialogDescription, DialogFooter,
+    29→  DialogHeader, DialogTitle
+    30→} from '@/components/ui/dialog'
+    31→import {
+    32→  AlertDialog, AlertDialogAction, AlertDialogCancel,
+    33→  AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
+    34→  AlertDialogHeader, AlertDialogTitle
+    35→} from '@/components/ui/alert-dialog'
+    36→import {
+    37→  Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter
+    38→} from '@/components/ui/sheet'
+    39→import {
+    40→  Select, SelectContent, SelectItem, SelectTrigger, SelectValue
+    41→} from '@/components/ui/select'
+    42→import { Textarea } from '@/components/ui/textarea'
+    43→import { Switch } from '@/components/ui/switch'
+    44→import { ScrollArea } from '@/components/ui/scroll-area'
+    45→import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+    46→import { toast } from 'sonner'
+    47→
+    48→// ─── Brand Constants ──────────────────────────────────────
+    49→const BRAND = {
+    50→  green: '#48805b',
+    51→  lime: '#afb75d',
+    52→  dark: '#1f1e1c',
+    53→  muted: '#88837b',
+    54→  surface: '#e3dfd8',
+    55→  bg: '#f4f3f0',
+    56→  blue: '#2e91b2',
+    57→}
+    58→
+    59→// ─── Mobile Detection ────────────────────────────────────
+    60→function useIsMobile() {
+    61→  const [isMobile, setIsMobile] = useState(false)
+    62→  useEffect(() => {
+    63→    const check = () => setIsMobile(window.innerWidth < 768)
+    64→    check()
+    65→    window.addEventListener('resize', check)
+    66→    return () => window.removeEventListener('resize', check)
+    67→  }, [])
+    68→  return isMobile
+    69→}
+    70→
+    71→// ─── Tab Definitions ─────────────────────────────────────
+    72→const TAB_ITEMS = [
+    73→  { value: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    74→  { value: 'products', label: 'Products', icon: Package },
+    75→  { value: 'learning', label: 'Learning', icon: BookOpen },
+    76→  { value: 'users', label: 'Users', icon: Users },
+    77→  { value: 'campaigns', label: 'Campaigns', icon: Megaphone },
+    78→] as const
+    79→
+    80→type AdminTab = typeof TAB_ITEMS[number]['value']
+    81→
+    82→// ─── Animations ──────────────────────────────────────────
+    83→const fadeInUp = {
+    84→  hidden: { opacity: 0, y: 20 },
+    85→  visible: { opacity: 1, y: 0, transition: { duration: 0.4 } }
+    86→}
+    87→
+    88→// ─── Responsive Form Wrapper ─────────────────────────────
+    89→function FormWrapper({
+    90→  open, onClose, title, description, children, isMobile
+    91→}: {
+    92→  open: boolean
+    93→  onClose: () => void
+    94→  title: string
+    95→  description?: string
+    96→  children: React.ReactNode
+    97→  isMobile: boolean
+    98→}) {
+    99→  if (isMobile) {
+   100→    return (
+   101→      <Sheet open={open} onOpenChange={(v) => !v && onClose()}>
+   102→        <SheetContent side="bottom" className="h-[92vh] rounded-t-2xl overflow-hidden">
+   103→          <SheetHeader className="pb-2">
+   104→            <SheetTitle>{title}</SheetTitle>
+   105→            {description && <SheetDescription>{description}</SheetDescription>}
+   106→          </SheetHeader>
+   107→          <ScrollArea className="flex-1 px-4 pb-4">
+   108→            {children}
+   109→          </ScrollArea>
+   110→        </SheetContent>
+   111→      </Sheet>
+   112→    )
+   113→  }
+   114→  return (
+   115→    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+   116→      <DialogContent className="max-w-2xl max-h-[85vh] overflow-hidden">
+   117→        <DialogHeader>
+   118→          <DialogTitle>{title}</DialogTitle>
+   119→          {description && <DialogDescription>{description}</DialogDescription>}
+   120→        </DialogHeader>
+   121→        <ScrollArea className="max-h-[65vh] pr-2">
+   122→          {children}
+   123→        </ScrollArea>
+   124→      </DialogContent>
+   125→    </Dialog>
+   126→  )
+   127→}
+   128→
+   129→// ═══════════════════════════════════════════════════════════
+   130→// MAIN COMPONENT: AdminPanel
+   131→// ═══════════════════════════════════════════════════════════
+   132→
+   133→export default function AdminPanel() {
+   134→  const { user, navigateTo } = useAppStore()
+   135→  const isMobile = useIsMobile()
+   136→  const [activeTab, setActiveTab] = useState<AdminTab>('dashboard')
+   137→
+   138→  // Admin check
+   139→  useEffect(() => {
+   140→    if (!user?.is_admin) {
+   141→      navigateTo('landing')
+   142→    }
+   143→  }, [user, navigateTo])
+   144→
+   145→  if (!user?.is_admin) return null
+   146→
+   147→  return (
+   148→    <div className="min-h-screen" style={{ background: BRAND.bg }}>
+   149→      {/* Desktop sidebar + Mobile top tabs */}
+   150→      {isMobile ? (
+   151→        <MobileTopTabs activeTab={activeTab} setActiveTab={setActiveTab} />
+   152→      ) : (
+   153→        <DesktopLayout activeTab={activeTab} setActiveTab={setActiveTab} />
+   154→      )}
+   155→    </div>
+   156→  )
+   157→}
+   158→
+   159→// ─── Desktop Layout ──────────────────────────────────────
+   160→function DesktopLayout({ activeTab, setActiveTab }: {
+   161→  activeTab: AdminTab
+   162→  setActiveTab: (t: AdminTab) => void
+   163→}) {
+   164→  const { user, navigateTo } = useAppStore()
+   165→
+   166→  return (
+   167→    <div className="min-h-screen flex" style={{ background: BRAND.bg }}>
+   168→      {/* Sidebar */}
+   169→      <aside
+   170→        className="w-64 min-h-screen flex flex-col border-r"
+   171→        style={{ background: '#fff', borderColor: BRAND.surface }}
+   172→      >
+   173→        <div className="p-6 flex items-center gap-3">
+   174→          <div
+   175→            className="w-9 h-9 rounded-lg flex items-center justify-center"
+   176→            style={{ background: BRAND.green }}
+   177→          >
+   178→            <Leaf className="w-5 h-5 text-white" />
+   179→          </div>
+   180→          <div>
+   181→            <h1 className="font-bold text-sm" style={{ color: BRAND.dark }}>NOTJUST Admin</h1>
+   182→            <p className="text-xs" style={{ color: BRAND.muted }}>{user?.name || 'Admin'}</p>
+   183→          </div>
+   184→        </div>
+   185→        <Separator />
+   186→        <nav className="flex-1 p-3 space-y-1">
+   187→          {TAB_ITEMS.map(tab => (
+   188→            <button
+   189→              key={tab.value}
+   190→              onClick={() => setActiveTab(tab.value)}
+   191→              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all min-h-[44px]"
+   192→              style={{
+   193→                background: activeTab === tab.value ? `${BRAND.green}15` : 'transparent',
+   194→                color: activeTab === tab.value ? BRAND.green : BRAND.muted,
+   195→              }}
+   196→            >
+   197→              <tab.icon className="w-4 h-4" />
+   198→              {tab.label}
+   199→            </button>
+   200→          ))}
+   201→        </nav>
+   202→        <Separator />
+   203→        <div className="p-3">
+   204→          <button
+   205→            onClick={() => navigateTo('landing')}
+   206→            className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm min-h-[44px]"
+   207→            style={{ color: BRAND.muted }}
+   208→          >
+   209→            <ArrowLeft className="w-4 h-4" />
+   210→            Back to App
+   211→          </button>
+   212→        </div>
+   213→      </aside>
+   214→
+   215→      {/* Main content */}
+   216→      <main className="flex-1 p-6">
+   217→        <AnimatePresence mode="wait">
+   218→          <motion.div key={activeTab} initial="hidden" animate="visible" variants={fadeInUp}>
+   219→            {activeTab === 'dashboard' && <DashboardTab />}
+   220→            {activeTab === 'products' && <ProductsTab />}
+   221→            {activeTab === 'learning' && <LearningTab />}
+   222→            {activeTab === 'users' && <UsersTab />}
+   223→            {activeTab === 'campaigns' && <CampaignsTab />}
+   224→          </motion.div>
+   225→        </AnimatePresence>
+   226→      </main>
+   227→    </div>
+   228→  )
+   229→}
+   230→
+   231→// ─── Mobile Top Tabs ─────────────────────────────────────
+   232→function MobileTopTabs({ activeTab, setActiveTab }: {
+   233→  activeTab: AdminTab
+   234→  setActiveTab: (t: AdminTab) => void
+   235→}) {
+   236→  const { user, navigateTo } = useAppStore()
+   237→
+   238→  return (
+   239→    <div className="min-h-screen flex flex-col" style={{ background: BRAND.bg }}>
+   240→      {/* Header */}
+   241→      <header className="sticky top-0 z-40 bg-white border-b px-4 py-3" style={{ borderColor: BRAND.surface }}>
+   242→        <div className="flex items-center justify-between">
+   243→          <div className="flex items-center gap-2">
+   244→            <div className="w-7 h-7 rounded-md flex items-center justify-center" style={{ background: BRAND.green }}>
+   245→              <Leaf className="w-4 h-4 text-white" />
+   246→            </div>
+   247→            <h1 className="font-bold text-sm" style={{ color: BRAND.dark }}>Admin</h1>
+   248→          </div>
+   249→          <button
+   250→            onClick={() => navigateTo('landing')}
+   251→            className="flex items-center gap-1 px-2 py-1 rounded text-xs min-h-[44px]"
+   252→            style={{ color: BRAND.muted }}
+   253→          >
+   254→            <ArrowLeft className="w-4 h-4" />
+   255→            Back
+   256→          </button>
+   257→        </div>
+   258→      </header>
+   259→
+   260→      {/* Scrollable horizontal tabs */}
+   261→      <div className="sticky top-[56px] z-30 bg-white border-b overflow-x-auto" style={{ borderColor: BRAND.surface }}>
+   262→        <div className="flex px-2 py-1 gap-1 min-w-max">
+   263→          {TAB_ITEMS.map(tab => (
+   264→            <button
+   265→              key={tab.value}
+   266→              onClick={() => setActiveTab(tab.value)}
+   267→              className="flex items-center gap-1.5 px-3 py-2 rounded-md text-xs font-medium whitespace-nowrap min-h-[44px]"
+   268→              style={{
+   269→                background: activeTab === tab.value ? `${BRAND.green}15` : 'transparent',
+   270→                color: activeTab === tab.value ? BRAND.green : BRAND.muted,
+   271→              }}
+   272→            >
+   273→              <tab.icon className="w-3.5 h-3.5" />
+   274→              {tab.label}
+   275→            </button>
+   276→          ))}
+   277→        </div>
+   278→      </div>
+   279→
+   280→      {/* Main content */}
+   281→      <main className="flex-1 p-4">
+   282→        <AnimatePresence mode="wait">
+   283→          <motion.div key={activeTab} initial="hidden" animate="visible" variants={fadeInUp}>
+   284→            {activeTab === 'dashboard' && <DashboardTab />}
+   285→            {activeTab === 'products' && <ProductsTab />}
+   286→            {activeTab === 'learning' && <LearningTab />}
+   287→            {activeTab === 'users' && <UsersTab />}
+   288→            {activeTab === 'campaigns' && <CampaignsTab />}
+   289→          </motion.div>
+   290→        </AnimatePresence>
+   291→      </main>
+   292→    </div>
+   293→  )
+   294→}
+   295→
+   296→// ═══════════════════════════════════════════════════════════
+   297→// 1. DASHBOARD TAB
+   298→// ═══════════════════════════════════════════════════════════
+   299→
+   300→function DashboardTab() {
+   301→  const [statsData, setStatsData] = useState<AdminStatsResponse | null>(null)
+   302→  const [loading, setLoading] = useState(true)
+   303→  const { navigateTo, user } = useAppStore()
+   304→
+   305→  const loadStats = useCallback(async () => {
+   306→    setLoading(true)
+   307→    try {
+   308→      const data = await adminStatsService.get(user?.id || '')
+   309→      setStatsData(data)
+   310→    } catch (err: any) {
+   311→      toast.error('Failed to load dashboard stats: ' + (err.message || 'Unknown error'))
+   312→    } finally {
+   313→      setLoading(false)
+   314→    }
+   315→  }, [])
+   316→
+   317→  useEffect(() => { loadStats() }, [loadStats])
+   318→
+   319→  if (loading) {
+   320→    return (
+   321→      <div className="flex items-center justify-center py-20">
+   322→        <Loader2 className="w-8 h-8 animate-spin" style={{ color: BRAND.green }} />
+   323→      </div>
+   324→    )
+   325→  }
+   326→
+   327→  if (!statsData) return <p className="text-center py-10" style={{ color: BRAND.muted }}>No stats data available</p>
+   328→
+   329→  const { stats, recentUsers } = statsData
+   330→  const statCards = [
+   331→    { label: 'Total Users', value: stats.totalUsers, icon: Users, color: BRAND.green, bgColor: `${BRAND.green}15` },
+   332→    { label: 'Total Products', value: stats.totalProducts, icon: Package, color: BRAND.lime, bgColor: `${BRAND.lime}15` },
+   333→    { label: 'Active Campaigns', value: stats.activeCampaigns, icon: Megaphone, color: BRAND.blue, bgColor: `${BRAND.blue}15` },
+   334→    { label: 'Learning Completions', value: stats.learningCompletions, icon: CheckCircle, color: BRAND.green, bgColor: `${BRAND.green}15` },
+   335→  ]
+   336→
+   337→  return (
+   338→    <div className="space-y-6">
+   339→      <div className="flex items-center justify-between">
+   340→        <h2 className="text-xl font-bold" style={{ color: BRAND.dark }}>Dashboard Overview</h2>
+   341→        <Button variant="outline" size="sm" onClick={loadStats} className="min-h-[44px]">
+   342→          <RefreshCw className="w-4 h-4 mr-1" /> Refresh
+   343→        </Button>
+   344→      </div>
+   345→
+   346→      {/* Stat Cards */}
+   347→      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+   348→        {statCards.map(card => (
+   349→          <Card key={card.label} className="border-0 shadow-sm">
+   350→            <CardContent className="p-4">
+   351→              <div className="flex items-center gap-3">
+   352→                <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: card.bgColor }}>
+   353→                  <card.icon className="w-5 h-5" style={{ color: card.color }} />
+   354→                </div>
+   355→                <div>
+   356→                  <p className="text-2xl font-bold" style={{ color: BRAND.dark }}>{card.value}</p>
+   357→                  <p className="text-xs" style={{ color: BRAND.muted }}>{card.label}</p>
+   358→                </div>
+   359→              </div>
+   360→            </CardContent>
+   361→          </Card>
+   362→        ))}
+   363→      </div>
+   364→
+   365→      {/* Progress Breakdown */}
+   366→      {stats.progressByStatus && Object.keys(stats.progressByStatus).length > 0 && (
+   367→        <Card className="border-0 shadow-sm">
+   368→          <CardHeader className="pb-2">
+   369→            <CardTitle className="text-sm font-semibold" style={{ color: BRAND.dark }}>Learning Progress Breakdown</CardTitle>
+   370→          </CardHeader>
+   371→          <CardContent>
+   372→            <div className="grid grid-cols-3 gap-3">
+   373→              {Object.entries(stats.progressByStatus).map(([status, count]) => (
+   374→                <div key={status} className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: BRAND.surface }}>
+   375→                  <Badge variant="outline" className="text-xs" style={{ borderColor: BRAND.green, color: BRAND.green }}>
+   376→                    {status}
+   377→                  </Badge>
+   378→                  <span className="font-semibold text-sm" style={{ color: BRAND.dark }}>{count}</span>
+   379→                </div>
+   380→              ))}
+   381→            </div>
+   382→          </CardContent>
+   383→        </Card>
+   384→      )}
+   385→
+   386→      {/* Recent Users */}
+   387→      {recentUsers && recentUsers.length > 0 && (
+   388→        <Card className="border-0 shadow-sm">
+   389→          <CardHeader className="pb-2">
+   390→            <CardTitle className="text-sm font-semibold" style={{ color: BRAND.dark }}>Recent Users</CardTitle>
+   391→          </CardHeader>
+   392→          <CardContent>
+   393→            <div className="space-y-2">
+   394→              {recentUsers.map(u => (
+   395→                <div key={u.id} className="flex items-center justify-between py-2 px-3 rounded-lg" style={{ background: BRAND.bg }}>
+   396→                  <div className="flex items-center gap-2">
+   397→                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold" style={{ background: `${BRAND.green}15`, color: BRAND.green }}>
+   398→                      {u.name?.charAt(0) || '?'}
+   399→                    </div>
+   400→                    <div>
+   401→                      <p className="text-sm font-medium" style={{ color: BRAND.dark }}>{u.name}</p>
+   402→                      <p className="text-xs" style={{ color: BRAND.muted }}>{u.email || 'No email'}</p>
+   403→                    </div>
+   404→                  </div>
+   405→                  {u.is_admin && (
+   406→                    <Badge className="text-xs" style={{ background: `${BRAND.blue}15`, color: BRAND.blue }}>Admin</Badge>
+   407→                  )}
+   408→                </div>
+   409→              ))}
+   410→            </div>
+   411→          </CardContent>
+   412→        </Card>
+   413→      )}
+   414→
+   415→      {/* Quick Actions */}
+   416→      <div className="flex flex-wrap gap-3">
+   417→        <Button
+   418→          onClick={() => navigateTo('admin-products')}
+   419→          className="min-h-[44px]"
+   420→          style={{ background: BRAND.green, color: '#fff' }}
+   421→        >
+   422→          <Plus className="w-4 h-4 mr-1" /> Add Product
+   423→        </Button>
+   424→        <Button
+   425→          onClick={() => navigateTo('admin-campaigns')}
+   426→          className="min-h-[44px]"
+   427→          style={{ background: BRAND.blue, color: '#fff' }}
+   428→        >
+   429→          <Plus className="w-4 h-4 mr-1" /> Add Campaign
+   430→        </Button>
+   431→      </div>
+   432→    </div>
+   433→  )
+   434→}
+   435→
+   436→// ═══════════════════════════════════════════════════════════
+   437→// 2. PRODUCTS TAB
+   438→// ═══════════════════════════════════════════════════════════
+   439→
+   440→function ProductsTab() {
+   441→  const isMobile = useIsMobile()
+   442→  const { user } = useAppStore()
+   443→  const [products, setProducts] = useState<Product[]>([])
+   444→  const [loading, setLoading] = useState(true)
+   445→  const [search, setSearch] = useState('')
+   446→  const [filter, setFilter] = useState<'all' | 'active' | 'inactive'>('all')
+   447→  const [showForm, setShowForm] = useState(false)
+   448→  const [editingProduct, setEditingProduct] = useState<Product | null>(null)
+   449→  const [deleteTarget, setDeleteTarget] = useState<Product | null>(null)
+   450→  const [saving, setSaving] = useState(false)
+   451→
+   452→  // Form state
+   453→  const emptyProduct = {
+   454→    name: '', slug: '', description: '', short_description: '',
+   455→    price: 0, mrp: 0, stock: 0, image_url: '',
+   456→    type: 'FIZZ', category: 'Wellness Shot', active: true, featured: false,
+   457→    brand: 'NOTJUST', flavor: '', sku: '', weight: '',
+   458→    ingredients: '', nutrition_info: '', tags: '',
+   459→    allergen_info: '', storage_info: '', shelf_life: '',
+   460→    country_origin: 'India', fssai_license: '', hsn_code: '',
+   461→    gst_rate: 18, min_order_qty: 1, max_order_qty: 10,
+   462→    discount_label: '', highlights: '',
+   463→  }
+   464→  const [form, setForm] = useState(emptyProduct)
+   465→
+   466→  const loadProducts = useCallback(async () => {
+   467→    setLoading(true)
+   468→    try {
+   469→      const data = await productService.list()
+   470→      setProducts(data)
+   471→    } catch (err: any) {
+   472→      toast.error('Failed to load products: ' + (err.message || 'Unknown error'))
+   473→    } finally {
+   474→      setLoading(false)
+   475→    }
+   476→  }, [])
+   477→
+   478→  useEffect(() => { loadProducts() }, [loadProducts])
+   479→
+   480→  const filtered = products.filter(p => {
+   481→    const matchSearch = !search || p.name.toLowerCase().includes(search.toLowerCase()) || p.slug.toLowerCase().includes(search.toLowerCase())
+   482→    const matchFilter = filter === 'all' || (filter === 'active' && p.active) || (filter === 'inactive' && !p.active)
+   483→    return matchSearch && matchFilter
+   484→  })
+   485→
+   486→  const openCreate = () => {
+   487→    setEditingProduct(null)
+   488→    setForm(emptyProduct)
+   489→    setShowForm(true)
+   490→  }
+   491→
+   492→  const openEdit = (p: Product) => {
+   493→    setEditingProduct(p)
+   494→    setForm({
+   495→      name: p.name, slug: p.slug, description: p.description || '', short_description: p.short_description || '',
+   496→      price: p.price, mrp: p.mrp || 0, stock: p.stock, image_url: p.image_url || '',
+   497→      type: p.type, category: p.category || 'Wellness Shot', active: p.active, featured: p.featured || false,
+   498→      brand: p.brand || 'NOTJUST', flavor: p.flavor || '', sku: p.sku || '', weight: p.weight || '',
+   499→      ingredients: p.ingredients || '', nutrition_info: p.nutrition_info || '', tags: p.tags || '',
+   500→      allergen_info: p.allergen_info || '', storage_info: p.storage_info || '', shelf_life: p.shelf_life || '',
+   501→      country_origin: p.country_origin || 'India', fssai_license: p.fssai_license || '', hsn_code: p.hsn_code || '',
+   502→      gst_rate: p.gst_rate || 18, min_order_qty: p.min_order_qty || 1, max_order_qty: p.max_order_qty || 10,
+   503→      discount_label: p.discount_label || '', highlights: p.highlights || '',
+   504→    })
+   505→    setShowForm(true)
+   506→  }
+   507→
+   508→  const handleSave = async () => {
+   509→    if (!form.name || !form.slug) {
+   510→      toast.error('Name and slug are required')
+   511→      return
+   512→    }
+   513→    if (form.price <= 0) {
+   514→      toast.error('Price must be greater than 0')
+   515→      return
+   516→    }
+   517→    setSaving(true)
+   518→    try {
+   519→      if (editingProduct) {
+   520→        await productService.update(editingProduct.id, form, user?.id || '')
+   521→        toast.success('Product updated successfully')
+   522→      } else {
+   523→        await productService.create(form, user?.id || '')
+   524→        toast.success('Product created successfully')
+   525→      }
+   526→      setShowForm(false)
+   527→      loadProducts()
+   528→    } catch (err: any) {
+   529→      toast.error('Failed to save product: ' + (err.message || 'Unknown error'))
+   530→    } finally {
+   531→      setSaving(false)
+   532→    }
+   533→  }
+   534→
+   535→  const handleDelete = async () => {
+   536→    if (!deleteTarget) return
+   537→    setSaving(true)
+   538→    try {
+   539→      await productService.delete(deleteTarget.id, user?.id || '')
+   540→      toast.success('Product deleted successfully')
+   541→      setDeleteTarget(null)
+   542→      loadProducts()
+   543→    } catch (err: any) {
+   544→      toast.error('Failed to delete product: ' + (err.message || 'Unknown error'))
+   545→    } finally {
+   546→      setSaving(false)
+   547→    }
+   548→  }
+   549→
+   550→  const copyShareLink = (p: Product) => {
+   551→    const url = `${window.location.origin}?product=${p.slug}`
+   552→    navigator.clipboard.writeText(url)
+   553→    toast.success('Share link copied!')
+   554→  }
+   555→
+   556→  if (loading) {
+   557→    return (
+   558→      <div className="flex items-center justify-center py-20">
+   559→        <Loader2 className="w-8 h-8 animate-spin" style={{ color: BRAND.green }} />
+   560→      </div>
+   561→    )
+   562→  }
+   563→
+   564→  return (
+   565→    <div className="space-y-4">
+   566→      {/* Header + Search */}
+   567→      <div className="flex items-center justify-between flex-wrap gap-3">
+   568→        <h2 className="text-xl font-bold" style={{ color: BRAND.dark }}>Products</h2>
+   569→        <Button onClick={openCreate} className="min-h-[44px]" style={{ background: BRAND.green, color: '#fff' }}>
+   570→          <Plus className="w-4 h-4 mr-1" /> Add Product
+   571→        </Button>
+   572→      </div>
+   573→
+   574→      <div className="flex gap-2 flex-wrap">
+   575→        <div className="relative flex-1 min-w-[200px]">
+   576→          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2" style={{ color: BRAND.muted }} />
+   577→          <Input
+   578→            placeholder="Search products..."
+   579→            value={search}
+   580→            onChange={e => setSearch(e.target.value)}
+   581→            className="pl-9 min-h-[44px]"
+   582→            style={{ background: '#fff' }}
+   583→          />
+   584→        </div>
+   585→        <Select value={filter} onValueChange={(v: any) => setFilter(v)}>
+   586→          <SelectTrigger className="w-[130px] min-h-[44px]" style={{ background: '#fff' }}>
+   587→            <Filter className="w-4 h-4 mr-1" style={{ color: BRAND.muted }} />
+   588→            <SelectValue />
+   589→          </SelectTrigger>
+   590→          <SelectContent>
+   591→            <SelectItem value="all">All</SelectItem>
+   592→            <SelectItem value="active">Active</SelectItem>
+   593→            <SelectItem value="inactive">Inactive</SelectItem>
+   594→          </SelectContent>
+   595→        </Select>
+   596→      </div>
+   597→
+   598→      {/* Products Display */}
+   599→      {filtered.length === 0 ? (
+   600→        <div className="text-center py-10" style={{ color: BRAND.muted }}>No products found</div>
+   601→      ) : isMobile ? (
+   602→        <div className="space-y-3">
+   603→          {filtered.map(p => (
+   604→            <ProductCard key={p.id} product={p} onEdit={openEdit} onDelete={setDeleteTarget} onCopy={copyShareLink} />
+   605→          ))}
+   606→        </div>
+   607→      ) : (
+   608→        <Card className="border-0 shadow-sm overflow-hidden">
+   609→          <Table>
+   610→            <TableHeader>
+   611→              <TableRow style={{ background: BRAND.bg }}>
+   612→                <TableHead className="text-xs font-semibold">Name</TableHead>
+   613→                <TableHead className="text-xs font-semibold">Type</TableHead>
+   614→                <TableHead className="text-xs font-semibold">Price</TableHead>
+   615→                <TableHead className="text-xs font-semibold">Stock</TableHead>
+   616→                <TableHead className="text-xs font-semibold">Status</TableHead>
+   617→                <TableHead className="text-xs font-semibold text-right">Actions</TableHead>
+   618→              </TableRow>
+   619→            </TableHeader>
+   620→            <TableBody>
+   621→              {filtered.map(p => (
+   622→                <TableRow key={p.id} className="hover:bg-gray-50">
+   623→                  <TableCell>
+   624→                    <div className="flex items-center gap-2">
+   625→                      {p.image_url && (
+   626→                        <img src={p.image_url} alt={p.name} className="w-8 h-8 rounded-md object-cover" />
+   627→                      )}
+   628→                      <span className="font-medium text-sm" style={{ color: BRAND.dark }}>{p.name}</span>
+   629→                    </div>
+   630→                  </TableCell>
+   631→                  <TableCell>
+   632→                    <Badge variant="outline" className="text-xs" style={{ borderColor: BRAND.lime, color: BRAND.lime }}>
+   633→                      {p.type}
+   634→                    </Badge>
+   635→                  </TableCell>
+   636→                  <TableCell className="font-semibold text-sm">₹{p.price}</TableCell>
+   637→                  <TableCell className="text-sm">{p.stock}</TableCell>
+   638→                  <TableCell>
+   639→                    <Badge className="text-xs" style={{
+   640→                      background: p.active ? `${BRAND.green}15` : `${BRAND.muted}15`,
+   641→                      color: p.active ? BRAND.green : BRAND.muted,
+   642→                    }}>
+   643→                      {p.active ? 'Active' : 'Inactive'}
+   644→                    </Badge>
+   645→                  </TableCell>
+   646→                  <TableCell className="text-right">
+   647→                    <div className="flex items-center gap-1 justify-end">
+   648→                      <Button variant="ghost" size="icon" className="h-8 w-8 min-h-[44px]" onClick={() => openEdit(p)}>
+   649→                        <Pencil className="w-4 h-4" style={{ color: BRAND.blue }} />
+   650→                      </Button>
+   651→                      <Button variant="ghost" size="icon" className="h-8 w-8 min-h-[44px]" onClick={() => copyShareLink(p)}>
+   652→                        <Copy className="w-4 h-4" style={{ color: BRAND.lime }} />
+   653→                      </Button>
+   654→                      <Button variant="ghost" size="icon" className="h-8 w-8 min-h-[44px]" onClick={() => setDeleteTarget(p)}>
+   655→                        <Trash2 className="w-4 h-4" style={{ color: '#ef4444' }} />
+   656→                      </Button>
+   657→                    </div>
+   658→                  </TableCell>
+   659→                </TableRow>
+   660→              ))}
+   661→            </TableBody>
+   662→          </Table>
+   663→        </Card>
+   664→      )}
+   665→
+   666→      {/* Product Form */}
+   667→      <FormWrapper
+   668→        open={showForm}
+   669→        onClose={() => setShowForm(false)}
+   670→        title={editingProduct ? 'Edit Product' : 'Create Product'}
+   671→        description={editingProduct ? `Editing ${editingProduct.name}` : 'Add a new product to the catalog'}
+   672→        isMobile={isMobile}
+   673→      >
+   674→        <ProductForm form={form} setForm={setForm} saving={saving} onSave={handleSave} onCancel={() => setShowForm(false)} />
+   675→      </FormWrapper>
+   676→
+   677→      {/* Delete Confirmation */}
+   678→      <AlertDialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
+   679→        <AlertDialogContent>
+   680→          <AlertDialogHeader>
+   681→            <AlertDialogTitle>Delete Product</AlertDialogTitle>
+   682→            <AlertDialogDescription>
+   683→              Are you sure you want to delete "{deleteTarget?.name}"? This action cannot be undone and will also remove all associated videos and quizzes.
+   684→            </AlertDialogDescription>
+   685→          </AlertDialogHeader>
+   686→          <AlertDialogFooter>
+   687→            <AlertDialogCancel className="min-h-[44px]">Cancel</AlertDialogCancel>
+   688→            <AlertDialogAction
+   689→              onClick={handleDelete}
+   690→              className="min-h-[44px]"
+   691→              style={{ background: '#ef4444', color: '#fff' }}
+   692→              disabled={saving}
+   693→            >
+   694→              {saving ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null} Delete
+   695→            </AlertDialogAction>
+   696→          </AlertDialogFooter>
+   697→        </AlertDialogContent>
+   698→      </AlertDialog>
+   699→    </div>
+   700→  )
+   701→}
+   702→
+   703→// ─── Product Card (Mobile) ────────────────────────────────
+   704→function ProductCard({ product, onEdit, onDelete, onCopy }: {
+   705→  product: Product
+   706→  onEdit: (p: Product) => void
+   707→  onDelete: (p: Product) => void
+   708→  onCopy: (p: Product) => void
+   709→}) {
+   710→  return (
+   711→    <Card className="border-0 shadow-sm">
+   712→      <CardContent className="p-4">
+   713→        <div className="flex items-start gap-3">
+   714→          {product.image_url && (
+   715→            <img src={product.image_url} alt={product.name} className="w-12 h-12 rounded-lg object-cover" />
+   716→          )}
+   717→          <div className="flex-1 min-w-0">
+   718→            <div className="flex items-center gap-2 mb-1">
+   719→              <h3 className="font-semibold text-sm truncate" style={{ color: BRAND.dark }}>{product.name}</h3>
+   720→              <Badge variant="outline" className="text-xs shrink-0" style={{ borderColor: BRAND.lime, color: BRAND.lime }}>
+   721→                {product.type}
+   722→              </Badge>
+   723→            </div>
+   724→            <div className="flex items-center gap-3 text-xs mb-2" style={{ color: BRAND.muted }}>
+   725→              <span className="font-semibold" style={{ color: BRAND.dark }}>₹{product.price}</span>
+   726→              <span>Stock: {product.stock}</span>
+   727→            </div>
+   728→            <Badge className="text-xs" style={{
+   729→              background: product.active ? `${BRAND.green}15` : `${BRAND.muted}15`,
+   730→              color: product.active ? BRAND.green : BRAND.muted,
+   731→            }}>
+   732→              {product.active ? 'Active' : 'Inactive'}
+   733→            </Badge>
+   734→          </div>
+   735→        </div>
+   736→        <div className="flex gap-2 mt-3 pt-3 border-t" style={{ borderColor: BRAND.surface }}>
+   737→          <Button variant="outline" size="sm" className="min-h-[44px] text-xs" onClick={() => onEdit(product)}>
+   738→            <Pencil className="w-3.5 h-3.5 mr-1" /> Edit
+   739→          </Button>
+   740→          <Button variant="outline" size="sm" className="min-h-[44px] text-xs" onClick={() => onCopy(product)}>
+   741→            <Copy className="w-3.5 h-3.5 mr-1" /> Copy Link
+   742→          </Button>
+   743→          <Button variant="outline" size="sm" className="min-h-[44px] text-xs" onClick={() => onDelete(product)} style={{ color: '#ef4444', borderColor: '#ef4444' }}>
+   744→            <Trash2 className="w-3.5 h-3.5 mr-1" /> Delete
+   745→          </Button>
+   746→        </div>
+   747→      </CardContent>
+   748→    </Card>
+   749→  )
+   750→}
+   751→
+   752→// ─── Product Form ─────────────────────────────────────────
+   753→function ProductForm({ form, setForm, saving, onSave, onCancel }: {
+   754→  form: any
+   755→  setForm: (f: any) => void
+   756→  saving: boolean
+   757→  onSave: () => void
+   758→  onCancel: () => void
+   759→}) {
+   760→  const updateField = (field: string, value: any) => setForm({ ...form, [field]: value })
+   761→
+   762→  return (
+   763→    <div className="space-y-4 pb-4">
+   764→      {/* Basic Info */}
+   765→      <div className="space-y-3">
+   766→        <h4 className="font-semibold text-xs uppercase tracking-wider" style={{ color: BRAND.muted }}>Basic Info</h4>
+   767→        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+   768→          <div>
+   769→            <Label className="text-xs">Name *</Label>
+   770→            <Input value={form.name} onChange={e => updateField('name', e.target.value)} className="min-h-[44px]" />
+   771→          </div>
+   772→          <div>
+   773→            <Label className="text-xs">Slug *</Label>
+   774→            <Input value={form.slug} onChange={e => updateField('slug', e.target.value)} className="min-h-[44px]" />
+   775→          </div>
+   776→          <div>
+   777→            <Label className="text-xs">Type</Label>
+   778→            <Select value={form.type} onValueChange={v => updateField('type', v)}>
+   779→              <SelectTrigger className="min-h-[44px]"><SelectValue /></SelectTrigger>
+   780→              <SelectContent>
+   781→                <SelectItem value="FIZZ">FIZZ</SelectItem>
+   782→                <SelectItem value="STILL">STILL</SelectItem>
+   783→              </SelectContent>
+   784→            </Select>
+   785→          </div>
+   786→          <div>
+   787→            <Label className="text-xs">Category</Label>
+   788→            <Input value={form.category} onChange={e => updateField('category', e.target.value)} className="min-h-[44px]" />
+   789→          </div>
+   790→        </div>
+   791→        <div>
+   792→          <Label className="text-xs">Short Description</Label>
+   793→          <Input value={form.short_description} onChange={e => updateField('short_description', e.target.value)} className="min-h-[44px]" />
+   794→        </div>
+   795→        <div>
+   796→          <Label className="text-xs">Description</Label>
+   797→          <Textarea value={form.description} onChange={e => updateField('description', e.target.value)} rows={3} />
+   798→        </div>
+   799→      </div>
+   800→
+   801→      <Separator />
+   802→
+   803→      {/* Pricing */}
+   804→      <div className="space-y-3">
+   805→        <h4 className="font-semibold text-xs uppercase tracking-wider" style={{ color: BRAND.muted }}>Pricing & Inventory</h4>
+   806→        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+   807→          <div>
+   808→            <Label className="text-xs">Price (₹) *</Label>
+   809→            <Input type="number" value={form.price} onChange={e => updateField('price', parseFloat(e.target.value) || 0)} className="min-h-[44px]" />
+   810→          </div>
+   811→          <div>
+   812→            <Label className="text-xs">MRP (₹)</Label>
+   813→            <Input type="number" value={form.mrp} onChange={e => updateField('mrp', parseFloat(e.target.value) || 0)} className="min-h-[44px]" />
+   814→          </div>
+   815→          <div>
+   816→            <Label className="text-xs">Stock</Label>
+   817→            <Input type="number" value={form.stock} onChange={e => updateField('stock', parseInt(e.target.value) || 0)} className="min-h-[44px]" />
+   818→          </div>
+   819→          <div>
+   820→            <Label className="text-xs">GST Rate (%)</Label>
+   821→            <Input type="number" value={form.gst_rate} onChange={e => updateField('gst_rate', parseFloat(e.target.value) || 0)} className="min-h-[44px]" />
+   822→          </div>
+   823→        </div>
+   824→      </div>
+   825→
+   826→      <Separator />
+   827→
+   828→      {/* Status */}
+   829→      <div className="space-y-3">
+   830→        <h4 className="font-semibold text-xs uppercase tracking-wider" style={{ color: BRAND.muted }}>Status</h4>
+   831→        <div className="flex items-center gap-4">
+   832→          <div className="flex items-center gap-2">
+   833→            <Switch checked={form.active} onCheckedChange={v => updateField('active', v)} />
+   834→            <Label className="text-xs">Active</Label>
+   835→          </div>
+   836→          <div className="flex items-center gap-2">
+   837→            <Switch checked={form.featured} onCheckedChange={v => updateField('featured', v)} />
+   838→            <Label className="text-xs">Featured</Label>
+   839→          </div>
+   840→        </div>
+   841→      </div>
+   842→
+   843→      <Separator />
+   844→
+   845→      {/* Details */}
+   846→      <div className="space-y-3">
+   847→        <h4 className="font-semibold text-xs uppercase tracking-wider" style={{ color: BRAND.muted }}>Product Details</h4>
+   848→        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+   849→          <div>
+   850→            <Label className="text-xs">Brand</Label>
+   851→            <Input value={form.brand} onChange={e => updateField('brand', e.target.value)} className="min-h-[44px]" />
+   852→          </div>
+   853→          <div>
+   854→            <Label className="text-xs">Flavor</Label>
+   855→            <Input value={form.flavor} onChange={e => updateField('flavor', e.target.value)} className="min-h-[44px]" />
+   856→          </div>
+   857→          <div>
+   858→            <Label className="text-xs">SKU</Label>
+   859→            <Input value={form.sku} onChange={e => updateField('sku', e.target.value)} className="min-h-[44px]" />
+   860→          </div>
+   861→          <div>
+   862→            <Label className="text-xs">Weight</Label>
+   863→            <Input value={form.weight} onChange={e => updateField('weight', e.target.value)} className="min-h-[44px]" />
+   864→          </div>
+   865→          <div>
+   866→            <Label className="text-xs">Image URL</Label>
+   867→            <Input value={form.image_url} onChange={e => updateField('image_url', e.target.value)} className="min-h-[44px]" />
+   868→          </div>
+   869→          <div>
+   870→            <Label className="text-xs">Country Origin</Label>
+   871→            <Input value={form.country_origin} onChange={e => updateField('country_origin', e.target.value)} className="min-h-[44px]" />
+   872→          </div>
+   873→        </div>
+   874→      </div>
+   875→
+   876→      <Separator />
+   877→
+   878→      {/* Health & Safety */}
+   879→      <div className="space-y-3">
+   880→        <h4 className="font-semibold text-xs uppercase tracking-wider" style={{ color: BRAND.muted }}>Health & Safety</h4>
+   881→        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+   882→          <div>
+   883→            <Label className="text-xs">Ingredients</Label>
+   884→            <Textarea value={form.ingredients} onChange={e => updateField('ingredients', e.target.value)} rows={2} />
+   885→          </div>
+   886→          <div>
+   887→            <Label className="text-xs">Nutrition Info</Label>
+   888→            <Textarea value={form.nutrition_info} onChange={e => updateField('nutrition_info', e.target.value)} rows={2} />
+   889→          </div>
+   890→          <div>
+   891→            <Label className="text-xs">Allergen Info</Label>
+   892→            <Input value={form.allergen_info} onChange={e => updateField('allergen_info', e.target.value)} className="min-h-[44px]" />
+   893→          </div>
+   894→          <div>
+   895→            <Label className="text-xs">Storage Info</Label>
+   896→            <Input value={form.storage_info} onChange={e => updateField('storage_info', e.target.value)} className="min-h-[44px]" />
+   897→          </div>
+   898→          <div>
+   899→            <Label className="text-xs">Shelf Life</Label>
+   900→            <Input value={form.shelf_life} onChange={e => updateField('shelf_life', e.target.value)} className="min-h-[44px]" />
+   901→          </div>
+   902→          <div>
+   903→            <Label className="text-xs">FSSAI License</Label>
+   904→            <Input value={form.fssai_license} onChange={e => updateField('fssai_license', e.target.value)} className="min-h-[44px]" />
+   905→          </div>
+   906→        </div>
+   907→      </div>
+   908→
+   909→      {/* Submit */}
+   910→      <div className="flex gap-3 pt-4">
+   911→        <Button
+   912→          onClick={onSave}
+   913→          disabled={saving}
+   914→          className="min-h-[44px] flex-1"
+   915→          style={{ background: BRAND.green, color: '#fff' }}
+   916→        >
+   917→          {saving ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <CheckCircle className="w-4 h-4 mr-1" />}
+   918→          {saving ? 'Saving...' : 'Save Product'}
+   919→        </Button>
+   920→        <Button variant="outline" onClick={onCancel} className="min-h-[44px]">Cancel</Button>
+   921→      </div>
+   922→    </div>
+   923→  )
+   924→}
+   925→
+   926→// ═══════════════════════════════════════════════════════════
+   927→// 3. LEARNING CONTENT TAB
+   928→// ═══════════════════════════════════════════════════════════
+   929→
+   930→function LearningTab() {
+   931→  const isMobile = useIsMobile()
+   932→  const { user } = useAppStore()
+   933→  const [products, setProducts] = useState<Product[]>([])
+   934→  const [selectedProductId, setSelectedProductId] = useState<string>('')
+   935→  const [videos, setVideos] = useState<ProductVideo[]>([])
+   936→  const [quizzes, setQuizzes] = useState<ProductQuiz[]>([])
+   937→  const [loadingProducts, setLoadingProducts] = useState(true)
+   938→  const [loadingContent, setLoadingContent] = useState(false)
+   939→
+   940→  // Video CRUD state
+   941→  const [showVideoForm, setShowVideoForm] = useState(false)
+   942→  const [editingVideo, setEditingVideo] = useState<ProductVideo | null>(null)
+   943→  const [deleteVideoTarget, setDeleteVideoTarget] = useState<ProductVideo | null>(null)
+   944→  const [savingVideo, setSavingVideo] = useState(false)
+   945→
+   946→  const emptyVideo = { title: '', duration: '5:00', description: '', order: 0, video_url: '', active: true }
+   947→  const [videoForm, setVideoForm] = useState(emptyVideo)
+   948→
+   949→  // Quiz CRUD state
+   950→  const [showQuizForm, setShowQuizForm] = useState(false)
+   951→  const [editingQuiz, setEditingQuiz] = useState<ProductQuiz | null>(null)
+   952→  const [deleteQuizTarget, setDeleteQuizTarget] = useState<ProductQuiz | null>(null)
+   953→  const [savingQuiz, setSavingQuiz] = useState(false)
+   954→
+   955→  const emptyQuizForm = { question: '', options: ['', '', '', ''], answer: 0, video_id: '', difficulty: 'EASY', order: 0, active: true }
+   956→  const [quizForm, setQuizForm] = useState(emptyQuizForm)
+   957→
+   958→  // Load products for dropdown
+   959→  const loadProducts = useCallback(async () => {
+   960→    setLoadingProducts(true)
+   961→    try {
+   962→      const data = await productService.list()
+   963→      setProducts(data)
+   964→      if (data.length > 0 && !selectedProductId) {
+   965→        setSelectedProductId(data[0].id)
+   966→      }
+   967→    } catch (err: any) {
+   968→      toast.error('Failed to load products')
+   969→    } finally {
+   970→      setLoadingProducts(false)
+   971→    }
+   972→  }, [])
+   973→
+   974→  useEffect(() => { loadProducts() }, [loadProducts])
+   975→
+   976→  // Load videos and quizzes when product selected
+   977→  const loadContent = useCallback(async () => {
+   978→    if (!selectedProductId) return
+   979→    setLoadingContent(true)
+   980→    try {
+   981→      const [vData, qData] = await Promise.all([
+   982→        productVideoService.list(selectedProductId),
+   983→        productQuizService.list(selectedProductId),
+   984→      ])
+   985→      setVideos(vData)
+   986→      setQuizzes(qData)
+   987→    } catch (err: any) {
+   988→      toast.error('Failed to load learning content')
+   989→    } finally {
+   990→      setLoadingContent(false)
+   991→    }
+   992→  }, [selectedProductId])
+   993→
+   994→  useEffect(() => { loadContent() }, [loadContent])
+   995→
+   996→  // Video CRUD handlers
+   997→  const openCreateVideo = () => {
+   998→    setEditingVideo(null)
+   999→    setVideoForm({ ...emptyVideo, order: videos.length + 1 })
+  1000→    setShowVideoForm(true)
+  1001→  }
+  1002→
+  1003→  const openEditVideo = (v: ProductVideo) => {
+  1004→    setEditingVideo(v)
+  1005→    setVideoForm({
+  1006→      title: v.title, duration: v.duration, description: v.description || '',
+  1007→      order: v.order, video_url: v.video_url || '', active: v.active,
+  1008→    })
+  1009→    setShowVideoForm(true)
+  1010→  }
+  1011→
+  1012→  const handleSaveVideo = async () => {
+  1013→    if (!selectedProductId || !videoForm.title) {
+  1014→      toast.error('Title is required')
+  1015→      return
+  1016→    }
+  1017→    setSavingVideo(true)
+  1018→    try {
+  1019→      if (editingVideo) {
+  1020→        await productVideoService.update(selectedProductId, editingVideo.id, videoForm, user?.id || '')
+  1021→        toast.success('Video updated')
+  1022→      } else {
+  1023→        await productVideoService.create(selectedProductId, { ...videoForm, product_id: selectedProductId }, user?.id || '')
+  1024→        toast.success('Video created')
+  1025→      }
+  1026→      setShowVideoForm(false)
+  1027→      loadContent()
+  1028→    } catch (err: any) {
+  1029→      toast.error('Failed to save video: ' + (err.message || 'Unknown error'))
+  1030→    } finally {
+  1031→      setSavingVideo(false)
+  1032→    }
+  1033→  }
+  1034→
+  1035→  const handleDeleteVideo = async () => {
+  1036→    if (!deleteVideoTarget || !selectedProductId) return
+  1037→    setSavingVideo(true)
+  1038→    try {
+  1039→      await productVideoService.delete(selectedProductId, deleteVideoTarget.id, user?.id || '')
+  1040→      toast.success('Video deleted')
+  1041→      setDeleteVideoTarget(null)
+  1042→      loadContent()
+  1043→    } catch (err: any) {
+  1044→      toast.error('Failed to delete video')
+  1045→    } finally {
+  1046→      setSavingVideo(false)
+  1047→    }
+  1048→  }
+  1049→
+  1050→  // Quiz CRUD handlers
+  1051→  const openCreateQuiz = () => {
+  1052→    setEditingQuiz(null)
+  1053→    setQuizForm({ ...emptyQuizForm, order: quizzes.length + 1 })
+  1054→    setShowQuizForm(true)
+  1055→  }
+  1056→
+  1057→  const openEditQuiz = (q: ProductQuiz) => {
+  1058→    setEditingQuiz(q)
+  1059→    setQuizForm({
+  1060→      question: q.question,
+  1061→      options: Array.isArray(q.options) ? q.options : ['', '', '', ''],
+  1062→      answer: q.answer,
+  1063→      video_id: q.video_id,
+  1064→      difficulty: q.difficulty,
+  1065→      order: q.order,
+  1066→      active: q.active,
+  1067→    })
+  1068→    setShowQuizForm(true)
+  1069→  }
+  1070→
+  1071→  const handleSaveQuiz = async () => {
+  1072→    if (!selectedProductId || !quizForm.question || !quizForm.video_id) {
+  1073→      toast.error('Question and video reference are required')
+  1074→      return
+  1075→    }
+  1076→    setSavingQuiz(true)
+  1077→    try {
+  1078→      if (editingQuiz) {
+  1079→        await productQuizService.update(selectedProductId, editingQuiz.id, {
+  1080→          ...quizForm,
+  1081→          options: quizForm.options,
+  1082→        }, user?.id || '')
+  1083→        toast.success('Quiz updated')
+  1084→      } else {
+  1085→        await productQuizService.create(selectedProductId, {
+  1086→          ...quizForm,
+  1087→          product_id: selectedProductId,
+  1088→          options: quizForm.options,
+  1089→        }, user?.id || '')
+  1090→        toast.success('Quiz created')
+  1091→      }
+  1092→      setShowQuizForm(false)
+  1093→      loadContent()
+  1094→    } catch (err: any) {
+  1095→      toast.error('Failed to save quiz: ' + (err.message || 'Unknown error'))
+  1096→    } finally {
+  1097→      setSavingQuiz(false)
+  1098→    }
+  1099→  }
+  1100→
+  1101→  const handleDeleteQuiz = async () => {
+  1102→    if (!deleteQuizTarget || !selectedProductId) return
+  1103→    setSavingQuiz(true)
+  1104→    try {
+  1105→      await productQuizService.delete(selectedProductId, deleteQuizTarget.id, user?.id || '')
+  1106→      toast.success('Quiz deleted')
+  1107→      setDeleteQuizTarget(null)
+  1108→      loadContent()
+  1109→    } catch (err: any) {
+  1110→      toast.error('Failed to delete quiz')
+  1111→    } finally {
+  1112→      setSavingQuiz(false)
+  1113→    }
+  1114→  }
+  1115→
+  1116→  if (loadingProducts) {
+  1117→    return (
+  1118→      <div className="flex items-center justify-center py-20">
+  1119→        <Loader2 className="w-8 h-8 animate-spin" style={{ color: BRAND.green }} />
+  1120→      </div>
+  1121→    )
+  1122→  }
+  1123→
+  1124→  return (
+  1125→    <div className="space-y-6">
+  1126→      <h2 className="text-xl font-bold" style={{ color: BRAND.dark }}>Learning Content</h2>
+  1127→
+  1128→      {/* Product Selector */}
+  1129→      <div className="flex items-center gap-3">
+  1130→        <Label className="text-sm font-medium" style={{ color: BRAND.dark }}>Select Product:</Label>
+  1131→        <Select value={selectedProductId} onValueChange={setSelectedProductId}>
+  1132→          <SelectTrigger className="min-w-[200px] min-h-[44px]" style={{ background: '#fff' }}>
+  1133→            <SelectValue placeholder="Choose a product" />
+  1134→          </SelectTrigger>
+  1135→          <SelectContent>
+  1136→            {products.map(p => (
+  1137→              <SelectItem key={p.id} value={p.id}>{p.name} ({p.type})</SelectItem>
+  1138→            ))}
+  1139→          </SelectContent>
+  1140→        </Select>
+  1141→      </div>
+  1142→
+  1143→      {loadingContent && (
+  1144→        <div className="flex items-center justify-center py-10">
+  1145→          <Loader2 className="w-6 h-6 animate-spin" style={{ color: BRAND.green }} />
+  1146→        </div>
+  1147→      )}
+  1148→
+  1149→      {!loadingContent && selectedProductId && (
+  1150→        <>
+  1151→          {/* Videos Section */}
+  1152→          <Card className="border-0 shadow-sm">
+  1153→            <CardHeader className="pb-3">
+  1154→              <div className="flex items-center justify-between">
+  1155→                <CardTitle className="text-sm font-semibold flex items-center gap-2" style={{ color: BRAND.dark }}>
+  1156→                  <Video className="w-4 h-4" style={{ color: BRAND.green }} />
+  1157→                  Videos ({videos.length})
+  1158→                </CardTitle>
+  1159→                <Button size="sm" className="min-h-[44px]" style={{ background: BRAND.green, color: '#fff' }} onClick={openCreateVideo}>
+  1160→                  <Plus className="w-3.5 h-3.5 mr-1" /> Add Video
+  1161→                </Button>
+  1162→              </div>
+  1163→            </CardHeader>
+  1164→            <CardContent>
+  1165→              {videos.length === 0 ? (
+  1166→                <p className="text-center py-6 text-sm" style={{ color: BRAND.muted }}>No videos yet. Add the first one!</p>
+  1167→              ) : (
+  1168→                <ScrollArea className="max-h-96">
+  1169→                  <div className="space-y-2">
+  1170→                    {videos.map(v => (
+  1171→                      <div key={v.id} className="flex items-center justify-between p-3 rounded-lg" style={{ background: BRAND.bg }}>
+  1172→                        <div className="flex items-center gap-3 min-w-0 flex-1">
+  1173→                          <div className="w-7 h-7 rounded-md flex items-center justify-center text-xs font-bold shrink-0" style={{ background: `${BRAND.green}15`, color: BRAND.green }}>
+  1174→                            {v.order}
+  1175→                          </div>
+  1176→                          <div className="min-w-0">
+  1177→                            <p className="text-sm font-medium truncate" style={{ color: BRAND.dark }}>{v.title}</p>
+  1178→                            <p className="text-xs" style={{ color: BRAND.muted }}>{v.duration} · {v.active ? 'Active' : 'Inactive'}</p>
+  1179→                          </div>
+  1180→                        </div>
+  1181→                        <div className="flex items-center gap-1 shrink-0">
+  1182→                          <Button variant="ghost" size="icon" className="h-8 w-8 min-h-[44px]" onClick={() => openEditVideo(v)}>
+  1183→                            <Pencil className="w-3.5 h-3.5" style={{ color: BRAND.blue }} />
+  1184→                          </Button>
+  1185→                          <Button variant="ghost" size="icon" className="h-8 w-8 min-h-[44px]" onClick={() => setDeleteVideoTarget(v)}>
+  1186→                            <Trash2 className="w-3.5 h-3.5" style={{ color: '#ef4444' }} />
+  1187→                          </Button>
+  1188→                        </div>
+  1189→                      </div>
+  1190→                    ))}
+  1191→                  </div>
+  1192→                </ScrollArea>
+  1193→              )}
+  1194→            </CardContent>
+  1195→          </Card>
+  1196→
+  1197→          {/* Quizzes Section */}
+  1198→          <Card className="border-0 shadow-sm">
+  1199→            <CardHeader className="pb-3">
+  1200→              <div className="flex items-center justify-between">
+  1201→                <CardTitle className="text-sm font-semibold flex items-center gap-2" style={{ color: BRAND.dark }}>
+  1202→                  <HelpCircle className="w-4 h-4" style={{ color: BRAND.lime }} />
+  1203→                  Quizzes ({quizzes.length})
+  1204→                </CardTitle>
+  1205→                <Button size="sm" className="min-h-[44px]" style={{ background: BRAND.lime, color: BRAND.dark }} onClick={openCreateQuiz}>
+  1206→                  <Plus className="w-3.5 h-3.5 mr-1" /> Add Quiz
+  1207→                </Button>
+  1208→              </div>
+  1209→            </CardHeader>
+  1210→            <CardContent>
+  1211→              {quizzes.length === 0 ? (
+  1212→                <p className="text-center py-6 text-sm" style={{ color: BRAND.muted }}>No quizzes yet. Add the first one!</p>
+  1213→              ) : (
+  1214→                <ScrollArea className="max-h-96">
+  1215→                  <div className="space-y-2">
+  1216→                    {quizzes.map(q => (
+  1217→                      <div key={q.id} className="flex items-center justify-between p-3 rounded-lg" style={{ background: BRAND.bg }}>
+  1218→                        <div className="flex items-center gap-3 min-w-0 flex-1">
+  1219→                          <div className="w-7 h-7 rounded-md flex items-center justify-center text-xs font-bold shrink-0" style={{ background: `${BRAND.lime}15`, color: BRAND.lime }}>
+  1220→                            {q.order}
+  1221→                          </div>
+  1222→                          <div className="min-w-0">
+  1223→                            <p className="text-sm font-medium truncate" style={{ color: BRAND.dark }}>{q.question}</p>
+  1224→                            <p className="text-xs" style={{ color: BRAND.muted }}>
+  1225→                              {q.difficulty} · {q.category || 'General'} · {q.active ? 'Active' : 'Inactive'}
+  1226→                              {q.video?.title && ` · Video: ${q.video.title}`}
+  1227→                            </p>
+  1228→                          </div>
+  1229→                        </div>
+  1230→                        <div className="flex items-center gap-1 shrink-0">
+  1231→                          <Button variant="ghost" size="icon" className="h-8 w-8 min-h-[44px]" onClick={() => openEditQuiz(q)}>
+  1232→                            <Pencil className="w-3.5 h-3.5" style={{ color: BRAND.blue }} />
+  1233→                          </Button>
+  1234→                          <Button variant="ghost" size="icon" className="h-8 w-8 min-h-[44px]" onClick={() => setDeleteQuizTarget(q)}>
+  1235→                            <Trash2 className="w-3.5 h-3.5" style={{ color: '#ef4444' }} />
+  1236→                          </Button>
+  1237→                        </div>
+  1238→                      </div>
+  1239→                    ))}
+  1240→                  </div>
+  1241→                </ScrollArea>
+  1242→              )}
+  1243→            </CardContent>
+  1244→          </Card>
+  1245→        </>
+  1246→      )}
+  1247→
+  1248→      {/* Video Form */}
+  1249→      <FormWrapper
+  1250→        open={showVideoForm}
+  1251→        onClose={() => setShowVideoForm(false)}
+  1252→        title={editingVideo ? 'Edit Video' : 'Add Video'}
+  1253→        isMobile={isMobile}
+  1254→      >
+  1255→        <div className="space-y-4 pb-4">
+  1256→          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+  1257→            <div>
+  1258→              <Label className="text-xs">Title *</Label>
+  1259→              <Input value={videoForm.title} onChange={e => setVideoForm({ ...videoForm, title: e.target.value })} className="min-h-[44px]" />
+  1260→            </div>
+  1261→            <div>
+  1262→              <Label className="text-xs">Duration</Label>
+  1263→              <Input value={videoForm.duration} onChange={e => setVideoForm({ ...videoForm, duration: e.target.value })} className="min-h-[44px]" placeholder="5:00" />
+  1264→            </div>
+  1265→          </div>
+  1266→          <div>
+  1267→            <Label className="text-xs">Description</Label>
+  1268→            <Textarea value={videoForm.description} onChange={e => setVideoForm({ ...videoForm, description: e.target.value })} rows={2} />
+  1269→          </div>
+  1270→          <div>
+  1271→            <Label className="text-xs">Video URL</Label>
+  1272→            <Input value={videoForm.video_url} onChange={e => setVideoForm({ ...videoForm, video_url: e.target.value })} className="min-h-[44px]" />
+  1273→          </div>
+  1274→          <div className="grid grid-cols-2 gap-3">
+  1275→            <div>
+  1276→              <Label className="text-xs">Order</Label>
+  1277→              <Input type="number" value={videoForm.order} onChange={e => setVideoForm({ ...videoForm, order: parseInt(e.target.value) || 0 })} className="min-h-[44px]" />
+  1278→            </div>
+  1279→            <div className="flex items-center gap-2 pt-6">
+  1280→              <Switch checked={videoForm.active} onCheckedChange={v => setVideoForm({ ...videoForm, active: v })} />
+  1281→              <Label className="text-xs">Active</Label>
+  1282→            </div>
+  1283→          </div>
+  1284→          <div className="flex gap-3 pt-4">
+  1285→            <Button onClick={handleSaveVideo} disabled={savingVideo} className="min-h-[44px] flex-1" style={{ background: BRAND.green, color: '#fff' }}>
+  1286→              {savingVideo ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null}
+  1287→              {savingVideo ? 'Saving...' : 'Save Video'}
+  1288→            </Button>
+  1289→            <Button variant="outline" onClick={() => setShowVideoForm(false)} className="min-h-[44px]">Cancel</Button>
+  1290→          </div>
+  1291→        </div>
+  1292→      </FormWrapper>
+  1293→
+  1294→      {/* Quiz Form */}
+  1295→      <FormWrapper
+  1296→        open={showQuizForm}
+  1297→        onClose={() => setShowQuizForm(false)}
+  1298→        title={editingQuiz ? 'Edit Quiz Question' : 'Add Quiz Question'}
+  1299→        isMobile={isMobile}
+  1300→      >
+  1301→        <div className="space-y-4 pb-4">
+  1302→          <div>
+  1303→            <Label className="text-xs">Video Reference *</Label>
+  1304→            <Select value={quizForm.video_id} onValueChange={v => setQuizForm({ ...quizForm, video_id: v })}>
+  1305→              <SelectTrigger className="min-h-[44px]" style={{ background: '#fff' }}>
+  1306→                <SelectValue placeholder="Select a video" />
+  1307→              </SelectTrigger>
+  1308→              <SelectContent>
+  1309→                {videos.map(v => (
+  1310→                  <SelectItem key={v.id} value={v.id}>{v.title} (Order {v.order})</SelectItem>
+  1311→                ))}
+  1312→              </SelectContent>
+  1313→            </Select>
+  1314→          </div>
+  1315→          <div>
+  1316→            <Label className="text-xs">Question *</Label>
+  1317→            <Textarea value={quizForm.question} onChange={e => setQuizForm({ ...quizForm, question: e.target.value })} rows={2} />
+  1318→          </div>
+  1319→          <div className="space-y-2">
+  1320→            <Label className="text-xs">Options (at least 2)</Label>
+  1321→            {quizForm.options.map((opt, idx) => (
+  1322→              <div key={idx} className="flex items-center gap-2">
+  1323→                <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0" style={{
+  1324→                  background: quizForm.answer === idx ? BRAND.green : BRAND.surface,
+  1325→                  color: quizForm.answer === idx ? '#fff' : BRAND.muted,
+  1326→                }}>
+  1327→                  {idx + 1}
+  1328→                </div>
+  1329→                <Input
+  1330→                  value={opt}
+  1331→                  onChange={e => {
+  1332→                    const newOpts = [...quizForm.options]
+  1333→                    newOpts[idx] = e.target.value
+  1334→                    setQuizForm({ ...quizForm, options: newOpts })
+  1335→                  }}
+  1336→                  className="min-h-[44px] flex-1"
+  1337→                  placeholder={`Option ${idx + 1}`}
+  1338→                />
+  1339→                <Button
+  1340→                  variant="ghost"
+  1341→                  size="icon"
+  1342→                  className="h-8 w-8 shrink-0"
+  1343→                  onClick={() => setQuizForm({ ...quizForm, answer: idx })}
+  1344→                  style={{ color: quizForm.answer === idx ? BRAND.green : BRAND.muted }}
+  1345→                >
+  1346→                  {quizForm.answer === idx ? <CheckCircle className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
+  1347→                </Button>
+  1348→              </div>
+  1349→            ))}
+  1350→          </div>
+  1351→          <div className="grid grid-cols-2 gap-3">
+  1352→            <div>
+  1353→              <Label className="text-xs">Difficulty</Label>
+  1354→              <Select value={quizForm.difficulty} onValueChange={v => setQuizForm({ ...quizForm, difficulty: v })}>
+  1355→                <SelectTrigger className="min-h-[44px]"><SelectValue /></SelectTrigger>
+  1356→                <SelectContent>
+  1357→                  <SelectItem value="EASY">Easy</SelectItem>
+  1358→                  <SelectItem value="MEDIUM">Medium</SelectItem>
+  1359→                  <SelectItem value="HARD">Hard</SelectItem>
+  1360→                </SelectContent>
+  1361→              </Select>
+  1362→            </div>
+  1363→            <div>
+  1364→              <Label className="text-xs">Order</Label>
+  1365→              <Input type="number" value={quizForm.order} onChange={e => setQuizForm({ ...quizForm, order: parseInt(e.target.value) || 0 })} className="min-h-[44px]" />
+  1366→            </div>
+  1367→          </div>
+  1368→          <div className="flex items-center gap-2">
+  1369→            <Switch checked={quizForm.active} onCheckedChange={v => setQuizForm({ ...quizForm, active: v })} />
+  1370→            <Label className="text-xs">Active</Label>
+  1371→          </div>
+  1372→          <div className="flex gap-3 pt-4">
+  1373→            <Button onClick={handleSaveQuiz} disabled={savingQuiz} className="min-h-[44px] flex-1" style={{ background: BRAND.lime, color: BRAND.dark }}>
+  1374→              {savingQuiz ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null}
+  1375→              {savingQuiz ? 'Saving...' : 'Save Quiz'}
+  1376→            </Button>
+  1377→            <Button variant="outline" onClick={() => setShowQuizForm(false)} className="min-h-[44px]">Cancel</Button>
+  1378→          </div>
+  1379→        </div>
+  1380→      </FormWrapper>
+  1381→
+  1382→      {/* Delete Video Confirmation */}
+  1383→      <AlertDialog open={!!deleteVideoTarget} onOpenChange={() => setDeleteVideoTarget(null)}>
+  1384→        <AlertDialogContent>
+  1385→          <AlertDialogHeader>
+  1386→            <AlertDialogTitle>Delete Video</AlertDialogTitle>
+  1387→            <AlertDialogDescription>
+  1388→              Are you sure you want to delete "{deleteVideoTarget?.title}"? This will also remove any associated quiz questions.
+  1389→            </AlertDialogDescription>
+  1390→          </AlertDialogHeader>
+  1391→          <AlertDialogFooter>
+  1392→            <AlertDialogCancel className="min-h-[44px]">Cancel</AlertDialogCancel>
+  1393→            <AlertDialogAction onClick={handleDeleteVideo} className="min-h-[44px]" style={{ background: '#ef4444', color: '#fff' }} disabled={savingVideo}>
+  1394→              {savingVideo ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null} Delete
+  1395→            </AlertDialogAction>
+  1396→          </AlertDialogFooter>
+  1397→        </AlertDialogContent>
+  1398→      </AlertDialog>
+  1399→
+  1400→      {/* Delete Quiz Confirmation */}
+  1401→      <AlertDialog open={!!deleteQuizTarget} onOpenChange={() => setDeleteQuizTarget(null)}>
+  1402→        <AlertDialogContent>
+  1403→          <AlertDialogHeader>
+  1404→            <AlertDialogTitle>Delete Quiz Question</AlertDialogTitle>
+  1405→            <AlertDialogDescription>
+  1406→              Are you sure you want to delete this quiz question? This action cannot be undone.
+  1407→            </AlertDialogDescription>
+  1408→          </AlertDialogHeader>
+  1409→          <AlertDialogFooter>
+  1410→            <AlertDialogCancel className="min-h-[44px]">Cancel</AlertDialogCancel>
+  1411→            <AlertDialogAction onClick={handleDeleteQuiz} className="min-h-[44px]" style={{ background: '#ef4444', color: '#fff' }} disabled={savingQuiz}>
+  1412→              {savingQuiz ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null} Delete
+  1413→            </AlertDialogAction>
+  1414→          </AlertDialogFooter>
+  1415→        </AlertDialogContent>
+  1416→      </AlertDialog>
+  1417→    </div>
+  1418→  )
+  1419→}
+  1420→
+  1421→// ═══════════════════════════════════════════════════════════
+  1422→// 4. USERS TAB
+  1423→// ═══════════════════════════════════════════════════════════
+  1424→
+  1425→function UsersTab() {
+  1426→  const isMobile = useIsMobile()
+  1427→  const { user: currentUser } = useAppStore()
+  1428→  const [usersData, setUsersData] = useState<UsersListResponse | null>(null)
+  1429→  const [loading, setLoading] = useState(true)
+  1430→  const [search, setSearch] = useState('')
+  1431→  const [page, setPage] = useState(1)
+  1432→  const [toggleLoading, setToggleLoading] = useState<string | null>(null)
+  1433→  const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null)
+  1434→
+  1435→  const loadUsers = useCallback(async () => {
+  1436→    setLoading(true)
+  1437→    try {
+  1438→      const data = await userService.list({ page, limit: 20, search }, currentUser?.id || '')
+  1439→      setUsersData(data)
+  1440→    } catch (err: any) {
+  1441→      toast.error('Failed to load users: ' + (err.message || 'Unknown error'))
+  1442→    } finally {
+  1443→      setLoading(false)
+  1444→    }
+  1445→  }, [page, search])
+  1446→
+  1447→  useEffect(() => { loadUsers() }, [loadUsers])
+  1448→
+  1449→  const handleSearch = (value: string) => {
+  1450→    setSearch(value)
+  1451→    setPage(1) // Reset page on search
+  1452→  }
+  1453→
+  1454→  const toggleAdmin = async (userId: string, currentIsAdmin: boolean) => {
+  1455→    setToggleLoading(userId)
+  1456→    try {
+  1457→      await userService.update(userId, { is_admin: !currentIsAdmin }, currentUser?.id || '')
+  1458→      toast.success(`Admin status updated`)
+  1459→      loadUsers()
+  1460→    } catch (err: any) {
+  1461→      toast.error('Failed to update admin status')
+  1462→    } finally {
+  1463→      setToggleLoading(null)
+  1464→    }
+  1465→  }
+  1466→
+  1467→  if (loading && !usersData) {
+  1468→    return (
+  1469→      <div className="flex items-center justify-center py-20">
+  1470→        <Loader2 className="w-8 h-8 animate-spin" style={{ color: BRAND.green }} />
+  1471→      </div>
+  1472→    )
+  1473→  }
+  1474→
+  1475→  const users = usersData?.users || []
+  1476→  const pagination = usersData?.pagination
+  1477→
+  1478→  return (
+  1479→    <div className="space-y-4">
+  1480→      <div className="flex items-center justify-between flex-wrap gap-3">
+  1481→        <h2 className="text-xl font-bold" style={{ color: BRAND.dark }}>Users</h2>
+  1482→        <span className="text-sm" style={{ color: BRAND.muted }}>
+  1483→          {pagination ? `${pagination.total} total` : ''}
+  1484→        </span>
+  1485→      </div>
+  1486→
+  1487→      {/* Search */}
+  1488→      <div className="relative">
+  1489→        <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2" style={{ color: BRAND.muted }} />
+  1490→        <Input
+  1491→          placeholder="Search by name, email, or phone..."
+  1492→          value={search}
+  1493→          onChange={e => handleSearch(e.target.value)}
+  1494→          className="pl-9 min-h-[44px]"
+  1495→          style={{ background: '#fff' }}
+  1496→        />
+  1497→      </div>
+  1498→
+  1499→      {/* Users Display */}
+  1500→      {users.length === 0 ? (
+  1501→        <div className="text-center py-10" style={{ color: BRAND.muted }}>No users found</div>
+  1502→      ) : isMobile ? (
+  1503→        <div className="space-y-3">
+  1504→          {users.map(u => (
+  1505→            <UserCard key={u.id} user={u} onToggleAdmin={toggleAdmin} onView={setSelectedUser} toggleLoading={toggleLoading} />
+  1506→          ))}
+  1507→        </div>
+  1508→      ) : (
+  1509→        <Card className="border-0 shadow-sm overflow-hidden">
+  1510→          <ScrollArea className="max-h-[500px]">
+  1511→            <Table>
+  1512→              <TableHeader>
+  1513→                <TableRow style={{ background: BRAND.bg }}>
+  1514→                  <TableHead className="text-xs font-semibold">Name</TableHead>
+  1515→                  <TableHead className="text-xs font-semibold">Email</TableHead>
+  1516→                  <TableHead className="text-xs font-semibold">Phone</TableHead>
+  1517→                  <TableHead className="text-xs font-semibold">Admin</TableHead>
+  1518→                  <TableHead className="text-xs font-semibold">Learning</TableHead>
+  1519→                  <TableHead className="text-xs font-semibold">Joined</TableHead>
+  1520→                  <TableHead className="text-xs font-semibold text-right">Actions</TableHead>
+  1521→                </TableRow>
+  1522→              </TableHeader>
+  1523→              <TableBody>
+  1524→                {users.map(u => (
+  1525→                  <TableRow key={u.id} className="hover:bg-gray-50">
+  1526→                    <TableCell>
+  1527→                      <div className="flex items-center gap-2">
+  1528→                        <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold" style={{ background: `${BRAND.green}15`, color: BRAND.green }}>
+  1529→                          {u.name?.charAt(0) || '?'}
+  1530→                        </div>
+  1531→                        <span className="font-medium text-sm" style={{ color: BRAND.dark }}>{u.name}</span>
+  1532→                      </div>
+  1533→                    </TableCell>
+  1534→                    <TableCell className="text-sm" style={{ color: BRAND.muted }}>{u.email || '—'}</TableCell>
+  1535→                    <TableCell className="text-sm" style={{ color: BRAND.muted }}>{u.phone || '—'}</TableCell>
+  1536→                    <TableCell>
+  1537→                      <Badge className="text-xs" style={{
+  1538→                        background: u.is_admin ? `${BRAND.blue}15` : `${BRAND.muted}15`,
+  1539→                        color: u.is_admin ? BRAND.blue : BRAND.muted,
+  1540→                      }}>
+  1541→                        {u.is_admin ? 'Admin' : 'User'}
+  1542→                      </Badge>
+  1543→                    </TableCell>
+  1544→                    <TableCell>
+  1545→                      {u.learning_completed ? (
+  1546→                        <CheckCircle className="w-4 h-4" style={{ color: BRAND.green }} />
+  1547→                      ) : (
+  1548→                        <XCircle className="w-4 h-4" style={{ color: BRAND.muted }} />
+  1549→                      )}
+  1550→                    </TableCell>
+  1551→                    <TableCell className="text-xs" style={{ color: BRAND.muted }}>
+  1552→                      {new Date(u.created_at).toLocaleDateString()}
+  1553→                    </TableCell>
+  1554→                    <TableCell className="text-right">
+  1555→                      <div className="flex items-center gap-1 justify-end">
+  1556→                        <Button variant="ghost" size="icon" className="h-8 w-8 min-h-[44px]" onClick={() => setSelectedUser(u)}>
+  1557→                          <Eye className="w-4 h-4" style={{ color: BRAND.blue }} />
+  1558→                        </Button>
+  1559→                        <Button
+  1560→                          variant="ghost"
+  1561→                          size="icon"
+  1562→                          className="h-8 w-8 min-h-[44px]"
+  1563→                          onClick={() => toggleAdmin(u.id, u.is_admin)}
+  1564→                          disabled={toggleLoading === u.id}
+  1565→                        >
+  1566→                          {toggleLoading === u.id ? (
+  1567→                            <Loader2 className="w-4 h-4 animate-spin" />
+  1568→                          ) : (
+  1569→                            <Shield className="w-4 h-4" style={{ color: u.is_admin ? BRAND.blue : BRAND.muted }} />
+  1570→                          )}
+  1571→                        </Button>
+  1572→                      </div>
+  1573→                    </TableCell>
+  1574→                  </TableRow>
+  1575→                ))}
+  1576→              </TableBody>
+  1577→            </Table>
+  1578→          </ScrollArea>
+  1579→        </Card>
+  1580→      )}
+  1581→
+  1582→      {/* Pagination */}
+  1583→      {pagination && pagination.totalPages > 1 && (
+  1584→        <div className="flex items-center justify-center gap-2 pt-4">
+  1585→          <Button
+  1586→            variant="outline"
+  1587→            size="sm"
+  1588→            className="min-h-[44px]"
+  1589→            disabled={page <= 1}
+  1590→            onClick={() => setPage(page - 1)}
+  1591→          >
+  1592→            <ChevronLeft className="w-4 h-4" /> Prev
+  1593→          </Button>
+  1594→          <span className="text-sm" style={{ color: BRAND.muted }}>
+  1595→            Page {pagination.page} of {pagination.totalPages}
+  1596→          </span>
+  1597→          <Button
+  1598→            variant="outline"
+  1599→            size="sm"
+  1600→            className="min-h-[44px]"
+  1601→            disabled={page >= pagination.totalPages}
+  1602→            onClick={() => setPage(page + 1)}
+  1603→          >
+  1604→            Next <ChevronRight className="w-4 h-4" />
+  1605→          </Button>
+  1606→        </div>
+  1607→      )}
+  1608→
+  1609→      {/* User Detail Dialog */}
+  1610→      <FormWrapper
+  1611→        open={!!selectedUser}
+  1612→        onClose={() => setSelectedUser(null)}
+  1613→        title="User Details"
+  1614→        isMobile={isMobile}
+  1615→      >
+  1616→        {selectedUser && (
+  1617→          <div className="space-y-4 pb-4">
+  1618→            <div className="flex items-center gap-4">
+  1619→              <div className="w-14 h-14 rounded-full flex items-center justify-center text-lg font-bold" style={{ background: `${BRAND.green}15`, color: BRAND.green }}>
+  1620→                {selectedUser.name?.charAt(0) || '?'}
+  1621→              </div>
+  1622→              <div>
+  1623→                <h3 className="font-bold text-lg" style={{ color: BRAND.dark }}>{selectedUser.name}</h3>
+  1624→                <div className="flex gap-2 mt-1">
+  1625→                  {selectedUser.is_admin && (
+  1626→                    <Badge style={{ background: `${BRAND.blue}15`, color: BRAND.blue }}>
+  1627→                      <Shield className="w-3 h-3 mr-1" /> Admin
+  1628→                    </Badge>
+  1629→                  )}
+  1630→                  {selectedUser.learning_completed && (
+  1631→                    <Badge style={{ background: `${BRAND.green}15`, color: BRAND.green }}>
+  1632→                      <CheckCircle className="w-3 h-3 mr-1" /> Learning Complete
+  1633→                    </Badge>
+  1634→                  )}
+  1635→                </div>
+  1636→              </div>
+  1637→            </div>
+  1638→            <Separator />
+  1639→            <div className="grid grid-cols-2 gap-3">
+  1640→              {[
+  1641→                { label: 'Email', value: selectedUser.email || '—' },
+  1642→                { label: 'Phone', value: selectedUser.phone || '—' },
+  1643→                { label: 'Age', value: selectedUser.age?.toString() || '—' },
+  1644→                { label: 'Gender', value: selectedUser.gender || '—' },
+  1645→                { label: 'Country', value: selectedUser.country || '—' },
+  1646→                { label: 'State', value: selectedUser.state || '—' },
+  1647→                { label: 'User ID', value: selectedUser.user_id },
+  1648→                { label: 'Joined', value: new Date(selectedUser.created_at).toLocaleDateString() },
+  1649→              ].map(item => (
+  1650→                <div key={item.label} className="p-3 rounded-lg" style={{ background: BRAND.bg }}>
+  1651→                  <p className="text-xs font-medium" style={{ color: BRAND.muted }}>{item.label}</p>
+  1652→                  <p className="text-sm font-semibold" style={{ color: BRAND.dark }}>{item.value}</p>
+  1653→                </div>
+  1654→              ))}
+  1655→            </div>
+  1656→            <div className="flex gap-3 pt-4">
+  1657→              <Button
+  1658→                onClick={() => toggleAdmin(selectedUser.id, selectedUser.is_admin)}
+  1659→                disabled={toggleLoading === selectedUser.id}
+  1660→                className="min-h-[44px] flex-1"
+  1661→                style={{ background: selectedUser.is_admin ? BRAND.muted : BRAND.blue, color: '#fff' }}
+  1662→              >
+  1663→                {toggleLoading === selectedUser.id ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Shield className="w-4 h-4 mr-1" />}
+  1664→                {selectedUser.is_admin ? 'Remove Admin' : 'Make Admin'}
+  1665→              </Button>
+  1666→              <Button variant="outline" onClick={() => setSelectedUser(null)} className="min-h-[44px]">Close</Button>
+  1667→            </div>
+  1668→          </div>
+  1669→        )}
+  1670→      </FormWrapper>
+  1671→    </div>
+  1672→  )
+  1673→}
+  1674→
+  1675→// ─── User Card (Mobile) ───────────────────────────────────
+  1676→function UserCard({ user, onToggleAdmin, onView, toggleLoading }: {
+  1677→  user: UserProfile
+  1678→  onToggleAdmin: (id: string, isAdmin: boolean) => void
+  1679→  onView: (u: UserProfile) => void
+  1680→  toggleLoading: string | null
+  1681→}) {
+  1682→  return (
+  1683→    <Card className="border-0 shadow-sm">
+  1684→      <CardContent className="p-4">
+  1685→        <div className="flex items-start gap-3">
+  1686→          <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shrink-0" style={{ background: `${BRAND.green}15`, color: BRAND.green }}>
+  1687→            {user.name?.charAt(0) || '?'}
+  1688→          </div>
+  1689→          <div className="flex-1 min-w-0">
+  1690→            <div className="flex items-center gap-2 mb-1">
+  1691→              <h3 className="font-semibold text-sm truncate" style={{ color: BRAND.dark }}>{user.name}</h3>
+  1692→              {user.is_admin && (
+  1693→                <Badge className="text-xs shrink-0" style={{ background: `${BRAND.blue}15`, color: BRAND.blue }}>
+  1694→                  <Shield className="w-3 h-3 mr-0.5" /> Admin
+  1695→                </Badge>
+  1696→              )}
+  1697→              {user.learning_completed && (
+  1698→                <CheckCircle className="w-4 h-4 shrink-0" style={{ color: BRAND.green }} />
+  1699→              )}
+  1700→            </div>
+  1701→            <p className="text-xs mb-1" style={{ color: BRAND.muted }}>{user.email || 'No email'}</p>
+  1702→            <p className="text-xs" style={{ color: BRAND.muted }}>{user.phone || 'No phone'} · Joined {new Date(user.created_at).toLocaleDateString()}</p>
+  1703→          </div>
+  1704→        </div>
+  1705→        <div className="flex gap-2 mt-3 pt-3 border-t" style={{ borderColor: BRAND.surface }}>
+  1706→          <Button variant="outline" size="sm" className="min-h-[44px] text-xs" onClick={() => onView(user)}>
+  1707→            <Eye className="w-3.5 h-3.5 mr-1" /> View
+  1708→          </Button>
+  1709→          <Button
+  1710→            variant="outline"
+  1711→            size="sm"
+  1712→            className="min-h-[44px] text-xs"
+  1713→            onClick={() => onToggleAdmin(user.id, user.is_admin)}
+  1714→            disabled={toggleLoading === user.id}
+  1715→          >
+  1716→            {toggleLoading === user.id ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : <Shield className="w-3.5 h-3.5 mr-1" />}
+  1717→            {user.is_admin ? 'Remove Admin' : 'Make Admin'}
+  1718→          </Button>
+  1719→        </div>
+  1720→      </CardContent>
+  1721→    </Card>
+  1722→  )
+  1723→}
+  1724→
+  1725→// ═══════════════════════════════════════════════════════════
+  1726→// 5. CAMPAIGNS TAB
+  1727→// ═══════════════════════════════════════════════════════════
+  1728→
+  1729→function CampaignsTab() {
+  1730→  const isMobile = useIsMobile()
+  1731→  const { user } = useAppStore()
+  1732→  const [campaigns, setCampaigns] = useState<Campaign[]>([])
+  1733→  const [loading, setLoading] = useState(true)
+  1734→  const [filter, setFilter] = useState<'all' | 'ACTIVE' | 'INACTIVE' | 'PAUSED'>('all')
+  1735→  const [showForm, setShowForm] = useState(false)
+  1736→  const [editingCampaign, setEditingCampaign] = useState<Campaign | null>(null)
+  1737→  const [deleteTarget, setDeleteTarget] = useState<Campaign | null>(null)
+  1738→  const [saving, setSaving] = useState(false)
+  1739→
+  1740→  const emptyCampaign = {
+  1741→    name: '', channel: 'HOTEL', partner_name: '', location: '',
+  1742→    start_date: '', end_date: '', status: 'ACTIVE', qr_code_url: '',
+  1743→  }
+  1744→  const [form, setForm] = useState(emptyCampaign)
+  1745→
+  1746→  const loadCampaigns = useCallback(async () => {
+  1747→    setLoading(true)
+  1748→    try {
+  1749→      const data = await campaignService.list(filter !== 'all' ? { status: filter } : undefined)
+  1750→      setCampaigns(data)
+  1751→    } catch (err: any) {
+  1752→      toast.error('Failed to load campaigns: ' + (err.message || 'Unknown error'))
+  1753→    } finally {
+  1754→      setLoading(false)
+  1755→    }
+  1756→  }, [filter])
+  1757→
+  1758→  useEffect(() => { loadCampaigns() }, [loadCampaigns])
+  1759→
+  1760→  const openCreate = () => {
+  1761→    setEditingCampaign(null)
+  1762→    setForm(emptyCampaign)
+  1763→    setShowForm(true)
+  1764→  }
+  1765→
+  1766→  const openEdit = (c: Campaign) => {
+  1767→    setEditingCampaign(c)
+  1768→    setForm({
+  1769→      name: c.name,
+  1770→      channel: c.channel,
+  1771→      partner_name: c.partner_name || '',
+  1772→      location: c.location || '',
+  1773→      start_date: c.start_date ? new Date(c.start_date).toISOString().split('T')[0] : '',
+  1774→      end_date: c.end_date ? new Date(c.end_date).toISOString().split('T')[0] : '',
+  1775→      status: c.status,
+  1776→      qr_code_url: c.qr_code_url || '',
+  1777→    })
+  1778→    setShowForm(true)
+  1779→  }
+  1780→
+  1781→  const handleSave = async () => {
+  1782→    if (!form.name) {
+  1783→      toast.error('Campaign name is required')
+  1784→      return
+  1785→    }
+  1786→    setSaving(true)
+  1787→    try {
+  1788→      const payload: any = {
+  1789→        name: form.name,
+  1790→        channel: form.channel,
+  1791→        partner_name: form.partner_name || null,
+  1792→        location: form.location || null,
+  1793→        status: form.status,
+  1794→        qr_code_url: form.qr_code_url || null,
+  1795→      }
+  1796→      if (form.start_date) payload.start_date = form.start_date
+  1797→      if (form.end_date) payload.end_date = form.end_date
+  1798→
+  1799→      if (editingCampaign) {
+  1800→        await campaignService.update(editingCampaign.id, payload, user?.id || '')
+  1801→        toast.success('Campaign updated')
+  1802→      } else {
+  1803→        await campaignService.create(payload, user?.id || '')
+  1804→        toast.success('Campaign created')
+  1805→      }
+  1806→      setShowForm(false)
+  1807→      loadCampaigns()
+  1808→    } catch (err: any) {
+  1809→      toast.error('Failed to save campaign: ' + (err.message || 'Unknown error'))
+  1810→    } finally {
+  1811→      setSaving(false)
+  1812→    }
+  1813→  }
+  1814→
+  1815→  const handleDelete = async () => {
+  1816→    if (!deleteTarget) return
+  1817→    setSaving(true)
+  1818→    try {
+  1819→      await campaignService.delete(deleteTarget.id, user?.id || '')
+  1820→      toast.success('Campaign deleted')
+  1821→      setDeleteTarget(null)
+  1822→      loadCampaigns()
+  1823→    } catch (err: any) {
+  1824→      toast.error('Failed to delete campaign')
+  1825→    } finally {
+  1826→      setSaving(false)
+  1827→    }
+  1828→  }
+  1829→
+  1830→  if (loading) {
+  1831→    return (
+  1832→      <div className="flex items-center justify-center py-20">
+  1833→        <Loader2 className="w-8 h-8 animate-spin" style={{ color: BRAND.green }} />
+  1834→      </div>
+  1835→    )
+  1836→  }
+  1837→
+  1838→  return (
+  1839→    <div className="space-y-4">
+  1840→      <div className="flex items-center justify-between flex-wrap gap-3">
+  1841→        <h2 className="text-xl font-bold" style={{ color: BRAND.dark }}>Campaigns</h2>
+  1842→        <Button onClick={openCreate} className="min-h-[44px]" style={{ background: BRAND.blue, color: '#fff' }}>
+  1843→          <Plus className="w-4 h-4 mr-1" /> Add Campaign
+  1844→        </Button>
+  1845→      </div>
+  1846→
+  1847→      <Select value={filter} onValueChange={(v: any) => setFilter(v)}>
+  1848→        <SelectTrigger className="w-[140px] min-h-[44px]" style={{ background: '#fff' }}>
+  1849→          <Filter className="w-4 h-4 mr-1" style={{ color: BRAND.muted }} />
+  1850→          <SelectValue />
+  1851→        </SelectTrigger>
+  1852→        <SelectContent>
+  1853→          <SelectItem value="all">All Status</SelectItem>
+  1854→          <SelectItem value="ACTIVE">Active</SelectItem>
+  1855→          <SelectItem value="INACTIVE">Inactive</SelectItem>
+  1856→          <SelectItem value="PAUSED">Paused</SelectItem>
+  1857→        </SelectContent>
+  1858→      </Select>
+  1859→
+  1860→      {/* Campaigns Display */}
+  1861→      {campaigns.length === 0 ? (
+  1862→        <div className="text-center py-10" style={{ color: BRAND.muted }}>No campaigns found</div>
+  1863→      ) : isMobile ? (
+  1864→        <div className="space-y-3">
+  1865→          {campaigns.map(c => (
+  1866→            <CampaignCard key={c.id} campaign={c} onEdit={openEdit} onDelete={setDeleteTarget} />
+  1867→          ))}
+  1868→        </div>
+  1869→      ) : (
+  1870→        <Card className="border-0 shadow-sm overflow-hidden">
+  1871→          <ScrollArea className="max-h-[500px]">
+  1872→            <Table>
+  1873→              <TableHeader>
+  1874→                <TableRow style={{ background: BRAND.bg }}>
+  1875→                  <TableHead className="text-xs font-semibold">Name</TableHead>
+  1876→                  <TableHead className="text-xs font-semibold">Channel</TableHead>
+  1877→                  <TableHead className="text-xs font-semibold">Partner</TableHead>
+  1878→                  <TableHead className="text-xs font-semibold">Location</TableHead>
+  1879→                  <TableHead className="text-xs font-semibold">Status</TableHead>
+  1880→                  <TableHead className="text-xs font-semibold text-right">Actions</TableHead>
+  1881→                </TableRow>
+  1882→              </TableHeader>
+  1883→              <TableBody>
+  1884→                {campaigns.map(c => (
+  1885→                  <TableRow key={c.id} className="hover:bg-gray-50">
+  1886→                    <TableCell className="font-medium text-sm" style={{ color: BRAND.dark }}>{c.name}</TableCell>
+  1887→                    <TableCell>
+  1888→                      <Badge variant="outline" className="text-xs" style={{ borderColor: BRAND.lime, color: BRAND.lime }}>
+  1889→                        {c.channel}
+  1890→                      </Badge>
+  1891→                    </TableCell>
+  1892→                    <TableCell className="text-sm" style={{ color: BRAND.muted }}>{c.partner_name || '—'}</TableCell>
+  1893→                    <TableCell className="text-sm" style={{ color: BRAND.muted }}>{c.location || '—'}</TableCell>
+  1894→                    <TableCell>
+  1895→                      <CampaignStatusBadge status={c.status} />
+  1896→                    </TableCell>
+  1897→                    <TableCell className="text-right">
+  1898→                      <div className="flex items-center gap-1 justify-end">
+  1899→                        <Button variant="ghost" size="icon" className="h-8 w-8 min-h-[44px]" onClick={() => openEdit(c)}>
+  1900→                          <Pencil className="w-4 h-4" style={{ color: BRAND.blue }} />
+  1901→                        </Button>
+  1902→                        <Button variant="ghost" size="icon" className="h-8 w-8 min-h-[44px]" onClick={() => setDeleteTarget(c)}>
+  1903→                          <Trash2 className="w-4 h-4" style={{ color: '#ef4444' }} />
+  1904→                        </Button>
+  1905→                      </div>
+  1906→                    </TableCell>
+  1907→                  </TableRow>
+  1908→                ))}
+  1909→              </TableBody>
+  1910→            </Table>
+  1911→          </ScrollArea>
+  1912→        </Card>
+  1913→      )}
+  1914→
+  1915→      {/* Campaign Form */}
+  1916→      <FormWrapper
+  1917→        open={showForm}
+  1918→        onClose={() => setShowForm(false)}
+  1919→        title={editingCampaign ? 'Edit Campaign' : 'Create Campaign'}
+  1920→        description={editingCampaign ? `Editing ${editingCampaign.name}` : 'Add a new marketing campaign'}
+  1921→        isMobile={isMobile}
+  1922→      >
+  1923→        <div className="space-y-4 pb-4">
+  1924→          <div>
+  1925→            <Label className="text-xs">Campaign Name *</Label>
+  1926→            <Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="min-h-[44px]" />
+  1927→          </div>
+  1928→          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+  1929→            <div>
+  1930→              <Label className="text-xs">Channel</Label>
+  1931→              <Select value={form.channel} onValueChange={v => setForm({ ...form, channel: v })}>
+  1932→                <SelectTrigger className="min-h-[44px]"><SelectValue /></SelectTrigger>
+  1933→                <SelectContent>
+  1934→                  <SelectItem value="HOTEL">Hotel</SelectItem>
+  1935→                  <SelectItem value="RESTAURANT">Restaurant</SelectItem>
+  1936→                  <SelectItem value="GYM">Gym</SelectItem>
+  1937→                  <SelectItem value="SPA">Spa</SelectItem>
+  1938→                  <SelectItem value="ONLINE">Online</SelectItem>
+  1939→                  <SelectItem value="SOCIAL_MEDIA">Social Media</SelectItem>
+  1940→                  <SelectItem value="EVENT">Event</SelectItem>
+  1941→                  <SelectItem value="OTHER">Other</SelectItem>
+  1942→                </SelectContent>
+  1943→              </Select>
+  1944→            </div>
+  1945→            <div>
+  1946→              <Label className="text-xs">Status</Label>
+  1947→              <Select value={form.status} onValueChange={v => setForm({ ...form, status: v })}>
+  1948→                <SelectTrigger className="min-h-[44px]"><SelectValue /></SelectTrigger>
+  1949→                <SelectContent>
+  1950→                  <SelectItem value="ACTIVE">Active</SelectItem>
+  1951→                  <SelectItem value="INACTIVE">Inactive</SelectItem>
+  1952→                  <SelectItem value="PAUSED">Paused</SelectItem>
+  1953→                </SelectContent>
+  1954→              </Select>
+  1955→            </div>
+  1956→          </div>
+  1957→          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+  1958→            <div>
+  1959→              <Label className="text-xs">Partner Name</Label>
+  1960→              <Input value={form.partner_name} onChange={e => setForm({ ...form, partner_name: e.target.value })} className="min-h-[44px]" />
+  1961→            </div>
+  1962→            <div>
+  1963→              <Label className="text-xs">Location</Label>
+  1964→              <Input value={form.location} onChange={e => setForm({ ...form, location: e.target.value })} className="min-h-[44px]" />
+  1965→            </div>
+  1966→          </div>
+  1967→          <div className="grid grid-cols-2 gap-3">
+  1968→            <div>
+  1969→              <Label className="text-xs">Start Date</Label>
+  1970→              <Input type="date" value={form.start_date} onChange={e => setForm({ ...form, start_date: e.target.value })} className="min-h-[44px]" />
+  1971→            </div>
+  1972→            <div>
+  1973→              <Label className="text-xs">End Date</Label>
+  1974→              <Input type="date" value={form.end_date} onChange={e => setForm({ ...form, end_date: e.target.value })} className="min-h-[44px]" />
+  1975→            </div>
+  1976→          </div>
+  1977→          <div>
+  1978→            <Label className="text-xs">QR Code URL</Label>
+  1979→            <Input value={form.qr_code_url} onChange={e => setForm({ ...form, qr_code_url: e.target.value })} className="min-h-[44px]" />
+  1980→          </div>
+  1981→          <div className="flex gap-3 pt-4">
+  1982→            <Button onClick={handleSave} disabled={saving} className="min-h-[44px] flex-1" style={{ background: BRAND.blue, color: '#fff' }}>
+  1983→              {saving ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <CheckCircle className="w-4 h-4 mr-1" />}
+  1984→              {saving ? 'Saving...' : 'Save Campaign'}
+  1985→            </Button>
+  1986→            <Button variant="outline" onClick={() => setShowForm(false)} className="min-h-[44px]">Cancel</Button>
+  1987→          </div>
+  1988→        </div>
+  1989→      </FormWrapper>
+  1990→
+  1991→      {/* Delete Confirmation */}
+  1992→      <AlertDialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
+  1993→        <AlertDialogContent>
+  1994→          <AlertDialogHeader>
+  1995→            <AlertDialogTitle>Delete Campaign</AlertDialogTitle>
+  1996→            <AlertDialogDescription>
+  1997→              Are you sure you want to delete "{deleteTarget?.name}"? This action cannot be undone.
+  1998→            </AlertDialogDescription>
+  1999→          </AlertDialogHeader>
+  2000→          <AlertDialogFooter>
+
+[showing lines 1-2000 of 2068; use offset=2001 with limit to continue reading]

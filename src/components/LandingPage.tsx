@@ -231,12 +231,6 @@ export default function LandingPage() {
                 <button
                   key={link.label}
                   onClick={() => {
-                    if (link.view === 'products') {
-                      // Products are on the landing page — scroll to the carousel
-                      navigateTo('landing')
-                      setTimeout(() => scrollToSection('product-carousel'), 100)
-                      return
-                    }
                     if (link.view === 'landing') {
                       scrollToSection('hero')
                       navigateTo('landing')
@@ -307,7 +301,7 @@ export default function LandingPage() {
                     {/* Nav links */}
                     {[
                       { label: 'Home', icon: Home, action: () => { navigateTo('landing'); setMobileNavOpen(false) } },
-                      { label: 'Product', icon: Store, action: () => { navigateTo('landing'); setMobileNavOpen(false); setTimeout(() => scrollToSection('product-carousel'), 100) } },
+                      { label: 'Product', icon: Store, action: () => { navigateTo('products'); setMobileNavOpen(false) } },
                       { label: 'Our Journey', icon: Globe, action: () => { navigateTo('our-journey'); setMobileNavOpen(false) } },
                     ].map(item => (
                       <button
@@ -1335,7 +1329,7 @@ export default function LandingPage() {
               <h4 className="font-heading font-semibold text-white text-sm mb-4">Quick Links</h4>
               <ul className="space-y-2.5 text-sm text-white/40">
                 <li><button onClick={() => navigateTo('landing')} className="hover:text-white transition-colors duration-300 min-h-[44px] flex items-center">Home</button></li>
-                <li><button onClick={() => scrollToSection('product-carousel')} className="hover:text-white transition-colors duration-300 min-h-[44px] flex items-center">Products</button></li>
+                <li><button onClick={() => navigateTo('products')} className="hover:text-white transition-colors duration-300 min-h-[44px] flex items-center">Products</button></li>
                 <li><button onClick={() => navigateTo('our-journey')} className="hover:text-white transition-colors duration-300 min-h-[44px] flex items-center">Our Journey</button></li>
               </ul>
             </div>

@@ -13,6 +13,7 @@ import { ProfilePage } from '@/components/ProfilePage'
 import ProductDetailPage from '@/components/ProductDetailPage'
 import { ProductLearningModule } from '@/components/ProductLearningModule'
 import AdminPanel from '@/components/AdminPanel'
+import ProductPage from '@/components/ProductPage'
 
 // ─── URL Sync: reads ?product=slug and navigates ────────────
 function UrlSyncHandler() {
@@ -67,7 +68,7 @@ function ViewRenderer() {
       case 'our-journey':
         return <OurJourneyPage />
       case 'products':
-        return <LandingPageComponent /> // Products shown on landing page carousel
+        return <ProductPage />
       case 'product-detail':
         return <ProductDetailPage />
       case 'product-learning':

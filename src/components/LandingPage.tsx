@@ -389,26 +389,39 @@ export default function LandingPage() {
           />
         </div>
 
-        {/* Floating Particles */}
+        {/* Floating Particles — deterministic values to avoid hydration mismatch */}
         <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden z-[1]">
-          {[...Array(12)].map((_, i) => (
+          {[
+            { w:4, h:4, l:31, t:75, dur:5, del:0.4 },
+            { w:8, h:5, l:4,  t:3,  dur:4, del:1.2 },
+            { w:7, h:5, l:86, t:69, dur:6, del:0.8 },
+            { w:6, h:8, l:18, t:13, dur:5, del:1.6 },
+            { w:7, h:2, l:65, t:2,  dur:7, del:0.3 },
+            { w:5, h:3, l:71, t:82, dur:4, del:1.5 },
+            { w:2, h:2, l:38, t:85, dur:6, del:0.9 },
+            { w:5, h:4, l:86, t:21, dur:5, del:1.1 },
+            { w:5, h:4, l:23, t:49, dur:4, del:0.6 },
+            { w:2, h:5, l:34, t:62, dur:6, del:1.4 },
+            { w:6, h:5, l:7,  t:83, dur:5, del:0.7 },
+            { w:8, h:5, l:37, t:45, dur:7, del:1.0 },
+          ].map((p, i) => (
             <motion.div
               key={i}
               className="absolute rounded-full bg-[#48805b]/15"
               style={{
-                width: Math.random() * 6 + 2 + 'px',
-                height: Math.random() * 6 + 2 + 'px',
-                left: Math.random() * 100 + '%',
-                top: Math.random() * 100 + '%',
+                width: p.w + 'px',
+                height: p.h + 'px',
+                left: p.l + '%',
+                top: p.t + '%',
               }}
               animate={{
                 y: [0, -30, 0],
                 opacity: [0.2, 0.8, 0.2],
               }}
               transition={{
-                duration: 3 + Math.random() * 4,
+                duration: p.dur,
                 repeat: Infinity,
-                delay: Math.random() * 2,
+                delay: p.del,
               }}
             />
           ))}

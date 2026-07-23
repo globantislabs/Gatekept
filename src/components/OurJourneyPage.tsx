@@ -61,30 +61,53 @@ const glowPulse = {
 // FLOATING PARTICLES COMPONENT
 // ============================================================
 function FloatingParticles() {
+  // Deterministic particle data to avoid hydration mismatch
+  const particles = [
+    { w:3, h:3, l:12, t:8,  op:0.2, yEnd:-80,  xEnd:15,  opMid:0.35, dur:10, del:0.5 },
+    { w:4, h:4, l:45, t:22, op:0.15, yEnd:-100, xEnd:-10, opMid:0.3,  dur:8,  del:1.2 },
+    { w:2, h:2, l:78, t:55, op:0.25, yEnd:-60,  xEnd:20,  opMid:0.4,  dur:12, del:2.0 },
+    { w:5, h:5, l:33, t:70, op:0.1,  yEnd:-120, xEnd:-25, opMid:0.25, dur:14, del:0.8 },
+    { w:3, h:3, l:90, t:35, op:0.2,  yEnd:-90,  xEnd:10,  opMid:0.35, dur:9,  del:3.0 },
+    { w:4, h:4, l:5,  t:85, op:0.15, yEnd:-140, xEnd:30,  opMid:0.3,  dur:11, del:1.5 },
+    { w:2, h:2, l:60, t:15, op:0.25, yEnd:-50,  xEnd:-15, opMid:0.4,  dur:7,  del:0.3 },
+    { w:3, h:3, l:22, t:42, op:0.2,  yEnd:-110, xEnd:5,   opMid:0.35, dur:13, del:2.5 },
+    { w:5, h:5, l:72, t:78, op:0.1,  yEnd:-70,  xEnd:-20, opMid:0.25, dur:10, del:1.0 },
+    { w:4, h:4, l:15, t:60, op:0.15, yEnd:-130, xEnd:25,  opMid:0.3,  dur:8,  del:0.7 },
+    { w:2, h:2, l:55, t:90, op:0.25, yEnd:-80,  xEnd:-5,  opMid:0.4,  dur:12, del:2.2 },
+    { w:3, h:3, l:85, t:5,  op:0.2,  yEnd:-100, xEnd:15,  opMid:0.35, dur:9,  del:1.8 },
+    { w:4, h:4, l:40, t:32, op:0.15, yEnd:-60,  xEnd:-10, opMid:0.3,  dur:11, del:3.5 },
+    { w:5, h:5, l:68, t:48, op:0.1,  yEnd:-120, xEnd:30,  opMid:0.25, dur:14, del:0.2 },
+    { w:2, h:2, l:28, t:75, op:0.25, yEnd:-90,  xEnd:-25, opMid:0.4,  dur:7,  del:1.3 },
+    { w:3, h:3, l:95, t:62, op:0.2,  yEnd:-140, xEnd:10,  opMid:0.35, dur:10, del:2.8 },
+    { w:4, h:4, l:8,  t:18, op:0.15, yEnd:-50,  xEnd:20,  opMid:0.3,  dur:13, del:0.6 },
+    { w:2, h:2, l:50, t:95, op:0.25, yEnd:-110, xEnd:-15, opMid:0.4,  dur:8,  del:1.0 },
+    { w:3, h:3, l:38, t:50, op:0.2,  yEnd:-70,  xEnd:5,   opMid:0.35, dur:12, del:3.2 },
+    { w:5, h:5, l:82, t:28, op:0.1,  yEnd:-130, xEnd:-30, opMid:0.25, dur:9,  del:0.9 },
+  ]
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      {Array.from({ length: 20 }).map((_, i) => (
+      {particles.map((p, i) => (
         <motion.div
           key={i}
           className="absolute rounded-full"
           style={{
-            width: Math.random() * 4 + 2,
-            height: Math.random() * 4 + 2,
+            width: p.w,
+            height: p.h,
             background: i % 3 === 0 ? BRAND.green : i % 3 === 1 ? BRAND.lime : BRAND.muted,
-            opacity: Math.random() * 0.3 + 0.1,
-            left: `${Math.random() * 100}%`,
-            top: `${Math.random() * 100}%`,
+            opacity: p.op,
+            left: `${p.l}%`,
+            top: `${p.t}%`,
           }}
           animate={{
-            y: [0, Math.random() * -120 - 40, 0],
-            x: [0, Math.random() * 60 - 30, 0],
-            opacity: [0.1, Math.random() * 0.4 + 0.2, 0.1],
+            y: [0, p.yEnd, 0],
+            x: [0, p.xEnd, 0],
+            opacity: [0.1, p.opMid, 0.1],
           }}
           transition={{
-            duration: Math.random() * 8 + 6,
+            duration: p.dur,
             repeat: Infinity,
             ease: 'easeInOut',
-            delay: Math.random() * 4,
+            delay: p.del,
           }}
         />
       ))}

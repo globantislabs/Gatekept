@@ -565,7 +565,7 @@ export function ProductLearningModule() {
                       className="text-9xl font-heading font-bold select-none"
                       style={{ color: BRAND.lime }}
                     >
-                      {product.name.charAt(0)}
+                      {product?.name?.charAt(0) ?? '?'}
                     </div>
                   </div>
                 </div>

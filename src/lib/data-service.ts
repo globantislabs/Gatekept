@@ -394,7 +394,12 @@ export const productLearningService = {
   async get(userId: string, productId?: string): Promise<ProductLearningProgress[]> {
     const params = new URLSearchParams({ user_id: userId })
     if (productId) params.set('product_id', productId)
-    return apiFetch(`/api/learning/progress?${params.toString()}`)
+    const res = await apiFetch<{ progress: ProductLearningProgress | ProductLearningProgress[] | undefined; total?: number }>(`/api/learning/progress?${params.toString()}`)
+    // API returns { progress: array } when no productId, { progress: single object } when productId specified
+    const progressData = res?.progress
+    if (Array.isArray(progressData)) return progressData
+    if (progressData && typeof progressData === 'object') return [progressData as ProductLearningProgress]
+    return []
   },
 
   async save(data: {

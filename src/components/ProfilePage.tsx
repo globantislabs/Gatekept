@@ -187,7 +187,7 @@ export function ProfilePage() {
 
       try {
         const progress = await productLearningService.get(user.user_id)
-        setLearningProgress(progress)
+        setLearningProgress(Array.isArray(progress) ? progress : [])
         const prods = await productService.list({ active: true })
         setProducts(prods)
       } catch { /* silent */ } finally { setLoadingProgress(false) }

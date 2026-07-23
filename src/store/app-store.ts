@@ -84,6 +84,10 @@ interface AppState {
   // Orders
   lastOrderId: string | null
   setLastOrderId: (id: string | null) => void
+
+  // Redirect after login
+  redirectAfterLogin: AppView | null
+  setRedirectAfterLogin: (view: AppView | null) => void
 }
 
 export const useAppStore = create<AppState>()(
@@ -154,6 +158,10 @@ export const useAppStore = create<AppState>()(
       // Orders
       lastOrderId: null,
       setLastOrderId: (id) => set({ lastOrderId: id }),
+
+      // Redirect after login
+      redirectAfterLogin: null,
+      setRedirectAfterLogin: (view) => set({ redirectAfterLogin: view }),
     }),
     {
       name: 'notjust-app-store',

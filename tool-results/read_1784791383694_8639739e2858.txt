@@ -565,7 +565,7 @@
    565→                      className="text-9xl font-heading font-bold select-none"
    566→                      style={{ color: BRAND.lime }}
    567→                    >
-   568→                      {product.name.charAt(0)}
+   568→                      {product?.name?.charAt(0) ?? '?'}
    569→                    </div>
    570→                  </div>
    571→                </div>

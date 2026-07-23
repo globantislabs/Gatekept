@@ -74,7 +74,6 @@ export default function ProductPage() {
 
   // ── Fetch products on mount ──
   useEffect(() => {
-    setLoading(true)
     productService.list({ active: true })
       .then((data) => {
         setLocalProducts(data)
@@ -153,7 +152,7 @@ export default function ProductPage() {
                 alt="NotJust Watr"
                 width={120}
                 height={40}
-                className="h-9 w-auto object-contain transition-all duration-300 group-hover:scale-105 brightness-0"
+                className="h-9 w-auto object-contain transition-all duration-300 group-hover:scale-105"
                 loading="eager"
               />
             </button>
@@ -210,7 +209,7 @@ export default function ProductPage() {
                 <SheetContent side="right" className="bg-[#1f1e1c] border-l border-white/[0.06]">
                   <SheetHeader>
                     <SheetTitle className="text-white font-heading flex items-center gap-2">
-                      <Image src="/images/notjust-logo-clean.png" alt="NotJust" width={100} height={32} className="h-8 w-auto object-contain brightness-0 invert" />
+                      <Image src="/images/notjust-logo-clean.png" alt="NotJust" width={100} height={32} className="h-8 w-auto object-contain" />
                     </SheetTitle>
                   </SheetHeader>
                   <div className="flex flex-col gap-2 mt-6 px-2">
@@ -614,7 +613,7 @@ export default function ProductPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-wrap gap-8 justify-between">
             <div>
-              <Image src="/images/notjust-logo-clean.png" alt="NotJust" width={100} height={32} className="h-8 w-auto object-contain brightness-0 invert mb-3" />
+              <Image src="/images/notjust-logo-clean.png" alt="NotJust" width={100} height={32} className="h-8 w-auto object-contain mb-3" />
               <p className="text-white/40 text-sm">Pre-Meal Wellness Shot</p>
             </div>
             <div>

@@ -126,6 +126,85 @@ export interface QrScan {
   created_at: string
 }
 
+// ─── Order & Subscription Types ────────────────────────────
+
+export interface OrderItem {
+  id: string
+  order_id: string
+  product_id: string
+  product_name: string
+  product_type: string
+  quantity: number
+  unit_price: number
+  total_price: number
+  pack_type?: string | null
+  pack_days?: number | null
+  pack_discount?: number | null
+  created_at: string
+}
+
+export interface OrderTracking {
+  id: string
+  order_id: string
+  status: string
+  location?: string | null
+  description?: string | null
+  tracked_at: string
+}
+
+export interface Order {
+  id: string
+  user_id: string
+  order_number: string
+  status: string
+  total_amount: number
+  subtotal: number
+  tax_amount: number
+  discount_amount: number
+  currency: string
+  shipping_name?: string | null
+  shipping_phone?: string | null
+  shipping_address?: string | null
+  shipping_city?: string | null
+  shipping_state?: string | null
+  shipping_pincode?: string | null
+  payment_method?: string | null
+  payment_status: string
+  payment_ref?: string | null
+  notes?: string | null
+  delivered_at?: string | null
+  created_at: string
+  updated_at: string
+  items?: OrderItem[]
+  tracking?: OrderTracking[]
+  subscription?: Subscription | null
+}
+
+export interface Subscription {
+  id: string
+  user_id: string
+  order_id: string
+  product_id: string
+  product_name: string
+  product_type: string
+  pack_type: string
+  pack_days: number
+  pack_discount: number
+  quantity: number
+  unit_price: number
+  frequency_days: number
+  status: string
+  next_delivery?: string | null
+  start_date: string
+  end_date?: string | null
+  paused_at?: string | null
+  cancelled_at?: string | null
+  total_cycles: number
+  completed_cycles: number
+  created_at: string
+  updated_at: string
+}
+
 export interface AdminStats {
   totalUsers: number
   totalProducts: number
@@ -476,9 +555,62 @@ export const quizService = {
 }
 
 export const orderService = {
-  // Removed - no orders in simplified version
-  async list() { return [] },
-  async get() { return null },
+  async list(userId: string): Promise<Order[]> {
+    const res = await apiFetch<{ data: Order[] }>(`/api/orders?user_id=${userId}`)
+    return res.data || []
+  },
+
+  async get(orderId: string): Promise<Order | null> {
+    const res = await apiFetch<{ data: Order }>(`/api/orders/${orderId}`)
+    return res.data || null
+  },
+
+  async create(data: {
+    user_id: string
+    items: any[]
+    shipping_name?: string
+    shipping_phone?: string
+    shipping_address?: string
+    shipping_city?: string
+    shipping_state?: string
+    shipping_pincode?: string
+    payment_method?: string
+    notes?: string
+  }): Promise<Order> {
+    const res = await apiFetch<{ data: Order }>('/api/orders', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+    return res.data
+  },
+
+  async cancel(orderId: string, otpVerifiedId: string): Promise<Order> {
+    const res = await apiFetch<{ data: Order }>(`/api/orders/${orderId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status: 'CANCELLED', otp_verified_id: otpVerifiedId }),
+    })
+    return res.data
+  },
+
+  async updateAddress(orderId: string, addressData: {
+    shipping_name?: string
+    shipping_phone?: string
+    shipping_address?: string
+    shipping_city?: string
+    shipping_state?: string
+    shipping_pincode?: string
+  }, otpVerifiedId: string): Promise<Order> {
+    const res = await apiFetch<{ data: Order }>(`/api/orders/${orderId}/address`, {
+      method: 'PATCH',
+      body: JSON.stringify({ otp_verified_id: otpVerifiedId, ...addressData }),
+    })
+    return res.data
+  },
+
+  async getTracking(orderId: string): Promise<OrderTracking[]> {
+    const res = await apiFetch<{ data: OrderTracking[] }>(`/api/orders/${orderId}/tracking`)
+    return res.data || []
+  },
 }
 
 export const qrScanService = {
@@ -486,8 +618,100 @@ export const qrScanService = {
 }
 
 export const subscriptionService = {
-  // Removed - no subscriptions
-  async list() { return [] },
+  async list(userId: string): Promise<Subscription[]> {
+    const res = await apiFetch<{ data: Subscription[] }>(`/api/subscriptions?user_id=${userId}`)
+    return res.data || []
+  },
+
+  async get(subId: string): Promise<Subscription | null> {
+    const res = await apiFetch<{ data: Subscription }>(`/api/subscriptions/${subId}`)
+    return res.data || null
+  },
+
+  async create(data: {
+    user_id: string
+    order_id: string
+    product_id: string
+    product_name: string
+    product_type?: string
+    pack_type: string
+    pack_days: number
+    pack_discount?: number
+    quantity?: number
+    unit_price: number
+    frequency_days?: number
+    next_delivery?: string
+  }): Promise<Subscription> {
+    const res = await apiFetch<{ data: Subscription }>('/api/subscriptions', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+    return res.data
+  },
+
+  async pause(subId: string, otpVerifiedId: string): Promise<Subscription> {
+    const res = await apiFetch<{ data: Subscription }>(`/api/subscriptions/${subId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ action: 'pause', otp_verified_id: otpVerifiedId }),
+    })
+    return res.data
+  },
+
+  async resume(subId: string, otpVerifiedId: string): Promise<Subscription> {
+    const res = await apiFetch<{ data: Subscription }>(`/api/subscriptions/${subId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ action: 'resume', otp_verified_id: otpVerifiedId }),
+    })
+    return res.data
+  },
+
+  async cancel(subId: string, otpVerifiedId: string): Promise<Subscription> {
+    const res = await apiFetch<{ data: Subscription }>(`/api/subscriptions/${subId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ action: 'cancel', otp_verified_id: otpVerifiedId }),
+    })
+    return res.data
+  },
+}
+
+// ─── OTP Service ────────────────────────────────────────────
+
+export type OtpPurpose =
+  | 'CANCEL_ORDER'
+  | 'CANCEL_SUB'
+  | 'PAUSE_SUB'
+  | 'RESUME_SUB'
+  | 'MODIFY_ADDRESS'
+  | 'VERIFY_PHONE'
+
+export interface OtpSendResponse {
+  success: boolean
+  otp_id: string
+  message: string
+  phone_masked: string
+}
+
+export interface OtpVerifyResponse {
+  success: boolean
+  message: string
+  purpose?: OtpPurpose
+  reference_id?: string
+}
+
+export const otpService = {
+  async send(userId: string, purpose: OtpPurpose, referenceId?: string): Promise<OtpSendResponse> {
+    return apiFetch('/api/otp/send', {
+      method: 'POST',
+      body: JSON.stringify({ user_id: userId, purpose, reference_id: referenceId }),
+    })
+  },
+
+  async verify(otpId: string, otpCode: string): Promise<OtpVerifyResponse> {
+    return apiFetch('/api/otp/verify', {
+      method: 'POST',
+      body: JSON.stringify({ otp_id: otpId, otp_code: otpCode }),
+    })
+  },
 }
 
 export const reorderReminderService = {

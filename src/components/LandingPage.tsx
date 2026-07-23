@@ -117,7 +117,6 @@ export default function LandingPage() {
 
   // ── Fetch products on mount ──
   useEffect(() => {
-    setLoading(true)
     productService.list({ active: true })
       .then((data) => {
         setLocalProducts(data)
@@ -219,9 +218,7 @@ export default function LandingPage() {
                 alt="NotJust Watr"
                 width={120}
                 height={40}
-                className={`h-9 w-auto object-contain transition-all duration-300 group-hover:scale-105 ${
-                  scrolled ? 'brightness-0' : 'brightness-0 invert'
-                }`}
+                className="h-9 w-auto object-contain transition-all duration-300 group-hover:scale-105"
               />
             </button>
 
@@ -294,7 +291,7 @@ export default function LandingPage() {
                 <SheetContent side="right" className="bg-[#1f1e1c] border-l border-white/[0.06]">
                   <SheetHeader>
                     <SheetTitle className="text-white font-heading flex items-center gap-2">
-                      <Image src="/images/notjust-logo-clean.png" alt="NotJust" width={100} height={32} className="h-8 w-auto object-contain brightness-0 invert" />
+                      <Image src="/images/notjust-logo-clean.png" alt="NotJust" width={100} height={32} className="h-8 w-auto object-contain" />
                     </SheetTitle>
                   </SheetHeader>
                   <div className="flex flex-col gap-2 mt-6 px-2">
@@ -1319,7 +1316,7 @@ export default function LandingPage() {
           <div className="grid md:grid-cols-4 gap-10">
             <div className="md:col-span-1">
               <div className="mb-4">
-                <Image src="/images/notjust-logo-clean.png" alt="NotJust" width={140} height={48} className="h-10 w-auto object-contain brightness-0 invert" />
+                <Image src="/images/notjust-logo-clean.png" alt="NotJust" width={140} height={48} className="h-10 w-auto object-contain" />
               </div>
               <p className="text-white/40 text-sm leading-relaxed">
                 NOTJUST WATER™ is a 50 ml pre-meal wellness shot designed to help lower the glycemic impact of your meal.

@@ -1,0 +1,1117 @@
+     1→'use client'
+     2→
+     3→import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+     4→import Image from 'next/image'
+     5→import { motion, AnimatePresence } from 'framer-motion'
+     6→import {
+     7→  ArrowLeft, Play, CheckCircle, Lock, Share2, Copy, Link2, Package,
+     8→  ChevronRight, Home, GraduationCap, RefreshCw, ShieldCheck, Truck,
+     9→  Leaf, Clock, Globe, Mail, MessageCircle, Smartphone, ShoppingCart,
+    10→  Minus, Plus, CreditCard, BookOpen, Star, AlertTriangle, Info,
+    11→  Sparkles, Eye, EyeOff, SeparatorHorizontal
+    12→} from 'lucide-react'
+    13→import { useAppStore, type CartItem } from '@/store/app-store'
+    14→import {
+    15→  productService, productLearningService
+    16→} from '@/lib/data-service'
+    17→import type {
+    18→  Product, ProductVideo, ProductQuiz, ProductLearningProgress
+    19→} from '@/lib/data-service'
+    20→import { Button } from '@/components/ui/button'
+    21→import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+    22→import { Badge } from '@/components/ui/badge'
+    23→import { Separator } from '@/components/ui/separator'
+    24→import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+    25→import { Progress } from '@/components/ui/progress'
+    26→import { toast } from 'sonner'
+    27→
+    28→// ─── Brand Constants ────────────────────────────────────────
+    29→const BRAND = {
+    30→  green: '#48805b',
+    31→  lime: '#afb75d',
+    32→  dark: '#1f1e1c',
+    33→  muted: '#88837b',
+    34→  surface: '#e3dfd8',
+    35→  bg: '#f4f3f0',
+    36→  blue: '#2e91b2',
+    37→}
+    38→
+    39→// ─── Animation Variants ─────────────────────────────────────
+    40→const fadeInUp = {
+    41→  hidden: { opacity: 0, y: 30 },
+    42→  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' } }
+    43→}
+    44→
+    45→const fadeIn = {
+    46→  hidden: { opacity: 0 },
+    47→  visible: { opacity: 1, transition: { duration: 0.4 } }
+    48→}
+    49→
+    50→const staggerItem = {
+    51→  hidden: { opacity: 0, y: 15 },
+    52→  visible: { opacity: 1, y: 0, transition: { duration: 0.35 } }
+    53→}
+    54→
+    55→// ─── Helper: Parse Highlights ───────────────────────────────
+    56→function parseHighlights(highlights: string | null | undefined): string[] {
+    57→  if (!highlights) return []
+    58→  return highlights.split(',').map(h => h.trim()).filter(Boolean)
+    59→}
+    60→
+    61→// ─── Helper: Parse Ingredients ──────────────────────────────
+    62→function parseIngredients(ingredients: string | null | undefined): string[] {
+    63→  if (!ingredients) return []
+    64→  return ingredients.split(',').map(i => i.trim()).filter(Boolean)
+    65→}
+    66→
+    67→// ─── Helper: Discount Calculation ───────────────────────────
+    68→function calculateDiscount(price: number, mrp: number | null | undefined): { discountPercent: number; savings: number } | null {
+    69→  if (!mrp || mrp <= price) return null
+    70→  const savings = mrp - price
+    71→  const discountPercent = Math.round((savings / mrp) * 100)
+    72→  return { discountPercent, savings }
+    73→}
+    74→
+    75→// ─── Helper: Video Progress Percentage ──────────────────────
+    76→function getVideoProgressPercent(progress: ProductLearningProgress | null): number {
+    77→  if (!progress) return 0
+    78→  const vp = progress.video_progress
+    79→  const total = Object.keys(vp).length
+    80→  if (total === 0) return 0
+    81→  const watched = Object.values(vp).reduce((sum, pct) => sum + (pct >= 0.9 ? 1 : 0), 0)
+    82→  return Math.round((watched / total) * 100)
+    83→}
+    84→
+    85→// ─── Helper: Learning Status ────────────────────────────────
+    86→type LearningStatus = 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED'
+    87→
+    88→function getLearningStatus(progress: ProductLearningProgress | null): LearningStatus {
+    89→  if (!progress) return 'NOT_STARTED'
+    90→  return progress.status as LearningStatus
+    91→}
+    92→
+    93→// ─── Product Detail Page ────────────────────────────────────
+    94→export default function ProductDetailPage() {
+    95→  const {
+    96→    user, selectedProductId, navigateTo, goBack,
+    97→    setSelectedProductId, setRedirectAfterLogin,
+    98→    addToCart, setShareSlug, shareSlug
+    99→  } = useAppStore()
+   100→
+   101→  // State
+   102→  const [product, setProduct] = useState<(Product & { videos: ProductVideo[]; quizzes: ProductQuiz[] }) | null>(null)
+   103→  const [loading, setLoading] = useState(() => !selectedProductId)
+   104→  const [error, setError] = useState<string | null>(() => selectedProductId ? null : 'No product selected')
+   105→  const [productProgress, setProductProgress] = useState<ProductLearningProgress | null>(null)
+   106→  const [copied, setCopied] = useState(false)
+   107→  const hasFetchedRef = useRef(false)
+   108→
+   109→  // Derived: share URL computed from product
+   110→  const shareUrl = useMemo(() => {
+   111→    if (!product) return ''
+   112→    const slug = product.slug || product.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+   113→    return `${window.location.origin}${window.location.pathname}?product=${slug}`
+   114→  }, [product])
+   115→
+   116→  // Fetch product data (async, not synchronous setState)
+   117→  useEffect(() => {
+   118→    if (!selectedProductId || hasFetchedRef.current) return
+   119→    hasFetchedRef.current = true
+   120→
+   121→    productService.get(selectedProductId)
+   122→      .then(data => {
+   123→        setProduct(data)
+   124→        // Update share slug for URL
+   125→        const slug = data.slug || data.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+   126→        setShareSlug(slug)
+   127→        setLoading(false)
+   128→        setError(null)
+   129→      })
+   130→      .catch(err => {
+   131→        setError(err.message || 'Failed to load product')
+   132→        setLoading(false)
+   133→      })
+   134→  }, [selectedProductId, setShareSlug])
+   135→
+   136→  // Sync URL with product slug for shareable links (external DOM update)
+   137→  useEffect(() => {
+   138→    if (!product) return
+   139→    const slug = product.slug || product.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+   140→    const url = new URL(window.location.href)
+   141→    if (url.searchParams.get('product') !== slug) {
+   142→      url.searchParams.set('product', slug)
+   143→      window.history.replaceState({}, '', url.toString())
+   144→    }
+   145→  }, [product?.id])
+   146→
+   147→  // Clean up URL on unmount
+   148→  useEffect(() => {
+   149→    return () => {
+   150→      const url = new URL(window.location.href)
+   151→      if (url.searchParams.has('product')) {
+   152→        url.searchParams.delete('product')
+   153→        window.history.replaceState({}, '', url.toString())
+   154→      }
+   155→    }
+   156→  }, [])
+   157→
+   158→  // Fetch learning progress for logged-in user
+   159→  useEffect(() => {
+   160→    if (!user || !selectedProductId) return
+   161→    productLearningService.get(user.user_id, selectedProductId)
+   162→      .then(data => {
+   163→        const prog = data.find(p => p.product_id === selectedProductId)
+   164→        setProductProgress(prog || null)
+   165→      })
+   166→      .catch(() => {
+   167→        // Silently fail — progress fetch is non-critical
+   168→      })
+   169→  }, [user, selectedProductId])
+   170→
+   171→  // Learning status
+   172→  const learningStatus = getLearningStatus(productProgress)
+   173→  const isCompleted = learningStatus === 'COMPLETED'
+   174→  const isInProgress = learningStatus === 'IN_PROGRESS'
+   175→  const videoProgressPct = getVideoProgressPercent(productProgress)
+   176→
+   177→  // Discount
+   178→  const discountInfo = product ? calculateDiscount(product.price, product.mrp) : null
+   179→
+   180→  // Highlights & ingredients
+   181→  const highlights = product ? parseHighlights(product.highlights) : []
+   182→  const ingredientsList = product ? parseIngredients(product.ingredients) : []
+   183→
+   184→  // ─── Handlers ─────────────────────────────────────────────
+   185→  const handleStartLearning = useCallback(() => {
+   186→    if (!product) return
+   187→    setSelectedProductId(product.id)
+   188→    if (!user) {
+   189→      // Allow learning without login, but suggest login to save progress
+   190→      navigateTo('product-learning')
+   191→    } else {
+   192→      navigateTo('product-learning')
+   193→    }
+   194→  }, [product, user, setSelectedProductId, navigateTo])
+   195→
+   196→  const handleLoginToSave = useCallback(() => {
+   197→    if (!product) return
+   198→    setSelectedProductId(product.id)
+   199→    setRedirectAfterLogin('product-learning')
+   200→    navigateTo('auth-login')
+   201→  }, [product, setSelectedProductId, setRedirectAfterLogin, navigateTo])
+   202→
+   203→  const handleContinueLearning = useCallback(() => {
+   204→    if (!product) return
+   205→    setSelectedProductId(product.id)
+   206→    navigateTo('product-learning')
+   207→  }, [product, setSelectedProductId, navigateTo])
+   208→
+   209→  const handleReview = useCallback(() => {
+   210→    if (!product) return
+   211→    setSelectedProductId(product.id)
+   212→    navigateTo('product-learning')
+   213→  }, [product, setSelectedProductId, navigateTo])
+   214→
+   215→  const handleCopyShareLink = useCallback(async () => {
+   216→    if (!shareUrl) return
+   217→    try {
+   218→      await navigator.clipboard.writeText(shareUrl)
+   219→      setCopied(true)
+   220→      toast.success('Link copied to clipboard!')
+   221→      setTimeout(() => setCopied(false), 2000)
+   222→    } catch {
+   223→      toast.error('Failed to copy link')
+   224→    }
+   225→  }, [shareUrl])
+   226→
+   227→  const handleNativeShare = useCallback(async () => {
+   228→    if (!shareUrl || !product) return
+   229→    if (navigator.share) {
+   230→      try {
+   231→        await navigator.share({
+   232→          title: product.name,
+   233→          text: `Check out ${product.name} on NOTJUST Watr!`,
+   234→          url: shareUrl
+   235→        })
+   236→      } catch {
+   237→        // User cancelled or failed — fall back to copy
+   238→        await handleCopyShareLink()
+   239→      }
+   240→    } else {
+   241→      await handleCopyShareLink()
+   242→    }
+   243→  }, [shareUrl, product, handleCopyShareLink])
+   244→
+   245→  // ─── Loading State ────────────────────────────────────────
+   246→  if (loading) {
+   247→    return (
+   248→      <div className="min-h-screen flex items-center justify-center bg-[#f4f3f0]">
+   249→        <motion.div
+   250→          initial={{ opacity: 0 }}
+   251→          animate={{ opacity: 1 }}
+   252→          className="flex flex-col items-center gap-4"
+   253→        >
+   254→          <RefreshCw className="w-8 h-8 animate-spin" style={{ color: BRAND.green }} />
+   255→          <p className="text-sm" style={{ color: BRAND.muted }}>Loading product details...</p>
+   256→        </motion.div>
+   257→      </div>
+   258→    )
+   259→  }
+   260→
+   261→  // ─── Error State ──────────────────────────────────────────
+   262→  if (error || !product) {
+   263→    return (
+   264→      <div className="min-h-screen flex items-center justify-center bg-[#f4f3f0]">
+   265→        <motion.div
+   266→          initial={{ opacity: 0, scale: 0.95 }}
+   267→          animate={{ opacity: 1, scale: 1 }}
+   268→          className="flex flex-col items-center gap-6 text-center p-8"
+   269→        >
+   270→          <div className="w-20 h-20 rounded-full flex items-center justify-center" style={{ backgroundColor: `${BRAND.surface}50` }}>
+   271→            <Package className="w-10 h-10" style={{ color: BRAND.muted }} />
+   272→          </div>
+   273→          <h2 className="font-heading text-xl font-bold" style={{ color: BRAND.dark }}>
+   274→            {error || 'Product not found'}
+   275→          </h2>
+   276→          <p className="text-sm" style={{ color: BRAND.muted }}>
+   277→            The product you&apos;re looking for doesn&apos;t exist or has been removed.
+   278→          </p>
+   279→          <div className="flex gap-3">
+   280→            <Button
+   281→              onClick={() => navigateTo('products')}
+   282→              className="min-h-[44px] rounded-xl font-heading font-semibold"
+   283→              style={{ backgroundColor: BRAND.green, color: '#fff' }}
+   284→            >
+   285→              <ArrowLeft className="w-4 h-4 mr-2" />
+   286→              Back to Products
+   287→            </Button>
+   288→            <Button
+   289→              variant="outline"
+   290→              onClick={() => navigateTo('landing')}
+   291→              className="min-h-[44px] rounded-xl font-heading font-semibold border-[#e3dfd8]"
+   292→            >
+   293→              <Home className="w-4 h-4 mr-2" />
+   294→              Home
+   295→            </Button>
+   296→          </div>
+   297→        </motion.div>
+   298→      </div>
+   299→    )
+   300→  }
+   301→
+   302→  // ─── Main Render ──────────────────────────────────────────
+   303→  return (
+   304→    <div className="min-h-screen bg-[#f4f3f0] pt-4 pb-12">
+   305→      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+   306→
+   307→        {/* ─── Navigation ──────────────────────────────────── */}
+   308→        <motion.div
+   309→          initial={{ opacity: 0, x: -20 }}
+   310→          animate={{ opacity: 1, x: 0 }}
+   311→          transition={{ duration: 0.3 }}
+   312→          className="flex items-center justify-between mb-6"
+   313→        >
+   314→          <div className="flex items-center gap-2 text-sm" style={{ color: BRAND.muted }}>
+   315→            <button
+   316→              onClick={() => navigateTo('products')}
+   317→              className="pointer-events-auto hover:opacity-80 transition-opacity font-medium"
+   318→              style={{ color: BRAND.green }}
+   319→            >
+   320→              Products
+   321→            </button>
+   322→            <ChevronRight className="w-3.5 h-3.5" />
+   323→            <span className="font-medium" style={{ color: BRAND.dark }}>{product.name}</span>
+   324→          </div>
+   325→          <div className="flex items-center gap-2">
+   326→            <Button
+   327→              variant="outline"
+   328→              size="sm"
+   329→              onClick={() => navigateTo('products')}
+   330→              className="pointer-events-auto min-h-[44px] rounded-xl border-[#e3dfd8] font-heading text-sm"
+   331→            >
+   332→              <ArrowLeft className="w-4 h-4 mr-1" />
+   333→              Products
+   334→            </Button>
+   335→            <Button
+   336→              variant="outline"
+   337→              size="sm"
+   338→              onClick={() => navigateTo('landing')}
+   339→              className="pointer-events-auto min-h-[44px] rounded-xl border-[#e3dfd8] font-heading text-sm"
+   340→            >
+   341→              <Home className="w-4 h-4 mr-1" />
+   342→              Home
+   343→            </Button>
+   344→          </div>
+   345→        </motion.div>
+   346→
+   347→        {/* ─── Product Overview Section ────────────────────── */}
+   348→        <motion.div
+   349→          initial="hidden"
+   350→          animate="visible"
+   351→          variants={fadeInUp}
+   352→        >
+   353→          <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
+   354→
+   355→            {/* Left: Product Image */}
+   356→            <motion.div variants={staggerItem} className="space-y-4">
+   357→              <div className="relative aspect-square rounded-2xl lg:rounded-3xl overflow-hidden flex items-center justify-center border"
+   358→                style={{ borderColor: BRAND.surface, backgroundColor: `${BRAND.surface}30` }}
+   359→              >
+   360→                {/* Gradient background */}
+   361→                <div className="absolute inset-0 bg-gradient-to-br from-[#e3dfd8]/20 to-[#f4f3f0]" />
+   362→
+   363→                {/* Product image */}
+   364→                <Image
+   365→                  src={product.image_url || (product.type === 'STILL' ? '/images/product-still.webp' : '/images/product-fizz.webp')}
+   366→                  alt={product.name}
+   367→                  fill
+   368→                  className="object-contain p-8 sm:p-10 lg:p-12 relative z-10"
+   369→                  priority
+   370→                />
+   371→
+   372→                {/* Badges on image */}
+   373→                <Badge
+   374→                  className="pointer-events-auto absolute top-3 right-3 z-20 text-xs shadow-md min-h-[28px]"
+   375→                  style={{ backgroundColor: BRAND.green, color: '#fff', borderColor: 'transparent' }}
+   376→                >
+   377→                  {product.type}
+   378→                </Badge>
+   379→
+   380→                {product.category && (
+   381→                  <Badge
+   382→                    className="pointer-events-auto absolute top-3 left-12 z-20 text-xs shadow-md min-h-[28px]"
+   383→                    style={{ backgroundColor: BRAND.lime, color: BRAND.dark, borderColor: 'transparent' }}
+   384→                  >
+   385→                    {product.category}
+   386→                  </Badge>
+   387→                )}
+   388→
+   389→                {product.discount_label && (
+   390→                  <Badge
+   391→                    className="pointer-events-auto absolute bottom-3 left-3 z-20 text-xs shadow-md min-h-[28px]"
+   392→                    style={{ backgroundColor: '#e7b973', color: BRAND.dark, borderColor: 'transparent' }}
+   393→                  >
+   394→                    {product.discount_label}
+   395→                  </Badge>
+   396→                )}
+   397→
+   398→                {/* Completed overlay badge */}
+   399→                {isCompleted && (
+   400→                  <div className="pointer-events-auto absolute bottom-3 right-3 z-20">
+   401→                    <Badge
+   402→                      className="text-xs shadow-lg min-h-[28px] px-3"
+   403→                      style={{ backgroundColor: BRAND.green, color: '#fff', borderColor: 'transparent' }}
+   404→                    >
+   405→                      <CheckCircle className="w-3.5 h-3.5 mr-1" />
+   406→                      Completed
+   407→                    </Badge>
+   408→                  </div>
+   409→                )}
+   410→              </div>
+   411→
+   412→              {/* Highlights strip below image */}
+   413→              {highlights.length > 0 && (
+   414→                <div className="flex flex-wrap gap-2">
+   415→                  {highlights.slice(0, 6).map((h, i) => (
+   416→                    <motion.span
+   417→                      key={i}
+   418→                      initial={{ opacity: 0, scale: 0.9 }}
+   419→                      animate={{ opacity: 1, scale: 1 }}
+   420→                      transition={{ delay: i * 0.06 }}
+   421→                      className="pointer-events-auto px-3 py-1.5 rounded-full text-xs font-medium border"
+   422→                      style={{
+   423→                        backgroundColor: `${BRAND.green}08`,
+   424→                        color: BRAND.green,
+   425→                        borderColor: `${BRAND.green}18`
+   426→                      }}
+   427→                    >
+   428→                      <Sparkles className="w-3 h-3 mr-1 inline" />
+   429→                      {h}
+   430→                    </motion.span>
+   431→                  ))}
+   432→                </div>
+   433→              )}
+   434→            </motion.div>
+   435→
+   436→            {/* Right: Product Info */}
+   437→            <motion.div variants={staggerItem} className="space-y-5">
+   438→              {/* Name & Short Description */}
+   439→              <div>
+   440→                <h1 className="font-heading text-2xl sm:text-3xl lg:text-4xl font-bold mb-2" style={{ color: BRAND.dark }}>
+   441→                  {product.name}
+   442→                </h1>
+   443→                {product.short_description && (
+   444→                  <p className="leading-relaxed text-sm sm:text-base" style={{ color: BRAND.muted }}>
+   445→                    {product.short_description}
+   446→                  </p>
+   447→                )}
+   448→              </div>
+   449→
+   450→              {/* Price Display */}
+   451→              <div className="flex items-baseline gap-3">
+   452→                <span className="font-heading text-3xl sm:text-4xl font-bold" style={{ color: BRAND.green }}>
+   453→                  ₹{product.price.toLocaleString()}
+   454→                </span>
+   455→                {discountInfo && (
+   456→                  <>
+   457→                    <span className="text-lg line-through" style={{ color: BRAND.muted }}>
+   458→                      ₹{product.mrp!.toLocaleString()}
+   459→                    </span>
+   460→                    <Badge
+   461→                      className="text-xs min-h-[24px]"
+   462→                      style={{ backgroundColor: '#e7b97320', color: '#b56b20', borderColor: '#e7b97330' }}
+   463→                    >
+   464→                      {discountInfo.discountPercent}% OFF
+   465→                    </Badge>
+   466→                  </>
+   467→                )}
+   468→              </div>
+   469→
+   470→              {/* Type & Category Badges */}
+   471→              <div className="flex flex-wrap gap-2">
+   472→                <Badge
+   473→                  className="min-h-[28px] px-3 text-xs font-medium"
+   474→                  style={{ backgroundColor: BRAND.green, color: '#fff', borderColor: 'transparent' }}
+   475→                >
+   476→                  {product.type === 'FIZZ' ? '🫧 FIZZ' : '💧 STILL'}
+   477→                </Badge>
+   478→                {product.category && (
+   479→                  <Badge
+   480→                    className="min-h-[28px] px-3 text-xs font-medium"
+   481→                    style={{ backgroundColor: `${BRAND.lime}20`, color: BRAND.dark, borderColor: `${BRAND.lime}30` }}
+   482→                  >
+   483→                    {product.category}
+   484→                  </Badge>
+   485→                )}
+   486→                {product.discount_label && (
+   487→                  <Badge
+   488→                    className="min-h-[28px] px-3 text-xs font-medium"
+   489→                    style={{ backgroundColor: '#e7b97320', color: '#b56b20', borderColor: '#e7b97330' }}
+   490→                  >
+   491→                    {product.discount_label}
+   492→                  </Badge>
+   493→                )}
+   494→              </div>
+   495→
+   496→              <Separator style={{ backgroundColor: BRAND.surface }} />
+   497→
+   498→              {/* ─── Learning Access Section ─────────────────── */}
+   499→              <Card className="border rounded-xl" style={{ borderColor: BRAND.surface }}>
+   500→                <CardHeader className="pb-3">
+   501→                  <CardTitle className="font-heading text-base font-semibold flex items-center gap-2" style={{ color: BRAND.dark }}>
+   502→                    <GraduationCap className="w-5 h-5" style={{ color: BRAND.green }} />
+   503→                    Learning Module
+   504→                  </CardTitle>
+   505→                </CardHeader>
+   506→                <CardContent className="space-y-4">
+   507→
+   508→                  {/* Progress display if user has progress */}
+   509→                  {user && productProgress && (isInProgress || isCompleted) && (
+   510→                    <motion.div
+   511→                      initial={{ opacity: 0 }}
+   512→                      animate={{ opacity: 1 }}
+   513→                      className="space-y-3"
+   514→                    >
+   515→                      {/* Video Progress */}
+   516→                      <div className="space-y-1.5">
+   517→                        <div className="flex justify-between text-xs">
+   518→                          <span style={{ color: BRAND.muted }}>Video Progress</span>
+   519→                          <span className="font-medium" style={{ color: BRAND.green }}>{videoProgressPct}%</span>
+   520→                        </div>
+   521→                        <Progress
+   522→                          value={videoProgressPct}
+   523→                          className="h-2 rounded-full"
+   524→                          style={{ backgroundColor: `${BRAND.surface}60` }}
+   525→                        />
+   526→                      </div>
+   527→
+   528→                      {/* Quiz Score */}
+   529→                      {productProgress.quiz_completed && (
+   530→                        <div className="flex items-center gap-2 p-2.5 rounded-lg"
+   531→                          style={{ backgroundColor: isCompleted ? `${BRAND.green}08` : `${BRAND.lime}08` }}
+   532→                        >
+   533→                          {isCompleted ? (
+   534→                            <CheckCircle className="w-4 h-4" style={{ color: BRAND.green }} />
+   535→                          ) : (
+   536→                            <Star className="w-4 h-4" style={{ color: BRAND.lime }} />
+   537→                          )}
+   538→                          <span className="text-sm font-medium" style={{ color: BRAND.dark }}>
+   539→                            Quiz Score: {productProgress.quiz_score}%
+   540→                          </span>
+   541→                          {isCompleted && (
+   542→                            <Badge className="text-[10px] ml-auto min-h-[20px]"
+   543→                              style={{ backgroundColor: BRAND.green, color: '#fff', borderColor: 'transparent' }}
+   544→                            >
+   545→                              Passed
+   546→                            </Badge>
+   547→                          )}
+   548→                        </div>
+   549→                      )}
+   550→                    </motion.div>
+   551→                  )}
+   552→
+   553→                  {/* Status-based buttons */}
+   554→                  {!user && (
+   555→                    <div className="space-y-3">
+   556→                      {/* Not logged in: Start Learning + Login to save */}
+   557→                      <p className="text-xs" style={{ color: BRAND.muted }}>
+   558→                        Learn about this product — progress saves automatically when you log in
+   559→                      </p>
+   560→                      <div className="flex flex-col sm:flex-row gap-3">
+   561→                        <Button
+   562→                          onClick={handleStartLearning}
+   563→                          className="pointer-events-auto min-h-[44px] flex-1 rounded-xl font-heading font-semibold text-base"
+   564→                          style={{ backgroundColor: BRAND.green, color: '#fff' }}
+   565→                        >
+   566→                          <Play className="w-5 h-5 mr-2" />
+   567→                          Start Learning
+   568→                        </Button>
+   569→                        <Button
+   570→                          onClick={handleLoginToSave}
+   571→                          variant="outline"
+   572→                          className="pointer-events-auto min-h-[44px] flex-1 rounded-xl font-heading font-semibold text-sm border-[#e3dfd8]"
+   573→                        >
+   574→                          <Lock className="w-4 h-4 mr-2" style={{ color: BRAND.blue }} />
+   575→                          Login to save progress
+   576→                        </Button>
+   577→                      </div>
+   578→                    </div>
+   579→                  )}
+   580→
+   581→                  {user && learningStatus === 'NOT_STARTED' && (
+   582→                    <div className="space-y-2">
+   583→                      <Button
+   584→                        onClick={handleStartLearning}
+   585→                        className="pointer-events-auto min-h-[44px] w-full rounded-xl font-heading font-semibold text-base"
+   586→                        style={{ backgroundColor: BRAND.green, color: '#fff' }}
+   587→                      >
+   588→                        <Play className="w-5 h-5 mr-2" />
+   589→                        Start Learning Module
+   590→                      </Button>
+   591→                    </div>
+   592→                  )}
+   593→
+   594→                  {user && isInProgress && (
+   595→                    <Button
+   596→                      onClick={handleContinueLearning}
+   597→                      className="pointer-events-auto min-h-[44px] w-full rounded-xl font-heading font-semibold text-base"
+   598→                      style={{ backgroundColor: BRAND.green, color: '#fff' }}
+   599→                    >
+   600→                      <BookOpen className="w-5 h-5 mr-2" />
+   601→                      Continue Learning
+   602→                    </Button>
+   603→                  )}
+   604→
+   605→                  {user && isCompleted && (
+   606→                    <div className="flex items-center gap-3">
+   607→                      <Badge
+   608→                        className="min-h-[28px] px-3 text-xs"
+   609→                        style={{ backgroundColor: BRAND.green, color: '#fff', borderColor: 'transparent' }}
+   610→                      >
+   611→                        <CheckCircle className="w-3.5 h-3.5 mr-1" />
+   612→                        Completed
+   613→                      </Badge>
+   614→                      <Button
+   615→                        onClick={handleReview}
+   616→                        variant="outline"
+   617→                        className="pointer-events-auto min-h-[44px] flex-1 rounded-xl font-heading font-semibold border-[#e3dfd8]"
+   618→                      >
+   619→                        <Eye className="w-4 h-4 mr-2" />
+   620→                        Review
+   621→                      </Button>
+   622→                    </div>
+   623→                  )}
+   624→
+   625→                  {/* Video & Quiz count info */}
+   626→                  {product.videos && product.videos.length > 0 && (
+   627→                    <div className="flex items-center gap-4 text-xs pt-1" style={{ color: BRAND.muted }}>
+   628→                      <span className="flex items-center gap-1">
+   629→                        <Play className="w-3.5 h-3.5" />
+   630→                        {product.videos.length} videos
+   631→                      </span>
+   632→                      {product.quizzes && product.quizzes.length > 0 && (
+   633→                        <span className="flex items-center gap-1">
+   634→                          <GraduationCap className="w-3.5 h-3.5" />
+   635→                          {product.quizzes.length} quiz questions
+   636→                        </span>
+   637→                      )}
+   638→                      <span className="flex items-center gap-1">
+   639→                        <Clock className="w-3.5 h-3.5" />
+   640→                        ~10 min
+   641→                      </span>
+   642→                    </div>
+   643→                  )}
+   644→                </CardContent>
+   645→              </Card>
+   646→
+   647→              <Separator style={{ backgroundColor: BRAND.surface }} />
+   648→
+   649→              {/* ─── Share Section ────────────────────────────── */}
+   650→              <Card className="border rounded-xl" style={{ borderColor: BRAND.surface }}>
+   651→                <CardContent className="p-4 space-y-3">
+   652→                  <div className="flex items-center gap-2">
+   653→                    <Share2 className="w-4 h-4" style={{ color: BRAND.green }} />
+   654→                    <span className="font-heading text-sm font-semibold" style={{ color: BRAND.dark }}>
+   655→                      Share this product
+   656→                    </span>
+   657→                  </div>
+   658→
+   659→                  {shareUrl && (
+   660→                    <div className="flex items-center gap-2">
+   661→                      <div className="flex-1 min-w-0 px-3 py-2.5 rounded-lg text-xs truncate"
+   662→                        style={{ backgroundColor: `${BRAND.surface}40`, color: BRAND.muted }}
+   663→                      >
+   664→                        {shareUrl}
+   665→                      </div>
+   666→                      <Button
+   667→                        variant="outline"
+   668→                        size="sm"
+   669→                        onClick={handleCopyShareLink}
+   670→                        className="pointer-events-auto min-h-[44px] min-w-[44px] rounded-lg border-[#e3dfd8]"
+   671→                      >
+   672→                        {copied ? (
+   673→                          <CheckCircle className="w-4 h-4" style={{ color: BRAND.green }} />
+   674→                        ) : (
+   675→                          <Copy className="w-4 h-4" style={{ color: BRAND.muted }} />
+   676→                        )}
+   677→                      </Button>
+   678→                      <Button
+   679→                        variant="outline"
+   680→                        size="sm"
+   681→                        onClick={handleNativeShare}
+   682→                        className="pointer-events-auto min-h-[44px] min-w-[44px] rounded-lg border-[#e3dfd8]"
+   683→                      >
+   684→                        <Link2 className="w-4 h-4" style={{ color: BRAND.blue }} />
+   685→                      </Button>
+   686→                    </div>
+   687→                  )}
+   688→                </CardContent>
+   689→              </Card>
+   690→
+   691→              {/* ─── Trust Badges ─────────────────────────────── */}
+   692→              <div className="grid grid-cols-3 gap-3">
+   693→                <div className="flex flex-col items-center text-center p-3 rounded-xl bg-white border" style={{ borderColor: BRAND.surface }}>
+   694→                  <ShieldCheck className="w-5 h-5 mb-1" style={{ color: BRAND.green }} />
+   695→                  <p className="text-[10px] font-medium" style={{ color: BRAND.dark }}>FSSAI Certified</p>
+   696→                  <p className="text-[9px]" style={{ color: BRAND.muted }}>{product.fssai_license || 'Licensed'}</p>
+   697→                </div>
+   698→                <div className="flex flex-col items-center text-center p-3 rounded-xl bg-white border" style={{ borderColor: BRAND.surface }}>
+   699→                  <Truck className="w-5 h-5 mb-1" style={{ color: BRAND.green }} />
+   700→                  <p className="text-[10px] font-medium" style={{ color: BRAND.dark }}>Free Shipping</p>
+   701→                  <p className="text-[9px]" style={{ color: BRAND.muted }}>Pan India</p>
+   702→                </div>
+   703→                <div className="flex flex-col items-center text-center p-3 rounded-xl bg-white border" style={{ borderColor: BRAND.surface }}>
+   704→                  <Leaf className="w-5 h-5 mb-1" style={{ color: BRAND.green }} />
+   705→                  <p className="text-[10px] font-medium" style={{ color: BRAND.dark }}>100% Natural</p>
+   706→                  <p className="text-[9px]" style={{ color: BRAND.muted }}>{product.country_origin || 'Made in India'}</p>
+   707→                </div>
+   708→              </div>
+   709→            </motion.div>
+   710→          </div>
+   711→        </motion.div>
+   712→
+   713→        {/* ─── Product Details Tabs ─────────────────────────── */}
+   714→        <motion.div
+   715→          initial={{ opacity: 0, y: 20 }}
+   716→          animate={{ opacity: 1, y: 0 }}
+   717→          transition={{ duration: 0.5, delay: 0.2 }}
+   718→          className="mt-10 lg:mt-12"
+   719→        >
+   720→          <Tabs defaultValue="overview" className="w-full">
+   721→
+   722→            {/* Scrollable Tabs List */}
+   723→            <TabsList className="w-full flex overflow-x-auto gap-0 h-auto p-0 bg-transparent rounded-none border-b"
+   724→              style={{ borderColor: BRAND.surface }}
+   725→            >
+   726→              {[
+   727→                { value: 'overview', label: 'Overview', icon: <Info className="w-4 h-4" /> },
+   728→                { value: 'ingredients', label: 'Ingredients', icon: <Leaf className="w-4 h-4" /> },
+   729→                { value: 'nutrition', label: 'Nutrition', icon: <Package className="w-4 h-4" /> },
+   730→                { value: 'storage', label: 'Storage', icon: <ShieldCheck className="w-4 h-4" /> },
+   731→                { value: 'legal', label: 'Legal', icon: <Globe className="w-4 h-4" /> },
+   732→              ].map(tab => (
+   733→                <TabsTrigger
+   734→                  key={tab.value}
+   735→                  value={tab.value}
+   736→                  className="pointer-events-auto min-h-[44px] px-4 sm:px-5 py-2.5 text-sm font-heading font-medium transition-all border-b-2 -mb-px rounded-none data-[state=active]:border-b-2 data-[state=active]:shadow-none shrink-0"
+   737→                  style={{
+   738→                    borderColor: 'transparent',
+   739→                    color: BRAND.muted,
+   740→                  }}
+   741→                  // Use CSS for active state coloring via data attribute
+   742→                >
+   743→                  <span className="flex items-center gap-1.5">
+   744→                    {tab.icon}
+   745→                    {tab.label}
+   746→                  </span>
+   747→                </TabsTrigger>
+   748→              ))}
+   749→            </TabsList>
+   750→
+   751→            {/* ─── Overview Tab ──────────────────────────────── */}
+   752→            <TabsContent value="overview" className="mt-6">
+   753→              <AnimatePresence mode="wait">
+   754→                <motion.div
+   755→                  key="overview"
+   756→                  initial={{ opacity: 0, y: 10 }}
+   757→                  animate={{ opacity: 1, y: 0 }}
+   758→                  transition={{ duration: 0.3 }}
+   759→                  className="grid md:grid-cols-2 gap-8"
+   760→                >
+   761→                  {/* Full description + highlights */}
+   762→                  <div className="space-y-4">
+   763→                    <h3 className="font-heading font-bold text-lg" style={{ color: BRAND.dark }}>
+   764→                      About This Product
+   765→                    </h3>
+   766→                    {product.description ? (
+   767→                      <p className="leading-relaxed text-sm sm:text-base" style={{ color: BRAND.muted }}>
+   768→                        {product.description}
+   769→                      </p>
+   770→                    ) : (
+   771→                      <p className="text-sm" style={{ color: BRAND.muted }}>
+   772→                        {product.short_description || 'No description available.'}
+   773→                      </p>
+   774→                    )}
+   775→
+   776→                    {highlights.length > 0 && (
+   777→                      <div className="space-y-2 pt-2">
+   778→                        <h4 className="font-heading font-semibold text-sm" style={{ color: BRAND.dark }}>
+   779→                          Key Highlights
+   780→                        </h4>
+   781→                        {highlights.map((h, i) => (
+   782→                          <motion.div
+   783→                            key={i}
+   784→                            initial={{ opacity: 0, x: -10 }}
+   785→                            animate={{ opacity: 1, x: 0 }}
+   786→                            transition={{ delay: i * 0.05 }}
+   787→                            className="flex items-center gap-2"
+   788→                          >
+   789→                            <CheckCircle className="w-4 h-4 flex-shrink-0" style={{ color: BRAND.green }} />
+   790→                            <span className="text-sm" style={{ color: BRAND.dark }}>{h}</span>
+   791→                          </motion.div>
+   792→                        ))}
+   793→                      </div>
+   794→                    )}
+   795→                  </div>
+   796→
+   797→                  {/* Product Details Grid */}
+   798→                  <div className="space-y-3">
+   799→                    <h3 className="font-heading font-bold text-lg" style={{ color: BRAND.dark }}>
+   800→                      Product Details
+   801→                    </h3>
+   802→                    <div className="grid grid-cols-2 gap-3">
+   803→                      {[
+   804→                        { label: 'Weight', value: product.weight, icon: <Package className="w-3.5 h-3.5" /> },
+   805→                        { label: 'Serving Size', value: product.serving_size, icon: <Leaf className="w-3.5 h-3.5" /> },
+   806→                        { label: 'Flavor', value: product.flavor, icon: <Sparkles className="w-3.5 h-3.5" /> },
+   807→                        { label: 'Brand', value: product.brand, icon: <Star className="w-3.5 h-3.5" /> },
+   808→                        { label: 'SKU', value: product.sku, icon: <Info className="w-3.5 h-3.5" /> },
+   809→                        { label: 'Type', value: product.type, icon: <Package className="w-3.5 h-3.5" /> },
+   810→                      ]
+   811→                        .filter(d => d.value)
+   812→                        .map((d, i) => (
+   813→                          <motion.div
+   814→                            key={i}
+   815→                            initial={{ opacity: 0, y: 5 }}
+   816→                            animate={{ opacity: 1, y: 0 }}
+   817→                            transition={{ delay: i * 0.04 }}
+   818→                            className="p-3 rounded-lg bg-white border"
+   819→                            style={{ borderColor: BRAND.surface }}
+   820→                          >
+   821→                            <div className="flex items-center gap-1.5 mb-1">
+   822→                              {d.icon}
+   823→                              <p className="text-[10px] uppercase tracking-wider" style={{ color: BRAND.muted }}>{d.label}</p>
+   824→                            </div>
+   825→                            <p className="text-sm font-medium" style={{ color: BRAND.dark }}>{d.value}</p>
+   826→                          </motion.div>
+   827→                        ))}
+   828→                    </div>
+   829→                  </div>
+   830→                </motion.div>
+   831→              </AnimatePresence>
+   832→            </TabsContent>
+   833→
+   834→            {/* ─── Ingredients Tab ────────────────────────────── */}
+   835→            <TabsContent value="ingredients" className="mt-6">
+   836→              <AnimatePresence mode="wait">
+   837→                <motion.div
+   838→                  key="ingredients"
+   839→                  initial={{ opacity: 0, y: 10 }}
+   840→                  animate={{ opacity: 1, y: 0 }}
+   841→                  transition={{ duration: 0.3 }}
+   842→                  className="grid md:grid-cols-2 gap-8"
+   843→                >
+   844→                  <div className="space-y-4">
+   845→                    <h3 className="font-heading font-bold text-lg" style={{ color: BRAND.dark }}>
+   846→                      Ingredients
+   847→                    </h3>
+   848→                    {ingredientsList.length > 0 ? (
+   849→                      <div className="flex flex-wrap gap-2">
+   850→                        {ingredientsList.map((ing, i) => (
+   851→                          <motion.span
+   852→                            key={i}
+   853→                            initial={{ opacity: 0, scale: 0.9 }}
+   854→                            animate={{ opacity: 1, scale: 1 }}
+   855→                            transition={{ delay: i * 0.03 }}
+   856→                            className="pointer-events-auto px-3 py-2 rounded-full text-xs font-medium min-h-[32px]"
+   857→                            style={{ backgroundColor: '#edf5ee', color: BRAND.green }}
+   858→                          >
+   859→                            {ing}
+   860→                          </motion.span>
+   861→                        ))}
+   862→                      </div>
+   863→                    ) : product.ingredients ? (
+   864→                      <div className="p-4 rounded-xl bg-white border" style={{ borderColor: BRAND.surface }}>
+   865→                        <p className="text-sm leading-relaxed" style={{ color: BRAND.dark }}>
+   866→                          {product.ingredients}
+   867→                        </p>
+   868→                      </div>
+   869→                    ) : (
+   870→                      <p className="text-sm" style={{ color: BRAND.muted }}>No ingredients info available</p>
+   871→                    )}
+   872→                  </div>
+   873→
+   874→                  <div className="space-y-4">
+   875→                    <h3 className="font-heading font-bold text-lg" style={{ color: BRAND.dark }}>
+   876→                      Allergen Information
+   877→                    </h3>
+   878→                    {product.allergen_info ? (
+   879→                      <div className="p-4 rounded-xl border"
+   880→                        style={{ backgroundColor: '#fef2f2', borderColor: '#fecaca' }}
+   881→                      >
+   882→                        <div className="flex items-start gap-3">
+   883→                          <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: '#dc2626' }} />
+   884→                          <div>
+   885→                            <p className="text-sm font-semibold mb-1" style={{ color: '#991b1b' }}>Allergen Warning</p>
+   886→                            <p className="text-sm" style={{ color: '#b91c1c' }}>{product.allergen_info}</p>
+   887→                          </div>
+   888→                        </div>
+   889→                      </div>
+   890→                    ) : (
+   891→                      <div className="p-4 rounded-xl bg-white border" style={{ borderColor: BRAND.surface }}>
+   892→                        <div className="flex items-center gap-2">
+   893→                          <CheckCircle className="w-4 h-4" style={{ color: BRAND.green }} />
+   894→                          <p className="text-sm" style={{ color: BRAND.muted }}>
+   895→                            No known allergens — always check the label for the most current information.
+   896→                          </p>
+   897→                        </div>
+   898→                      </div>
+   899→                    )}
+   900→                  </div>
+   901→                </motion.div>
+   902→              </AnimatePresence>
+   903→            </TabsContent>
+   904→
+   905→            {/* ─── Nutrition Tab ─────────────────────────────── */}
+   906→            <TabsContent value="nutrition" className="mt-6">
+   907→              <AnimatePresence mode="wait">
+   908→                <motion.div
+   909→                  key="nutrition"
+   910→                  initial={{ opacity: 0, y: 10 }}
+   911→                  animate={{ opacity: 1, y: 0 }}
+   912→                  transition={{ duration: 0.3 }}
+   913→                >
+   914→                  <h3 className="font-heading font-bold text-lg mb-4" style={{ color: BRAND.dark }}>
+   915→                    Nutrition Information
+   916→                  </h3>
+   917→                  {product.nutrition_info ? (
+   918→                    <div className="p-6 rounded-xl bg-white border max-w-2xl" style={{ borderColor: BRAND.surface }}>
+   919→                      <p className="text-sm leading-relaxed" style={{ color: BRAND.dark }}>
+   920→                        {product.nutrition_info}
+   921→                      </p>
+   922→                    </div>
+   923→                  ) : (
+   924→                    <div className="p-6 rounded-xl bg-white border max-w-2xl" style={{ borderColor: BRAND.surface }}>
+   925→                      <div className="flex items-center gap-3">
+   926→                        <Info className="w-5 h-5" style={{ color: BRAND.muted }} />
+   927→                        <p className="text-sm" style={{ color: BRAND.muted }}>
+   928→                          Nutrition information will be available soon. Check the product label for details.
+   929→                        </p>
+   930→                      </div>
+   931→                    </div>
+   932→                  )}
+   933→
+   934→                  {product.serving_size && (
+   935→                    <div className="mt-4 flex items-center gap-2 text-xs" style={{ color: BRAND.muted }}>
+   936→                      <Leaf className="w-3.5 h-3.5" />
+   937→                      <span>Serving size: {product.serving_size}</span>
+   938→                    </div>
+   939→                  )}
+   940→                </motion.div>
+   941→              </AnimatePresence>
+   942→            </TabsContent>
+   943→
+   944→            {/* ─── Storage Tab ────────────────────────────────── */}
+   945→            <TabsContent value="storage" className="mt-6">
+   946→              <AnimatePresence mode="wait">
+   947→                <motion.div
+   948→                  key="storage"
+   949→                  initial={{ opacity: 0, y: 10 }}
+   950→                  animate={{ opacity: 1, y: 0 }}
+   951→                  transition={{ duration: 0.3 }}
+   952→                  className="grid md:grid-cols-2 gap-8"
+   953→                >
+   954→                  <div className="space-y-4">
+   955→                    <h3 className="font-heading font-bold text-lg" style={{ color: BRAND.dark }}>
+   956→                      Storage Instructions
+   957→                    </h3>
+   958→                    {product.storage_info ? (
+   959→                      <div className="p-4 rounded-xl bg-white border flex items-start gap-3"
+   960→                        style={{ borderColor: BRAND.surface }}
+   961→                      >
+   962→                        <ShieldCheck className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: BRAND.green }} />
+   963→                        <p className="text-sm leading-relaxed" style={{ color: BRAND.dark }}>
+   964→                          {product.storage_info}
+   965→                        </p>
+   966→                      </div>
+   967→                    ) : (
+   968→                      <div className="p-4 rounded-xl bg-white border" style={{ borderColor: BRAND.surface }}>
+   969→                        <p className="text-sm" style={{ color: BRAND.muted }}>
+   970→                          Store in a cool, dry place away from direct sunlight.
+   971→                        </p>
+   972→                      </div>
+   973→                    )}
+   974→                  </div>
+   975→
+   976→                  <div className="space-y-4">
+   977→                    <h3 className="font-heading font-bold text-lg" style={{ color: BRAND.dark }}>
+   978→                      Shelf Life
+   979→                    </h3>
+   980→                    {product.shelf_life ? (
+   981→                      <div className="p-4 rounded-xl bg-white border flex items-start gap-3"
+   982→                        style={{ borderColor: BRAND.surface }}
+   983→                      >
+   984→                        <Clock className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: BRAND.green }} />
+   985→                        <p className="text-sm leading-relaxed" style={{ color: BRAND.dark }}>
+   986→                          {product.shelf_life}
+   987→                        </p>
+   988→                      </div>
+   989→                    ) : (
+   990→                      <div className="p-4 rounded-xl bg-white border" style={{ borderColor: BRAND.surface }}>
+   991→                        <p className="text-sm" style={{ color: BRAND.muted }}>
+   992→                          Shelf life information will be available on the product label.
+   993→                        </p>
+   994→                      </div>
+   995→                    )}
+   996→                  </div>
+   997→                </motion.div>
+   998→              </AnimatePresence>
+   999→            </TabsContent>
+  1000→
+  1001→            {/* ─── Legal Tab ──────────────────────────────────── */}
+  1002→            <TabsContent value="legal" className="mt-6">
+  1003→              <AnimatePresence mode="wait">
+  1004→                <motion.div
+  1005→                  key="legal"
+  1006→                  initial={{ opacity: 0, y: 10 }}
+  1007→                  animate={{ opacity: 1, y: 0 }}
+  1008→                  transition={{ duration: 0.3 }}
+  1009→                >
+  1010→                  <h3 className="font-heading font-bold text-lg mb-4" style={{ color: BRAND.dark }}>
+  1011→                    Legal & Compliance
+  1012→                  </h3>
+  1013→                  <div className="grid sm:grid-cols-2 gap-4 max-w-2xl">
+  1014→                    {[
+  1015→                      { label: 'FSSAI License', value: product.fssai_license, icon: <ShieldCheck className="w-4 h-4" /> },
+  1016→                      { label: 'HSN Code', value: product.hsn_code, icon: <Package className="w-4 h-4" /> },
+  1017→                      { label: 'GST Rate', value: product.gst_rate ? `${product.gst_rate}%` : null, icon: <CreditCard className="w-4 h-4" /> },
+  1018→                      { label: 'Country of Origin', value: product.country_origin, icon: <Globe className="w-4 h-4" /> },
+  1019→                    ]
+  1020→                      .map((d, i) => (
+  1021→                        <motion.div
+  1022→                          key={i}
+  1023→                          initial={{ opacity: 0, y: 5 }}
+  1024→                          animate={{ opacity: 1, y: 0 }}
+  1025→                          transition={{ delay: i * 0.05 }}
+  1026→                          className="p-4 rounded-xl bg-white border"
+  1027→                          style={{ borderColor: BRAND.surface }}
+  1028→                        >
+  1029→                          <div className="flex items-center gap-2 mb-1">
+  1030→                            {d.icon}
+  1031→                            <p className="text-xs uppercase tracking-wider" style={{ color: BRAND.muted }}>{d.label}</p>
+  1032→                          </div>
+  1033→                          <p className="text-sm font-medium" style={{ color: d.value ? BRAND.dark : BRAND.muted }}>
+  1034→                            {d.value || 'Not available'}
+  1035→                          </p>
+  1036→                        </motion.div>
+  1037→                      ))}
+  1038→                  </div>
+  1039→                </motion.div>
+  1040→              </AnimatePresence>
+  1041→            </TabsContent>
+  1042→          </Tabs>
+  1043→        </motion.div>
+  1044→
+  1045→        {/* ─── Contact Section ──────────────────────────────── */}
+  1046→        <motion.div
+  1047→          initial={{ opacity: 0, y: 20 }}
+  1048→          animate={{ opacity: 1, y: 0 }}
+  1049→          transition={{ duration: 0.5, delay: 0.3 }}
+  1050→          className="mt-10 lg:mt-12"
+  1051→        >
+  1052→          <Card className="border rounded-2xl" style={{ borderColor: BRAND.surface }}>
+  1053→            <CardHeader>
+  1054→              <CardTitle className="font-heading font-bold text-lg flex items-center gap-2" style={{ color: BRAND.dark }}>
+  1055→                <MessageCircle className="w-5 h-5" style={{ color: BRAND.green }} />
+  1056→                Need Help? Contact Us
+  1057→              </CardTitle>
+  1058→            </CardHeader>
+  1059→            <CardContent>
+  1060→              <div className="grid sm:grid-cols-3 gap-4">
+  1061→                <button
+  1062→                  className="pointer-events-auto flex items-center gap-3 p-4 rounded-xl transition-all min-h-[44px]"
+  1063→                  style={{ backgroundColor: '#25D36608', borderColor: '#25D36620', border: '1px solid #25D36620' }}
+  1064→                  onClick={() => window.open('https://wa.me/919876543210?text=Hi%2C%20I%20have%20a%20question%20about%20NOTJUST%20Watr', '_blank')}
+  1065→                >
+  1066→                  <div className="w-10 h-10 rounded-lg flex items-center justify-center min-h-[40px]"
+  1067→                    style={{ backgroundColor: '#25D36615' }}
+  1068→                  >
+  1069→                    <MessageCircle className="w-5 h-5" style={{ color: '#25D366' }} />
+  1070→                  </div>
+  1071→                  <div className="text-left">
+  1072→                    <p className="text-sm font-semibold" style={{ color: BRAND.dark }}>WhatsApp</p>
+  1073→                    <p className="text-[11px]" style={{ color: BRAND.muted }}>Chat with us instantly</p>
+  1074→                  </div>
+  1075→                </button>
+  1076→
+  1077→                <button
+  1078→                  className="pointer-events-auto flex items-center gap-3 p-4 rounded-xl transition-all min-h-[44px]"
+  1079→                  style={{ backgroundColor: `${BRAND.blue}08`, borderColor: `${BRAND.blue}20`, border: `1px solid ${BRAND.blue}20` }}
+  1080→                  onClick={() => window.open('mailto:hello@notjust.health?subject=Query%20about%20NOTJUST%20Watr', '_blank')}
+  1081→                >
+  1082→                  <div className="w-10 h-10 rounded-lg flex items-center justify-center min-h-[40px]"
+  1083→                    style={{ backgroundColor: `${BRAND.blue}15` }}
+  1084→                  >
+  1085→                    <Mail className="w-5 h-5" style={{ color: BRAND.blue }} />
+  1086→                  </div>
+  1087→                  <div className="text-left">
+  1088→                    <p className="text-sm font-semibold" style={{ color: BRAND.dark }}>Email</p>
+  1089→                    <p className="text-[11px]" style={{ color: BRAND.muted }}>hello@notjust.health</p>
+  1090→                  </div>
+  1091→                </button>
+  1092→
+  1093→                <button
+  1094→                  className="pointer-events-auto flex items-center gap-3 p-4 rounded-xl transition-all min-h-[44px]"
+  1095→                  style={{ backgroundColor: `${BRAND.green}08`, borderColor: `${BRAND.green}20`, border: `1px solid ${BRAND.green}20` }}
+  1096→                  onClick={() => window.open('sms:+919876543210?body=Hi%2C%20I%20have%20a%20question%20about%20NOTJUST%20Watr', '_blank')}
+  1097→                >
+  1098→                  <div className="w-10 h-10 rounded-lg flex items-center justify-center min-h-[40px]"
+  1099→                    style={{ backgroundColor: `${BRAND.green}15` }}
+  1100→                  >
+  1101→                    <Smartphone className="w-5 h-5" style={{ color: BRAND.green }} />
+  1102→                  </div>
+  1103→                  <div className="text-left">
+  1104→                    <p className="text-sm font-semibold" style={{ color: BRAND.dark }}>SMS</p>
+  1105→                    <p className="text-[11px]" style={{ color: BRAND.muted }}>+91 98765 43210</p>
+  1106→                  </div>
+  1107→                </button>
+  1108→              </div>
+  1109→            </CardContent>
+  1110→          </Card>
+  1111→        </motion.div>
+  1112→
+  1113→      </div>
+  1114→    </div>
+  1115→  )
+  1116→}
+  1117→

@@ -18,8 +18,9 @@ module.exports = {
       // Working directory (the project root on the Plesk server)
       // cwd: '/var/www/vhosts/yourdomain.com/httpdocs',
 
-      // Number of instances. For a stateful app (SQLite), use 1 instance.
-      // If using an external database (e.g., PostgreSQL), you can increase this.
+      // Number of instances. With MariaDB, multiple instances are supported
+      // (unlike SQLite which requires exactly 1). Start with 1 for simplicity;
+      // increase to 2-4 for high traffic if needed (use exec_mode: 'cluster').
       instances: 1,
 
       // Run in cluster mode for multiple instances, fork mode for single
@@ -39,7 +40,7 @@ module.exports = {
         NODE_ENV: 'production',
         // PORT is set by Plesk automatically — do not override here
         // HOSTNAME is set by server.js to 0.0.0.0 — do not override here
-        // DATABASE_URL must point to the production SQLite path on the server
+        // DATABASE_URL must be the MariaDB connection string
         // Set these in Plesk's Node.js environment settings instead
       },
 

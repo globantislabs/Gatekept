@@ -1,0 +1,341 @@
+// NOTJUST Watr - Production Database Schema
+// Prisma + MySQL/MariaDB for Plesk hosting deployment
+// Switch to this schema for production: bun run db:use-mysql
+// Switch to SQLite for local dev: bun run db:use-sqlite
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Users & Auth ───────────────────────────────────────────
+
+model UserProfile {
+  id              String   @id @default(cuid()) @db.VarChar(30)
+  user_id         String   @unique @db.VarChar(191)
+  name            String   @db.VarChar(255)
+  age             Int?
+  gender          String?  @db.VarChar(50)
+  phone           String?  @db.VarChar(20)
+  email           String?  @unique @db.VarChar(191)
+  country         String   @default("India") @db.VarChar(100)
+  state           String?  @db.VarChar(100)
+  avatar_url      String?  @db.Text
+  learning_completed Boolean @default(false)
+  is_admin        Boolean  @default(false)
+  password_hash   String?  @db.VarChar(255)
+  created_at      DateTime @default(now()) @db.DateTime(3)
+  updated_at      DateTime @updatedAt @db.DateTime(3)
+
+  // Relations
+  learningProgress    ProductLearningProgress[]
+  qrScans             QrScan[]
+  orders              Order[]
+  subscriptions       Subscription[]
+  otpVerifications    OtpVerification[]
+
+  @@index([user_id])
+  @@index([email])
+  @@index([phone])
+}
+
+// ─── Products ───────────────────────────────────────────────
+
+model Product {
+  id              String   @id @default(cuid()) @db.VarChar(30)
+  name            String   @db.VarChar(255)
+  slug            String   @unique @db.VarChar(191)
+  description     String?  @db.Text
+  short_description String? @db.VarChar(500)
+  price           Float
+  mrp             Float?
+  stock           Int      @default(0)
+  image_url       String?  @db.Text
+  gallery_images  String?  @db.Text    // JSON array
+  type            String   @default("FIZZ") @db.VarChar(50)
+  category        String?  @default("Wellness Shot") @db.VarChar(100)
+  sku             String?  @db.VarChar(100)
+  weight          String?  @db.VarChar(50)
+  ingredients     String?  @db.Text    // JSON data
+  nutrition_info  String?  @db.Text    // JSON data
+  tags            String?  @db.Text    // JSON array
+  active          Boolean  @default(true)
+  featured        Boolean  @default(false)
+  brand           String?  @default("NOTJUST") @db.VarChar(100)
+  flavor          String?  @db.VarChar(100)
+  serving_size    String?  @db.VarChar(50)
+  allergen_info   String?  @db.Text
+  storage_info    String?  @db.Text
+  shelf_life      String?  @db.VarChar(100)
+  country_origin  String?  @default("India") @db.VarChar(100)
+  fssai_license   String?  @db.VarChar(100)
+  hsn_code        String?  @db.VarChar(50)
+  gst_rate        Float?   @default(18)
+  min_order_qty   Int?     @default(1)
+  max_order_qty   Int?     @default(10)
+  discount_label  String?  @db.VarChar(255)
+  highlights      String?  @db.Text    // JSON data
+  created_at      DateTime @default(now()) @db.DateTime(3)
+  updated_at      DateTime @updatedAt @db.DateTime(3)
+
+  // Relations
+  videos          ProductVideo[]
+  quizzes         ProductQuiz[]
+  learningProgress ProductLearningProgress[]
+  orderItems      OrderItem[]
+  subscriptions   Subscription[]
+
+  @@index([slug])
+  @@index([active])
+  @@index([type])
+}
+
+// ─── Product Videos (Learning Content) ──────────────────────
+
+model ProductVideo {
+  id              String   @id @default(cuid()) @db.VarChar(30)
+  product_id      String   @db.VarChar(30)
+  title           String   @db.VarChar(255)
+  duration        String   @default("5:00") @db.VarChar(20)
+  description     String?  @db.Text
+  order           Int      @default(0)
+  video_url       String?  @db.Text
+  thumbnail_url   String?  @db.Text
+  active          Boolean  @default(true)
+  created_at      DateTime @default(now()) @db.DateTime(3)
+  updated_at      DateTime @updatedAt @db.DateTime(3)
+
+  product         Product  @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  quizzes         ProductQuiz[]
+
+  @@index([product_id])
+  @@index([order])
+}
+
+// ─── Product Quiz Questions ─────────────────────────────────
+
+model ProductQuiz {
+  id              String   @id @default(cuid()) @db.VarChar(30)
+  product_id      String   @db.VarChar(30)
+  video_id        String   @db.VarChar(30)
+  question        String   @db.Text
+  options         String   @db.Text  // JSON array of strings
+  answer          Int
+  category        String?  @default("general") @db.VarChar(50)
+  difficulty      String   @default("EASY") @db.VarChar(20)
+  order           Int      @default(0)
+  active          Boolean  @default(true)
+  created_at      DateTime @default(now()) @db.DateTime(3)
+  updated_at      DateTime @updatedAt @db.DateTime(3)
+
+  product         Product  @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  video           ProductVideo @relation(fields: [video_id], references: [id], onDelete: Cascade)
+
+  @@index([product_id])
+  @@index([video_id])
+}
+
+// ─── Learning Progress ──────────────────────────────────────
+
+model ProductLearningProgress {
+  id              String   @id @default(cuid()) @db.VarChar(30)
+  user_id         String   @db.VarChar(30)
+  product_id      String   @db.VarChar(30)
+  video_progress  String   @default("{}") @db.Text   // JSON data
+  quiz_answers    String   @default("{}") @db.Text   // JSON data
+  quiz_completed  Boolean  @default(false)
+  quiz_score      Int      @default(0)
+  status          String   @default("NOT_STARTED") @db.VarChar(30)
+  completed_at    DateTime? @db.DateTime(3)
+  created_at      DateTime @default(now()) @db.DateTime(3)
+  updated_at      DateTime @updatedAt @db.DateTime(3)
+
+  user            UserProfile @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  product         Product    @relation(fields: [product_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, product_id])
+  @@index([user_id])
+  @@index([product_id])
+  @@index([status])
+}
+
+// ─── Marketing Campaigns ────────────────────────────────────
+
+model Campaign {
+  id              String   @id @default(cuid()) @db.VarChar(30)
+  name            String   @db.VarChar(255)
+  channel         String   @default("HOTEL") @db.VarChar(50)
+  partner_name    String?  @db.VarChar(255)
+  location        String?  @db.VarChar(255)
+  start_date      DateTime? @db.DateTime(3)
+  end_date        DateTime? @db.DateTime(3)
+  status          String   @default("ACTIVE") @db.VarChar(30)
+  qr_code_url     String?  @db.Text
+  created_at      DateTime @default(now()) @db.DateTime(3)
+  updated_at      DateTime @updatedAt @db.DateTime(3)
+
+  // Relations
+  qrScans         QrScan[]
+
+  @@index([status])
+  @@index([channel])
+}
+
+// ─── QR Scan Tracking ──────────────────────────────────────
+
+model QrScan {
+  id              String   @id @default(cuid()) @db.VarChar(30)
+  campaign_id     String?  @db.VarChar(30)
+  user_id         String?  @db.VarChar(30)
+  device          String?  @db.VarChar(100)
+  location        String?  @db.VarChar(255)
+  created_at      DateTime @default(now()) @db.DateTime(3)
+
+  campaign        Campaign? @relation(fields: [campaign_id], references: [id])
+  user            UserProfile? @relation(fields: [user_id], references: [id])
+
+  @@index([campaign_id])
+  @@index([user_id])
+  @@index([created_at])
+}
+
+// ─── Orders ────────────────────────────────────────────────────
+
+model Order {
+  id              String   @id @default(cuid()) @db.VarChar(30)
+  user_id         String   @db.VarChar(30)
+  order_number    String   @unique @db.VarChar(191)
+  status          String   @default("PLACED") @db.VarChar(30)  // PLACED, CONFIRMED, PROCESSING, SHIPPED, DELIVERED, CANCELLED
+  total_amount    Float
+  subtotal        Float
+  tax_amount      Float    @default(0)
+  discount_amount Float    @default(0)
+  currency        String   @default("INR") @db.VarChar(10)
+  shipping_name   String?  @db.VarChar(255)
+  shipping_phone  String?  @db.VarChar(20)
+  shipping_address String? @db.Text
+  shipping_city   String?  @db.VarChar(100)
+  shipping_state  String?  @db.VarChar(100)
+  shipping_pincode String? @db.VarChar(10)
+  payment_method  String?  @default("UPI") @db.VarChar(50)
+  payment_status  String   @default("PENDING") @db.VarChar(30) // PENDING, COMPLETED, FAILED, REFUNDED
+  payment_ref     String?  @db.VarChar(255)
+  notes           String?  @db.Text
+  delivered_at    DateTime? @db.DateTime(3)
+  created_at      DateTime @default(now()) @db.DateTime(3)
+  updated_at      DateTime @updatedAt @db.DateTime(3)
+
+  // Relations
+  user            UserProfile @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  items           OrderItem[]
+  tracking        OrderTracking[]
+  subscription    Subscription?
+
+  @@index([user_id])
+  @@index([order_number])
+  @@index([status])
+  @@index([created_at])
+}
+
+model OrderItem {
+  id              String   @id @default(cuid()) @db.VarChar(30)
+  order_id        String   @db.VarChar(30)
+  product_id      String   @db.VarChar(30)
+  product_name    String   @db.VarChar(255)
+  product_type    String   @default("FIZZ") @db.VarChar(50)
+  quantity        Int      @default(1)
+  unit_price      Float
+  total_price     Float
+  pack_type       String?  @db.VarChar(30)  // 30_DAY, 60_DAY, 90_DAY, 180_DAY
+  pack_days       Int?
+  pack_discount   Float?   @default(0)
+  created_at      DateTime @default(now()) @db.DateTime(3)
+
+  order           Order    @relation(fields: [order_id], references: [id], onDelete: Cascade)
+  product         Product  @relation(fields: [product_id], references: [id])
+
+  @@index([order_id])
+  @@index([product_id])
+}
+
+// ─── Order Tracking ────────────────────────────────────────────
+
+model OrderTracking {
+  id              String   @id @default(cuid()) @db.VarChar(30)
+  order_id        String   @db.VarChar(30)
+  status          String   @db.VarChar(30)  // PLACED, CONFIRMED, PROCESSING, SHIPPED, OUT_FOR_DELIVERY, DELIVERED, CANCELLED
+  location        String?  @db.VarChar(255)
+  description     String?  @db.Text
+  tracked_at      DateTime @default(now()) @db.DateTime(3)
+
+  order           Order    @relation(fields: [order_id], references: [id], onDelete: Cascade)
+
+  @@index([order_id])
+  @@index([tracked_at])
+}
+
+// ─── Subscriptions ──────────────────────────────────────────────
+
+model Subscription {
+  id              String   @id @default(cuid()) @db.VarChar(30)
+  user_id         String   @db.VarChar(30)
+  order_id        String   @unique @db.VarChar(30)
+  product_id      String   @db.VarChar(30)
+  product_name    String   @db.VarChar(255)
+  product_type    String   @default("FIZZ") @db.VarChar(50)
+  pack_type       String   @db.VarChar(30)  // 30_DAY, 60_DAY, 90_DAY, 180_DAY
+  pack_days       Int
+  pack_discount   Float    @default(0)
+  quantity        Int      @default(1)
+  unit_price      Float
+  frequency_days  Int      @default(30)  // delivery every N days
+  status          String   @default("ACTIVE") @db.VarChar(30) // ACTIVE, PAUSED, CANCELLED, EXPIRED
+  next_delivery   DateTime? @db.DateTime(3)
+  start_date      DateTime @default(now()) @db.DateTime(3)
+  end_date        DateTime? @db.DateTime(3)
+  paused_at       DateTime? @db.DateTime(3)
+  cancelled_at    DateTime? @db.DateTime(3)
+  total_cycles    Int      @default(0)
+  completed_cycles Int     @default(0)
+  created_at      DateTime @default(now()) @db.DateTime(3)
+  updated_at      DateTime @updatedAt @db.DateTime(3)
+
+  user            UserProfile @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  order           Order      @relation(fields: [order_id], references: [id], onDelete: Cascade)
+  product         Product    @relation(fields: [product_id], references: [id])
+
+  @@index([user_id])
+  @@index([order_id])
+  @@index([product_id])
+  @@index([status])
+}
+
+// ─── OTP Verification ──────────────────────────────────────────
+
+model OtpVerification {
+  id            String   @id @default(cuid()) @db.VarChar(30)
+  phone         String   @db.VarChar(20)
+  otp_code      String   @db.VarChar(255)    // SHA-256 hashed OTP (never plaintext)
+  purpose       String   @db.VarChar(50)     // CANCEL_ORDER, CANCEL_SUB, PAUSE_SUB, RESUME_SUB, MODIFY_ADDRESS, VERIFY_PHONE
+  reference_id  String?  @db.VarChar(30)     // order_id or subscription_id
+  user_id       String?  @db.VarChar(30)     // Link to user profile
+  status        String   @default("PENDING") @db.VarChar(30)  // PENDING, VERIFIED, EXPIRED, FAILED
+  attempts      Int      @default(0)
+  max_attempts  Int      @default(3)
+  sms_sent      Boolean  @default(false)
+  sms_reference String?  @db.VarChar(255)    // SMSAlert delivery reference
+  expires_at    DateTime @db.DateTime(3)
+  verified_at   DateTime? @db.DateTime(3)
+  created_at    DateTime @default(now()) @db.DateTime(3)
+  updated_at    DateTime @updatedAt @db.DateTime(3)
+
+  user          UserProfile? @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([phone, purpose, status])
+  @@index([reference_id])
+  @@index([expires_at])
+}

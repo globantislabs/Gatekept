@@ -1,6 +1,7 @@
 // NOTJUST Watr — Plesk-compatible production server entry point
 // This file loads the Next.js standalone server built with `output: "standalone"`
 // Plesk's Node.js extension uses this as the application startup file.
+// Supports both MariaDB (production) and SQLite (local dev) via DATABASE_URL.
 
 const path = require('path');
 const fs = require('fs');
@@ -40,12 +41,24 @@ if (missingVars.length > 0) {
   // (some routes may work without all vars, e.g. static pages)
 }
 
-// ─── Log Configuration ──────────────────────────────────────────
+// ─── Detect Database Type ────────────────────────────────────────
+const dbUrl = process.env.DATABASE_URL || '';
+const isMariaDB = dbUrl.startsWith('mysql://');
+const isSQLite = dbUrl.startsWith('file:');
+const dbType = isMariaDB ? 'MariaDB/MySQL' : isSQLite ? 'SQLite' : 'Unknown';
+
 console.log(`[server.js] NODE_ENV: ${process.env.NODE_ENV || 'not set (defaulting to production)'}`);
-console.log(`[server.js] DATABASE_URL: ${process.env.DATABASE_URL ? 'configured' : 'NOT SET'}`);
+console.log(`[server.js] DATABASE_URL: ${dbUrl ? 'configured' : 'NOT SET'} (${dbType})`);
 console.log(`[server.js] SMSAlert: ${process.env.SMSALERT_USER ? 'configured' : 'not configured (dev mode)'}`);
 console.log(`[server.js] NEXTAUTH_SECRET: ${process.env.NEXTAUTH_SECRET ? 'configured' : 'NOT SET'}`);
 console.log(`[server.js] NEXTAUTH_URL: ${process.env.NEXTAUTH_URL || 'not set'}`);
+
+if (isMariaDB) {
+  console.log('[server.js] Database: MariaDB/MySQL — production mode');
+} else if (isSQLite) {
+  console.log('[server.js] Database: SQLite — local dev mode (not for production)');
+  console.log('[server.js] WARNING: SQLite does not support concurrent writes. Use MariaDB for production.');
+}
 
 // ─── Set Default NODE_ENV ───────────────────────────────────────
 if (!process.env.NODE_ENV) {

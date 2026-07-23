@@ -1,6 +1,6 @@
-# NOTJUST Watr — Plesk Deployment Guide
+# NOTJUST Watr — Plesk Deployment Guide (MariaDB)
 
-Step-by-step instructions for deploying the NOTJUST Watr wellness shot application on a Plesk-managed server.
+Step-by-step instructions for deploying the NOTJUST Watr wellness shot application on a Plesk-managed server with MariaDB database.
 
 ---
 
@@ -9,12 +9,48 @@ Step-by-step instructions for deploying the NOTJUST Watr wellness shot applicati
 - **Plesk** version 18+ with the **Node.js extension** installed
 - **Node.js** 18.x or 20.x installed via Plesk (check in Plesk > Tools & Settings > Node.js)
 - **npm** 9+ or **bun** 1+ (bun is recommended for faster builds)
+- **MariaDB** 10.3+ or MySQL 5.7+ available on the Plesk server
 - Domain configured in Plesk with SSL certificate (Let's Encrypt or commercial)
 - SSH access to the server (optional, but recommended for initial setup)
 
 ---
 
-## 1. Prepare the Build
+## 1. Database Setup (MariaDB)
+
+### Create Database in Plesk
+
+1. In Plesk control panel, go to **Domains > yourdomain.com > Databases**
+2. Click **Add Database**
+3. Set:
+   - **Database name**: `notjustwatr_com`
+   - **Database user**: `notjustwatrdb`
+   - **Password**: (set a strong password — you'll need this in DATABASE_URL)
+   - **Database server**: (default MariaDB on localhost:3306)
+4. Click **OK** to create the database
+
+### Alternatively via SSH (if Plesk database tool is unavailable):
+```bash
+# Connect to MariaDB
+mysql -u root -p
+
+# Create database and user
+CREATE DATABASE notjustwatr_com CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER 'notjustwatrdb'@'localhost' IDENTIFIED BY 'YOUR_STRONG_PASSWORD';
+GRANT ALL PRIVILEGES ON notjustwatr_com.* TO 'notjustwatrdb'@'localhost';
+FLUSH PRIVILEGES;
+EXIT;
+```
+
+### DATABASE_URL Format
+```
+DATABASE_URL=mysql://notjustwatrdb:YOUR_PASSWORD@localhost:3306/notjustwatr_com
+```
+
+**Important**: MariaDB must use `utf8mb4` character set (not `utf8`) for proper Unicode support including emojis. The Prisma schema uses `@db.VarChar(191)` for unique fields, which is the safe maximum for utf8mb4 indexes in MariaDB.
+
+---
+
+## 2. Prepare the Build
 
 Run the build on your local machine or a CI server (not on Plesk, to save resources):
 
@@ -22,10 +58,10 @@ Run the build on your local machine or a CI server (not on Plesk, to save resour
 # Install dependencies
 npm install
 
-# Generate Prisma client
-npx prisma generate
+# Switch to MySQL/MariaDB schema for production build
+npm run db:use-mysql
 
-# Build Next.js standalone output
+# Build Next.js standalone output (includes Prisma MySQL client)
 npm run build:plesk
 ```
 
@@ -33,12 +69,13 @@ This creates:
 - `.next/standalone/` — The self-contained Next.js server
 - `.next/static/` — Static assets (copied into standalone)
 - `public/` — Public files (copied into standalone)
-- `prisma/` — Prisma schema (copied into standalone)
-- `db/` — SQLite database file (copied if exists)
+- `prisma/` — Prisma schema + generated MySQL client
+
+**Note**: `npm run build:plesk` automatically switches to the MySQL schema before building. The `dev` script uses SQLite for local development.
 
 ---
 
-## 2. Upload Files to Plesk
+## 3. Upload Files to Plesk
 
 Upload the following files/directories to your Plesk document root (e.g., `/var/www/vhosts/yourdomain.com/httpdocs/`):
 
@@ -52,9 +89,8 @@ package.json                     # For Plesk dependency resolution
   ├── .next/                     # Built Next.js assets
   │   └── static/               # Static files
   ├── public/                    # Public assets
-  ├── prisma/                    # Prisma schema + generated client
-  ├── node_modules/              # Production dependencies (standalone includes these)
-  └── db/                        # SQLite database (if exists)
+  ├── prisma/                    # Prisma schema + generated MySQL client
+  └── node_modules/              # Production dependencies (standalone includes these)
 .env.production                  # Production environment variables
 ```
 
@@ -65,6 +101,7 @@ package.json                     # For Plesk dependency resolution
 - `dev.log`, `server.log` — Log files
 - `.env` — Dev environment file (use `.env.production` instead)
 - `bun.lock` — Only needed for bun dev
+- `db/` — SQLite database directory (not used in production; MariaDB replaces it)
 
 ### Upload methods:
 - **Plesk File Manager**: Upload zip and extract
@@ -74,7 +111,7 @@ package.json                     # For Plesk dependency resolution
 
 ---
 
-## 3. Plesk Node.js Application Settings
+## 4. Plesk Node.js Application Settings
 
 In Plesk control panel:
 
@@ -88,13 +125,13 @@ In Plesk control panel:
 | **Application Mode** | Production |
 | **Application Root** | `/var/www/vhosts/yourdomain.com/httpdocs` |
 | **Startup File** | `server.js` |
-| **Custom Environment Variables** | (see Section 4) |
+| **Custom Environment Variables** | (see Section 5) |
 
 3. Click **Enable Node.js** to start the application
 
 ---
 
-## 4. Environment Variables
+## 5. Environment Variables
 
 Set these in **Plesk > Node.js > Environment Variables** or in `.env.production`:
 
@@ -103,7 +140,7 @@ Set these in **Plesk > Node.js > Environment Variables** or in `.env.production`
 | `NODE_ENV` | Yes | `production` | Application environment |
 | `PORT` | Auto | (set by Plesk) | Port number (Plesk sets this automatically) |
 | `HOSTNAME` | Auto | (set by server.js) | Plesk needs `0.0.0.0`, server.js sets this |
-| `DATABASE_URL` | Yes | `file:/var/www/vhosts/yourdomain.com/httpdocs/db/production.db` | SQLite database path (must be absolute) |
+| `DATABASE_URL` | Yes | `mysql://notjustwatrdb:password@localhost:3306/notjustwatr_com` | MariaDB connection string |
 | `SMSALERT_USER` | No* | `your_username` | SMSAlert.co.in API username |
 | `SMSALERT_PWD` | No* | `your_password` | SMSAlert.co.in API password |
 | `SMSALERT_SENDER` | No | `NJWATR` | SMS sender ID (default: NJWATR) |
@@ -114,45 +151,27 @@ Set these in **Plesk > Node.js > Environment Variables** or in `.env.production`
 
 ---
 
-## 5. Database Setup
+## 6. Push Prisma Schema to MariaDB
 
-### SQLite Path Configuration
-
-The `DATABASE_URL` must use an **absolute path** pointing to a writable location on the server:
-
-```
-DATABASE_URL=file:/var/www/vhosts/yourdomain.com/httpdocs/db/production.db
-```
-
-### Initialize the Database:
+After uploading files and configuring environment variables, push the Prisma schema to create tables in MariaDB:
 
 ```bash
 # On the server via SSH:
 cd /var/www/vhosts/yourdomain.com/httpdocs
 
-# Push the Prisma schema to create tables
+# Ensure DATABASE_URL is set (from Plesk environment or .env.production)
+# Push the Prisma schema to create MariaDB tables
 npx prisma db push
 
 # Seed initial data (admin user, products, videos, quizzes, etc.)
 npm run seed
 ```
 
-### Database Permissions:
-Ensure the `db/` directory and `production.db` file are writable by the Node.js process user:
-```bash
-chmod 755 /var/www/vhosts/yourdomain.com/httpdocs/db/
-chmod 644 /var/www/vhosts/yourdomain.com/httpdocs/db/production.db
-```
-
-### Backup:
-SQLite is a single-file database — backup by copying the file:
-```bash
-cp db/production.db db/production.db.backup-$(date +%Y%m%d)
-```
+**Alternative**: If SSH is not available, you can use Plesk's phpMyAdmin to verify the database, and push the schema via a build step.
 
 ---
 
-## 6. Build and Start Commands in Plesk
+## 7. Build and Start Commands in Plesk
 
 In the Plesk Node.js application settings:
 
@@ -175,7 +194,7 @@ pm2 startup  # Generates startup command for auto-restart on reboot
 
 ---
 
-## 7. Domain and SSL Configuration
+## 8. Domain and SSL Configuration
 
 ### Plesk Domain Settings:
 1. **Domains > yourdomain.com > Web Server Settings**
@@ -192,7 +211,35 @@ pm2 startup  # Generates startup command for auto-restart on reboot
 
 ---
 
-## 8. Troubleshooting
+## 9. Database Backup & Maintenance
+
+### MariaDB Backup (via Plesk):
+Plesk provides built-in database backup:
+1. **Domains > yourdomain.com > Databases > notjustwatr_com > Backup**
+2. Set up scheduled backups (daily recommended)
+
+### MariaDB Backup (via SSH):
+```bash
+# Full database backup
+mysqldump -u notjustwatrdb -p notjustwatr_com > backup-$(date +%Y%m%d).sql
+
+# Restore from backup
+mysql -u notjustwatrdb -p notjustwatr_com < backup-20250615.sql
+```
+
+### phpMyAdmin:
+Plesk provides phpMyAdmin for database inspection and manual queries:
+1. **Domains > yourdomain.com > Databases > notjustwatr_com > phpMyAdmin**
+
+### Database Optimization:
+```bash
+# Periodic optimization (monthly recommended)
+mysql -u notjustwatrdb -p -e "OPTIMIZE TABLE UserProfile, Product, Order, OrderItem, Subscription, OtpVerification;" notjustwatr_com
+```
+
+---
+
+## 10. Troubleshooting
 
 ### Application won't start
 - Check Plesk Node.js logs: **Domains > yourdomain.com > Logs**
@@ -204,13 +251,23 @@ pm2 startup  # Generates startup command for auto-restart on reboot
 ### "Cannot find module" errors
 - Ensure `npx prisma generate` was run before building
 - Ensure `.next/standalone/node_modules/` exists and contains `@prisma/client`
-- Try: `npm install && npx prisma generate && npm run build:plesk`
+- Try: `npm install && npm run db:use-mysql && npx prisma generate && npm run build:plesk`
 
-### "SQLite database not found"
-- Verify `DATABASE_URL` uses an **absolute path** (not relative)
-- Ensure the directory exists: `mkdir -p /var/www/vhosts/yourdomain.com/httpdocs/db`
-- Ensure file permissions allow writing by the Node.js process
-- Run `npx prisma db push` on the server to create the schema
+### MariaDB connection errors
+- Verify `DATABASE_URL` is correctly formatted: `mysql://USER:PASSWORD@HOST:PORT/DATABASE`
+- Verify the database exists: check in Plesk > Databases or phpMyAdmin
+- Verify user credentials: test with `mysql -u notjustwatrdb -p -h localhost notjustwatr_com`
+- Verify MariaDB is running: `systemctl status mariadb`
+- Check MariaDB character set: must be `utf8mb4` (not `utf8`)
+  ```sql
+  SHOW VARIABLES LIKE 'character_set_server';
+  -- Should show: utf8mb4
+  ```
+
+### "Prisma client could not connect" errors
+- Ensure the Prisma schema uses `provider = "mysql"` (run `npm run db:use-mysql` before building)
+- Ensure `mysql2` package is in the standalone `node_modules`
+- For Plesk, the MariaDB server is typically on `localhost:3306`
 
 ### OTP not working
 - Verify `SMSALERT_USER` and `SMSALERT_PWD` are set correctly
@@ -241,30 +298,57 @@ pm2 startup  # Generates startup command for auto-restart on reboot
 ### Performance tips
 - Use Node.js 20.x for best performance
 - Set `NODE_ENV=production` (enables Next.js optimizations)
-- Use PM2 cluster mode only if using an external database (not SQLite)
+- With MariaDB, you can now use PM2 cluster mode for multiple instances (no longer limited to 1)
 - Enable Plesk's Nginx caching for static assets
 - Consider enabling Gzip/Brotli compression in Plesk
+- Monitor MariaDB query performance in phpMyAdmin
 
 ---
 
-## 9. Quick Start Checklist
+## 11. Schema Switching (Local Dev vs Production)
+
+The project supports switching between SQLite (local dev) and MariaDB (production):
+
+```bash
+# Switch to SQLite for local development (no MariaDB needed)
+npm run db:use-sqlite
+# DATABASE_URL=file:/path/to/local.db
+
+# Switch to MariaDB for production
+npm run db:use-mysql
+# DATABASE_URL=mysql://notjustwatrdb:password@localhost:3306/notjustwatr_com
+```
+
+**How it works**:
+- `prisma/schema.prisma` is the active schema (used by Prisma)
+- `prisma/schema-sqlite.prisma` is the SQLite template
+- `prisma/schema-mysql.prisma` is the MariaDB/MySQL template
+- The `db:use-sqlite` and `db:use-mysql` scripts copy the appropriate template to `schema.prisma` and regenerate the Prisma client
+- The `dev` script automatically switches to SQLite before starting
+- The `build:plesk` script automatically switches to MySQL before building
+
+---
+
+## 12. Quick Start Checklist
 
 ```
+[ ] MariaDB database created in Plesk (utf8mb4 charset)
+[ ] Database user created with full privileges
 [ ] Node.js 18+ installed in Plesk
 [ ] Plesk Node.js extension installed
 [ ] Domain configured with SSL
 [ ] Files uploaded to Plesk document root
-[ ] .env.production configured with correct values
-[ ] DATABASE_URL points to absolute SQLite path
+[ ] .env.production configured with MariaDB DATABASE_URL
 [ ] NEXTAUTH_SECRET generated (openssl rand -base64 32)
 [ ] NEXTAUTH_URL set to https://yourdomain.com
-[ ] Prisma schema pushed to database (npx prisma db push)
+[ ] Prisma schema pushed to MariaDB (npx prisma db push)
 [ ] Database seeded (npm run seed)
-[ ] Build completed (npm run build:plesk)
+[ ] Build completed (npm run build:plesk) — auto-switches to MySQL schema
 [ ] Plesk Node.js app created with startup file = server.js
 [ ] Application started and responding
 [ ] Test OTP flow
 [ ] Test admin login
 [ ] Test product pages
 [ ] Verify HTTPS redirect working
+[ ] Set up MariaDB scheduled backups in Plesk
 ```

@@ -328,3 +328,64 @@ Stage Summary:
 - SMS OTP via SMSAlert.co.in is fully integrated
 - Project compiles and runs successfully (HTTP 200 confirmed)
 - Ready for Plesk deployment following plesk-setup.md guide
+
+---
+Task ID: 10
+Agent: MariaDB Migration Agent
+Task: Switch project from SQLite to MariaDB (MySQL) for Plesk hosting deployment
+
+Work Log:
+- Read worklog.md and all existing project files (schema.prisma, package.json, next.config.ts, .env, ecosystem.config.cjs, server.js, plesk-setup.md)
+- Saved current SQLite schema as `prisma/schema-sqlite.prisma` (preserved for local dev use)
+- Wrote new MariaDB/MySQL schema as `prisma/schema.prisma` with all MySQL-specific type annotations:
+  - `provider = "mysql"` datasource
+  - `@db.VarChar(30)` for all @id fields (cuid() generates 25-char strings)
+  - `@db.VarChar(191)` for all @unique string fields (MariaDB utf8mb4 index limit)
+  - `@db.Text` for JSON-like fields (video_progress, quiz_answers, options, ingredients, nutrition_info, tags, highlights, gallery_images, description, allergen_info, storage_info, etc.)
+  - `@db.VarChar()` for bounded string fields (name, phone, email, country, etc.)
+  - `@db.DateTime(3)` for all DateTime fields (millisecond precision)
+  - `@@index` declarations for all foreign key columns and frequently queried columns
+- Copied MySQL schema as `prisma/schema-mysql.prisma` (template for db:use-mysql script)
+- Updated `.env` with detailed comments explaining MariaDB vs SQLite DATABASE_URL configurations
+- Created `.env.production.example` with MariaDB DATABASE_URL format and all production env vars
+- Updated `next.config.ts`: removed `better-sqlite3` from serverExternalPackages (only `@prisma/client` needed for MySQL)
+- Updated `package.json` scripts:
+  - `dev`: auto-switches to SQLite schema before starting (`bun run db:use-sqlite && next dev`)
+  - `build:plesk`: auto-switches to MySQL schema before building (`bun run db:use-mysql && npx prisma generate && next build`)
+  - `db:use-mysql`: copies schema-mysql.prisma to schema.prisma and regenerates Prisma client
+  - `db:use-sqlite`: copies schema-sqlite.prisma to schema.prisma and regenerates Prisma client
+  - Removed SQLite file copy from build:plesk (no more db/custom.db copy)
+- Rewrote `plesk-setup.md` with comprehensive MariaDB instructions:
+  - Database creation via Plesk or SSH (CREATE DATABASE, CREATE USER, GRANT PRIVILEGES)
+  - MariaDB-specific DATABASE_URL format
+  - utf8mb4 charset requirement
+  - Schema switching instructions (db:use-mysql / db:use-sqlite)
+  - MariaDB backup via mysqldump and Plesk scheduled backups
+  - phpMyAdmin for database inspection
+  - Updated troubleshooting for MariaDB connection errors
+  - Updated quick-start checklist for MariaDB
+- Updated `ecosystem.config.cjs`:
+  - Changed comment from "single instance for SQLite" to "multiple instances supported with MariaDB"
+  - Kept instances: 1 for simplicity but noted cluster mode is now possible
+- Updated `server.js`:
+  - Added MariaDB/SQLite database type detection from DATABASE_URL prefix
+  - Logs database type on startup (MariaDB/MySQL or SQLite)
+  - Warns if SQLite is used (not for production)
+- Generated Prisma client with MySQL schema successfully (v6.19.2)
+- Switched back to SQLite schema for local dev (bun run db:use-sqlite)
+- Pushed SQLite schema to local database (already in sync)
+- Verified dev server compiles and runs correctly (HTTP 200)
+- Verified lint check passes (only pre-existing error in Gatekept examples folder)
+
+Stage Summary:
+- Project switched from SQLite to MariaDB as primary production database
+- Dual-schema system: MySQL for production (Plesk), SQLite for local dev (sandbox)
+- Three Prisma schema files: schema.prisma (active), schema-mysql.prisma (template), schema-sqlite.prisma (template)
+- Automated switching via db:use-mysql and db:use-sqlite npm scripts
+- Dev script auto-switches to SQLite; build:plesk auto-switches to MySQL
+- All deployment documentation updated for MariaDB on Plesk
+- MariaDB connection: mysql://notjustwatrdb:PASSWORD@localhost:3306/notjustwatr_com
+- Schema optimized for MariaDB utf8mb4 with @db.VarChar(191) for unique fields
+- Zero new lint errors introduced
+- Dev server compiles and serves pages correctly (HTTP 200)
+

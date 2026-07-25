@@ -144,10 +144,17 @@ Set these in **Plesk > Node.js > Environment Variables** or in `.env.production`
 | `SMSALERT_USER` | No* | `your_username` | SMSAlert.co.in API username |
 | `SMSALERT_PWD` | No* | `your_password` | SMSAlert.co.in API password |
 | `SMSALERT_SENDER` | No | `NJWATR` | SMS sender ID (default: NJWATR) |
+| `SMSALERT_ACTIVE` | No | `false` | SMS OTP is currently inactive — set to `true` when ready |
+| `WHATSAPP_TOKEN` | Yes | (your token) | WhatsApp Business API access token |
+| `WHATSAPP_PHONE_NUMBER_ID` | Yes | `1249816758211230` | WhatsApp Business phone number ID |
+| `ZOHO_SMTP_HOST` | No | `smtp.zoho.com` | Zoho SMTP host for email notifications |
+| `ZOHO_SMTP_PORT` | No | `465` | Zoho SMTP port (SSL) |
+| `ZOHO_EMAIL` | No | `notjustwatr@zh-onehealth.com` | Zoho email address |
+| `ZOHO_PASSWORD` | No | (your password) | Zoho email password/app password |
 | `NEXTAUTH_SECRET` | Yes | (generated) | Generate with: `openssl rand -base64 32` |
 | `NEXTAUTH_URL` | Yes | `https://yourdomain.com` | Full URL of your production site |
 
-*SMSAlert credentials are optional — without them, OTP works in dev mode (codes shown in API response for testing).
+*SMSAlert is currently **disabled** (`SMSALERT_ACTIVE=false`). WhatsApp OTP is the primary OTP delivery method. SMSAlert can be activated later by setting `SMSALERT_ACTIVE=true` and providing credentials.
 
 ---
 
@@ -270,9 +277,12 @@ mysql -u notjustwatrdb -p -e "OPTIMIZE TABLE UserProfile, Product, Order, OrderI
 - For Plesk, the MariaDB server is typically on `localhost:3306`
 
 ### OTP not working
-- Verify `SMSALERT_USER` and `SMSALERT_PWD` are set correctly
-- Without SMS credentials, OTP still works in dev mode (code visible in API response)
-- Check SMSAlert.co.in dashboard for delivery status
+- **WhatsApp OTP** (primary method): Verify `WHATSAPP_TOKEN` and `WHATSAPP_PHONE_NUMBER_ID` are set correctly
+- Test the WhatsApp API by sending a test OTP via the `/api/auth/whatsapp-otp/send` endpoint
+- Check WhatsApp Business API dashboard for message delivery status
+- Ensure the `otp_verification` template is approved in your WhatsApp Business account
+- **SMS OTP** (currently inactive): Set `SMSALERT_ACTIVE=true` and provide `SMSALERT_USER`/`SMSALERT_PWD` to activate SMSAlert.co.in
+- In dev mode (without WhatsApp credentials), OTP code is logged to console and shown via toast
 
 ### "ECONNREFUSED" or port errors
 - Plesk's Node.js extension sets `PORT` automatically
@@ -339,6 +349,9 @@ npm run db:use-mysql
 [ ] Domain configured with SSL
 [ ] Files uploaded to Plesk document root
 [ ] .env.production configured with MariaDB DATABASE_URL
+[ ] WhatsApp Business API credentials set (WHATSAPP_TOKEN + WHATSAPP_PHONE_NUMBER_ID)
+[ ] Zoho email credentials set (optional, for notifications)
+[ ] SMSAlert set to inactive (SMSALERT_ACTIVE=false) — WhatsApp OTP is primary
 [ ] NEXTAUTH_SECRET generated (openssl rand -base64 32)
 [ ] NEXTAUTH_URL set to https://yourdomain.com
 [ ] Prisma schema pushed to MariaDB (npx prisma db push)
@@ -346,7 +359,7 @@ npm run db:use-mysql
 [ ] Build completed (npm run build:plesk) — auto-switches to MySQL schema
 [ ] Plesk Node.js app created with startup file = server.js
 [ ] Application started and responding
-[ ] Test OTP flow
+[ ] Test WhatsApp OTP login flow
 [ ] Test admin login
 [ ] Test product pages
 [ ] Verify HTTPS redirect working

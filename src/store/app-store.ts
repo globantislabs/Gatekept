@@ -10,6 +10,7 @@ export type AppView =
   | 'product-learning'
   | 'auth-login'
   | 'auth-register'
+  | 'auth-whatsapp-otp'
   | 'cart'
   | 'checkout'
   | 'order-success'

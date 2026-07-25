@@ -389,3 +389,61 @@ Stage Summary:
 - Zero new lint errors introduced
 - Dev server compiles and serves pages correctly (HTTP 200)
 
+---
+Task ID: 1
+Agent: navbar-agent
+Task: Add visible fixed top navbar to OurJourneyPage component
+
+Work Log:
+- Read worklog.md and OurJourneyPage.tsx (836 lines) to understand context
+- Updated imports: added useState from React, Image from next/image, Home/Store/Menu/X from lucide-react, Sheet/SheetContent/SheetHeader/SheetTitle from @/components/ui/sheet
+- Added JourneyNavbar function component before OurJourneyPage main component (~150 lines)
+  - Fixed top nav (z-50) with transparent→scrolled bg transition (bg-[#1f1e1c]/95 backdrop-blur-xl)
+  - NotJust Watr logo via next/image with hover scale effect
+  - Desktop nav links: Home (Home icon), Product (Store icon), Our Journey (Globe icon)
+  - "Our Journey" highlighted with lime accent (text-[#afb75d] bg-[#afb75d]/10)
+  - Other links: text-white/60 hover:text-[#afb75d] hover:bg-[#afb75d]/5
+  - Right side: user name with Award icon (if logged in), Login button with green bg-[#48805b] (if not)
+  - Mobile hamburger Menu icon opening Sheet (side="right") with dark bg-[#1f1e1c] border-l border-white/[0.06]
+  - Sheet contains same nav links and logo in header
+- Added <JourneyNavbar /> as first child inside OurJourneyPage div (before HeroSection)
+- Added pt-[72px] to HeroSection section element className to prevent content overlap
+- Verified lint passes (only pre-existing error in Gatekept/examples folder)
+
+Stage Summary:
+- OurJourneyPage now has a visible fixed top navbar matching dark theme
+- Navbar transitions from transparent to blurred dark background on scroll
+- Desktop and mobile responsive nav with Sheet side panel
+- Content no longer overlaps navbar thanks to pt-[72px] padding
+
+---
+Task ID: 2
+Agent: full-stack-developer
+Task: Create complete WhatsApp OTP login system
+
+Work Log:
+- Read worklog.md and all existing project files (app-store, page.tsx, AuthPages, Prisma schema, smsalert-service, .env)
+- Created src/lib/whatsapp-otp-service.ts — Backend WhatsApp OTP service using WhatsApp Business API v19.0 with exact payload format (otp_verification template, body + button URL components). Methods: sendOtp(), verifyOtp(), loginWithOtp(). Phone format: accepts Indian 10-digit numbers, adds 91 prefix for WhatsApp.
+- Created src/lib/email-service.ts — Zoho email service using nodemailer with SMTP (smtp.zoho.com:465 SSL). Dynamic import for nodemailer to satisfy lint rules. Methods: sendOtpEmail(), sendNotificationEmail(), isConfigured(). Dev mode: logs to console if SMTP not configured.
+- Created src/app/api/auth/whatsapp-otp/send/route.ts — POST endpoint accepting { phone, purpose }, returns { success, otp_id, message, phone_masked }
+- Created src/app/api/auth/whatsapp-otp/verify/route.ts — POST endpoint accepting { otp_id, otp_code }, returns { success, message }
+- Created src/app/api/auth/whatsapp-otp/login/route.ts — POST endpoint accepting { otp_id, phone, name }, returns { success, user, is_new, message }. Sets session cookies.
+- Created src/components/AuthWhatsAppOtpLogin.tsx — 3-step UI: phone input → OTP verification → success. WhatsApp green (#25D366) branding. InputOTP for 6-digit entry. Resend with 30s cooldown. Success animation with auto-redirect. Links to auth-login and auth-register.
+- Updated src/store/app-store.ts — Added 'auth-whatsapp-otp' to AppView type union
+- Updated src/app/page.tsx — Added import and case for AuthWhatsAppOtpLogin
+- Updated src/components/AuthPages.tsx — Added MessageCircle import and WhatsApp OTP button (outline, WhatsApp green #25D366) between Login button and Separator
+- Updated .env — Added all production credentials: WhatsApp (WHATSAPP_TOKEN, WHATSAPP_PHONE_NUMBER_ID), Zoho (ZOHO_SMTP_HOST/PORT/EMAIL/PASSWORD), SMSAlert (SMSALERT_ACTIVE=false, disabled), Auth (NEXTAUTH_SECRET/URL)
+- Updated src/lib/smsalert-service.ts — Added SMSALERT_ACTIVE check: if 'false' or empty, throws "SMS OTP is currently inactive. Please use WhatsApp OTP instead."
+- Installed nodemailer@9.0.3 for Zoho email service
+- Pushed Prisma schema (already in sync)
+- Ran lint: only pre-existing error in Gatekept/examples folder remains, no new errors
+
+Stage Summary:
+- Complete WhatsApp OTP login system integrated into NOTJUST Watr app
+- Backend: WhatsApp Business API v19.0 with otp_verification template
+- 3 API routes: /api/auth/whatsapp-otp/send, verify, login
+- UI: 3-step component with WhatsApp green branding (#25D366)
+- Zoho email service ready for notifications (nodemailer + SMTP)
+- SMSAlert service disabled with clear error message pointing to WhatsApp OTP
+- Login page has "Login with WhatsApp OTP" button
+- All credentials in .env, all code lint-clean

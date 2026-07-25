@@ -1,0 +1,836 @@
+     1→     1→'use client'
+     2→     2→
+     3→     3→import React, { useRef } from 'react'
+     4→     4→import { motion, useInView, AnimatePresence } from 'framer-motion'
+     5→     5→import {
+     6→     6→  ArrowLeft, Leaf, Heart, Zap, FlaskConical, Users, Globe,
+     7→     7→  Award, Microscope, ShieldCheck, TrendingUp, ChevronRight,
+     8→     8→  Sparkles, Beaker, Target, ArrowRight
+     9→     9→} from 'lucide-react'
+    10→    10→import { Button } from '@/components/ui/button'
+    11→    11→import { useAppStore } from '@/store/app-store'
+    12→    12→
+    13→    13→// ============================================================
+    14→    14→// BRAND CONSTANTS
+    15→    15→// ============================================================
+    16→    16→const BRAND = {
+    17→    17→  green: '#48805b',
+    18→    18→  lime: '#afb75d',
+    19→    19→  dark: '#1f1e1c',
+    20→    20→  muted: '#88837b',
+    21→    21→  surface: '#e3dfd8',
+    22→    22→  bg: '#f4f3f0',
+    23→    23→  blue: '#2e91b2',
+    24→    24→}
+    25→    25→
+    26→    26→// ============================================================
+    27→    27→// ANIMATION VARIANTS
+    28→    28→// ============================================================
+    29→    29→const fadeInUp = {
+    30→    30→  hidden: { opacity: 0, y: 40 },
+    31→    31→  visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease: 'easeOut' } },
+    32→    32→}
+    33→    33→
+    34→    34→const fadeInScale = {
+    35→    35→  hidden: { opacity: 0, scale: 0.9 },
+    36→    36→  visible: { opacity: 1, scale: 1, transition: { duration: 0.6, ease: 'easeOut' } },
+    37→    37→}
+    38→    38→
+    39→    39→const staggerContainer = {
+    40→    40→  hidden: { opacity: 0 },
+    41→    41→  visible: { opacity: 1, transition: { staggerChildren: 0.12 } },
+    42→    42→}
+    43→    43→
+    44→    44→const timelineDot = {
+    45→    45→  hidden: { opacity: 0, scale: 0 },
+    46→    46→  visible: { opacity: 1, scale: 1, transition: { duration: 0.4, type: 'spring', stiffness: 200 } },
+    47→    47→}
+    48→    48→
+    49→    49→const glowPulse = {
+    50→    50→  animate: {
+    51→    51→    boxShadow: [
+    52→    52→      `0 0 20px ${BRAND.green}40`,
+    53→    53→      `0 0 40px ${BRAND.green}60`,
+    54→    54→      `0 0 20px ${BRAND.green}40`,
+    55→    55→    ],
+    56→    56→    transition: { duration: 2, repeat: Infinity, ease: 'easeInOut' },
+    57→    57→  },
+    58→    58→}
+    59→    59→
+    60→    60→// ============================================================
+    61→    61→// FLOATING PARTICLES COMPONENT
+    62→    62→// ============================================================
+    63→    63→function FloatingParticles() {
+    64→    64→  // Deterministic particle data to avoid hydration mismatch
+    65→    65→  const particles = [
+    66→    66→    { w:3, h:3, l:12, t:8,  op:0.2, yEnd:-80,  xEnd:15,  opMid:0.35, dur:10, del:0.5 },
+    67→    67→    { w:4, h:4, l:45, t:22, op:0.15, yEnd:-100, xEnd:-10, opMid:0.3,  dur:8,  del:1.2 },
+    68→    68→    { w:2, h:2, l:78, t:55, op:0.25, yEnd:-60,  xEnd:20,  opMid:0.4,  dur:12, del:2.0 },
+    69→    69→    { w:5, h:5, l:33, t:70, op:0.1,  yEnd:-120, xEnd:-25, opMid:0.25, dur:14, del:0.8 },
+    70→    70→    { w:3, h:3, l:90, t:35, op:0.2,  yEnd:-90,  xEnd:10,  opMid:0.35, dur:9,  del:3.0 },
+    71→    71→    { w:4, h:4, l:5,  t:85, op:0.15, yEnd:-140, xEnd:30,  opMid:0.3,  dur:11, del:1.5 },
+    72→    72→    { w:2, h:2, l:60, t:15, op:0.25, yEnd:-50,  xEnd:-15, opMid:0.4,  dur:7,  del:0.3 },
+    73→    73→    { w:3, h:3, l:22, t:42, op:0.2,  yEnd:-110, xEnd:5,   opMid:0.35, dur:13, del:2.5 },
+    74→    74→    { w:5, h:5, l:72, t:78, op:0.1,  yEnd:-70,  xEnd:-20, opMid:0.25, dur:10, del:1.0 },
+    75→    75→    { w:4, h:4, l:15, t:60, op:0.15, yEnd:-130, xEnd:25,  opMid:0.3,  dur:8,  del:0.7 },
+    76→    76→    { w:2, h:2, l:55, t:90, op:0.25, yEnd:-80,  xEnd:-5,  opMid:0.4,  dur:12, del:2.2 },
+    77→    77→    { w:3, h:3, l:85, t:5,  op:0.2,  yEnd:-100, xEnd:15,  opMid:0.35, dur:9,  del:1.8 },
+    78→    78→    { w:4, h:4, l:40, t:32, op:0.15, yEnd:-60,  xEnd:-10, opMid:0.3,  dur:11, del:3.5 },
+    79→    79→    { w:5, h:5, l:68, t:48, op:0.1,  yEnd:-120, xEnd:30,  opMid:0.25, dur:14, del:0.2 },
+    80→    80→    { w:2, h:2, l:28, t:75, op:0.25, yEnd:-90,  xEnd:-25, opMid:0.4,  dur:7,  del:1.3 },
+    81→    81→    { w:3, h:3, l:95, t:62, op:0.2,  yEnd:-140, xEnd:10,  opMid:0.35, dur:10, del:2.8 },
+    82→    82→    { w:4, h:4, l:8,  t:18, op:0.15, yEnd:-50,  xEnd:20,  opMid:0.3,  dur:13, del:0.6 },
+    83→    83→    { w:2, h:2, l:50, t:95, op:0.25, yEnd:-110, xEnd:-15, opMid:0.4,  dur:8,  del:1.0 },
+    84→    84→    { w:3, h:3, l:38, t:50, op:0.2,  yEnd:-70,  xEnd:5,   opMid:0.35, dur:12, del:3.2 },
+    85→    85→    { w:5, h:5, l:82, t:28, op:0.1,  yEnd:-130, xEnd:-30, opMid:0.25, dur:9,  del:0.9 },
+    86→    86→  ]
+    87→    87→  return (
+    88→    88→    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+    89→    89→      {particles.map((p, i) => (
+    90→    90→        <motion.div
+    91→    91→          key={i}
+    92→    92→          className="absolute rounded-full"
+    93→    93→          style={{
+    94→    94→            width: p.w,
+    95→    95→            height: p.h,
+    96→    96→            background: i % 3 === 0 ? BRAND.green : i % 3 === 1 ? BRAND.lime : BRAND.muted,
+    97→    97→            opacity: p.op,
+    98→    98→            left: `${p.l}%`,
+    99→    99→            top: `${p.t}%`,
+   100→   100→          }}
+   101→   101→          animate={{
+   102→   102→            y: [0, p.yEnd, 0],
+   103→   103→            x: [0, p.xEnd, 0],
+   104→   104→            opacity: [0.1, p.opMid, 0.1],
+   105→   105→          }}
+   106→   106→          transition={{
+   107→   107→            duration: p.dur,
+   108→   108→            repeat: Infinity,
+   109→   109→            ease: 'easeInOut',
+   110→   110→            delay: p.del,
+   111→   111→          }}
+   112→   112→        />
+   113→   113→      ))}
+   114→   114→    </div>
+   115→   115→  )
+   116→   116→}
+   117→   117→
+   118→   118→// ============================================================
+   119→   119→// GRADIENT BLOBS
+   120→   120→// ============================================================
+   121→   121→function GradientBlobs() {
+   122→   122→  return (
+   123→   123→    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+   124→   124→      <motion.div
+   125→   125→        className="absolute w-[500px] h-[500px] rounded-full blur-[120px]"
+   126→   126→        style={{ background: `${BRAND.green}15`, top: '-10%', right: '-10%' }}
+   127→   127→        animate={{ x: [0, 40, 0], y: [0, 30, 0] }}
+   128→   128→        transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut' }}
+   129→   129→      />
+   130→   130→      <motion.div
+   131→   131→        className="absolute w-[400px] h-[400px] rounded-full blur-[100px]"
+   132→   132→        style={{ background: `${BRAND.lime}10`, bottom: '-5%', left: '-5%' }}
+   133→   133→        animate={{ x: [0, -30, 0], y: [0, -20, 0] }}
+   134→   134→        transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
+   135→   135→      />
+   136→   136→      <motion.div
+   137→   137→        className="absolute w-[300px] h-[300px] rounded-full blur-[80px]"
+   138→   138→        style={{ background: `${BRAND.blue}08`, top: '40%', left: '30%' }}
+   139→   139→        animate={{ x: [0, 50, 0], y: [0, -40, 0] }}
+   140→   140→        transition={{ duration: 15, repeat: Infinity, ease: 'easeInOut' }}
+   141→   141→      />
+   142→   142→    </div>
+   143→   143→  )
+   144→   144→}
+   145→   145→
+   146→   146→// ============================================================
+   147→   147→// SECTION WRAPPER
+   148→   148→// ============================================================
+   149→   149→function SectionWrapper({
+   150→   150→  children,
+   151→   151→  className = '',
+   152→   152→  id,
+   153→   153→}: {
+   154→   154→  children: React.ReactNode
+   155→   155→  className?: string
+   156→   156→  id?: string
+   157→   157→}) {
+   158→   158→  const ref = useRef(null)
+   159→   159→  const isInView = useInView(ref, { once: true, margin: '-80px' })
+   160→   160→
+   161→   161→  return (
+   162→   162→    <motion.section
+   163→   163→      ref={ref}
+   164→   164→      id={id}
+   165→   165→      initial="hidden"
+   166→   166→      animate={isInView ? 'visible' : 'hidden'}
+   167→   167→      variants={staggerContainer}
+   168→   168→      className={`relative py-16 md:py-24 ${className}`}
+   169→   169→      style={{ backgroundColor: BRAND.dark }}
+   170→   170→    >
+   171→   171→      {children}
+   172→   172→    </motion.section>
+   173→   173→  )
+   174→   174→}
+   175→   175→
+   176→   176→// ============================================================
+   177→   177→// TIMELINE DATA
+   178→   178→// ============================================================
+   179→   179→const TIMELINE_EVENTS = [
+   180→   180→  {
+   181→   181→    year: '2024',
+   182→   182→    title: 'Research Begins at IIT Mumbai',
+   183→   183→    description: 'A team of biochemists and nutritionists at IIT Mumbai begin studying the effects of apple cider vinegar on glycemic response in Indian diets.',
+   184→   184→    icon: Microscope,
+   185→   185→  },
+   186→   186→  {
+   187→   187→    year: '2025',
+   188→   188→    title: 'First Prototype Developed',
+   189→   189→    description: 'After 18 months of formulation trials, the first functional wellness shot prototype is created — blending ACV with turmeric, ginger, and cinnamon extracts.',
+   190→   190→    icon: Beaker,
+   191→   191→  },
+   192→   192→  {
+   193→   193→    year: '2025',
+   194→   194→    title: 'Clinical Trials with Apollo Hospitals',
+   195→   195→    description: 'Partnership with Apollo Hospitals validates the product\'s efficacy. Phase-1 trials show a 27% reduction in post-meal glucose spikes across 200 participants.',
+   196→   196→    icon: ShieldCheck,
+   197→   197→  },
+   198→   198→  {
+   199→   199→    year: '2026',
+   200→   200→    title: 'NOTJUST Watr Fizz Launched',
+   201→   201→    description: 'The sparkling variant hits the market — a refreshing, effervescent wellness shot that makes glycemic control enjoyable and social.',
+   202→   202→    icon: Sparkles,
+   203→   203→  },
+   204→   204→  {
+   205→   205→    year: '2026',
+   206→   206→    title: 'NOTJUST Watr Still Launched',
+   207→   207→    description: 'The calm, concentrated still variant is released for daily routine use — perfect for morning shots and pre-meal consumption.',
+   208→   208→    icon: Target,
+   209→   209→  },
+   210→   210→  {
+   211→   211→    year: 'Future',
+   212→   212→    title: 'Pan-India Distribution',
+   213→   213→    description: 'Expanding to 50+ cities, launching subscription packs, and partnering with retail chains to make NOTJUST Watr accessible to every Indian household.',
+   214→   214→    icon: Globe,
+   215→   215→  },
+   216→   216→]
+   217→   217→
+   218→   218→// ============================================================
+   219→   219→// VALUES DATA
+   220→   220→// ============================================================
+   221→   221→const VALUES = [
+   222→   222→  {
+   223→   223→    title: 'Science First',
+   224→   224→    description: 'Every claim is backed by peer-reviewed research and clinical trials. We don\'t guess — we test, measure, and publish.',
+   225→   225→    icon: FlaskConical,
+   226→   226→  },
+   227→   227→  {
+   228→   228→    title: 'Natural Ingredients',
+   229→   229→    description: 'No artificial sweeteners, preservatives, or colourants. Just pure, potent botanicals — apple cider vinegar, turmeric, ginger, cinnamon.',
+   230→   230→    icon: Leaf,
+   231→   231→  },
+   232→   232→  {
+   233→   233→    title: 'Accessible Wellness',
+   234→   234→    description: 'Health shouldn\'t be a luxury. At ₹15 per shot, NOTJUST Watr makes glycemic control affordable for every Indian.',
+   235→   235→    icon: Heart,
+   236→   236→  },
+   237→   237→]
+   238→   238→
+   239→   239→// ============================================================
+   240→   240→// TEAM DATA
+   241→   241→// ============================================================
+   242→   242→const TEAM_MEMBERS = [
+   243→   243→  {
+   244→   244→    name: 'Dr. Anil Mehta',
+   245→   245→    role: 'Chief Medical Officer',
+   246→   246→    bio: 'Former endocrinologist at Apollo Hospitals with 20+ years in metabolic health research. Led our clinical trials and ensures every product meets medical-grade standards.',
+   247→   247→    initials: 'AM',
+   248→   248→  },
+   249→   249→  {
+   250→   250→    name: 'Priya Sharma',
+   251→   251→    role: 'Product Development Lead',
+   252→   252→    bio: 'IIT Mumbai biochemist who turned research into reality. Priya spent 18 months perfecting the formulation — balancing potency with palatability.',
+   253→   253→    initials: 'PS',
+   254→   254→  },
+   255→   255→  {
+   256→   256→    name: 'Vikram Patel',
+   257→   257→    role: 'Distribution & Partnerships',
+   258→   258→    bio: 'Former FMCG executive with deep retail network across India. Vikram is building the distribution backbone that will carry NOTJUST Watr to every corner of the country.',
+   259→   259→    initials: 'VP',
+   260→   260→  },
+   261→   261→]
+   262→   262→
+   263→   263→// ============================================================
+   264→   264→// HERO SECTION
+   265→   265→// ============================================================
+   266→   266→function HeroSection() {
+   267→   267→  const { navigateTo } = useAppStore()
+   268→   268→
+   269→   269→  return (
+   270→   270→    <section
+   271→   271→      className="relative min-h-[80vh] flex flex-col items-center justify-center overflow-hidden"
+   272→   272→      style={{ backgroundColor: BRAND.dark }}
+   273→   273→    >
+   274→   274→      <GradientBlobs />
+   275→   275→      <FloatingParticles />
+   276→   276→
+   277→   277→      {/* Content */}
+   278→   278→      <motion.div
+   279→   279→        className="relative z-10 text-center px-4 sm:px-6 max-w-4xl mx-auto"
+   280→   280→        initial="hidden"
+   281→   281→        animate="visible"
+   282→   282→        variants={staggerContainer}
+   283→   283→      >
+   284→   284→        {/* Back Button */}
+   285→   285→        <motion.div variants={fadeInUp} className="mb-8">
+   286→   286→          <Button
+   287→   287→            onClick={() => navigateTo('landing')}
+   288→   288→            variant="ghost"
+   289→   289→            className="text-[#f4f3f0]/70 hover:text-[#f4f3f0] hover:bg-white/10 gap-2 min-h-[44px]"
+   290→   290→          >
+   291→   291→            <ArrowLeft className="w-4 h-4" />
+   292→   292→            Back to Home
+   293→   293→          </Button>
+   294→   294→        </motion.div>
+   295→   295→
+   296→   296→        {/* Heading */}
+   297→   297→        <motion.h1
+   298→   298→          variants={fadeInUp}
+   299→   299→          className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6"
+   300→   300→          style={{ color: '#f4f3f0' }}
+   301→   301→        >
+   302→   302→          Our{' '}
+   303→   303→          <span
+   304→   304→            className="relative inline-block"
+   305→   305→            style={{ color: BRAND.lime }}
+   306→   306→          >
+   307→   307→            Journey
+   308→   308→            <motion.span
+   309→   309→              className="absolute -bottom-1 left-0 right-0 h-[3px] rounded-full"
+   310→   310→              style={{ background: BRAND.lime }}
+   311→   311→              initial={{ scaleX: 0 }}
+   312→   312→              animate={{ scaleX: 1 }}
+   313→   313→              transition={{ duration: 1, delay: 0.5 }}
+   314→   314→            />
+   315→   315→          </span>
+   316→   316→        </motion.h1>
+   317→   317→
+   318→   318→        {/* Subtitle */}
+   319→   319→        <motion.p
+   320→   320→          variants={fadeInUp}
+   321→   321→          className="text-lg sm:text-xl md:text-2xl font-light leading-relaxed max-w-2xl mx-auto"
+   322→   322→          style={{ color: BRAND.muted }}
+   323→   323→        >
+   324→   324→          From ancient wisdom to modern wellness — the story of how science, nature, and purpose came together.
+   325→   325→        </motion.p>
+   326→   326→
+   327→   327→        {/* Decorative line */}
+   328→   328→        <motion.div
+   329→   329→          variants={fadeInUp}
+   330→   330→          className="mt-10 flex items-center justify-center gap-3"
+   331→   331→        >
+   332→   332→          <div className="w-12 h-[1px]" style={{ background: BRAND.muted }} />
+   333→   333→          <Leaf className="w-5 h-5" style={{ color: BRAND.green }} />
+   334→   334→          <div className="w-12 h-[1px]" style={{ background: BRAND.muted }} />
+   335→   335→        </motion.div>
+   336→   336→      </motion.div>
+   337→   337→
+   338→   338→      {/* Bottom gradient fade */}
+   339→   339→      <div
+   340→   340→        className="absolute bottom-0 left-0 right-0 h-32"
+   341→   341→        style={{ background: `linear-gradient(to top, ${BRAND.dark}, transparent)` }}
+   342→   342→      />
+   343→   343→    </section>
+   344→   344→  )
+   345→   345→}
+   346→   346→
+   347→   347→// ============================================================
+   348→   348→// ORIGIN STORY SECTION
+   349→   349→// ============================================================
+   350→   350→function OriginStorySection() {
+   351→   351→  const stories = [
+   352→   352→    {
+   353→   353→      title: 'The Problem We Saw',
+   354→   354→      subtitle: 'India\'s Silent Epidemic',
+   355→   355→      description:
+   356→   356→        'India has over 100 million diabetics — the highest in the world. But the problem is bigger than diabetes. Every Indian meal — rice, roti, dal — causes post-meal glucose spikes that silently damage blood vessels, accelerate aging, and drain energy. Even "healthy" people are affected. The science is clear: controlling these spikes is the single most impactful thing you can do for long-term health.',
+   357→   357→      accent: BRAND.green,
+   358→   358→      icon: TrendingUp,
+   359→   359→    },
+   360→   360→    {
+   361→   361→      title: 'The Science Behind It',
+   362→   362→      subtitle: 'Ancient Wisdom, Proven by Research',
+   363→   363→      description:
+   364→   364→        'Apple cider vinegar has been used for millennia in Ayurveda. Modern science now confirms: acetic acid in ACV slows gastric emptying and improves insulin sensitivity, reducing post-meal glucose spikes by up to 30%. We combined this with turmeric (anti-inflammatory), ginger (digestive aid), and cinnamon (insulin sensitizer) — creating a synergistic blend that amplifies each ingredient\'s effect.',
+   365→   365→      accent: BRAND.lime,
+   366→   366→      icon: FlaskConical,
+   367→   367→    },
+   368→   368→    {
+   369→   369→      title: 'Our Mission',
+   370→   370→      subtitle: 'Accessible. Affordable. Enjoyable.',
+   371→   371→      description:
+   372→   372→        'Glycemic control shouldn\'t cost ₹500 a day or require a doctor\'s prescription. Our mission is to make it as simple as drinking a shot — something you enjoy, something you afford, something that works. NOTJUST Watr is priced at ₹15 per shot. No compromise on quality. No compromise on taste. No compromise on science.',
+   373→   373→      accent: BRAND.green,
+   374→   374→      icon: Target,
+   375→   375→    },
+   376→   376→  ]
+   377→   377→
+   378→   378→  return (
+   379→   379→    <SectionWrapper id="origin-story">
+   380→   380→      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+   381→   381→        {/* Section Header */}
+   382→   382→        <motion.div variants={fadeInUp} className="text-center mb-12 md:mb-16">
+   383→   383→          <h2
+   384→   384→            className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4"
+   385→   385→            style={{ color: '#f4f3f0' }}
+   386→   386→          >
+   387→   387→            Why We Exist
+   388→   388→          </h2>
+   389→   389→          <p className="text-base sm:text-lg max-w-xl mx-auto" style={{ color: BRAND.muted }}>
+   390→   390→            The problem, the science, and the mission that drives everything we do.
+   391→   391→          </p>
+   392→   392→        </motion.div>
+   393→   393→
+   394→   394→        {/* Story Cards */}
+   395→   395→        <div className="space-y-8 md:space-y-12">
+   396→   396→          {stories.map((story, idx) => (
+   397→   397→            <motion.div
+   398→   398→              key={story.title}
+   399→   399→              variants={fadeInUp}
+   400→   400→              className="relative rounded-2xl overflow-hidden"
+   401→   401→              style={{
+   402→   402→                backgroundColor: '#2a2a28',
+   403→   403→                borderLeft: `3px solid ${story.accent}`,
+   404→   404→              }}
+   405→   405→            >
+   406→   406→              {/* Card glow */}
+   407→   407→              <div
+   408→   408→                className="absolute top-0 left-0 w-[200px] h-[200px] rounded-full blur-[80px] pointer-events-none"
+   409→   409→                style={{ background: `${story.accent}15` }}
+   410→   410→              />
+   411→   411→
+   412→   412→              <div className="relative z-10 p-6 sm:p-8 md:p-10">
+   413→   413→                <div className="flex items-start gap-4 mb-4">
+   414→   414→                  <div
+   415→   415→                    className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl shrink-0"
+   416→   416→                    style={{ backgroundColor: `${story.accent}20` }}
+   417→   417→                  >
+   418→   418→                    <story.icon className="w-5 h-5 sm:w-6 sm:h-6" style={{ color: story.accent }} />
+   419→   419→                  </div>
+   420→   420→                  <div>
+   421→   421→                    <h3
+   422→   422→                      className="text-xl sm:text-2xl font-bold mb-1"
+   423→   423→                      style={{ color: '#f4f3f0' }}
+   424→   424→                    >
+   425→   425→                      {story.title}
+   426→   426→                    </h3>
+   427→   427→                    <span
+   428→   428→                      className="text-sm font-medium tracking-wide uppercase"
+   429→   429→                      style={{ color: story.accent }}
+   430→   430→                    >
+   431→   431→                      {story.subtitle}
+   432→   432→                    </span>
+   433→   433→                  </div>
+   434→   434→                </div>
+   435→   435→                <p
+   436→   436→                  className="text-base sm:text-lg leading-relaxed"
+   437→   437→                  style={{ color: BRAND.muted }}
+   438→   438→                >
+   439→   439→                  {story.description}
+   440→   440→                </p>
+   441→   441→              </div>
+   442→   442→            </motion.div>
+   443→   443→          ))}
+   444→   444→        </div>
+   445→   445→      </div>
+   446→   446→    </SectionWrapper>
+   447→   447→  )
+   448→   448→}
+   449→   449→
+   450→   450→// ============================================================
+   451→   451→// TIMELINE SECTION
+   452→   452→// ============================================================
+   453→   453→function TimelineSection() {
+   454→   454→  const ref = useRef(null)
+   455→   455→  const isInView = useInView(ref, { once: true, margin: '-100px' })
+   456→   456→
+   457→   457→  return (
+   458→   458→    <SectionWrapper id="timeline" className="overflow-hidden">
+   459→   459→      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+   460→   460→        {/* Section Header */}
+   461→   461→        <motion.div variants={fadeInUp} className="text-center mb-12 md:mb-16">
+   462→   462→          <h2
+   463→   463→            className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4"
+   464→   464→            style={{ color: '#f4f3f0' }}
+   465→   465→          >
+   466→   466→            The Road So Far
+   467→   467→          </h2>
+   468→   468→          <p className="text-base sm:text-lg max-w-lg mx-auto" style={{ color: BRAND.muted }}>
+   469→   469→            Key milestones in our journey from research to reality.
+   470→   470→          </p>
+   471→   471→        </motion.div>
+   472→   472→
+   473→   473→        {/* Timeline */}
+   474→   474→        <div ref={ref} className="relative">
+   475→   475→          {/* Central line */}
+   476→   476→          <motion.div
+   477→   477→            className="absolute left-4 sm:left-6 md:left-8 top-0 bottom-0 w-[2px]"
+   478→   478→            style={{ background: `linear-gradient(to bottom, ${BRAND.green}, ${BRAND.lime}, ${BRAND.muted}40)` }}
+   479→   479→            initial={{ scaleY: 0 }}
+   480→   480→            animate={isInView ? { scaleY: 1 } : { scaleY: 0 }}
+   481→   481→            transition={{ duration: 1.5, ease: 'easeOut' }}
+   482→   482→          />
+   483→   483→
+   484→   484→          {/* Events */}
+   485→   485→          <div className="space-y-10 md:space-y-12">
+   486→   486→            {TIMELINE_EVENTS.map((event, idx) => (
+   487→   487→              <motion.div
+   488→   488→                key={idx}
+   489→   489→                initial="hidden"
+   490→   490→                animate={isInView ? 'visible' : 'hidden'}
+   491→   491→                variants={fadeInUp}
+   492→   492→                className="relative pl-12 sm:pl-16 md:pl-20"
+   493→   493→              >
+   494→   494→                {/* Dot on timeline */}
+   495→   495→                <motion.div
+   496→   496→                  variants={timelineDot}
+   497→   497→                  className="absolute left-[6px] sm:left-[10px] md:left-[14px] top-2 w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center"
+   498→   498→                  style={{
+   499→   499→                    backgroundColor: idx <= 3 ? BRAND.green : idx <= 4 ? BRAND.lime : '#2a2a28',
+   500→   500→                    border: `2px solid ${idx <= 3 ? BRAND.green : BRAND.lime}`,
+   501→   501→                    boxShadow: `0 0 12px ${idx <= 3 ? `${BRAND.green}40` : `${BRAND.lime}40`}`,
+   502→   502→                  }}
+   503→   503→                >
+   504→   504→                  <event.icon className="w-4 h-4 sm:w-5 sm:h-5" style={{ color: '#f4f3f0' }} />
+   505→   505→                </motion.div>
+   506→   506→
+   507→   507→                {/* Year badge */}
+   508→   508→                <div
+   509→   509→                  className="inline-block px-3 py-1 rounded-full text-xs sm:text-sm font-bold tracking-wider mb-2"
+   510→   510→                  style={{
+   511→   511→                    color: idx <= 3 ? BRAND.green : BRAND.lime,
+   512→   512→                    backgroundColor: `${idx <= 3 ? BRAND.green : BRAND.lime}15`,
+   513→   513→                    border: `1px solid ${idx <= 3 ? BRAND.green : BRAND.lime}30`,
+   514→   514→                  }}
+   515→   515→                >
+   516→   516→                  {event.year}
+   517→   517→                </div>
+   518→   518→
+   519→   519→                {/* Content */}
+   520→   520→                <h3
+   521→   521→                  className="text-lg sm:text-xl md:text-2xl font-bold mb-2"
+   522→   522→                  style={{ color: '#f4f3f0' }}
+   523→   523→                >
+   524→   524→                  {event.title}
+   525→   525→                </h3>
+   526→   526→                <p
+   527→   527→                  className="text-sm sm:text-base leading-relaxed max-w-xl"
+   528→   528→                  style={{ color: BRAND.muted }}
+   529→   529→                >
+   530→   530→                  {event.description}
+   531→   531→                </p>
+   532→   532→              </motion.div>
+   533→   533→            ))}
+   534→   534→          </div>
+   535→   535→        </div>
+   536→   536→      </div>
+   537→   537→    </SectionWrapper>
+   538→   538→  )
+   539→   539→}
+   540→   540→
+   541→   541→// ============================================================
+   542→   542→// VALUES SECTION
+   543→   543→// ============================================================
+   544→   544→function ValuesSection() {
+   545→   545→  return (
+   546→   546→    <SectionWrapper id="values">
+   547→   547→      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+   548→   548→        {/* Section Header */}
+   549→   549→        <motion.div variants={fadeInUp} className="text-center mb-12 md:mb-16">
+   550→   550→          <h2
+   551→   551→            className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4"
+   552→   552→            style={{ color: '#f4f3f0' }}
+   553→   553→          >
+   554→   554→            What We Stand For
+   555→   555→          </h2>
+   556→   556→          <p className="text-base sm:text-lg max-w-lg mx-auto" style={{ color: BRAND.muted }}>
+   557→   557→            Three principles that guide every decision we make.
+   558→   558→          </p>
+   559→   559→        </motion.div>
+   560→   560→
+   561→   561→        {/* Value Cards */}
+   562→   562→        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
+   563→   563→          {VALUES.map((value, idx) => (
+   564→   564→            <motion.div
+   565→   565→              key={value.title}
+   566→   566→              variants={fadeInScale}
+   567→   567→              className="relative rounded-2xl overflow-hidden group"
+   568→   568→              style={{
+   569→   569→                backgroundColor: '#2a2a28',
+   570→   570→                border: `1px solid ${BRAND.green}25`,
+   571→   571→              }}
+   572→   572→            >
+   573→   573→              {/* Hover glow */}
+   574→   574→              <div
+   575→   575→                className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+   576→   576→                style={{
+   577→   577→                  background: `radial-gradient(circle at 50% 50%, ${BRAND.green}08, transparent 70%)`,
+   578→   578→                }}
+   579→   579→              />
+   580→   580→              {/* Border glow on hover */}
+   581→   581→              <div
+   582→   582→                className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+   583→   583→                style={{
+   584→   584→                  boxShadow: `inset 0 0 30px ${BRAND.green}15, 0 0 20px ${BRAND.green}10`,
+   585→   585→                }}
+   586→   586→              />
+   587→   587→
+   588→   588→              <div className="relative z-10 p-6 sm:p-8 text-center">
+   589→   589→                {/* Icon */}
+   590→   590→                <div
+   591→   591→                  className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center mx-auto mb-5 transition-transform duration-300 group-hover:scale-110"
+   592→   592→                  style={{ backgroundColor: `${BRAND.green}20` }}
+   593→   593→                >
+   594→   594→                  <value.icon className="w-7 h-7 sm:w-8 sm:h-8" style={{ color: BRAND.green }} />
+   595→   595→                </div>
+   596→   596→
+   597→   597→                {/* Title */}
+   598→   598→                <h3
+   599→   599→                  className="text-xl sm:text-2xl font-bold mb-3"
+   600→   600→                  style={{ color: '#f4f3f0' }}
+   601→   601→                >
+   602→   602→                  {value.title}
+   603→   603→                </h3>
+   604→   604→
+   605→   605→                {/* Description */}
+   606→   606→                <p
+   607→   607→                  className="text-sm sm:text-base leading-relaxed"
+   608→   608→                  style={{ color: BRAND.muted }}
+   609→   609→                >
+   610→   610→                  {value.description}
+   611→   611→                </p>
+   612→   612→              </div>
+   613→   613→            </motion.div>
+   614→   614→          ))}
+   615→   615→        </div>
+   616→   616→      </div>
+   617→   617→    </SectionWrapper>
+   618→   618→  )
+   619→   619→}
+   620→   620→
+   621→   621→// ============================================================
+   622→   622→// TEAM SECTION
+   623→   623→// ============================================================
+   624→   624→function TeamSection() {
+   625→   625→  return (
+   626→   626→    <SectionWrapper id="team">
+   627→   627→      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+   628→   628→        {/* Section Header */}
+   629→   629→        <motion.div variants={fadeInUp} className="text-center mb-12 md:mb-16">
+   630→   630→          <h2
+   631→   631→            className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4"
+   632→   632→            style={{ color: '#f4f3f0' }}
+   633→   633→          >
+   634→   634→            The People Behind It
+   635→   635→          </h2>
+   636→   636→          <p className="text-base sm:text-lg max-w-lg mx-auto" style={{ color: BRAND.muted }}>
+   637→   637→            A team united by purpose — making wellness accessible for every Indian.
+   638→   638→          </p>
+   639→   639→        </motion.div>
+   640→   640→
+   641→   641→        {/* Team Cards */}
+   642→   642→        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
+   643→   643→          {TEAM_MEMBERS.map((member, idx) => (
+   644→   644→            <motion.div
+   645→   645→              key={member.name}
+   646→   646→              variants={fadeInScale}
+   647→   647→              className="relative rounded-2xl overflow-hidden group"
+   648→   648→              style={{ backgroundColor: '#2a2a28' }}
+   649→   649→            >
+   650→   650→              {/* Hover subtle glow */}
+   651→   651→              <div
+   652→   652→                className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+   653→   653→                style={{
+   654→   654→                  background: `radial-gradient(circle at 50% 30%, ${BRAND.lime}08, transparent 70%)`,
+   655→   655→                }}
+   656→   656→              />
+   657→   657→
+   658→   658→              <div className="relative z-10 p-6 sm:p-8 text-center">
+   659→   659→                {/* Avatar */}
+   660→   660→                <div
+   661→   661→                  className="w-20 h-20 sm:w-24 sm:h-24 rounded-full flex items-center justify-center mx-auto mb-5 ring-2 transition-all duration-300 group-hover:scale-105"
+   662→   662→                  style={{
+   663→   663→                    backgroundColor: `${BRAND.green}20`,
+   664→   664→                    ringColor: BRAND.green,
+   665→   665→                    borderColor: BRAND.green,
+   666→   666→                    boxShadow: `0 0 0 2px ${BRAND.green}40`,
+   667→   667→                  }}
+   668→   668→                >
+   669→   669→                  <span
+   670→   670→                    className="text-xl sm:text-2xl font-bold"
+   671→   671→                    style={{ color: BRAND.green }}
+   672→   672→                  >
+   673→   673→                    {member.initials}
+   674→   674→                  </span>
+   675→   675→                </div>
+   676→   676→
+   677→   677→                {/* Name */}
+   678→   678→                <h3
+   679→   679→                  className="text-xl sm:text-2xl font-bold mb-1"
+   680→   680→                  style={{ color: '#f4f3f0' }}
+   681→   681→                >
+   682→   682→                  {member.name}
+   683→   683→                </h3>
+   684→   684→
+   685→   685→                {/* Role */}
+   686→   686→                <span
+   687→   687→                  className="inline-block px-3 py-1 rounded-full text-xs sm:text-sm font-medium mb-4"
+   688→   688→                  style={{
+   689→   689→                    color: BRAND.lime,
+   690→   690→                    backgroundColor: `${BRAND.lime}15`,
+   691→   691→                    border: `1px solid ${BRAND.lime}25`,
+   692→   692→                  }}
+   693→   693→                >
+   694→   694→                  {member.role}
+   695→   695→                </span>
+   696→   696→
+   697→   697→                {/* Bio */}
+   698→   698→                <p
+   699→   699→                  className="text-sm sm:text-base leading-relaxed"
+   700→   700→                  style={{ color: BRAND.muted }}
+   701→   701→                >
+   702→   702→                  {member.bio}
+   703→   703→                </p>
+   704→   704→              </div>
+   705→   705→            </motion.div>
+   706→   706→          ))}
+   707→   707→        </div>
+   708→   708→      </div>
+   709→   709→    </SectionWrapper>
+   710→   710→  )
+   711→   711→}
+   712→   712→
+   713→   713→// ============================================================
+   714→   714→// CALL TO ACTION SECTION
+   715→   715→// ============================================================
+   716→   716→function CTASection() {
+   717→   717→  const { navigateTo } = useAppStore()
+   718→   718→
+   719→   719→  return (
+   720→   720→    <SectionWrapper id="cta">
+   721→   721→      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+   722→   722→        <motion.div variants={fadeInUp} className="mb-8">
+   723→   723→          <Sparkles className="w-8 h-8 sm:w-10 sm:h-10 mx-auto mb-4" style={{ color: BRAND.lime }} />
+   724→   724→        </motion.div>
+   725→   725→
+   726→   726→        <motion.h2
+   727→   727→          variants={fadeInUp}
+   728→   728→          className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-4"
+   729→   729→          style={{ color: '#f4f3f0' }}
+   730→   730→        >
+   731→   731→          Ready to experience{' '}
+   732→   732→          <span style={{ color: BRAND.lime }}>NOTJUST Watr</span>?
+   733→   733→        </motion.h2>
+   734→   734→
+   735→   735→        <motion.p
+   736→   736→          variants={fadeInUp}
+   737→   737→          className="text-base sm:text-lg mb-8 max-w-xl mx-auto"
+   738→   738→          style={{ color: BRAND.muted }}
+   739→   739→        >
+   740→   740→          One shot. Better glucose control. No compromise.
+   741→   741→        </motion.p>
+   742→   742→
+   743→   743→        <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row items-center justify-center gap-4">
+   744→   744→          {/* Primary CTA */}
+   745→   745→          <motion.div {...glowPulse}>
+   746→   746→            <Button
+   747→   747→              onClick={() => navigateTo('products')}
+   748→   748→              className="min-h-[44px] px-8 py-3 text-base font-semibold rounded-xl transition-all duration-300 hover:scale-105"
+   749→   749→              style={{
+   750→   750→                backgroundColor: BRAND.green,
+   751→   751→                color: '#f4f3f0',
+   752→   752→                borderColor: BRAND.green,
+   753→   753→              }}
+   754→   754→            >
+   755→   755→              <ChevronRight className="w-5 h-5 mr-1" />
+   756→   756→              Explore Products
+   757→   757→            </Button>
+   758→   758→          </motion.div>
+   759→   759→
+   760→   760→          {/* Secondary CTA */}
+   761→   761→          <Button
+   762→   762→            onClick={() => navigateTo('landing')}
+   763→   763→            variant="outline"
+   764→   764→            className="min-h-[44px] px-8 py-3 text-base font-semibold rounded-xl"
+   765→   765→            style={{
+   766→   766→              borderColor: `${BRAND.muted}40`,
+   767→   767→              color: '#f4f3f0',
+   768→   768→            }}
+   769→   769→          >
+   770→   770→            <ArrowLeft className="w-4 h-4 mr-2" />
+   771→   771→            Back to Home
+   772→   772→          </Button>
+   773→   773→        </motion.div>
+   774→   774→      </div>
+   775→   775→    </SectionWrapper>
+   776→   776→  )
+   777→   777→}
+   778→   778→
+   779→   779→// ============================================================
+   780→   780→// FOOTER
+   781→   781→// ============================================================
+   782→   782→function JourneyFooter() {
+   783→   783→  const { navigateTo } = useAppStore()
+   784→   784→
+   785→   785→  return (
+   786→   786→    <footer
+   787→   787→      className="py-8 text-center"
+   788→   788→      style={{ backgroundColor: '#1a1a18' }}
+   789→   789→    >
+   790→   790→      <div className="max-w-6xl mx-auto px-4 sm:px-6">
+   791→   791→        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+   792→   792→          <span
+   793→   793→            className="text-sm font-bold tracking-wider"
+   794→   794→            style={{ color: BRAND.green }}
+   795→   795→          >
+   796→   796→            NOTJUST Watr
+   797→   797→          </span>
+   798→   798→          <span
+   799→   799→            className="text-sm"
+   800→   800→            style={{ color: BRAND.muted }}
+   801→   801→          >
+   802→   802→            — Wellness, not compromise.
+   803→   803→          </span>
+   804→   804→          <button
+   805→   805→            onClick={() => navigateTo('landing')}
+   806→   806→            className="text-sm underline-offset-4 hover:underline transition-all min-h-[44px] px-3"
+   807→   807→            style={{ color: BRAND.lime }}
+   808→   808→          >
+   809→   809→            ← Home
+   810→   810→          </button>
+   811→   811→        </div>
+   812→   812→      </div>
+   813→   813→    </footer>
+   814→   814→  )
+   815→   815→}
+   816→   816→
+   817→   817→// ============================================================
+   818→   818→// MAIN COMPONENT
+   819→   819→// ============================================================
+   820→   820→export function OurJourneyPage() {
+   821→   821→  return (
+   822→   822→    <div
+   823→   823→      className="min-h-screen flex flex-col"
+   824→   824→      style={{ backgroundColor: BRAND.dark }}
+   825→   825→    >
+   826→   826→      <HeroSection />
+   827→   827→      <OriginStorySection />
+   828→   828→      <TimelineSection />
+   829→   829→      <ValuesSection />
+   830→   830→      <TeamSection />
+   831→   831→      <CTASection />
+   832→   832→      <JourneyFooter />
+   833→   833→    </div>
+   834→   834→  )
+   835→   835→}
+   836→   836→

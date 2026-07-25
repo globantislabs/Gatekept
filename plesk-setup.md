@@ -141,16 +141,16 @@ Set these in **Plesk > Node.js > Environment Variables** or in `.env.production`
 | `PORT` | Auto | (set by Plesk) | Port number (Plesk sets this automatically) |
 | `HOSTNAME` | Auto | (set by server.js) | Plesk needs `0.0.0.0`, server.js sets this |
 | `DATABASE_URL` | Yes | `mysql://notjustwatrdb:password@localhost:3306/notjustwatr_com` | MariaDB connection string |
-| `SMSALERT_USER` | No* | `your_username` | SMSAlert.co.in API username |
-| `SMSALERT_PWD` | No* | `your_password` | SMSAlert.co.in API password |
+| `SMSALERT_ACTIVE` | No | `false` | **ON HOLD** — WhatsApp OTP is primary. Set `true` to activate SMS later |
+| `SMSALERT_USER` | No* | (empty) | SMSAlert.co.in API username — fill when activating SMS |
+| `SMSALERT_PWD` | No* | (empty) | SMSAlert.co.in API password — fill when activating SMS |
 | `SMSALERT_SENDER` | No | `NJWATR` | SMS sender ID (default: NJWATR) |
-| `SMSALERT_ACTIVE` | No | `false` | SMS OTP is currently inactive — set to `true` when ready |
-| `WHATSAPP_TOKEN` | Yes | (your token) | WhatsApp Business API access token |
-| `WHATSAPP_PHONE_NUMBER_ID` | Yes | `1249816758211230` | WhatsApp Business phone number ID |
-| `ZOHO_SMTP_HOST` | No | `smtp.zoho.com` | Zoho SMTP host for email notifications |
-| `ZOHO_SMTP_PORT` | No | `465` | Zoho SMTP port (SSL) |
-| `ZOHO_EMAIL` | No | `notjustwatr@zh-onehealth.com` | Zoho email address |
-| `ZOHO_PASSWORD` | No | (your password) | Zoho email password/app password |
+| `WHATSAPP_TOKEN` | **Yes** | `EAAS4lNk8EUQBSG...` | WhatsApp Business API access token (v19.0) |
+| `WHATSAPP_PHONE_NUMBER_ID` | **Yes** | `1249816758211230` | WhatsApp Business phone number ID |
+| `ZOHO_SMTP_HOST` | No | `smtp.zoho.com` | Zoho SMTP host for transactional emails |
+| `ZOHO_SMTP_PORT` | No | `465` | Zoho SMTP port (SSL on port 465) |
+| `ZOHO_EMAIL` | **Yes** | `notjustwatr@zh-onehealth.com` | Zoho email address (sender) |
+| `ZOHO_PASSWORD` | **Yes** | `crRxWBPYHe7r` | Zoho app password (not login password) |
 | `NEXTAUTH_SECRET` | Yes | (generated) | Generate with: `openssl rand -base64 32` |
 | `NEXTAUTH_URL` | Yes | `https://yourdomain.com` | Full URL of your production site |
 

@@ -2,9 +2,53 @@
 // This file loads the Next.js standalone server built with `output: "standalone"`
 // Plesk's Node.js extension uses this as the application startup file.
 // Supports both MariaDB (production) and SQLite (local dev) via DATABASE_URL.
+//
+// ENVIRONMENT LOADING ORDER:
+//   1. Plesk's Node.js env vars (set in Plesk panel) — highest priority
+//   2. .env.production file (in project root) — loaded by dotenv
+//   3. Defaults/fallbacks in this file
+//
+// You can either:
+//   - Set all env vars in Plesk's Node.js panel (tedious but works)
+//   - OR just upload .env.production to the project root (much easier!)
+//   - OR combine both (Plesk panel vars override .env.production)
 
 const path = require('path');
 const fs = require('fs');
+
+// ─── Load .env.production FIRST (before any other code) ──────────
+// This loads all env vars from the file into process.env.
+// Plesk panel vars already set in process.env will NOT be overridden
+// (dotenv only sets vars that are NOT already defined).
+const envProductionPath = path.join(__dirname, '.env.production');
+
+if (fs.existsSync(envProductionPath)) {
+  try {
+    const dotenv = require('dotenv');
+    dotenv.config({ path: envProductionPath });
+    console.log('[server.js] Loaded environment from .env.production');
+  } catch (err) {
+    // Fallback: manually parse .env.production if dotenv not available
+    console.warn('[server.js] dotenv not available, parsing .env.production manually');
+    const envContent = fs.readFileSync(envProductionPath, 'utf8');
+    envContent.split('\n').forEach(line => {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith('#')) return;
+      const match = trimmed.match(/^([^#=]+)=(.*)$/);
+      if (match) {
+        const key = match[1].trim();
+        const value = match[2].trim();
+        // Don't override existing env vars (Plesk panel vars take priority)
+        if (!process.env[key]) {
+          process.env[key] = value;
+        }
+      }
+    });
+    console.log('[server.js] Loaded environment from .env.production (manual parse)');
+  }
+} else {
+  console.warn('[server.js] .env.production not found — using Plesk env vars only');
+}
 
 // ─── Environment Configuration ──────────────────────────────────
 // Plesk sets the PORT environment variable for the application.

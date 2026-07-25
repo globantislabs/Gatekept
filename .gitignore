@@ -38,7 +38,6 @@ yarn-error.log*
 # vercel
 .vercel
 
-
 # typescript
 *.tsbuildinfo
 next-env.d.ts
@@ -50,8 +49,39 @@ dev.log
 dev.out.log
 test
 prompt
-
 server.log
 logs/
-# Skills directory
-/skills/tool-results/
+
+# ─── NEVER track these (dev artifacts / secrets / bulk data) ────
+# Screenshots & verification PNGs at project root
+/*.png
+/*.jpg
+/*.jpeg
+/*.webp
+
+# Uploads directory (pasted images, PDFs)
+/upload/
+
+# Tool results (agent debug output)
+/tool-results/
+
+# Agent context files (dev session logs)
+/agent-ctx/
+
+# Skills directory (AI skill modules — too large for git)
+/skills/
+
+# Database files (SQLite local dev — never in git)
+/db/
+
+# Download directory
+/download/
+
+# Examples directory (websocket demo — not part of app)
+/examples/
+
+# Z-scripts (dev environment scripts)
+/.zscripts/
+
+# Worklog (dev session tracking)
+/worklog.md

@@ -49,7 +49,9 @@ const dbType = isMariaDB ? 'MariaDB/MySQL' : isSQLite ? 'SQLite' : 'Unknown';
 
 console.log(`[server.js] NODE_ENV: ${process.env.NODE_ENV || 'not set (defaulting to production)'}`);
 console.log(`[server.js] DATABASE_URL: ${dbUrl ? 'configured' : 'NOT SET'} (${dbType})`);
-console.log(`[server.js] SMSAlert: ${process.env.SMSALERT_USER ? 'configured' : 'not configured (dev mode)'}`);
+console.log(`[server.js] WhatsApp: ${process.env.WHATSAPP_TOKEN ? 'configured' : 'NOT SET'} (Phone ID: ${process.env.WHATSAPP_PHONE_NUMBER_ID || 'not set'})`);
+console.log(`[server.js] Zoho Email: ${process.env.ZOHO_EMAIL ? 'configured' : 'not configured (dev mode)'} (${process.env.ZOHO_SMTP_HOST || 'smtp.zoho.com'}:${process.env.ZOHO_SMTP_PORT || '465'})`);
+console.log(`[server.js] SMSAlert: ${process.env.SMSALERT_ACTIVE === 'true' ? 'ACTIVE' : 'INACTIVE (on hold)'} — WhatsApp OTP is primary`);
 console.log(`[server.js] NEXTAUTH_SECRET: ${process.env.NEXTAUTH_SECRET ? 'configured' : 'NOT SET'}`);
 console.log(`[server.js] NEXTAUTH_URL: ${process.env.NEXTAUTH_URL || 'not set'}`);
 

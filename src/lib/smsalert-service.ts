@@ -92,6 +92,12 @@ export const smsAlertService = {
     userId?: string,
     referenceId?: string
   ): Promise<{ success: boolean; otpId: string; message: string; phoneMasked: string }> {
+    // Check if SMS OTP is active
+    const smsActive = process.env.SMSALERT_ACTIVE
+    if (!smsActive || smsActive === 'false') {
+      throw new Error('SMS OTP is currently inactive. Please use WhatsApp OTP instead.')
+    }
+
     const formattedPhone = formatIndianPhone(phone)
     const phoneMasked = maskPhone(formattedPhone)
 

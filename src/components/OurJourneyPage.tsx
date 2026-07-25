@@ -1,13 +1,15 @@
 'use client'
 
-import React, { useRef } from 'react'
+import React, { useRef, useState } from 'react'
+import Image from 'next/image'
 import { motion, useInView, AnimatePresence } from 'framer-motion'
 import {
   ArrowLeft, Leaf, Heart, Zap, FlaskConical, Users, Globe,
   Award, Microscope, ShieldCheck, TrendingUp, ChevronRight,
-  Sparkles, Beaker, Target, ArrowRight
+  Sparkles, Beaker, Target, ArrowRight, Home, Store, Menu, X
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { useAppStore } from '@/store/app-store'
 
 // ============================================================
@@ -268,7 +270,7 @@ function HeroSection() {
 
   return (
     <section
-      className="relative min-h-[80vh] flex flex-col items-center justify-center overflow-hidden"
+      className="relative min-h-[80vh] pt-[72px] flex flex-col items-center justify-center overflow-hidden"
       style={{ backgroundColor: BRAND.dark }}
     >
       <GradientBlobs />
@@ -815,6 +817,156 @@ function JourneyFooter() {
 }
 
 // ============================================================
+// NAVBAR
+// ============================================================
+function JourneyNavbar() {
+  const [scrolled, setScrolled] = useState(false)
+  const [mobileNavOpen, setMobileNavOpen] = useState(false)
+  const { navigateTo, user } = useAppStore()
+
+  React.useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 40)
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
+  const navLinks = [
+    { label: 'Home', icon: Home, action: () => navigateTo('landing') },
+    { label: 'Product', icon: Store, action: () => navigateTo('products') },
+    { label: 'Our Journey', icon: Globe, action: () => navigateTo('our-journey') },
+  ]
+
+  return (
+    <nav
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        scrolled
+          ? 'bg-[#1f1e1c]/95 backdrop-blur-xl shadow-[0_1px_0_0_rgba(255,255,255,0.06)]'
+          : 'bg-transparent'
+      }`}
+    >
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-[72px]">
+          {/* Logo */}
+          <button
+            onClick={() => navigateTo('landing')}
+            className="group flex items-center gap-2 min-h-[44px]"
+          >
+            <Image
+              src="/images/notjust-logo-clean.png"
+              alt="NotJust Watr"
+              width={120}
+              height={40}
+              className="h-9 w-auto object-contain transition-all duration-300 group-hover:scale-105"
+            />
+          </button>
+
+          {/* Desktop nav links */}
+          <div className="hidden md:flex items-center gap-1">
+            {navLinks.map((link) => {
+              const isJourney = link.label === 'Our Journey'
+              return (
+                <button
+                  key={link.label}
+                  onClick={link.action}
+                  className={`flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 min-h-[44px] ${
+                    isJourney
+                      ? 'text-[#afb75d] bg-[#afb75d]/10'
+                      : 'text-white/60 hover:text-[#afb75d] hover:bg-[#afb75d]/5'
+                  }`}
+                >
+                  <link.icon className="h-4 w-4" />
+                  {link.label}
+                </button>
+              )
+            })}
+          </div>
+
+          {/* Right side: user info or login */}
+          <div className="hidden md:flex items-center gap-3">
+            {user ? (
+              <span className="flex items-center gap-1.5 text-sm text-white/80 min-h-[44px]">
+                <Award className="h-4 w-4 text-[#afb75d]" />
+                {user.name}
+              </span>
+            ) : (
+              <Button
+                onClick={() => navigateTo('login')}
+                className="bg-[#48805b] hover:bg-[#48805b]/90 text-white px-4 py-2 rounded-md text-sm font-medium min-h-[44px]"
+              >
+                Login
+              </Button>
+            )}
+          </div>
+
+          {/* Mobile hamburger */}
+          <button
+            onClick={() => setMobileNavOpen(true)}
+            className="md:hidden flex items-center justify-center min-h-[44px] min-w-[44px] text-white/70 hover:text-white transition-colors"
+          >
+            <Menu className="h-6 w-6" />
+          </button>
+        </div>
+      </div>
+
+      {/* Mobile Sheet */}
+      <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
+        <SheetContent
+          side="right"
+          className="bg-[#1f1e1c] border-l border-white/[0.06] text-white w-[280px] sm:w-[320px]"
+        >
+          <SheetHeader className="mb-6">
+            <SheetTitle className="flex items-center gap-2">
+              <Image
+                src="/images/notjust-logo-clean.png"
+                alt="NotJust Watr"
+                width={120}
+                height={40}
+                className="h-9 w-auto object-contain"
+              />
+            </SheetTitle>
+          </SheetHeader>
+
+          <div className="flex flex-col gap-2 mt-4">
+            {navLinks.map((link) => {
+              const isJourney = link.label === 'Our Journey'
+              return (
+                <button
+                  key={link.label}
+                  onClick={() => { link.action(); setMobileNavOpen(false) }}
+                  className={`flex items-center gap-2 px-3 py-3 rounded-md text-sm font-medium transition-all duration-200 min-h-[44px] ${
+                    isJourney
+                      ? 'text-[#afb75d] bg-[#afb75d]/10'
+                      : 'text-white/60 hover:text-[#afb75d] hover:bg-[#afb75d]/5'
+                  }`}
+                >
+                  <link.icon className="h-5 w-5" />
+                  {link.label}
+                </button>
+              )
+            })}
+          </div>
+
+          <div className="flex flex-col gap-2 mt-6 pt-4 border-t border-white/[0.06]">
+            {user ? (
+              <span className="flex items-center gap-2 px-3 py-3 text-sm text-white/80 min-h-[44px]">
+                <Award className="h-5 w-5 text-[#afb75d]" />
+                {user.name}
+              </span>
+            ) : (
+              <Button
+                onClick={() => { navigateTo('login'); setMobileNavOpen(false) }}
+                className="bg-[#48805b] hover:bg-[#48805b]/90 text-white px-4 py-2 rounded-md text-sm font-medium min-h-[44px] w-full"
+              >
+                Login
+              </Button>
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
+    </nav>
+  )
+}
+
 // MAIN COMPONENT
 // ============================================================
 export function OurJourneyPage() {
@@ -823,6 +975,7 @@ export function OurJourneyPage() {
       className="min-h-screen flex flex-col"
       style={{ backgroundColor: BRAND.dark }}
     >
+      <JourneyNavbar />
       <HeroSection />
       <OriginStorySection />
       <TimelineSection />

@@ -9,6 +9,7 @@ import { useAppStore, type AppView } from '@/store/app-store'
 import LandingPageComponent from '@/components/LandingPage'
 import { OurJourneyPage } from '@/components/OurJourneyPage'
 import { AuthLogin, AuthRegister } from '@/components/AuthPages'
+import { AuthWhatsAppOtpLogin } from '@/components/AuthWhatsAppOtpLogin'
 import { ProfilePage } from '@/components/ProfilePage'
 import ProductDetailPage from '@/components/ProductDetailPage'
 import { ProductLearningModule } from '@/components/ProductLearningModule'
@@ -77,6 +78,8 @@ function ViewRenderer() {
         return <AuthLogin />
       case 'auth-register':
         return <AuthRegister />
+      case 'auth-whatsapp-otp':
+        return <AuthWhatsAppOtpLogin />
       case 'profile':
         return <ProfilePage />
       case 'admin-dashboard':

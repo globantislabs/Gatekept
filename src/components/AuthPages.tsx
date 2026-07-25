@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Mail, Phone, Lock, User, MapPin, Shield, Eye, EyeOff, AlertCircle } from 'lucide-react'
+import { Mail, Phone, Lock, User, MapPin, Shield, Eye, EyeOff, AlertCircle, MessageCircle } from 'lucide-react'
 import { useAppStore } from '@/store/app-store'
 import { authService } from '@/lib/data-service'
 import type { UserProfile } from '@/lib/data-service'
@@ -187,6 +187,14 @@ export function AuthLogin() {
               ) : (
                 'Login'
               )}
+            </Button>
+
+            <Button
+              onClick={() => navigateTo('auth-whatsapp-otp')}
+              variant="outline"
+              className="w-full h-12 border-[#25D366]/40 text-[#25D366] hover:bg-[#25D366]/10 font-heading font-semibold text-base rounded-xl transition-all min-h-[44px]"
+            >
+              <MessageCircle className="w-5 h-5 mr-2" /> Login with WhatsApp OTP
             </Button>
 
             <Separator className="bg-[#e3dfd8]" />

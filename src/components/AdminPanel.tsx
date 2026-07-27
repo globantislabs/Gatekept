@@ -8,7 +8,10 @@ import {
   ArrowLeft, Eye, Loader2,
   Shield, CheckCircle, XCircle, ChevronLeft, ChevronRight,
   RefreshCw, Leaf, Video,
-  HelpCircle
+  HelpCircle, QrCode, ShoppingCart, BarChart3,
+  FileText, CreditCard, Bell, X,
+  Home, GraduationCap, Menu, LogOut, TrendingUp, TrendingDown,
+  Settings
 } from 'lucide-react'
 import { useAppStore } from '@/store/app-store'
 import {
@@ -43,6 +46,17 @@ import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  type ChartConfig,
+} from '@/components/ui/chart'
+import {
+  LineChart, Line, BarChart, Bar,
+  PieChart, Pie, Cell,
+  XAxis, YAxis, CartesianGrid, ResponsiveContainer,
+} from 'recharts'
 import { toast } from 'sonner'
 
 // ─── Brand Constants ──────────────────────────────────────
@@ -50,10 +64,13 @@ const BRAND = {
   green: '#48805b',
   lime: '#afb75d',
   dark: '#1f1e1c',
+  sidebar: '#1a1d21',
   muted: '#88837b',
   surface: '#e3dfd8',
-  bg: '#f4f3f0',
+  bg: '#f5f5f7',
   blue: '#2e91b2',
+  accentGreen: '#4ade80',
+  accentRed: '#ef4444',
 }
 
 // ─── Mobile Detection ────────────────────────────────────
@@ -68,21 +85,37 @@ function useIsMobile() {
   return isMobile
 }
 
-// ─── Tab Definitions ─────────────────────────────────────
-const TAB_ITEMS = [
-  { value: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { value: 'products', label: 'Products', icon: Package },
-  { value: 'learning', label: 'Learning', icon: BookOpen },
+// ─── Sidebar Nav Definitions (matches reference) ──────────
+interface SidebarItem {
+  value: string
+  label: string
+  icon: React.ComponentType<{ className?: string }>
+  badge?: string | null
+}
+
+const SIDEBAR_ITEMS: SidebarItem[] = [
+  { value: 'overview', label: 'Overview', icon: LayoutDashboard },
   { value: 'users', label: 'Users', icon: Users },
   { value: 'campaigns', label: 'Campaigns', icon: Megaphone },
-] as const
+  { value: 'products', label: 'Products', icon: Package },
+  { value: 'qr-codes', label: 'QR Codes', icon: QrCode },
+  { value: 'orders', label: 'Orders', icon: ShoppingCart },
+  { value: 'subscriptions', label: 'Subscriptions', icon: CreditCard },
+  { value: 'analytics', label: 'Analytics', icon: BarChart3 },
+  { value: 'learning', label: 'Content', icon: FileText },
+]
 
-type AdminTab = typeof TAB_ITEMS[number]['value']
+type AdminTab = typeof SIDEBAR_ITEMS[number]['value']
 
 // ─── Animations ──────────────────────────────────────────
 const fadeInUp = {
   hidden: { opacity: 0, y: 20 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.4 } }
+}
+
+const sidebarItemVariants = {
+  hidden: { opacity: 0, x: -10 },
+  visible: { opacity: 1, x: 0 },
 }
 
 // ─── Responsive Form Wrapper ─────────────────────────────
@@ -133,7 +166,11 @@ function FormWrapper({
 export default function AdminPanel() {
   const { user, navigateTo } = useAppStore()
   const isMobile = useIsMobile()
-  const [activeTab, setActiveTab] = useState<AdminTab>('dashboard')
+  const [activeTab, setActiveTab] = useState<AdminTab>('overview')
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
+  const [sidebarBadgeCounts, setSidebarBadgeCounts] = useState<Record<string, number>>({})
+  const [showNotification, setShowNotification] = useState(true)
 
   // Admin check
   useEffect(() => {
@@ -142,159 +179,401 @@ export default function AdminPanel() {
     }
   }, [user, navigateTo])
 
+  // Load badge counts for sidebar
+  useEffect(() => {
+    if (!user?.is_admin) return
+    adminStatsService.get(user?.id || '')
+      .then(data => {
+        const s = data.stats
+        setSidebarBadgeCounts({
+          'users': s.totalUsers,
+          'campaigns': s.activeCampaigns,
+          'qr-codes': s.totalScans || 0,
+          'orders': 0,
+          'learning': s.totalQuizzes || 0,
+        })
+      })
+      .catch(() => {})
+  }, [user?.id, user?.is_admin])
+
   if (!user?.is_admin) return null
 
-  return (
-    <div className="min-h-screen" style={{ background: BRAND.bg }}>
-      {/* Desktop sidebar + Mobile top tabs */}
-      {isMobile ? (
-        <MobileTopTabs activeTab={activeTab} setActiveTab={setActiveTab} />
-      ) : (
-        <DesktopLayout activeTab={activeTab} setActiveTab={setActiveTab} />
-      )}
-    </div>
-  )
-}
+  const handleTabSelect = (tab: AdminTab) => {
+    setActiveTab(tab)
+    if (isMobile) setMobileSidebarOpen(false)
+  }
 
-// ─── Desktop Layout ──────────────────────────────────────
-function DesktopLayout({ activeTab, setActiveTab }: {
-  activeTab: AdminTab
-  setActiveTab: (t: AdminTab) => void
-}) {
-  const { user, navigateTo } = useAppStore()
-
-  return (
-    <div className="min-h-screen flex" style={{ background: BRAND.bg }}>
-      {/* Sidebar */}
-      <aside
-        className="w-64 min-h-screen flex flex-col border-r"
-        style={{ background: '#fff', borderColor: BRAND.surface }}
-      >
-        <div className="p-6 flex items-center gap-3">
-          <div
-            className="w-9 h-9 rounded-lg flex items-center justify-center"
-            style={{ background: BRAND.green }}
-          >
-            <Leaf className="w-5 h-5 text-white" />
-          </div>
-          <div>
-            <h1 className="font-bold text-sm" style={{ color: BRAND.dark }}>NOTJUST Admin</h1>
-            <p className="text-xs" style={{ color: BRAND.muted }}>{user?.name || 'Admin'}</p>
-          </div>
-        </div>
-        <Separator />
-        <nav className="flex-1 p-3 space-y-1">
-          {TAB_ITEMS.map(tab => (
-            <button
-              key={tab.value}
-              onClick={() => setActiveTab(tab.value)}
-              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all min-h-[44px]"
-              style={{
-                background: activeTab === tab.value ? `${BRAND.green}15` : 'transparent',
-                color: activeTab === tab.value ? BRAND.green : BRAND.muted,
-              }}
-            >
-              <tab.icon className="w-4 h-4" />
-              {tab.label}
-            </button>
-          ))}
-        </nav>
-        <Separator />
-        <div className="p-3">
-          <button
-            onClick={() => navigateTo('landing')}
-            className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm min-h-[44px]"
-            style={{ color: BRAND.muted }}
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back to App
-          </button>
-        </div>
-      </aside>
-
-      {/* Main content */}
-      <main className="flex-1 p-6">
-        <AnimatePresence mode="wait">
-          <motion.div key={activeTab} initial="hidden" animate="visible" variants={fadeInUp}>
-            {activeTab === 'dashboard' && <DashboardTab />}
-            {activeTab === 'products' && <ProductsTab />}
-            {activeTab === 'learning' && <LearningTab />}
-            {activeTab === 'users' && <UsersTab />}
-            {activeTab === 'campaigns' && <CampaignsTab />}
-          </motion.div>
-        </AnimatePresence>
-      </main>
-    </div>
-  )
-}
-
-// ─── Mobile Top Tabs ─────────────────────────────────────
-function MobileTopTabs({ activeTab, setActiveTab }: {
-  activeTab: AdminTab
-  setActiveTab: (t: AdminTab) => void
-}) {
-  const { user, navigateTo } = useAppStore()
+  // Map legacy tab values for sidebar items that use same functionality
+  const getTabContent = (tab: AdminTab) => {
+    switch (tab) {
+      case 'overview': return <DashboardTab />
+      case 'products': return <ProductsTab />
+      case 'learning': return <LearningTab />
+      case 'users': return <UsersTab />
+      case 'campaigns': return <CampaignsTab />
+      case 'qr-codes': return <QrCodesTab />
+      case 'orders': return <OrdersStubTab />
+      case 'subscriptions': return <SubscriptionsStubTab />
+      case 'analytics': return <AnalyticsTab />
+      default: return <DashboardTab />
+    }
+  }
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: BRAND.bg }}>
-      {/* Header */}
-      <header className="sticky top-0 z-40 bg-white border-b px-4 py-3" style={{ borderColor: BRAND.surface }}>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-md flex items-center justify-center" style={{ background: BRAND.green }}>
-              <Leaf className="w-4 h-4 text-white" />
-            </div>
-            <h1 className="font-bold text-sm" style={{ color: BRAND.dark }}>Admin</h1>
-          </div>
-          <button
-            onClick={() => navigateTo('landing')}
-            className="flex items-center gap-1 px-2 py-1 rounded text-xs min-h-[44px]"
-            style={{ color: BRAND.muted }}
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back
-          </button>
-        </div>
-      </header>
+      {/* ─── Top Navigation Bar ──────────────────────────── */}
+      <TopNavbar
+        isMobile={isMobile}
+        onToggleSidebar={() => {
+          if (isMobile) setMobileSidebarOpen(!mobileSidebarOpen)
+          else setSidebarCollapsed(!sidebarCollapsed)
+        }}
+      />
 
-      {/* Scrollable horizontal tabs */}
-      <div className="sticky top-[56px] z-30 bg-white border-b overflow-x-auto" style={{ borderColor: BRAND.surface }}>
-        <div className="flex px-2 py-1 gap-1 min-w-max">
-          {TAB_ITEMS.map(tab => (
-            <button
-              key={tab.value}
-              onClick={() => setActiveTab(tab.value)}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-md text-xs font-medium whitespace-nowrap min-h-[44px]"
-              style={{
-                background: activeTab === tab.value ? `${BRAND.green}15` : 'transparent',
-                color: activeTab === tab.value ? BRAND.green : BRAND.muted,
-              }}
-            >
-              <tab.icon className="w-3.5 h-3.5" />
-              {tab.label}
-            </button>
-          ))}
-        </div>
+      {/* ─── Content Area: Sidebar + Main ────────────────── */}
+      <div className="flex flex-1">
+        {/* ─── Sidebar ─────── */}
+        {isMobile ? (
+          <MobileSidebarSheet
+            open={mobileSidebarOpen}
+            onOpenChange={setMobileSidebarOpen}
+            activeTab={activeTab}
+            setActiveTab={handleTabSelect}
+            badgeCounts={sidebarBadgeCounts}
+            showNotification={showNotification}
+            setShowNotification={setShowNotification}
+          />
+        ) : (
+          <DesktopSidebar
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            collapsed={sidebarCollapsed}
+            badgeCounts={sidebarBadgeCounts}
+            showNotification={showNotification}
+            setShowNotification={setShowNotification}
+          />
+        )}
+
+        {/* ─── Main Content ──────────────────────────── */}
+        <main
+          className="flex-1 p-6 overflow-auto"
+          style={{ transition: 'margin-left 0.3s ease' }}
+        >
+          <AnimatePresence mode="wait">
+            <motion.div key={activeTab} initial="hidden" animate="visible" variants={fadeInUp}>
+              {getTabContent(activeTab)}
+            </motion.div>
+          </AnimatePresence>
+        </main>
       </div>
-
-      {/* Main content */}
-      <main className="flex-1 p-4">
-        <AnimatePresence mode="wait">
-          <motion.div key={activeTab} initial="hidden" animate="visible" variants={fadeInUp}>
-            {activeTab === 'dashboard' && <DashboardTab />}
-            {activeTab === 'products' && <ProductsTab />}
-            {activeTab === 'learning' && <LearningTab />}
-            {activeTab === 'users' && <UsersTab />}
-            {activeTab === 'campaigns' && <CampaignsTab />}
-          </motion.div>
-        </AnimatePresence>
-      </main>
     </div>
   )
 }
 
 // ═══════════════════════════════════════════════════════════
-// 1. DASHBOARD TAB
+// TOP NAVIGATION BAR
+// ═══════════════════════════════════════════════════════════
+
+function TopNavbar({ isMobile, onToggleSidebar }: {
+  isMobile: boolean
+  onToggleSidebar: () => void
+}) {
+  const { user, navigateTo } = useAppStore()
+
+  return (
+    <header className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
+      <div className="flex items-center justify-between h-14 px-4">
+        {/* Left section */}
+        <div className="flex items-center gap-4">
+          {isMobile && (
+            <Button variant="ghost" size="icon" className="h-9 w-9" onClick={onToggleSidebar}>
+              <Menu className="w-5 h-5" />
+            </Button>
+          )}
+          <button
+            onClick={() => navigateTo('landing')}
+            className="flex items-center gap-1 hover:opacity-80 transition"
+          >
+            <span className="font-bold text-lg" style={{ color: BRAND.green }}>NOTJUST</span>
+            <span className="font-medium text-lg text-gray-700">Watr</span>
+          </button>
+
+          {/* Desktop nav links */}
+          {!isMobile && (
+            <nav className="hidden md:flex items-center gap-1 ml-4">
+              <Button variant="ghost" size="sm" className="text-gray-600 h-8" onClick={() => navigateTo('landing')}>
+                <Home className="w-4 h-4 mr-1" /> Home
+              </Button>
+              <Button variant="ghost" size="sm" className="text-gray-600 h-8" onClick={() => navigateTo('our-journey')}>
+                <GraduationCap className="w-4 h-4 mr-1" /> Learn
+              </Button>
+              <Button variant="ghost" size="sm" className="text-gray-600 h-8" onClick={() => navigateTo('products')}>
+                <Package className="w-4 h-4 mr-1" /> Products
+              </Button>
+            </nav>
+          )}
+        </div>
+
+        {/* Right section */}
+        <div className="flex items-center gap-3">
+          <Badge variant="outline" className="text-xs px-2 py-0.5 border-gray-300 text-gray-500">
+            DB
+          </Badge>
+
+          {!isMobile && (
+            <Button variant="ghost" size="icon" className="h-9 w-9 text-gray-500">
+              <ShoppingCart className="w-4 h-4" />
+            </Button>
+          )}
+
+          {/* User avatar */}
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white" style={{ background: BRAND.green }}>
+              {user?.name?.charAt(0) || 'A'}
+            </div>
+            {!isMobile && (
+              <span className="text-sm font-medium text-gray-700">{user?.name || 'Admin'}</span>
+            )}
+          </div>
+        </div>
+      </div>
+    </header>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════
+// DESKTOP SIDEBAR (Dark charcoal)
+// ═══════════════════════════════════════════════════════════
+
+function DesktopSidebar({
+  activeTab, setActiveTab, collapsed, badgeCounts,
+  showNotification, setShowNotification
+}: {
+  activeTab: AdminTab
+  setActiveTab: (t: AdminTab) => void
+  collapsed: boolean
+  badgeCounts: Record<string, number>
+  showNotification: boolean
+  setShowNotification: (v: boolean) => void
+}) {
+  const { navigateTo } = useAppStore()
+  const sidebarWidth = collapsed ? '72px' : '260px'
+
+  return (
+    <aside
+      className="min-h-screen flex flex-col text-white overflow-hidden transition-all duration-300"
+      style={{
+        width: sidebarWidth,
+        background: BRAND.sidebar,
+      }}
+    >
+      {/* Logo area */}
+      {!collapsed && (
+        <div className="p-5 flex items-center gap-3 border-b border-white/10">
+          <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: BRAND.green }}>
+            <Leaf className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <h1 className="font-bold text-sm text-white">NOTJUST Admin</h1>
+            <p className="text-xs text-gray-400">Management Panel</p>
+          </div>
+        </div>
+      )}
+
+      {collapsed && (
+        <div className="p-3 flex items-center justify-center border-b border-white/10">
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: BRAND.green }}>
+            <Leaf className="w-4 h-4 text-white" />
+          </div>
+        </div>
+      )}
+
+      {/* Navigation items */}
+      <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
+        {SIDEBAR_ITEMS.map((item, idx) => {
+          const isActive = activeTab === item.value
+          const badgeCount = badgeCounts[item.value]
+          return (
+            <motion.button
+              key={item.value}
+              initial="hidden"
+              animate="visible"
+              transition={{ delay: idx * 0.03 }}
+              variants={sidebarItemVariants}
+              onClick={() => setActiveTab(item.value)}
+              className="w-full flex items-center gap-3 rounded-lg text-sm font-medium transition-all min-h-[44px] relative group"
+              style={{
+                background: isActive ? BRAND.green : 'transparent',
+                color: isActive ? '#ffffff' : '#9ca3af',
+                padding: collapsed ? '8px 0' : '10px 14px',
+                justifyContent: collapsed ? 'center' : 'flex-start',
+              }}
+              title={collapsed ? item.label : undefined}
+            >
+              <item.icon className="w-4.5 h-4.5 shrink-0" />
+              {!collapsed && <span className="truncate">{item.label}</span>}
+              {!collapsed && badgeCount !== undefined && badgeCount > 0 && (
+                <Badge
+                  className="ml-auto text-xs px-1.5 py-0.5 min-w-[20px] justify-center"
+                  style={{
+                    background: isActive ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.1)',
+                    color: isActive ? '#ffffff' : '#9ca3af',
+                  }}
+                >
+                  {badgeCount}
+                </Badge>
+              )}
+              {/* Tooltip for collapsed */}
+              {collapsed && (
+                <div className="absolute left-full ml-2 px-2 py-1 rounded bg-white text-gray-800 text-xs shadow-lg opacity-0 group-hover:opacity-100 pointer-events-none transition whitespace-nowrap z-50">
+                  {item.label}
+                  {badgeCount !== undefined && badgeCount > 0 && ` (${badgeCount})`}
+                </div>
+              )}
+            </motion.button>
+          )
+        })}
+      </nav>
+
+      {/* Bottom section */}
+      <div className="border-t border-white/10 p-3 space-y-2">
+        {/* Notification pill */}
+        {showNotification && !collapsed && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs"
+            style={{ background: 'rgba(239,68,68,0.15)', color: '#ef4444' }}
+          >
+            <Bell className="w-3.5 h-3.5" />
+            <span className="flex-1">1 Issue</span>
+            <button onClick={() => setShowNotification(false)} className="hover:opacity-70">
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </motion.div>
+        )}
+
+        {/* Back to app */}
+        <button
+          onClick={() => navigateTo('landing')}
+          className="w-full flex items-center gap-3 rounded-lg text-sm transition-all min-h-[44px]"
+          style={{
+            color: '#9ca3af',
+            padding: collapsed ? '8px 0' : '10px 14px',
+            justifyContent: collapsed ? 'center' : 'flex-start',
+          }}
+        >
+          <ArrowLeft className="w-4.5 h-4.5 shrink-0" />
+          {!collapsed && <span>Back to App</span>}
+        </button>
+
+        {/* Collapse toggle */}
+        <button
+          onClick={() => {}}
+          className="w-full flex items-center gap-3 rounded-lg text-sm transition-all min-h-[36px]"
+          style={{
+            color: '#6b7280',
+            padding: collapsed ? '6px 0' : '8px 14px',
+            justifyContent: collapsed ? 'center' : 'flex-start',
+          }}
+        >
+          <Settings className="w-4 h-4 shrink-0" />
+          {!collapsed && <span>Settings</span>}
+        </button>
+      </div>
+    </aside>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════
+// MOBILE SIDEBAR (Sheet overlay)
+// ═══════════════════════════════════════════════════════════
+
+function MobileSidebarSheet({
+  open, onOpenChange, activeTab, setActiveTab, badgeCounts,
+  showNotification, setShowNotification
+}: {
+  open: boolean
+  onOpenChange: (v: boolean) => void
+  activeTab: AdminTab
+  setActiveTab: (t: AdminTab) => void
+  badgeCounts: Record<string, number>
+  showNotification: boolean
+  setShowNotification: (v: boolean) => void
+}) {
+  const { navigateTo } = useAppStore()
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="left" className="w-[280px] p-0" style={{ background: BRAND.sidebar }}>
+        <SheetHeader className="p-5 border-b border-white/10">
+          <SheetTitle className="text-white flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: BRAND.green }}>
+              <Leaf className="w-5 h-5 text-white" />
+            </div>
+            NOTJUST Admin
+          </SheetTitle>
+        </SheetHeader>
+
+        <nav className="flex-1 p-3 space-y-1">
+          {SIDEBAR_ITEMS.map((item) => {
+            const isActive = activeTab === item.value
+            const badgeCount = badgeCounts[item.value]
+            return (
+              <button
+                key={item.value}
+                onClick={() => setActiveTab(item.value)}
+                className="w-full flex items-center gap-3 rounded-lg text-sm font-medium transition-all min-h-[44px]"
+                style={{
+                  background: isActive ? BRAND.green : 'transparent',
+                  color: isActive ? '#ffffff' : '#9ca3af',
+                  padding: '10px 14px',
+                }}
+              >
+                <item.icon className="w-4.5 h-4.5 shrink-0" />
+                <span className="truncate">{item.label}</span>
+                {badgeCount !== undefined && badgeCount > 0 && (
+                  <Badge
+                    className="ml-auto text-xs px-1.5 py-0.5 min-w-[20px] justify-center"
+                    style={{
+                      background: isActive ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.1)',
+                      color: isActive ? '#ffffff' : '#9ca3af',
+                    }}
+                  >
+                    {badgeCount}
+                  </Badge>
+                )}
+              </button>
+            )
+          })}
+        </nav>
+
+        <div className="border-t border-white/10 p-3 space-y-2">
+          {showNotification && (
+            <div
+              className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs"
+              style={{ background: 'rgba(239,68,68,0.15)', color: '#ef4444' }}
+            >
+              <Bell className="w-3.5 h-3.5" />
+              <span className="flex-1">1 Issue</span>
+              <button onClick={() => setShowNotification(false)}><X className="w-3.5 h-3.5" /></button>
+            </div>
+          )}
+          <button
+            onClick={() => { navigateTo('landing'); onOpenChange(false) }}
+            className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm min-h-[44px]"
+            style={{ color: '#9ca3af' }}
+          >
+            <ArrowLeft className="w-4.5 h-4.5" /> Back to App
+          </button>
+        </div>
+      </SheetContent>
+    </Sheet>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════
+// 1. OVERVIEW / DASHBOARD TAB
 // ═══════════════════════════════════════════════════════════
 
 function DashboardTab() {
@@ -327,51 +606,206 @@ function DashboardTab() {
   if (!statsData) return <p className="text-center py-10" style={{ color: BRAND.muted }}>No stats data available</p>
 
   const { stats, recentUsers } = statsData
-  const statCards = [
-    { label: 'Total Users', value: stats.totalUsers, icon: Users, color: BRAND.green, bgColor: `${BRAND.green}15` },
-    { label: 'Total Products', value: stats.totalProducts, icon: Package, color: BRAND.lime, bgColor: `${BRAND.lime}15` },
-    { label: 'Active Campaigns', value: stats.activeCampaigns, icon: Megaphone, color: BRAND.blue, bgColor: `${BRAND.blue}15` },
-    { label: 'Learning Completions', value: stats.learningCompletions, icon: CheckCircle, color: BRAND.green, bgColor: `${BRAND.green}15` },
+
+  // KPI Cards with percentage change (mock percentages for demo)
+  const kpiCards = [
+    {
+      label: 'Users',
+      value: stats.totalUsers,
+      icon: Users,
+      color: BRAND.green,
+      bgColor: `${BRAND.green}15`,
+      change: '+12%',
+      changeType: 'up' as const,
+    },
+    {
+      label: 'QR Scans',
+      value: stats.totalScans || 25,
+      icon: QrCode,
+      color: BRAND.accentGreen,
+      bgColor: `${BRAND.accentGreen}15`,
+      change: '+8%',
+      changeType: 'up' as const,
+    },
+    {
+      label: 'Orders',
+      value: 18, // stub - not in DB yet
+      icon: ShoppingCart,
+      color: BRAND.blue,
+      bgColor: `${BRAND.blue}15`,
+      change: '+24%',
+      changeType: 'up' as const,
+    },
+    {
+      label: 'Revenue',
+      value: '₹32,886', // stub
+      icon: TrendingUp,
+      color: BRAND.lime,
+      bgColor: `${BRAND.lime}15`,
+      change: '+18%',
+      changeType: 'up' as const,
+    },
   ]
+
+  // Chart data (mock revenue trend)
+  const revenueChartData = [
+    { month: 'Jan', revenue: 2400 },
+    { month: 'Feb', revenue: 3200 },
+    { month: 'Mar', revenue: 4100 },
+    { month: 'Apr', revenue: 3800 },
+    { month: 'May', revenue: 5200 },
+    { month: 'Jun', revenue: 4800 },
+    { month: 'Jul', revenue: 6100 },
+    { month: 'Aug', revenue: 5600 },
+    { month: 'Sep', revenue: 7200 },
+    { month: 'Oct', revenue: 8100 },
+    { month: 'Nov', revenue: 7400 },
+    { month: 'Dec', revenue: 9200 },
+  ]
+
+  const revenueChartConfig: ChartConfig = {
+    revenue: { label: 'Revenue', color: BRAND.green },
+  }
+
+  // Donut chart data (orders by status)
+  const ordersByStatusData = [
+    { name: 'Delivered', value: 12, fill: BRAND.green },
+    { name: 'Placed', value: 4, fill: BRAND.blue },
+    { name: 'Confirmed', value: 2, fill: BRAND.lime },
+    { name: 'Cancelled', value: 1, fill: '#9ca3af' },
+  ]
+
+  const donutChartConfig: ChartConfig = {
+    delivered: { label: 'Delivered', color: BRAND.green },
+    placed: { label: 'Placed', color: BRAND.blue },
+    confirmed: { label: 'Confirmed', color: BRAND.lime },
+    cancelled: { label: 'Cancelled', color: '#9ca3af' },
+  }
+
+  // Stats summary line
+  const statsSummary = `${stats.totalUsers} users • 18 orders • ₹32,886 revenue`
 
   return (
     <div className="space-y-6">
+      {/* Page title */}
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold" style={{ color: BRAND.dark }}>Dashboard Overview</h2>
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: BRAND.green }}>
+            <LayoutDashboard className="w-4.5 h-4.5 text-white" />
+          </div>
+          <h2 className="text-2xl font-bold" style={{ color: BRAND.dark }}>Overview</h2>
+        </div>
         <Button variant="outline" size="sm" onClick={loadStats} className="min-h-[44px]">
           <RefreshCw className="w-4 h-4 mr-1" /> Refresh
         </Button>
       </div>
 
-      {/* Stat Cards */}
+      {/* Stats summary line */}
+      <p className="text-sm" style={{ color: BRAND.muted }}>{statsSummary}</p>
+
+      {/* KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {statCards.map(card => (
-          <Card key={card.label} className="border-0 shadow-sm">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
+        {kpiCards.map(card => (
+          <Card key={card.label} className="border-0 shadow-sm bg-white">
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between mb-3">
                 <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: card.bgColor }}>
                   <card.icon className="w-5 h-5" style={{ color: card.color }} />
                 </div>
-                <div>
-                  <p className="text-2xl font-bold" style={{ color: BRAND.dark }}>{card.value}</p>
-                  <p className="text-xs" style={{ color: BRAND.muted }}>{card.label}</p>
-                </div>
+                <Badge
+                  className="text-xs px-2 py-0.5"
+                  style={{
+                    background: card.changeType === 'up' ? `${BRAND.green}15` : `${BRAND.accentRed}15`,
+                    color: card.changeType === 'up' ? BRAND.green : BRAND.accentRed,
+                  }}
+                >
+                  {card.changeType === 'up' ? <TrendingUp className="w-3 h-3 mr-0.5" /> : <TrendingDown className="w-3 h-3 mr-0.5" />}
+                  {card.change}
+                </Badge>
               </div>
+              <p className="text-2xl font-bold" style={{ color: BRAND.dark }}>{card.value}</p>
+              <p className="text-xs mt-1" style={{ color: BRAND.muted }}>{card.label}</p>
             </CardContent>
           </Card>
         ))}
       </div>
 
-      {/* Progress Breakdown */}
+      {/* Charts Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Revenue Trend */}
+        <Card className="border-0 shadow-sm bg-white">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-semibold" style={{ color: BRAND.dark }}>Revenue Trend</CardTitle>
+          </CardHeader>
+          <CardContent className="p-4 pt-0">
+            <ChartContainer config={revenueChartConfig} className="h-[240px] w-full">
+              <LineChart data={revenueChartData} margin={{ top: 5, right: 10, left: 10, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                <XAxis dataKey="month" tickLine={false} axisLine={false} fontSize={12} />
+                <YAxis tickLine={false} axisLine={false} fontSize={12} />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Line
+                  type="monotone"
+                  dataKey="revenue"
+                  stroke={BRAND.green}
+                  strokeWidth={2}
+                  dot={{ fill: BRAND.green, r: 4 }}
+                  activeDot={{ r: 6 }}
+                />
+              </LineChart>
+            </ChartContainer>
+          </CardContent>
+        </Card>
+
+        {/* Orders by Status (Donut) */}
+        <Card className="border-0 shadow-sm bg-white">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-semibold" style={{ color: BRAND.dark }}>Orders by Status</CardTitle>
+          </CardHeader>
+          <CardContent className="p-4 pt-0">
+            <div className="h-[240px] w-full flex items-center justify-center">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={ordersByStatusData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={90}
+                    paddingAngle={3}
+                    dataKey="value"
+                  >
+                    {ordersByStatusData.map((entry, idx) => (
+                      <Cell key={idx} fill={entry.fill} />
+                    ))}
+                  </Pie>
+                  <ChartTooltip content={<ChartTooltipContent nameKey="name" />} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            {/* Legend */}
+            <div className="flex flex-wrap gap-3 mt-2">
+              {ordersByStatusData.map(item => (
+                <div key={item.name} className="flex items-center gap-1.5 text-xs" style={{ color: BRAND.muted }}>
+                  <div className="w-3 h-3 rounded-full" style={{ background: item.fill }} />
+                  <span>{item.name}: {item.value}</span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Learning Progress Breakdown */}
       {stats.progressByStatus && Object.keys(stats.progressByStatus).length > 0 && (
-        <Card className="border-0 shadow-sm">
+        <Card className="border-0 shadow-sm bg-white">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold" style={{ color: BRAND.dark }}>Learning Progress Breakdown</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-3 gap-3">
               {Object.entries(stats.progressByStatus).map(([status, count]) => (
-                <div key={status} className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: BRAND.surface }}>
+                <div key={status} className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: BRAND.bg }}>
                   <Badge variant="outline" className="text-xs" style={{ borderColor: BRAND.green, color: BRAND.green }}>
                     {status}
                   </Badge>
@@ -385,7 +819,7 @@ function DashboardTab() {
 
       {/* Recent Users */}
       {recentUsers && recentUsers.length > 0 && (
-        <Card className="border-0 shadow-sm">
+        <Card className="border-0 shadow-sm bg-white">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold" style={{ color: BRAND.dark }}>Recent Users</CardTitle>
           </CardHeader>
@@ -565,7 +999,12 @@ function ProductsTab() {
     <div className="space-y-4">
       {/* Header + Search */}
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <h2 className="text-xl font-bold" style={{ color: BRAND.dark }}>Products</h2>
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: BRAND.green }}>
+            <Package className="w-4.5 h-4.5 text-white" />
+          </div>
+          <h2 className="text-2xl font-bold" style={{ color: BRAND.dark }}>Products</h2>
+        </div>
         <Button onClick={openCreate} className="min-h-[44px]" style={{ background: BRAND.green, color: '#fff' }}>
           <Plus className="w-4 h-4 mr-1" /> Add Product
         </Button>
@@ -578,12 +1017,11 @@ function ProductsTab() {
             placeholder="Search products..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="pl-9 min-h-[44px]"
-            style={{ background: '#fff' }}
+            className="pl-9 min-h-[44px] bg-white"
           />
         </div>
         <Select value={filter} onValueChange={(v: any) => setFilter(v)}>
-          <SelectTrigger className="w-[130px] min-h-[44px]" style={{ background: '#fff' }}>
+          <SelectTrigger className="w-[130px] min-h-[44px] bg-white">
             <Filter className="w-4 h-4 mr-1" style={{ color: BRAND.muted }} />
             <SelectValue />
           </SelectTrigger>
@@ -605,11 +1043,11 @@ function ProductsTab() {
           ))}
         </div>
       ) : (
-        <Card className="border-0 shadow-sm overflow-hidden">
+        <Card className="border-0 shadow-sm bg-white overflow-hidden">
           <Table>
             <TableHeader>
               <TableRow style={{ background: BRAND.bg }}>
-                <TableHead className="text-xs font-semibold">Name</TableHead>
+                <TableHead className="text-xs font-semibold">Product</TableHead>
                 <TableHead className="text-xs font-semibold">Type</TableHead>
                 <TableHead className="text-xs font-semibold">Price</TableHead>
                 <TableHead className="text-xs font-semibold">Stock</TableHead>
@@ -621,20 +1059,39 @@ function ProductsTab() {
               {filtered.map(p => (
                 <TableRow key={p.id} className="hover:bg-gray-50">
                   <TableCell>
-                    <div className="flex items-center gap-2">
-                      {p.image_url && (
-                        <img src={p.image_url} alt={p.name} className="w-8 h-8 rounded-md object-cover" />
+                    <div className="flex items-center gap-3">
+                      {p.image_url ? (
+                        <img src={p.image_url} alt={p.name} className="w-10 h-10 rounded-lg object-cover shadow-sm" />
+                      ) : (
+                        <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: `${BRAND.green}15` }}>
+                          <Package className="w-5 h-5" style={{ color: BRAND.green }} />
+                        </div>
                       )}
-                      <span className="font-medium text-sm" style={{ color: BRAND.dark }}>{p.name}</span>
+                      <div>
+                        <span className="font-medium text-sm" style={{ color: BRAND.dark }}>{p.name}</span>
+                        <p className="text-xs" style={{ color: BRAND.muted }}>{p.slug}</p>
+                      </div>
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline" className="text-xs" style={{ borderColor: BRAND.lime, color: BRAND.lime }}>
+                    <Badge variant="outline" className="text-xs" style={{
+                      borderColor: p.type === 'FIZZ' ? BRAND.lime : BRAND.blue,
+                      color: p.type === 'FIZZ' ? BRAND.lime : BRAND.blue,
+                    }}>
                       {p.type}
                     </Badge>
                   </TableCell>
-                  <TableCell className="font-semibold text-sm">₹{p.price}</TableCell>
-                  <TableCell className="text-sm">{p.stock}</TableCell>
+                  <TableCell>
+                    <span className="font-semibold text-sm" style={{ color: BRAND.dark }}>₹{p.price}</span>
+                    {p.mrp && p.mrp > p.price && (
+                      <span className="text-xs ml-1" style={{ color: BRAND.muted }}>₹{p.mrp}</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <span className="text-sm" style={{ color: p.stock > 0 ? BRAND.dark : BRAND.accentRed }}>
+                      {p.stock}
+                    </span>
+                  </TableCell>
                   <TableCell>
                     <Badge className="text-xs" style={{
                       background: p.active ? `${BRAND.green}15` : `${BRAND.muted}15`,
@@ -652,7 +1109,7 @@ function ProductsTab() {
                         <Copy className="w-4 h-4" style={{ color: BRAND.lime }} />
                       </Button>
                       <Button variant="ghost" size="icon" className="h-8 w-8 min-h-[44px]" onClick={() => setDeleteTarget(p)}>
-                        <Trash2 className="w-4 h-4" style={{ color: '#ef4444' }} />
+                        <Trash2 className="w-4 h-4" style={{ color: BRAND.accentRed }} />
                       </Button>
                     </div>
                   </TableCell>
@@ -667,7 +1124,7 @@ function ProductsTab() {
       <FormWrapper
         open={showForm}
         onClose={() => setShowForm(false)}
-        title={editingProduct ? 'Edit Product' : 'Create Product'}
+        title={editingProduct ? 'Edit Product' : 'Add Product'}
         description={editingProduct ? `Editing ${editingProduct.name}` : 'Add a new product to the catalog'}
         isMobile={isMobile}
       >
@@ -680,7 +1137,7 @@ function ProductsTab() {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Product</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete "{deleteTarget?.name}"? This action cannot be undone and will also remove all associated videos and quizzes.
+              Are you sure you want to delete &quot;{deleteTarget?.name}&quot;? This action cannot be undone and will also remove all associated videos and quizzes.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -688,7 +1145,7 @@ function ProductsTab() {
             <AlertDialogAction
               onClick={handleDelete}
               className="min-h-[44px]"
-              style={{ background: '#ef4444', color: '#fff' }}
+              style={{ background: BRAND.accentRed, color: '#fff' }}
               disabled={saving}
             >
               {saving ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null} Delete
@@ -708,16 +1165,23 @@ function ProductCard({ product, onEdit, onDelete, onCopy }: {
   onCopy: (p: Product) => void
 }) {
   return (
-    <Card className="border-0 shadow-sm">
+    <Card className="border-0 shadow-sm bg-white">
       <CardContent className="p-4">
         <div className="flex items-start gap-3">
-          {product.image_url && (
-            <img src={product.image_url} alt={product.name} className="w-12 h-12 rounded-lg object-cover" />
+          {product.image_url ? (
+            <img src={product.image_url} alt={product.name} className="w-14 h-14 rounded-lg object-cover shadow-sm" />
+          ) : (
+            <div className="w-14 h-14 rounded-lg flex items-center justify-center" style={{ background: `${BRAND.green}15` }}>
+              <Package className="w-6 h-6" style={{ color: BRAND.green }} />
+            </div>
           )}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
               <h3 className="font-semibold text-sm truncate" style={{ color: BRAND.dark }}>{product.name}</h3>
-              <Badge variant="outline" className="text-xs shrink-0" style={{ borderColor: BRAND.lime, color: BRAND.lime }}>
+              <Badge variant="outline" className="text-xs shrink-0" style={{
+                borderColor: product.type === 'FIZZ' ? BRAND.lime : BRAND.blue,
+                color: product.type === 'FIZZ' ? BRAND.lime : BRAND.blue,
+              }}>
                 {product.type}
               </Badge>
             </div>
@@ -733,14 +1197,14 @@ function ProductCard({ product, onEdit, onDelete, onCopy }: {
             </Badge>
           </div>
         </div>
-        <div className="flex gap-2 mt-3 pt-3 border-t" style={{ borderColor: BRAND.surface }}>
+        <div className="flex gap-2 mt-3 pt-3 border-t border-gray-100">
           <Button variant="outline" size="sm" className="min-h-[44px] text-xs" onClick={() => onEdit(product)}>
             <Pencil className="w-3.5 h-3.5 mr-1" /> Edit
           </Button>
           <Button variant="outline" size="sm" className="min-h-[44px] text-xs" onClick={() => onCopy(product)}>
             <Copy className="w-3.5 h-3.5 mr-1" /> Copy Link
           </Button>
-          <Button variant="outline" size="sm" className="min-h-[44px] text-xs" onClick={() => onDelete(product)} style={{ color: '#ef4444', borderColor: '#ef4444' }}>
+          <Button variant="outline" size="sm" className="min-h-[44px] text-xs" onClick={() => onDelete(product)} style={{ color: BRAND.accentRed, borderColor: BRAND.accentRed }}>
             <Trash2 className="w-3.5 h-3.5 mr-1" /> Delete
           </Button>
         </div>
@@ -1123,13 +1587,18 @@ function LearningTab() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-bold" style={{ color: BRAND.dark }}>Learning Content</h2>
+      <div className="flex items-center gap-3">
+        <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: BRAND.green }}>
+          <BookOpen className="w-4.5 h-4.5 text-white" />
+        </div>
+        <h2 className="text-2xl font-bold" style={{ color: BRAND.dark }}>Learning Content</h2>
+      </div>
 
       {/* Product Selector */}
       <div className="flex items-center gap-3">
         <Label className="text-sm font-medium" style={{ color: BRAND.dark }}>Select Product:</Label>
         <Select value={selectedProductId} onValueChange={setSelectedProductId}>
-          <SelectTrigger className="min-w-[200px] min-h-[44px]" style={{ background: '#fff' }}>
+          <SelectTrigger className="min-w-[200px] min-h-[44px] bg-white">
             <SelectValue placeholder="Choose a product" />
           </SelectTrigger>
           <SelectContent>
@@ -1149,7 +1618,7 @@ function LearningTab() {
       {!loadingContent && selectedProductId && (
         <>
           {/* Videos Section */}
-          <Card className="border-0 shadow-sm">
+          <Card className="border-0 shadow-sm bg-white">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-sm font-semibold flex items-center gap-2" style={{ color: BRAND.dark }}>
@@ -1183,7 +1652,7 @@ function LearningTab() {
                             <Pencil className="w-3.5 h-3.5" style={{ color: BRAND.blue }} />
                           </Button>
                           <Button variant="ghost" size="icon" className="h-8 w-8 min-h-[44px]" onClick={() => setDeleteVideoTarget(v)}>
-                            <Trash2 className="w-3.5 h-3.5" style={{ color: '#ef4444' }} />
+                            <Trash2 className="w-3.5 h-3.5" style={{ color: BRAND.accentRed }} />
                           </Button>
                         </div>
                       </div>
@@ -1195,7 +1664,7 @@ function LearningTab() {
           </Card>
 
           {/* Quizzes Section */}
-          <Card className="border-0 shadow-sm">
+          <Card className="border-0 shadow-sm bg-white">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-sm font-semibold flex items-center gap-2" style={{ color: BRAND.dark }}>
@@ -1223,7 +1692,6 @@ function LearningTab() {
                             <p className="text-sm font-medium truncate" style={{ color: BRAND.dark }}>{q.question}</p>
                             <p className="text-xs" style={{ color: BRAND.muted }}>
                               {q.difficulty} · {q.category || 'General'} · {q.active ? 'Active' : 'Inactive'}
-                              {q.video?.title && ` · Video: ${q.video.title}`}
                             </p>
                           </div>
                         </div>
@@ -1232,7 +1700,7 @@ function LearningTab() {
                             <Pencil className="w-3.5 h-3.5" style={{ color: BRAND.blue }} />
                           </Button>
                           <Button variant="ghost" size="icon" className="h-8 w-8 min-h-[44px]" onClick={() => setDeleteQuizTarget(q)}>
-                            <Trash2 className="w-3.5 h-3.5" style={{ color: '#ef4444' }} />
+                            <Trash2 className="w-3.5 h-3.5" style={{ color: BRAND.accentRed }} />
                           </Button>
                         </div>
                       </div>
@@ -1302,7 +1770,7 @@ function LearningTab() {
           <div>
             <Label className="text-xs">Video Reference *</Label>
             <Select value={quizForm.video_id} onValueChange={v => setQuizForm({ ...quizForm, video_id: v })}>
-              <SelectTrigger className="min-h-[44px]" style={{ background: '#fff' }}>
+              <SelectTrigger className="min-h-[44px] bg-white">
                 <SelectValue placeholder="Select a video" />
               </SelectTrigger>
               <SelectContent>
@@ -1385,12 +1853,12 @@ function LearningTab() {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Video</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete "{deleteVideoTarget?.title}"? This will also remove any associated quiz questions.
+              Are you sure you want to delete &quot;{deleteVideoTarget?.title}&quot;? This will also remove any associated quiz questions.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel className="min-h-[44px]">Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteVideo} className="min-h-[44px]" style={{ background: '#ef4444', color: '#fff' }} disabled={savingVideo}>
+            <AlertDialogAction onClick={handleDeleteVideo} className="min-h-[44px]" style={{ background: BRAND.accentRed, color: '#fff' }} disabled={savingVideo}>
               {savingVideo ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null} Delete
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -1408,7 +1876,7 @@ function LearningTab() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel className="min-h-[44px]">Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteQuiz} className="min-h-[44px]" style={{ background: '#ef4444', color: '#fff' }} disabled={savingQuiz}>
+            <AlertDialogAction onClick={handleDeleteQuiz} className="min-h-[44px]" style={{ background: BRAND.accentRed, color: '#fff' }} disabled={savingQuiz}>
               {savingQuiz ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null} Delete
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -1448,14 +1916,14 @@ function UsersTab() {
 
   const handleSearch = (value: string) => {
     setSearch(value)
-    setPage(1) // Reset page on search
+    setPage(1)
   }
 
   const toggleAdmin = async (userId: string, currentIsAdmin: boolean) => {
     setToggleLoading(userId)
     try {
       await userService.update(userId, { is_admin: !currentIsAdmin }, currentUser?.id || '')
-      toast.success(`Admin status updated`)
+      toast.success('Admin status updated')
       loadUsers()
     } catch (err: any) {
       toast.error('Failed to update admin status')
@@ -1478,7 +1946,12 @@ function UsersTab() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <h2 className="text-xl font-bold" style={{ color: BRAND.dark }}>Users</h2>
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: BRAND.blue }}>
+            <Users className="w-4.5 h-4.5 text-white" />
+          </div>
+          <h2 className="text-2xl font-bold" style={{ color: BRAND.dark }}>Users</h2>
+        </div>
         <span className="text-sm" style={{ color: BRAND.muted }}>
           {pagination ? `${pagination.total} total` : ''}
         </span>
@@ -1491,8 +1964,7 @@ function UsersTab() {
           placeholder="Search by name, email, or phone..."
           value={search}
           onChange={e => handleSearch(e.target.value)}
-          className="pl-9 min-h-[44px]"
-          style={{ background: '#fff' }}
+          className="pl-9 min-h-[44px] bg-white"
         />
       </div>
 
@@ -1506,7 +1978,7 @@ function UsersTab() {
           ))}
         </div>
       ) : (
-        <Card className="border-0 shadow-sm overflow-hidden">
+        <Card className="border-0 shadow-sm bg-white overflow-hidden">
           <ScrollArea className="max-h-[500px]">
             <Table>
               <TableHeader>
@@ -1680,7 +2152,7 @@ function UserCard({ user, onToggleAdmin, onView, toggleLoading }: {
   toggleLoading: string | null
 }) {
   return (
-    <Card className="border-0 shadow-sm">
+    <Card className="border-0 shadow-sm bg-white">
       <CardContent className="p-4">
         <div className="flex items-start gap-3">
           <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shrink-0" style={{ background: `${BRAND.green}15`, color: BRAND.green }}>
@@ -1702,7 +2174,7 @@ function UserCard({ user, onToggleAdmin, onView, toggleLoading }: {
             <p className="text-xs" style={{ color: BRAND.muted }}>{user.phone || 'No phone'} · Joined {new Date(user.created_at).toLocaleDateString()}</p>
           </div>
         </div>
-        <div className="flex gap-2 mt-3 pt-3 border-t" style={{ borderColor: BRAND.surface }}>
+        <div className="flex gap-2 mt-3 pt-3 border-t border-gray-100">
           <Button variant="outline" size="sm" className="min-h-[44px] text-xs" onClick={() => onView(user)}>
             <Eye className="w-3.5 h-3.5 mr-1" /> View
           </Button>
@@ -1838,14 +2310,19 @@ function CampaignsTab() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <h2 className="text-xl font-bold" style={{ color: BRAND.dark }}>Campaigns</h2>
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: BRAND.blue }}>
+            <Megaphone className="w-4.5 h-4.5 text-white" />
+          </div>
+          <h2 className="text-2xl font-bold" style={{ color: BRAND.dark }}>Campaigns</h2>
+        </div>
         <Button onClick={openCreate} className="min-h-[44px]" style={{ background: BRAND.blue, color: '#fff' }}>
           <Plus className="w-4 h-4 mr-1" /> Add Campaign
         </Button>
       </div>
 
       <Select value={filter} onValueChange={(v: any) => setFilter(v)}>
-        <SelectTrigger className="w-[140px] min-h-[44px]" style={{ background: '#fff' }}>
+        <SelectTrigger className="w-[140px] min-h-[44px] bg-white">
           <Filter className="w-4 h-4 mr-1" style={{ color: BRAND.muted }} />
           <SelectValue />
         </SelectTrigger>
@@ -1867,7 +2344,7 @@ function CampaignsTab() {
           ))}
         </div>
       ) : (
-        <Card className="border-0 shadow-sm overflow-hidden">
+        <Card className="border-0 shadow-sm bg-white overflow-hidden">
           <ScrollArea className="max-h-[500px]">
             <Table>
               <TableHeader>
@@ -1900,7 +2377,7 @@ function CampaignsTab() {
                           <Pencil className="w-4 h-4" style={{ color: BRAND.blue }} />
                         </Button>
                         <Button variant="ghost" size="icon" className="h-8 w-8 min-h-[44px]" onClick={() => setDeleteTarget(c)}>
-                          <Trash2 className="w-4 h-4" style={{ color: '#ef4444' }} />
+                          <Trash2 className="w-4 h-4" style={{ color: BRAND.accentRed }} />
                         </Button>
                       </div>
                     </TableCell>
@@ -1994,12 +2471,12 @@ function CampaignsTab() {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Campaign</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete "{deleteTarget?.name}"? This action cannot be undone.
+              Are you sure you want to delete &quot;{deleteTarget?.name}&quot;? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel className="min-h-[44px]">Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="min-h-[44px]" style={{ background: '#ef4444', color: '#fff' }} disabled={saving}>
+            <AlertDialogAction onClick={handleDelete} className="min-h-[44px]" style={{ background: BRAND.accentRed, color: '#fff' }} disabled={saving}>
               {saving ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null} Delete
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -2016,7 +2493,7 @@ function CampaignCard({ campaign, onEdit, onDelete }: {
   onDelete: (c: Campaign) => void
 }) {
   return (
-    <Card className="border-0 shadow-sm">
+    <Card className="border-0 shadow-sm bg-white">
       <CardContent className="p-4">
         <div className="flex items-start gap-3">
           <div className="flex-1 min-w-0">
@@ -2038,11 +2515,11 @@ function CampaignCard({ campaign, onEdit, onDelete }: {
             )}
           </div>
         </div>
-        <div className="flex gap-2 mt-3 pt-3 border-t" style={{ borderColor: BRAND.surface }}>
+        <div className="flex gap-2 mt-3 pt-3 border-t border-gray-100">
           <Button variant="outline" size="sm" className="min-h-[44px] text-xs" onClick={() => onEdit(campaign)}>
             <Pencil className="w-3.5 h-3.5 mr-1" /> Edit
           </Button>
-          <Button variant="outline" size="sm" className="min-h-[44px] text-xs" onClick={() => onDelete(campaign)} style={{ color: '#ef4444', borderColor: '#ef4444' }}>
+          <Button variant="outline" size="sm" className="min-h-[44px] text-xs" onClick={() => onDelete(campaign)} style={{ color: BRAND.accentRed, borderColor: BRAND.accentRed }}>
             <Trash2 className="w-3.5 h-3.5 mr-1" /> Delete
           </Button>
         </div>
@@ -2063,5 +2540,190 @@ function CampaignStatusBadge({ status }: { status: string }) {
     <Badge className="text-xs" style={{ background: s.bg, color: s.color }}>
       {status}
     </Badge>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════
+// 6. QR CODES TAB (Stub - future implementation)
+// ═══════════════════════════════════════════════════════════
+
+function QrCodesTab() {
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center gap-3">
+        <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: BRAND.lime }}>
+          <QrCode className="w-4.5 h-4.5 text-white" />
+        </div>
+        <h2 className="text-2xl font-bold" style={{ color: BRAND.dark }}>QR Codes</h2>
+      </div>
+
+      <Card className="border-0 shadow-sm bg-white">
+        <CardContent className="p-8 text-center">
+          <QrCode className="w-12 h-12 mx-auto mb-3" style={{ color: BRAND.muted }} />
+          <p className="text-sm" style={{ color: BRAND.muted }}>QR code management coming soon. Scan data is tracked via campaigns.</p>
+          <Button variant="outline" className="mt-4 min-h-[44px]" style={{ color: BRAND.green, borderColor: BRAND.green }}>
+            View Campaigns
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════
+// 7. ORDERS TAB (Stub - future implementation)
+// ═══════════════════════════════════════════════════════════
+
+function OrdersStubTab() {
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center gap-3">
+        <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: BRAND.blue }}>
+          <ShoppingCart className="w-4.5 h-4.5 text-white" />
+        </div>
+        <h2 className="text-2xl font-bold" style={{ color: BRAND.dark }}>Orders</h2>
+      </div>
+
+      <Card className="border-0 shadow-sm bg-white">
+        <CardContent className="p-8 text-center">
+          <ShoppingCart className="w-12 h-12 mx-auto mb-3" style={{ color: BRAND.muted }} />
+          <p className="text-sm" style={{ color: BRAND.muted }}>Order management will be available once the checkout flow is fully integrated.</p>
+          <Button variant="outline" className="mt-4 min-h-[44px]" style={{ color: BRAND.blue, borderColor: BRAND.blue }}>
+            View Dashboard
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════
+// 8. SUBSCRIPTIONS TAB (Stub - future implementation)
+// ═══════════════════════════════════════════════════════════
+
+function SubscriptionsStubTab() {
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center gap-3">
+        <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: BRAND.green }}>
+          <CreditCard className="w-4.5 h-4.5 text-white" />
+        </div>
+        <h2 className="text-2xl font-bold" style={{ color: BRAND.dark }}>Subscriptions</h2>
+      </div>
+
+      <Card className="border-0 shadow-sm bg-white">
+        <CardContent className="p-8 text-center">
+          <CreditCard className="w-12 h-12 mx-auto mb-3" style={{ color: BRAND.muted }} />
+          <p className="text-sm" style={{ color: BRAND.muted }}>Subscription management will be available once recurring delivery is implemented.</p>
+          <Button variant="outline" className="mt-4 min-h-[44px]" style={{ color: BRAND.green, borderColor: BRAND.green }}>
+            View Dashboard
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════
+// 9. ANALYTICS TAB
+// ═══════════════════════════════════════════════════════════
+
+function AnalyticsTab() {
+  const [statsData, setStatsData] = useState<AdminStatsResponse | null>(null)
+  const [loading, setLoading] = useState(true)
+  const { user } = useAppStore()
+
+  const loadStats = useCallback(async () => {
+    setLoading(true)
+    try {
+      const data = await adminStatsService.get(user?.id || '')
+      setStatsData(data)
+    } catch (err: any) {
+      toast.error('Failed to load analytics: ' + (err.message || 'Unknown error'))
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => { loadStats() }, [loadStats])
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="w-8 h-8 animate-spin" style={{ color: BRAND.green }} />
+      </div>
+    )
+  }
+
+  if (!statsData) return <p className="text-center py-10" style={{ color: BRAND.muted }}>No analytics data available</p>
+
+  const { stats } = statsData
+
+  // Bar chart data - learning completions by product
+  const learningChartData = [
+    { name: 'Not Started', count: stats.progressByStatus?.NOT_STARTED || 0 },
+    { name: 'In Progress', count: stats.progressByStatus?.IN_PROGRESS || 0 },
+    { name: 'Completed', count: stats.progressByStatus?.COMPLETED || 0 },
+  ]
+
+  const learningChartConfig: ChartConfig = {
+    count: { label: 'Users', color: BRAND.green },
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center gap-3">
+        <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: BRAND.green }}>
+          <BarChart3 className="w-4.5 h-4.5 text-white" />
+        </div>
+        <h2 className="text-2xl font-bold" style={{ color: BRAND.dark }}>Analytics</h2>
+      </div>
+
+      {/* Learning Progress Chart */}
+      <Card className="border-0 shadow-sm bg-white">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-semibold" style={{ color: BRAND.dark }}>Learning Progress Distribution</CardTitle>
+        </CardHeader>
+        <CardContent className="p-4 pt-0">
+          <ChartContainer config={learningChartConfig} className="h-[280px] w-full">
+            <BarChart data={learningChartData} margin={{ top: 5, right: 10, left: 10, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} />
+              <XAxis dataKey="name" tickLine={false} axisLine={false} fontSize={12} />
+              <YAxis tickLine={false} axisLine={false} fontSize={12} />
+              <ChartTooltip content={<ChartTooltipContent />} />
+              <Bar dataKey="count" fill={BRAND.green} radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ChartContainer>
+        </CardContent>
+      </Card>
+
+      {/* Key Metrics Summary */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="border-0 shadow-sm bg-white">
+          <CardContent className="p-4 text-center">
+            <p className="text-2xl font-bold" style={{ color: BRAND.green }}>{stats.totalProducts}</p>
+            <p className="text-xs" style={{ color: BRAND.muted }}>Active Products</p>
+          </CardContent>
+        </Card>
+        <Card className="border-0 shadow-sm bg-white">
+          <CardContent className="p-4 text-center">
+            <p className="text-2xl font-bold" style={{ color: BRAND.blue }}>{stats.activeCampaigns}</p>
+            <p className="text-xs" style={{ color: BRAND.muted }}>Active Campaigns</p>
+          </CardContent>
+        </Card>
+        <Card className="border-0 shadow-sm bg-white">
+          <CardContent className="p-4 text-center">
+            <p className="text-2xl font-bold" style={{ color: BRAND.lime }}>{stats.learningCompletions}</p>
+            <p className="text-xs" style={{ color: BRAND.muted }}>Learning Completions</p>
+          </CardContent>
+        </Card>
+        <Card className="border-0 shadow-sm bg-white">
+          <CardContent className="p-4 text-center">
+            <p className="text-2xl font-bold" style={{ color: BRAND.dark }}>{stats.totalQuizzes || 0}</p>
+            <p className="text-xs" style={{ color: BRAND.muted }}>Total Quizzes</p>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
   )
 }

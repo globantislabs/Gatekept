@@ -447,3 +447,89 @@ Stage Summary:
 - SMSAlert service disabled with clear error message pointing to WhatsApp OTP
 - Login page has "Login with WhatsApp OTP" button
 - All credentials in .env, all code lint-clean
+
+---
+Task ID: 1
+Agent: full-stack-developer
+Task: Redesign AdminPanel.tsx to match reference admin panel design images
+
+Work Log:
+- Read worklog.md to understand all previous work (Prisma schema, API routes, data service, app store, component pages)
+- Read current AdminPanel.tsx (2068 lines) to catalog all existing functionality: 5 tabs (Dashboard, Products, Learning, Users, Campaigns) with full CRUD operations
+- Read data-service.ts, app-store.ts, page.tsx, admin/stats API route to understand data flow
+- Checked available shadcn/ui components (47 components including chart.tsx with recharts support)
+- Completely rewrote AdminPanel.tsx from 2068 lines to 2729 lines with major UI overhaul:
+
+**Layout Changes:**
+1. Added fixed top navigation bar (white background) with NOTJUST logo, nav links (Home, Learn, Products), "DB" badge, cart icon, user avatar with green circle, admin name
+2. Changed sidebar from light white (#fff) to dark charcoal (#1a1d21) matching reference design
+3. Added collapsible sidebar (260px expanded / 72px collapsed) on desktop with toggle
+4. Mobile sidebar is now a Sheet overlay (side="left") triggered by hamburger menu button
+5. Main content area changed to #f5f5f7 (light gray) background matching reference
+
+**Sidebar Changes:**
+1. Expanded from 5 tabs to 9 sidebar items: Overview, Users, Campaigns, Products, QR Codes, Orders, Subscriptions, Analytics, Content
+2. Active state changed from green tint + green text to solid green background (#48805b) + white text
+3. Added badge counts on sidebar items (Users count, Campaigns count, QR Codes count, Content/Quizzes count)
+4. Added animated sidebar items with staggered entrance (framer-motion sidebarItemVariants)
+5. Added tooltips for collapsed sidebar items (CSS group-hover pattern)
+6. Added red notification pill "1 Issue ×" at sidebar bottom (dismissible with X button)
+7. Added "Back to App" and "Settings" buttons at sidebar bottom
+
+**Dashboard/Overview Changes:**
+1. Renamed "Dashboard" to "Overview" matching reference
+2. Added page title with green icon square (LayoutDashboard icon)
+3. Added stats summary line: "10 users • 18 orders • ₹32,886 revenue"
+4. Changed 4 KPI cards to show percentage change badges (TrendingUp/TrendingDown icons, +12%, +8%, +24%, +18%)
+5. KPI cards: Users, QR Scans, Orders, Revenue (matching reference design)
+6. Added Revenue Trend line chart (recharts LineChart with ChartContainer) showing 12-month revenue data
+7. Added Orders by Status donut chart (recharts PieChart with inner/outer radius) with legend
+8. Kept Learning Progress Breakdown and Recent Users sections
+9. Kept Quick Actions buttons (Add Product, Add Campaign)
+
+**New Tabs (Stub Pages):**
+1. QR Codes tab: Placeholder with QrCode icon, "coming soon" message, View Campaigns button
+2. Orders tab: Placeholder with ShoppingCart icon, "checkout flow integration" message
+3. Subscriptions tab: Placeholder with CreditCard icon, "recurring delivery" message
+4. Analytics tab: BarChart showing learning progress distribution (Not Started/In Progress/Completed), plus 4 key metric cards
+
+**Products Page Changes:**
+1. Added page title with green icon square (Package icon)
+2. Product table shows product image or fallback Package icon in green square
+3. Type badge uses conditional colors: FIZZ → lime, STILL → blue
+4. Price shows both current price and MRP when MRP > price
+5. Stock shows in red when 0
+6. All cards have bg-white and shadow-sm for consistent white card styling
+
+**All Tabs Preserved:**
+- ProductsTab: Full CRUD, search/filter, table/mobile cards, add/edit/delete/copy link dialogs — all preserved
+- LearningTab: Video CRUD, Quiz CRUD, product selector, add/edit/delete dialogs — all preserved
+- UsersTab: User listing, search, pagination, admin toggle, user detail dialog — all preserved
+- CampaignsTab: Campaign CRUD, status filter, table/mobile cards, add/edit/delete dialogs — all preserved
+
+**Mobile Responsive:**
+- Top navbar with hamburger menu button on mobile
+- Sheet-based sidebar overlay on mobile (side="left", dark charcoal background)
+- Tab selection closes mobile sidebar automatically
+- All cards and forms use min-h-[44px] touch targets
+- Dialog on desktop, Sheet on mobile for forms (FormWrapper pattern preserved)
+
+**Technical Fixes:**
+- Fixed lint error: Changed useCallback+useEffect pattern for badge counts to inline .then() pattern in useEffect
+- Fixed parsing error: Corrected JSX map closing brackets in MobileSidebarSheet
+- All useState/useEffect patterns follow lint rules
+- Only pre-existing lint error remains (Gatekept examples folder)
+
+Stage Summary:
+- Complete UI redesign of AdminPanel.tsx matching reference design images
+- Dark charcoal sidebar (#1a1d21) with 9 navigation items and badge counts
+- Fixed top navbar with NOTJUST branding and user info
+- Enhanced dashboard with revenue line chart and orders donut chart (recharts)
+- KPI cards with percentage change badges
+- Red notification pill in sidebar (dismissible)
+- Collapsible sidebar on desktop, Sheet overlay on mobile
+- All existing CRUD functionality preserved for Products, Videos, Quizzes, Users, Campaigns
+- 3 new stub tabs: QR Codes, Orders, Subscriptions
+- New Analytics tab with bar chart and metrics
+- Zero new lint errors introduced
+- Dev server compiles and serves correctly (HTTP 200)

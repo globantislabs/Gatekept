@@ -16,6 +16,35 @@ Stage Summary:
 - Ready for Supabase migration (supabase-client.ts preserved)
 
 ---
+Task ID: 8
+Agent: Main orchestrator
+Task: Restore original admin panel UI from uploaded Gatekept-main.zip
+
+Work Log:
+- Extracted and analyzed uploaded Gatekept-main.zip containing the original project with Jira/Huly Style Light Theme admin panel
+- Compared original AdminDashboard (5761 lines in single page.tsx) with current AdminPanel.tsx (2729 lines)
+- Identified key differences: original had 9 admin tabs (Overview, Users, Campaigns, Products, QR Codes, Orders, Subscriptions, Analytics, Content) with specific A theme constants and dark sidebar
+- Delegated admin panel rewrite to full-stack-developer subagent
+- Subagent rewrote AdminPanel.tsx with original Jira/Huly Style Light Theme (A theme constants matching original exactly)
+- Updated app-store with new admin views: admin-qr, admin-orders, admin-analytics, admin-content, admin-subscriptions
+- Added new state properties: pendingOtpContact, pendingOtpType, scannedCampaignId, selectedSubscriptionId
+- Updated data-service: orderService.getAll(), subscriptionService.getAll(), productService.getAllForAdmin(), orderService.updateStatus()
+- Updated API routes: orders?admin=true, subscriptions?admin=true, enhanced admin stats
+- Updated page.tsx routing for all admin views
+- Fixed duplicate redirectAfterLogin property in store
+- Verified with Agent Browser: all 9 tabs working (Overview, Users, Campaigns, Products, QR Codes, Orders, Subscriptions, Analytics, Content)
+- Seeded database (was missing admin user) and verified login works
+
+Stage Summary:
+- Admin panel restored with original Jira/Huly Style Light Theme
+- All 9 tabs functional: Overview (stat cards + charts), Users (table), Campaigns (cards + QR), Products (cards + learning dialog), QR Codes, Orders, Subscriptions, Analytics, Content (quiz table)
+- Dark sidebar (#1f1e1c) with green active states, collapsible
+- Light background (#f4f3f0) with A theme color constants
+- Recharts charts (LineChart, PieChart, BarChart)
+- CSV export for all data tabs
+- Mobile sidebar as Sheet component
+
+---
 Task ID: 2
 Agent: full-stack-developer subagent
 Task: Create API routes for CRUD operations
@@ -533,3 +562,44 @@ Stage Summary:
 - New Analytics tab with bar chart and metrics
 - Zero new lint errors introduced
 - Dev server compiles and serves correctly (HTTP 200)
+
+---
+Task ID: 1
+Agent: Admin Panel Restoration Agent
+Task: Restore original Jira/Huly Style Light Theme admin panel with all 9 tabs
+
+Work Log:
+- Read original admin code from Gatekept-main (lines 3365-5543) to understand exact UI style
+- Updated app-store.ts: Added new AppView types (admin-qr, admin-orders, admin-analytics, admin-content, admin-subscriptions) and new state properties (pendingOtpContact, pendingOtpType, setPendingOtp, scannedCampaignId, setScannedCampaignId, selectedSubscriptionId, setSelectedSubscriptionId)
+- Updated data-service.ts: Added orderService.getAll(userId), orderService.updateStatus(), subscriptionService.getAll(userId), productService.getAllForAdmin(), qrScanService.getAll()
+- Updated orders API route (/api/orders/route.ts): Added admin mode support with ?admin=true parameter and admin verification headers, includes user relation in response
+- Updated orders PATCH route (/api/orders/[id]/route.ts): Added admin bypass for OTP requirement, admin status updates, and user relation in GET response
+- Updated subscriptions API route (/api/subscriptions/route.ts): Added admin mode support with ?admin=true parameter, includes user and product relations
+- Updated admin stats API route (/api/admin/stats/route.ts): Enhanced with totalOrders, totalRevenue, ordersByStatus, campaignsByChannel, totalScans, scansByCampaign, conversionRate
+- Completely rewrote AdminPanel.tsx (1846 lines) with the original Jira/Huly Style Light Theme:
+  - A theme constants matching original (bg, surface, border, text, green, lime, blue, amber, red, sidebarBg, sidebarText, sidebarActive, sidebarHover, destructive)
+  - Dark sidebar (#1f1e1c) with green active states, collapsible, with Leaf logo and user info
+  - All 9 tabs: Overview (dashboard), Users, Campaigns, Products, QR Codes, Orders, Subscriptions, Analytics, Content
+  - Dashboard tab: Stat cards grid, Recharts LineChart/PieChart, Activity + Quick Stats section
+  - Users tab: Table with search, admin badges, learning progress bars
+  - Campaigns tab: CampaignManagerInner component with QR codes, create/toggle status, detail dialog
+  - Products tab: Cards grid with search/filter, add/edit dialog with 4 tabs, learning content dialog with video/quiz management
+  - QR Codes tab: QRCodeSVG from qrcode.react, campaign-based QR view
+  - Orders tab: Table/kanban toggle, status update, order detail dialog
+  - Subscriptions tab: Stats cards + table with status badges
+  - Analytics tab: BarChart campaignsByChannel, BarChart ordersByStatus, conversion funnel, revenue trend LineChart
+  - Content tab: QuizManagerInner with filters and question table
+  - CSV export helper for all data tabs
+  - Top bar with breadcrumb, context text, CSV/PDF export buttons, refresh button
+- Updated page.tsx: Added all new admin view cases to switch statement
+- Fixed TypeScript errors: QuizQuestion category type, SelectItem value handling, difficultyColors style object
+- Verified: No lint errors in src/, no TypeScript errors in AdminPanel.tsx, dev server compiling successfully
+
+Stage Summary:
+- Complete Jira/Huly Style Light Theme admin panel restored with all 9 tabs
+- All API routes updated for admin-level data access (orders, subscriptions, stats)
+- Dark sidebar with A.green active state, collapsible, matching original design
+- All inline styles using A theme constants (not Tailwind bg classes)
+- Recharts charts using A theme colors
+- QRCodeSVG from qrcode.react for campaign QR codes
+- Mobile-responsive via existing Sheet pattern

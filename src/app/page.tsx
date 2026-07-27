@@ -86,6 +86,11 @@ function ViewRenderer() {
       case 'admin-products':
       case 'admin-users':
       case 'admin-campaigns':
+      case 'admin-qr':
+      case 'admin-orders':
+      case 'admin-analytics':
+      case 'admin-content':
+      case 'admin-subscriptions':
       case 'admin-learning':
         return <AdminPanel />
       default:

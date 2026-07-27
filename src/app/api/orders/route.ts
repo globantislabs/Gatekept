@@ -1,12 +1,42 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { checkAdmin, jsonResponse, errorResponse, handleOptions } from '@/lib/api-utils'
+
+// OPTIONS - CORS preflight
+export async function OPTIONS() {
+  return handleOptions()
+}
 
 // GET /api/orders?user_id=xxx — List orders for a user
+// GET /api/orders?admin=true — List ALL orders (admin only)
 export async function GET(req: NextRequest) {
   try {
+    const adminMode = req.nextUrl.searchParams.get('admin')
+    
+    // Admin mode: return all orders
+    if (adminMode === 'true') {
+      const isAdmin = await checkAdmin(req)
+      if (!isAdmin) {
+        return errorResponse('Unauthorized: Admin access required', 403)
+      }
+      
+      const orders = await db.order.findMany({
+        include: {
+          items: true,
+          tracking: { orderBy: { tracked_at: 'desc' } },
+          subscription: true,
+          user: { select: { id: true, name: true, email: true, phone: true } },
+        },
+        orderBy: { created_at: 'desc' },
+      })
+      
+      return jsonResponse({ data: orders })
+    }
+    
+    // Regular mode: user-specific orders
     const userId = req.nextUrl.searchParams.get('user_id')
     if (!userId) {
-      return NextResponse.json({ error: 'user_id is required' }, { status: 400 })
+      return errorResponse('user_id is required (or use admin=true)', 400)
     }
 
     const orders = await db.order.findMany({
@@ -21,7 +51,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ data: orders })
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Failed to fetch orders' }, { status: 500 })
+    return errorResponse(error.message || 'Failed to fetch orders', 500)
   }
 }
 

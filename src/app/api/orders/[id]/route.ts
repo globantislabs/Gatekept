@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { checkAdmin, jsonResponse, errorResponse, handleOptions } from '@/lib/api-utils'
+
+// OPTIONS - CORS preflight
+export async function OPTIONS() {
+  return handleOptions()
+}
 
 // GET /api/orders/[id] — Get single order
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -11,33 +17,34 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         items: true,
         tracking: { orderBy: { tracked_at: 'desc' } },
         subscription: true,
+        user: { select: { id: true, name: true, email: true, phone: true } },
       },
     })
 
     if (!order) {
-      return NextResponse.json({ error: 'Order not found' }, { status: 404 })
+      return errorResponse('Order not found', 404)
     }
 
-    return NextResponse.json({ data: order })
+    return jsonResponse({ data: order })
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Failed to fetch order' }, { status: 500 })
+    return errorResponse(error.message || 'Failed to fetch order', 500)
   }
 }
 
-// PATCH /api/orders/[id] — Update order (OTP-gated for cancellation)
+// PATCH /api/orders/[id] — Update order (OTP-gated for cancellation, or admin status update)
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
     const body = await req.json()
     const { status, otp_verified_id, ...restData } = body
 
-    // For cancellation, require OTP verification
-    if (status === 'CANCELLED') {
+    // Check if this is an admin request
+    const isAdmin = await checkAdmin(req)
+
+    // For cancellation, require OTP verification (unless admin)
+    if (status === 'CANCELLED' && !isAdmin) {
       if (!otp_verified_id) {
-        return NextResponse.json(
-          { error: 'OTP verification required to cancel an order. Send otp_verified_id from a verified OTP record.' },
-          { status: 403 }
-        )
+        return errorResponse('OTP verification required to cancel an order. Send otp_verified_id from a verified OTP record.', 403)
       }
       // Verify that the OTP was actually verified for this specific order
       const otpRecord = await db.otpVerification.findUnique({
@@ -49,10 +56,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         otpRecord.purpose !== 'CANCEL_ORDER' ||
         otpRecord.reference_id !== id
       ) {
-        return NextResponse.json(
-          { error: 'Invalid or unverified OTP for cancelling this order' },
-          { status: 403 }
-        )
+        return errorResponse('Invalid or unverified OTP for cancelling this order', 403)
       }
       // Clean up — mark OTP record as consumed (one-time use)
       await db.otpVerification.update({
@@ -64,13 +68,13 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const updateData: any = { ...restData }
     if (status) updateData.status = status
 
-    // Add tracking event for cancellation
-    if (status === 'CANCELLED') {
+    // Add tracking event for status changes
+    if (status) {
       await db.orderTracking.create({
         data: {
           order_id: id,
-          status: 'CANCELLED',
-          description: 'Order cancelled by customer (OTP verified)',
+          status,
+          description: isAdmin ? `Order status updated to ${status} by admin` : `Order status updated to ${status}`,
         },
       })
     }
@@ -84,8 +88,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       },
     })
 
-    return NextResponse.json({ data: order })
+    return jsonResponse({ data: order })
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Failed to update order' }, { status: 500 })
+    return errorResponse(error.message || 'Failed to update order', 500)
   }
 }

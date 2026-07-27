@@ -7,7 +7,7 @@ export async function OPTIONS() {
   return handleOptions()
 }
 
-// GET /api/admin/stats - Dashboard stats
+// GET /api/admin/stats - Dashboard stats (enhanced)
 export async function GET(request: NextRequest) {
   try {
     const isAdmin = await checkAdmin(request)
@@ -24,6 +24,12 @@ export async function GET(request: NextRequest) {
       totalQuizzes,
       totalVideos,
       recentUsers,
+      totalOrders,
+      totalRevenue,
+      ordersByStatusRaw,
+      campaignsByChannelRaw,
+      totalScans,
+      scansByCampaignRaw,
     ] = await Promise.all([
       db.userProfile.count(),
       db.product.count({ where: { active: true } }),
@@ -40,9 +46,14 @@ export async function GET(request: NextRequest) {
           email: true,
           created_at: true,
           is_admin: true,
-          // Exclude password_hash for security - never expose
         },
       }),
+      db.order.count(),
+      db.order.aggregate({ _sum: { total_amount: true } }),
+      db.order.groupBy({ by: ['status'], _count: { status: true } }),
+      db.campaign.groupBy({ by: ['channel'], _count: { channel: true } }),
+      db.qrScan.count(),
+      db.qrScan.groupBy({ by: ['campaign_id'], _count: { campaign_id: true } }),
     ])
 
     // Learning progress by status
@@ -56,14 +67,44 @@ export async function GET(request: NextRequest) {
       return acc
     }, {} as Record<string, number>)
 
+    // Orders by status
+    const ordersByStatus = ordersByStatusRaw.reduce((acc, item) => {
+      acc[item.status] = item._count.status
+      return acc
+    }, {} as Record<string, number>)
+
+    // Campaigns by channel
+    const campaignsByChannel = campaignsByChannelRaw.reduce((acc, item) => {
+      acc[item.channel] = item._count.channel
+      return acc
+    }, {} as Record<string, number>)
+
+    // Scans by campaign
+    const scansByCampaign = scansByCampaignRaw.reduce((acc, item) => {
+      const name = item.campaign_id || 'unknown'
+      acc[name] = item._count.campaign_id
+      return acc
+    }, {} as Record<string, number>)
+
+    // Conversion rate (learning completed / total users)
+    const conversionRate = totalUsers > 0 ? Math.round((learningCompletions / totalUsers) * 100) : 0
+
     return jsonResponse({
       stats: {
         totalUsers,
         totalProducts,
         activeCampaigns,
         learningCompletions,
+        learningCompleted: learningCompletions,
         totalQuizzes,
         totalVideos,
+        totalOrders,
+        totalRevenue: totalRevenue._sum.total_amount || 0,
+        totalScans,
+        conversionRate,
+        ordersByStatus,
+        campaignsByChannel,
+        scansByCampaign,
         progressByStatus: statusBreakdown,
       },
       recentUsers,

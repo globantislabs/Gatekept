@@ -20,6 +20,11 @@ export type AppView =
   | 'admin-products'
   | 'admin-users'
   | 'admin-campaigns'
+  | 'admin-qr'
+  | 'admin-orders'
+  | 'admin-analytics'
+  | 'admin-content'
+  | 'admin-subscriptions'
   | 'admin-learning'
   | 'learning'
   | 'quiz'
@@ -74,6 +79,19 @@ interface AppState {
   shareSlug: string | null
   setShareSlug: (slug: string | null) => void
 
+  // OTP pending
+  pendingOtpContact: string | null
+  pendingOtpType: 'phone' | 'email' | null
+  setPendingOtp: (contact: string | null, type: 'phone' | 'email' | null) => void
+
+  // QR scan
+  scannedCampaignId: string | null
+  setScannedCampaignId: (id: string | null) => void
+
+  // Subscription selection
+  selectedSubscriptionId: string | null
+  setSelectedSubscriptionId: (id: string | null) => void
+
   // Cart
   cart: CartItem[]
   addToCart: (item: CartItem) => void
@@ -85,10 +103,6 @@ interface AppState {
   // Orders
   lastOrderId: string | null
   setLastOrderId: (id: string | null) => void
-
-  // Redirect after login
-  redirectAfterLogin: AppView | null
-  setRedirectAfterLogin: (view: AppView | null) => void
 }
 
 export const useAppStore = create<AppState>()(
@@ -134,6 +148,19 @@ export const useAppStore = create<AppState>()(
       shareSlug: null,
       setShareSlug: (slug) => set({ shareSlug: slug }),
 
+      // OTP pending
+      pendingOtpContact: null,
+      pendingOtpType: null,
+      setPendingOtp: (contact, type) => set({ pendingOtpContact: contact, pendingOtpType: type }),
+
+      // QR scan
+      scannedCampaignId: null,
+      setScannedCampaignId: (id) => set({ scannedCampaignId: id }),
+
+      // Subscription selection
+      selectedSubscriptionId: null,
+      setSelectedSubscriptionId: (id) => set({ selectedSubscriptionId: id }),
+
       // Cart
       cart: [],
       addToCart: (item) => {
@@ -160,19 +187,20 @@ export const useAppStore = create<AppState>()(
       lastOrderId: null,
       setLastOrderId: (id) => set({ lastOrderId: id }),
 
-      // Redirect after login
-      redirectAfterLogin: null,
-      setRedirectAfterLogin: (view) => set({ redirectAfterLogin: view }),
     }),
     {
       name: 'notjust-app-store',
       partialize: (state) => ({
         user: state.user,
         currentView: state.currentView,
+        adminTab: state.adminTab,
         products: state.products,
         selectedProductId: state.selectedProductId,
         cart: state.cart,
         lastOrderId: state.lastOrderId,
+        pendingOtpContact: state.pendingOtpContact,
+        pendingOtpType: state.pendingOtpType,
+        scannedCampaignId: state.scannedCampaignId,
       }),
     }
   )

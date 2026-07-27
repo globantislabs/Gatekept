@@ -283,6 +283,10 @@ export const productService = {
     return res.products || res as unknown as Product[]
   },
 
+  async getAllForAdmin(): Promise<Product[]> {
+    return this.list() // Returns all products including inactive
+  },
+
   async get(id: string): Promise<Product & { videos: ProductVideo[]; quizzes: ProductQuiz[] }> {
     return apiFetch(`/api/products/${id}`)
   },
@@ -565,6 +569,13 @@ export const orderService = {
     return res.data || []
   },
 
+  async getAll(userId: string): Promise<Order[]> {
+    const res = await apiFetch<{ data: Order[] }>('/api/orders?admin=true', {
+      headers: getAdminHeaders(userId),
+    })
+    return res.data || []
+  },
+
   async get(orderId: string): Promise<Order | null> {
     const res = await apiFetch<{ data: Order }>(`/api/orders/${orderId}`)
     return res.data || null
@@ -585,6 +596,15 @@ export const orderService = {
     const res = await apiFetch<{ data: Order }>('/api/orders', {
       method: 'POST',
       body: JSON.stringify(data),
+    })
+    return res.data
+  },
+
+  async updateStatus(orderId: string, status: string, userId: string): Promise<Order> {
+    const res = await apiFetch<{ data: Order }>(`/api/orders/${orderId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+      headers: getAdminHeaders(userId),
     })
     return res.data
   },
@@ -620,11 +640,19 @@ export const orderService = {
 
 export const qrScanService = {
   async list() { return [] },
+  async getAll() { return [] },
 }
 
 export const subscriptionService = {
   async list(userId: string): Promise<Subscription[]> {
     const res = await apiFetch<{ data: Subscription[] }>(`/api/subscriptions?user_id=${userId}`)
+    return res.data || []
+  },
+
+  async getAll(userId: string): Promise<Subscription[]> {
+    const res = await apiFetch<{ data: Subscription[] }>('/api/subscriptions?admin=true', {
+      headers: getAdminHeaders(userId),
+    })
     return res.data || []
   },
 

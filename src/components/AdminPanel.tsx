@@ -709,7 +709,7 @@ function AdminDashboard() {
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {campaigns.filter(c => c.status === 'ACTIVE').map(campaign => {
                 const campaignScans = scans.filter(s => s.campaign_id === campaign.id)
-                const qrUrl = `https://notjust.health/scan/${campaign.id}`
+                const qrUrl = `https://notjustwatr.com/scan/${campaign.id}`
                 return (
                   <div key={campaign.id} className="bg-white border rounded-lg p-5 text-center hover:shadow-sm transition-shadow" style={{ borderColor: A.border }}>
                     <div className="mb-4 inline-block p-3 bg-white rounded-lg border" style={{ borderColor: A.borderLight }}>
@@ -1699,7 +1699,7 @@ function CampaignManagerInner({ campaigns, setCampaigns, scans, orders, userId }
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {campaigns.map(campaign => {
-          const qrUrl = `https://notjust.health/scan/${campaign.id}`
+          const qrUrl = `https://notjustwatr.com/scan/${campaign.id}`
           return (
             <div key={campaign.id} className="bg-white border rounded-lg p-4 hover:shadow-sm transition-shadow" style={{ borderColor: A.border }}>
               <div className="flex items-start gap-3">
@@ -1739,7 +1739,7 @@ function CampaignManagerInner({ campaigns, setCampaigns, scans, orders, userId }
             <div className="space-y-4">
               <div className="flex items-start gap-6">
                 <div className="p-4 bg-white rounded-lg border" style={{ borderColor: A.border }}>
-                  <QRCodeSVG value={`https://notjust.health/scan/${detailCampaign.id}`} size={130} bgColor="#ffffff" fgColor="#1f1e1c" level="M" />
+                  <QRCodeSVG value={`https://notjustwatr.com/scan/${detailCampaign.id}`} size={130} bgColor="#ffffff" fgColor="#1f1e1c" level="M" />
                 </div>
                 <div className="flex-1 space-y-2">
                   <h3 className="font-bold text-lg" style={{ color: A.text }}>{detailCampaign.name}</h3>
@@ -1752,7 +1752,7 @@ function CampaignManagerInner({ campaigns, setCampaigns, scans, orders, userId }
                     <p>Location: {detailCampaign.location || '-'}</p>
                   </div>
                   <div className="flex gap-2 pt-2">
-                    <Button variant="outline" size="sm" className="rounded-md text-[11px] h-8" style={{ borderColor: A.border, color: A.text }} onClick={() => { navigator.clipboard.writeText(`https://notjust.health/scan/${detailCampaign.id}`); toast.success('QR URL copied!') }}>
+                    <Button variant="outline" size="sm" className="rounded-md text-[11px] h-8" style={{ borderColor: A.border, color: A.text }} onClick={() => { navigator.clipboard.writeText(`https://notjustwatr.com/scan/${detailCampaign.id}`); toast.success('QR URL copied!') }}>
                       <Copy className="w-3 h-3 mr-1" /> Copy URL
                     </Button>
                     <Button variant="outline" size="sm" className="rounded-md text-[11px] h-8" style={{ borderColor: A.border, color: A.text }} onClick={() => toggleStatus(detailCampaign.id, detailCampaign.status)}>

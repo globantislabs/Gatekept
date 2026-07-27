@@ -1416,8 +1416,12 @@ function AdminDashboard() {
                                 {learningQuizzes.filter(q => q.video_id === video.id).length > 0 && (
                                   <div className="mt-2 space-y-1.5">
                                     <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: A.textSecondary }}>Quiz ({learningQuizzes.filter(q => q.video_id === video.id).length})</p>
-                                    {learningQuizzes.filter(q => q.video_id === video.id).map((quiz) => (
+                                    {learningQuizzes.filter(q => q.video_id === video.id).map((quiz, qIdx) => (
                                       <div key={quiz.id} className="flex items-start gap-1.5 p-2 rounded-md border" style={{ borderColor: A.borderLight, background: A.bg }}>
+                                        <div className="flex flex-col gap-0.5 shrink-0 pt-0.5">
+                                          <button onClick={() => handleReorderQuiz(quiz.id, 'up')} disabled={qIdx === 0} className="p-0.5 rounded hover:bg-gray-100 disabled:opacity-30"><ChevronUp className="w-2.5 h-2.5" style={{ color: A.textMuted }} /></button>
+                                          <button onClick={() => handleReorderQuiz(quiz.id, 'down')} disabled={qIdx === learningQuizzes.filter(q => q.video_id === video.id).length - 1} className="p-0.5 rounded hover:bg-gray-100 disabled:opacity-30"><ChevronDown className="w-2.5 h-2.5" style={{ color: A.textMuted }} /></button>
+                                        </div>
                                         <div className="flex-1 min-w-0">
                                           <p className="text-[11px] font-medium" style={{ color: A.text }}>{quiz.question}</p>
                                           <div className="flex flex-wrap gap-1 mt-1">
@@ -1429,6 +1433,7 @@ function AdminDashboard() {
                                           </div>
                                         </div>
                                         <div className="flex gap-0.5 shrink-0">
+                                          <button className="p-1 rounded hover:bg-blue-50" style={{ color: A.blue }} onClick={() => { setEditingQuiz(quiz); setShowAddQuiz(true); setNewQuiz({ question: quiz.question, options: quiz.options, answer: quiz.answer, category: quiz.category || '', difficulty: quiz.difficulty || 'EASY', order: quiz.order, video_id: quiz.video_id }) }}><Pencil className="w-3 h-3" /></button>
                                           <button className="p-1 rounded hover:bg-red-50" style={{ color: A.red }} onClick={() => handleDeleteQuiz(quiz.id)}><Trash2 className="w-3 h-3" /></button>
                                         </div>
                                       </div>

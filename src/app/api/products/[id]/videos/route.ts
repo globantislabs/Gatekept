@@ -80,7 +80,7 @@ export async function POST(
         order: order ? parseInt(String(order)) : 0,
         video_url: video_url as string || null,
         thumbnail_url: thumbnail_url as string || null,
-        active: active === true ?? true,
+        active: typeof active === 'boolean' ? active : true,
       },
     })
 

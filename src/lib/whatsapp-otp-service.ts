@@ -14,7 +14,7 @@ const OTP_LENGTH = 6
 const OTP_EXPIRY_MINUTES = 5
 
 // ─── Types ───────────────────────────────────────────────────
-export type WhatsAppOtpPurpose = 'WHATSAPP_LOGIN'
+export type WhatsAppOtpPurpose = 'WHATSAPP_LOGIN' | 'RESET_PASSWORD'
 
 interface WhatsAppApiResponse {
   messaging_product?: string

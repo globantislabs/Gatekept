@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { checkAdmin, jsonResponse, errorResponse, handleOptions } from '@/lib/api-utils'
+import { notificationService } from '@/lib/notification-service'
 
 // OPTIONS - CORS preflight
 export async function OPTIONS() {
@@ -117,6 +118,29 @@ export async function POST(req: NextRequest) {
         tracking: true,
       },
     })
+
+    // Fire order placed notification asynchronously (don't block the response)
+    try {
+      const user = await db.userProfile.findUnique({ where: { id: user_id } })
+      if (user) {
+        notificationService.sendOrderPlacedNotification(
+          {
+            id: order.id,
+            order_number: order.order_number,
+            status: order.status,
+            total_amount: order.total_amount,
+            items: order.items.map(i => ({
+              product_name: i.product_name,
+              quantity: i.quantity,
+              total_price: i.total_price,
+            })),
+          },
+          { id: user.id, name: user.name, email: user.email, phone: user.phone }
+        ).catch(err => console.error('Failed to send order placed notification:', err))
+      }
+    } catch (err) {
+      console.error('Error fetching user for notification:', err)
+    }
 
     return NextResponse.json({ data: order }, { status: 201 })
   } catch (error: any) {

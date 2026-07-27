@@ -8,7 +8,7 @@ import { useAppStore, type AppView } from '@/store/app-store'
 // ─── View Components ────────────────────────────────────────
 import LandingPageComponent from '@/components/LandingPage'
 import { OurJourneyPage } from '@/components/OurJourneyPage'
-import { AuthLogin, AuthRegister } from '@/components/AuthPages'
+import { AuthLogin, AuthRegister, AuthForgotPassword } from '@/components/AuthPages'
 import { AuthWhatsAppOtpLogin } from '@/components/AuthWhatsAppOtpLogin'
 import { ProfilePage } from '@/components/ProfilePage'
 import ProductDetailPage from '@/components/ProductDetailPage'
@@ -80,6 +80,11 @@ function ViewRenderer() {
         return <AuthRegister />
       case 'auth-whatsapp-otp':
         return <AuthWhatsAppOtpLogin />
+      case 'auth-forgot-password':
+      case 'auth-reset-password':
+        return <AuthForgotPassword />
+      case 'auth-verify-email':
+        return <AuthForgotPassword />
       case 'profile':
         return <ProfilePage />
       case 'admin-dashboard':

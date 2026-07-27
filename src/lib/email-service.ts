@@ -111,6 +111,182 @@ export const emailService = {
   },
 
   /**
+   * Send password reset OTP email
+   */
+  async sendPasswordResetEmail(to: string, otpCode: string): Promise<EmailResult> {
+    const subject = 'Reset Your NOTJUST Watr Password'
+    const htmlBody = `
+      <div style="max-width:480px;margin:0 auto;font-family:'Segoe UI',system-ui,sans-serif;background:#f4f3f0;padding:32px;border-radius:12px;">
+        <div style="text-align:center;margin-bottom:24px;">
+          <h1 style="color:#48805b;font-size:24px;font-weight:700;margin:0;">NOTJUST Watr</h1>
+          <p style="color:#88837b;font-size:14px;margin:4px 0 0;">Wellness, Verified.</p>
+        </div>
+        <div style="background:#fff;border-radius:8px;padding:24px;border:1px solid #e3dfd8;">
+          <p style="color:#1f1e1c;font-size:16px;margin:0 0 8px;">You requested to reset your password.</p>
+          <p style="color:#88837b;font-size:13px;margin:0 0 12px;">Enter this verification code to proceed:</p>
+          <div style="text-align:center;margin:16px 0;">
+            <span style="font-size:32px;font-weight:700;color:#48805b;letter-spacing:8px;background:#e8f0e8;padding:8px 16px;border-radius:8px;">${otpCode}</span>
+          </div>
+          <p style="color:#88837b;font-size:13px;margin:12px 0 0;">This code expires in 5 minutes. If you did not request a password reset, please ignore this email.</p>
+        </div>
+        <p style="color:#88837b;font-size:11px;text-align:center;margin-top:16px;">NOTJUST Watr — Wellness Shots for a Better You</p>
+      </div>
+    `
+    const textBody = `Your NOTJUST Watr password reset code is: ${otpCode}. It expires in 5 minutes. If you did not request this, please ignore this email.`
+
+    return sendEmail(to, subject, htmlBody, textBody)
+  },
+
+  /**
+   * Send order placed email
+   */
+  async sendOrderPlacedEmail(to: string, orderDetails: { orderNumber: string; totalAmount: number; items: string }): Promise<EmailResult> {
+    const subject = `Order Placed — ${orderDetails.orderNumber}`
+    const htmlBody = `
+      <div style="max-width:480px;margin:0 auto;font-family:'Segoe UI',system-ui,sans-serif;background:#f4f3f0;padding:32px;border-radius:12px;">
+        <div style="text-align:center;margin-bottom:24px;">
+          <h1 style="color:#48805b;font-size:24px;font-weight:700;margin:0;">NOTJUST Watr</h1>
+          <p style="color:#88837b;font-size:14px;margin:4px 0 0;">Wellness, Verified.</p>
+        </div>
+        <div style="background:#fff;border-radius:8px;padding:24px;border:1px solid #e3dfd8;">
+          <p style="color:#48805b;font-size:18px;font-weight:700;margin:0 0 12px;">🎉 Your order has been placed!</p>
+          <p style="color:#1f1e1c;font-size:15px;margin:0 0 8px;">Order: <strong>#${orderDetails.orderNumber}</strong></p>
+          <p style="color:#1f1e1c;font-size:15px;margin:0 0 8px;">Total: <strong>₹${orderDetails.totalAmount}</strong></p>
+          <div style="background:#f4f3f0;border-radius:6px;padding:12px;margin:12px 0;">
+            <p style="color:#1f1e1c;font-size:13px;margin:0;">${orderDetails.items}</p>
+          </div>
+          <p style="color:#88837b;font-size:13px;margin:12px 0 0;">We'll notify you when your order is confirmed and being prepared.</p>
+        </div>
+        <p style="color:#88837b;font-size:11px;text-align:center;margin-top:16px;">Thank you for choosing NOTJUST Watr</p>
+      </div>
+    `
+    const textBody = `Your NOTJUST Watr order #${orderDetails.orderNumber} has been placed! Total: ₹${orderDetails.totalAmount}. We'll notify you when it's confirmed.`
+
+    return sendEmail(to, subject, htmlBody, textBody)
+  },
+
+  /**
+   * Send order confirmed email
+   */
+  async sendOrderConfirmedEmail(to: string, orderDetails: { orderNumber: string }): Promise<EmailResult> {
+    const subject = `Order Confirmed — ${orderDetails.orderNumber}`
+    const htmlBody = `
+      <div style="max-width:480px;margin:0 auto;font-family:'Segoe UI',system-ui,sans-serif;background:#f4f3f0;padding:32px;border-radius:12px;">
+        <div style="text-align:center;margin-bottom:24px;">
+          <h1 style="color:#48805b;font-size:24px;font-weight:700;margin:0;">NOTJUST Watr</h1>
+          <p style="color:#88837b;font-size:14px;margin:4px 0 0;">Wellness, Verified.</p>
+        </div>
+        <div style="background:#fff;border-radius:8px;padding:24px;border:1px solid #e3dfd8;">
+          <p style="color:#48805b;font-size:18px;font-weight:700;margin:0 0 12px;">✅ Great news! Your order is confirmed.</p>
+          <p style="color:#1f1e1c;font-size:15px;margin:0 0 8px;">Order: <strong>#${orderDetails.orderNumber}</strong></p>
+          <p style="color:#88837b;font-size:13px;margin:12px 0 0;">Your order is being prepared and will be shipped soon. We'll send you another update when it's on its way.</p>
+        </div>
+        <p style="color:#88837b;font-size:11px;text-align:center;margin-top:16px;">Thank you for choosing NOTJUST Watr</p>
+      </div>
+    `
+    const textBody = `Great news! Your NOTJUST Watr order #${orderDetails.orderNumber} has been confirmed and is being prepared.`
+
+    return sendEmail(to, subject, htmlBody, textBody)
+  },
+
+  /**
+   * Send payment received email
+   */
+  async sendPaymentReceivedEmail(to: string, orderDetails: { orderNumber: string; totalAmount: number }): Promise<EmailResult> {
+    const subject = `Payment Received — ${orderDetails.orderNumber}`
+    const htmlBody = `
+      <div style="max-width:480px;margin:0 auto;font-family:'Segoe UI',system-ui,sans-serif;background:#f4f3f0;padding:32px;border-radius:12px;">
+        <div style="text-align:center;margin-bottom:24px;">
+          <h1 style="color:#48805b;font-size:24px;font-weight:700;margin:0;">NOTJUST Watr</h1>
+          <p style="color:#88837b;font-size:14px;margin:4px 0 0;">Wellness, Verified.</p>
+        </div>
+        <div style="background:#fff;border-radius:8px;padding:24px;border:1px solid #e3dfd8;">
+          <p style="color:#48805b;font-size:18px;font-weight:700;margin:0 0 12px;">💳 Payment received!</p>
+          <p style="color:#1f1e1c;font-size:15px;margin:0 0 8px;">Order: <strong>#${orderDetails.orderNumber}</strong></p>
+          <p style="color:#1f1e1c;font-size:15px;margin:0 0 8px;">Amount: <strong>₹${orderDetails.totalAmount}</strong></p>
+          <p style="color:#88837b;font-size:13px;margin:12px 0 0;">Thank you for your payment. Your order will be processed shortly.</p>
+        </div>
+        <p style="color:#88837b;font-size:11px;text-align:center;margin-top:16px;">Thank you for choosing NOTJUST Watr</p>
+      </div>
+    `
+    const textBody = `Payment of ₹${orderDetails.totalAmount} received for NOTJUST Watr order #${orderDetails.orderNumber}. Thank you!`
+
+    return sendEmail(to, subject, htmlBody, textBody)
+  },
+
+  /**
+   * Send order shipped email
+   */
+  async sendOrderShippedEmail(to: string, orderDetails: { orderNumber: string }): Promise<EmailResult> {
+    const subject = `Order Shipped — ${orderDetails.orderNumber}`
+    const htmlBody = `
+      <div style="max-width:480px;margin:0 auto;font-family:'Segoe UI',system-ui,sans-serif;background:#f4f3f0;padding:32px;border-radius:12px;">
+        <div style="text-align:center;margin-bottom:24px;">
+          <h1 style="color:#48805b;font-size:24px;font-weight:700;margin:0;">NOTJUST Watr</h1>
+          <p style="color:#88837b;font-size:14px;margin:4px 0 0;">Wellness, Verified.</p>
+        </div>
+        <div style="background:#fff;border-radius:8px;padding:24px;border:1px solid #e3dfd8;">
+          <p style="color:#48805b;font-size:18px;font-weight:700;margin:0 0 12px;">🚚 Your order is on its way!</p>
+          <p style="color:#1f1e1c;font-size:15px;margin:0 0 8px;">Order: <strong>#${orderDetails.orderNumber}</strong></p>
+          <p style="color:#88837b;font-size:13px;margin:12px 0 0;">Your wellness shots are being delivered. Track your delivery in the app.</p>
+        </div>
+        <p style="color:#88837b;font-size:11px;text-align:center;margin-top:16px;">Thank you for choosing NOTJUST Watr</p>
+      </div>
+    `
+    const textBody = `Your NOTJUST Watr order #${orderDetails.orderNumber} is on its way! Track your delivery in the app.`
+
+    return sendEmail(to, subject, htmlBody, textBody)
+  },
+
+  /**
+   * Send order delivered email
+   */
+  async sendOrderDeliveredEmail(to: string, orderDetails: { orderNumber: string }): Promise<EmailResult> {
+    const subject = `Order Delivered — ${orderDetails.orderNumber}`
+    const htmlBody = `
+      <div style="max-width:480px;margin:0 auto;font-family:'Segoe UI',system-ui,sans-serif;background:#f4f3f0;padding:32px;border-radius:12px;">
+        <div style="text-align:center;margin-bottom:24px;">
+          <h1 style="color:#48805b;font-size:24px;font-weight:700;margin:0;">NOTJUST Watr</h1>
+          <p style="color:#88837b;font-size:14px;margin:4px 0 0;">Wellness, Verified.</p>
+        </div>
+        <div style="background:#fff;border-radius:8px;padding:24px;border:1px solid #e3dfd8;">
+          <p style="color:#48805b;font-size:18px;font-weight:700;margin:0 0 12px;">📦 Your order has been delivered!</p>
+          <p style="color:#1f1e1c;font-size:15px;margin:0 0 8px;">Order: <strong>#${orderDetails.orderNumber}</strong></p>
+          <p style="color:#88837b;font-size:13px;margin:12px 0 0;">Enjoy your wellness shots! We hope you love them.</p>
+        </div>
+        <p style="color:#88837b;font-size:11px;text-align:center;margin-top:16px;">Thank you for choosing NOTJUST Watr</p>
+      </div>
+    `
+    const textBody = `Your NOTJUST Watr order #${orderDetails.orderNumber} has been delivered! Enjoy your wellness shots.`
+
+    return sendEmail(to, subject, htmlBody, textBody)
+  },
+
+  /**
+   * Send order cancelled email
+   */
+  async sendOrderCancelledEmail(to: string, orderDetails: { orderNumber: string }): Promise<EmailResult> {
+    const subject = `Order Cancelled — ${orderDetails.orderNumber}`
+    const htmlBody = `
+      <div style="max-width:480px;margin:0 auto;font-family:'Segoe UI',system-ui,sans-serif;background:#f4f3f0;padding:32px;border-radius:12px;">
+        <div style="text-align:center;margin-bottom:24px;">
+          <h1 style="color:#48805b;font-size:24px;font-weight:700;margin:0;">NOTJUST Watr</h1>
+          <p style="color:#88837b;font-size:14px;margin:4px 0 0;">Wellness, Verified.</p>
+        </div>
+        <div style="background:#fff;border-radius:8px;padding:24px;border:1px solid #e3dfd8;">
+          <p style="color:#1f1e1c;font-size:18px;font-weight:700;margin:0 0 12px;">Your order has been cancelled</p>
+          <p style="color:#1f1e1c;font-size:15px;margin:0 0 8px;">Order: <strong>#${orderDetails.orderNumber}</strong></p>
+          <p style="color:#88837b;font-size:13px;margin:12px 0 0;">If a refund is applicable, it will be processed within 5-7 business days.</p>
+        </div>
+        <p style="color:#88837b;font-size:11px;text-align:center;margin-top:16px;">We hope to serve you again — NOTJUST Watr</p>
+      </div>
+    `
+    const textBody = `Your NOTJUST Watr order #${orderDetails.orderNumber} has been cancelled. Refund will be processed if applicable.`
+
+    return sendEmail(to, subject, htmlBody, textBody)
+  },
+
+  /**
    * Check if email service is configured
    */
   isConfigured(): boolean {

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { checkAdmin, jsonResponse, errorResponse, handleOptions } from '@/lib/api-utils'
+import { notificationService } from '@/lib/notification-service'
 
 // OPTIONS - CORS preflight
 export async function OPTIONS() {
@@ -87,6 +88,53 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         tracking: { orderBy: { tracked_at: 'desc' } },
       },
     })
+
+    // Fire notification based on new status (async, don't block response)
+    try {
+      const orderWithUser = await db.order.findUnique({
+        where: { id },
+        include: { user: true, items: true },
+      })
+      if (orderWithUser?.user) {
+        const orderInfo = {
+          id: orderWithUser.id,
+          order_number: orderWithUser.order_number,
+          status: orderWithUser.status,
+          total_amount: orderWithUser.total_amount,
+          items: orderWithUser.items.map(i => ({
+            product_name: i.product_name,
+            quantity: i.quantity,
+            total_price: i.total_price,
+          })),
+        }
+        const userInfo = {
+          id: orderWithUser.user.id,
+          name: orderWithUser.user.name,
+          email: orderWithUser.user.email,
+          phone: orderWithUser.user.phone,
+        }
+
+        // Send notification based on status
+        const newStatus = status || body.status
+        if (newStatus === 'CONFIRMED') {
+          notificationService.sendOrderConfirmedNotification(orderInfo, userInfo).catch(err => console.error('Failed to send order confirmed notification:', err))
+        } else if (newStatus === 'SHIPPED') {
+          notificationService.sendOrderShippedNotification(orderInfo, userInfo).catch(err => console.error('Failed to send order shipped notification:', err))
+        } else if (newStatus === 'DELIVERED') {
+          notificationService.sendOrderDeliveredNotification(orderInfo, userInfo).catch(err => console.error('Failed to send order delivered notification:', err))
+        } else if (newStatus === 'CANCELLED') {
+          notificationService.sendOrderCancelledNotification(orderInfo, userInfo).catch(err => console.error('Failed to send order cancelled notification:', err))
+        }
+
+        // Also send payment notification if payment_status changed to COMPLETED
+        const newPaymentStatus = body.payment_status
+        if (newPaymentStatus === 'COMPLETED') {
+          notificationService.sendPaymentReceivedNotification(orderInfo, userInfo).catch(err => console.error('Failed to send payment received notification:', err))
+        }
+      }
+    } catch (err) {
+      console.error('Error sending order notification:', err)
+    }
 
     return jsonResponse({ data: order })
   } catch (error: any) {

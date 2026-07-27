@@ -603,3 +603,22 @@ Stage Summary:
 - Recharts charts using A theme colors
 - QRCodeSVG from qrcode.react for campaign QR codes
 - Mobile-responsive via existing Sheet pattern
+
+---
+Task ID: 10
+Agent: Main orchestrator
+Task: Fix learning content editing in admin Products tab + push to GitHub
+
+Work Log:
+- Investigated learning content editing issue using Explore agent
+- Found BUG 1 (Critical): `active: active === true ?? true` in videos/route.ts — always evaluates to `false` due to JS operator precedence (=== returns boolean, never nullish, so ?? true never kicks in). Changed to `typeof active === 'boolean' ? active : true`
+- Found BUG 2 (UX): No edit button for quiz questions — only delete button. Added Pencil edit button that opens quiz form with existing data pre-filled
+- Found BUG 3 (UX): No reorder buttons for quiz questions — handler existed but no UI buttons. Added ChevronUp/ChevronDown reorder buttons
+- Tested via Agent Browser: video edit works (PUT 200), video add works, quiz display works
+- Committed and pushed as `6f1a831` to GitHub main branch
+
+Stage Summary:
+- Video `active` default bug fixed — videos now default to `active: true`
+- Quiz edit button added — admins can now edit quiz questions inline
+- Quiz reorder buttons added — admins can reorder quiz questions within a video
+- All changes pushed to GitHub (commit 6f1a831)

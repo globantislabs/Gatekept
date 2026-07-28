@@ -525,20 +525,10 @@ export const productVideoServiceCompat = {
   },
 }
 
-// Extend productQuizService with getByVideo (returns { data, error })
+// Extend productQuizService with getByProduct (returns { data, error })
 export const productQuizServiceCompat = {
-  async getByVideo(videoId: string): Promise<{ data: ProductQuiz[] | null; error: string | null }> {
-    // Fetch quizzes for the product and filter by video_id
-    // Since we don't have a direct "by video" endpoint, we need the product ID
-    // For simplicity, we'll fetch from the product's quiz list and filter
-    try {
-      // We need to find which product this video belongs to
-      // This requires knowing the product context - handled at the component level
-      // For now, return an error indicating this method needs product context
-      return { data: [] as ProductQuiz[], error: null }
-    } catch (err: any) {
-      return { data: null, error: err.message || 'Unknown error' }
-    }
+  async getByProduct(productId: string): Promise<{ data: ProductQuiz[] | null; error: string | null }> {
+    return wrapApiCall(productQuizService.list(productId))
   },
 }
 

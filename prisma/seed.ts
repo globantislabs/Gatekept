@@ -148,24 +148,47 @@ async function seed() {
     })
   }
 
-  // ─── Product Quiz Questions ────────────────────────────
+  // ─── Product Quiz Questions (5 per video = 80% threshold = 4 correct needed) ──
   const fizzQuizzes = [
-    // After Video 1
+    // After Video 1 — Introduction
     { id: 'quiz_fizz_1a', product_id: fizzProduct.id, video_id: 'vid_fizz_1', question: 'When should you consume the NOTJUST pre-meal shot?', options: JSON.stringify(['After dinner', 'Before a meal', 'During exercise', 'Before sleeping']), answer: 1, category: 'usage', difficulty: 'EASY', order: 1, active: true },
     { id: 'quiz_fizz_1b', product_id: fizzProduct.id, video_id: 'vid_fizz_1', question: 'What is NOTJUST Watr Fizz primarily designed for?', options: JSON.stringify(['Weight loss', 'Glycemic control — reducing sugar spikes', 'Muscle building', 'Better sleep']), answer: 1, category: 'science', difficulty: 'EASY', order: 2, active: true },
-    // After Video 2
-    { id: 'quiz_fizz_2a', product_id: fizzProduct.id, video_id: 'vid_fizz_2', question: 'What is the recommended usage frequency?', options: JSON.stringify(['Once a week', 'Once before each main meal', 'Only on weekends', 'Three times a day regardless of meals']), answer: 1, category: 'usage', difficulty: 'MEDIUM', order: 3, active: true },
-    { id: 'quiz_fizz_2b', product_id: fizzProduct.id, video_id: 'vid_fizz_2', question: 'What should you do if you miss a dose before a meal?', options: JSON.stringify(['Double the next dose', 'Take it as soon as you remember, or skip and take before next meal', 'Stop entirely', 'Take it after the meal instead']), answer: 1, category: 'usage', difficulty: 'MEDIUM', order: 4, active: true },
-    // After Video 3
-    { id: 'quiz_fizz_3a', product_id: fizzProduct.id, video_id: 'vid_fizz_3', question: 'The NOTJUST shot works by:', options: JSON.stringify(['Replacing meals', 'Slowing carbohydrate absorption', 'Increasing insulin production', 'Eliminating sugar from food']), answer: 1, category: 'science', difficulty: 'HARD', order: 5, active: true },
+    { id: 'quiz_fizz_1c', product_id: fizzProduct.id, video_id: 'vid_fizz_1', question: 'How many shots are in the NOTJUST Watr Fizz monthly pack?', options: JSON.stringify(['30', '45', '60', '90']), answer: 2, category: 'product', difficulty: 'EASY', order: 3, active: true },
+    { id: 'quiz_fizz_1d', product_id: fizzProduct.id, video_id: 'vid_fizz_1', question: 'NOTJUST Watr Fizz is a carbonated beverage.', options: JSON.stringify(['False', 'True', 'Only slightly', 'It depends on the flavor']), answer: 1, category: 'product', difficulty: 'EASY', order: 4, active: true },
+    { id: 'quiz_fizz_1e', product_id: fizzProduct.id, video_id: 'vid_fizz_1', question: 'What type of meal is NOTJUST Watr most effective before?', options: JSON.stringify(['A protein-only meal', 'A carbohydrate-rich meal', 'A fat-only meal', 'An empty stomach']), answer: 1, category: 'science', difficulty: 'MEDIUM', order: 5, active: true },
+    // After Video 2 — Usage
+    { id: 'quiz_fizz_2a', product_id: fizzProduct.id, video_id: 'vid_fizz_2', question: 'What is the recommended usage frequency?', options: JSON.stringify(['Once a week', 'Once before each main meal', 'Only on weekends', 'Three times a day regardless of meals']), answer: 1, category: 'usage', difficulty: 'EASY', order: 1, active: true },
+    { id: 'quiz_fizz_2b', product_id: fizzProduct.id, video_id: 'vid_fizz_2', question: 'What should you do if you miss a dose before a meal?', options: JSON.stringify(['Double the next dose', 'Take it as soon as you remember, or skip and take before next meal', 'Stop entirely', 'Take it after the meal instead']), answer: 1, category: 'usage', difficulty: 'MEDIUM', order: 2, active: true },
+    { id: 'quiz_fizz_2c', product_id: fizzProduct.id, video_id: 'vid_fizz_2', question: 'How long before a meal should you take the shot?', options: JSON.stringify(['1 hour before', 'Immediately before (5-15 minutes)', 'After the first bite', 'The night before']), answer: 1, category: 'usage', difficulty: 'EASY', order: 3, active: true },
+    { id: 'quiz_fizz_2d', product_id: fizzProduct.id, video_id: 'vid_fizz_2', question: 'Can NOTJUST Watr Fizz be taken with other beverages?', options: JSON.stringify(['No, never', 'Yes, it can be taken alongside water or other drinks', 'Only with milk', 'Only with juice']), answer: 1, category: 'usage', difficulty: 'MEDIUM', order: 4, active: true },
+    { id: 'quiz_fizz_2e', product_id: fizzProduct.id, video_id: 'vid_fizz_2', question: 'What is the recommended storage for opened NOTJUST Watr Fizz?', options: JSON.stringify(['Freezer', 'Room temperature only', 'Refrigerate after opening', 'Direct sunlight']), answer: 2, category: 'product', difficulty: 'EASY', order: 5, active: true },
+    // After Video 3 — Science
+    { id: 'quiz_fizz_3a', product_id: fizzProduct.id, video_id: 'vid_fizz_3', question: 'The NOTJUST shot works by:', options: JSON.stringify(['Replacing meals', 'Slowing carbohydrate absorption', 'Increasing insulin production', 'Eliminating sugar from food']), answer: 1, category: 'science', difficulty: 'MEDIUM', order: 1, active: true },
+    { id: 'quiz_fizz_3b', product_id: fizzProduct.id, video_id: 'vid_fizz_3', question: 'Which ingredient in NOTJUST Watr Fizz helps with glycemic control?', options: JSON.stringify(['Caffeine', 'Apple cider vinegar', 'Artificial sweeteners', 'Protein isolate']), answer: 1, category: 'science', difficulty: 'EASY', order: 2, active: true },
+    { id: 'quiz_fizz_3c', product_id: fizzProduct.id, video_id: 'vid_fizz_3', question: 'Chromium picolinate in the shot helps with:', options: JSON.stringify(['Bone density', 'Insulin sensitivity', 'Muscle growth', 'Digestion']), answer: 1, category: 'science', difficulty: 'MEDIUM', order: 3, active: true },
+    { id: 'quiz_fizz_3d', product_id: fizzProduct.id, video_id: 'vid_fizz_3', question: 'Green tea extract in NOTJUST Watr Fizz provides:', options: JSON.stringify(['Caffeine boost only', 'Antioxidants that support metabolic health', 'Artificial flavoring', 'Color enhancement']), answer: 1, category: 'science', difficulty: 'MEDIUM', order: 4, active: true },
+    { id: 'quiz_fizz_3e', product_id: fizzProduct.id, video_id: 'vid_fizz_3', question: 'The glycemic index (GI) measures:', options: JSON.stringify(['How much protein is in food', 'How quickly a food raises blood sugar', 'How many calories a food has', 'How much fat is in food']), answer: 1, category: 'science', difficulty: 'HARD', order: 5, active: true },
   ]
 
   const stillQuizzes = [
+    // After Video 1 — Introduction
     { id: 'quiz_still_1a', product_id: stillProduct.id, video_id: 'vid_still_1', question: 'What makes NOTJUST Watr Still different from Fizz?', options: JSON.stringify(['It is carbonated', 'It is non-carbonated and smooth', 'It has more calories', 'It is only for athletes']), answer: 1, category: 'product', difficulty: 'EASY', order: 1, active: true },
     { id: 'quiz_still_1b', product_id: stillProduct.id, video_id: 'vid_still_1', question: 'Which natural extract is unique to NOTJUST Watr Still?', options: JSON.stringify(['Green tea extract', 'Gymnema sylvestre', 'Chromium picolinate', 'Caffeine']), answer: 1, category: 'product', difficulty: 'EASY', order: 2, active: true },
-    { id: 'quiz_still_2a', product_id: stillProduct.id, video_id: 'vid_still_2', question: 'How many shots are in the eco-friendly refill pack?', options: JSON.stringify(['30', '60', '14', '90']), answer: 2, category: 'product', difficulty: 'MEDIUM', order: 3, active: true },
-    { id: 'quiz_still_2b', product_id: stillProduct.id, video_id: 'vid_still_2', question: 'What does glycemic control help with?', options: JSON.stringify(['Hair growth', 'Blood sugar management after meals', 'Skin complexion', 'Eye health']), answer: 1, category: 'science', difficulty: 'MEDIUM', order: 4, active: true },
-    { id: 'quiz_still_3a', product_id: stillProduct.id, video_id: 'vid_still_3', question: 'Gymnema sylvestre is known as:', options: JSON.stringify(['The sugar destroyer', 'The protein builder', 'The fat burner', 'The sleep inducer']), answer: 0, category: 'science', difficulty: 'HARD', order: 5, active: true },
+    { id: 'quiz_still_1c', product_id: stillProduct.id, video_id: 'vid_still_1', question: 'NOTJUST Watr Still is best described as:', options: JSON.stringify(['A sports drink', 'A smooth non-carbonated wellness shot', 'A meal replacement', 'A protein shake']), answer: 1, category: 'product', difficulty: 'EASY', order: 3, active: true },
+    { id: 'quiz_still_1d', product_id: stillProduct.id, video_id: 'vid_still_1', question: 'What is the primary benefit of NOTJUST Watr Still?', options: JSON.stringify(['Energy boost', 'Supports healthy blood sugar management', 'Weight loss overnight', 'Muscle recovery']), answer: 1, category: 'science', difficulty: 'EASY', order: 4, active: true },
+    { id: 'quiz_still_1e', product_id: stillProduct.id, video_id: 'vid_still_1', question: 'Which pack type is available for NOTJUST Watr Still?', options: JSON.stringify(['Only single shots', 'Eco-friendly refill pack', 'Large bottle only', 'No packaging']), answer: 1, category: 'product', difficulty: 'MEDIUM', order: 5, active: true },
+    // After Video 2 — Usage
+    { id: 'quiz_still_2a', product_id: stillProduct.id, video_id: 'vid_still_2', question: 'How many shots are in the eco-friendly refill pack?', options: JSON.stringify(['30', '60', '14', '90']), answer: 2, category: 'product', difficulty: 'EASY', order: 1, active: true },
+    { id: 'quiz_still_2b', product_id: stillProduct.id, video_id: 'vid_still_2', question: 'What does glycemic control help with?', options: JSON.stringify(['Hair growth', 'Blood sugar management after meals', 'Skin complexion', 'Eye health']), answer: 1, category: 'science', difficulty: 'EASY', order: 2, active: true },
+    { id: 'quiz_still_2c', product_id: stillProduct.id, video_id: 'vid_still_2', question: 'When is the best time to take NOTJUST Watr Still?', options: JSON.stringify(['Before bed', 'Before a meal', 'After exercise', 'First thing in morning']), answer: 1, category: 'usage', difficulty: 'EASY', order: 3, active: true },
+    { id: 'quiz_still_2d', product_id: stillProduct.id, video_id: 'vid_still_2', question: 'The eco-friendly refill pack is designed to be:', options: JSON.stringify(['More expensive', 'Sustainable and affordable', 'Single-use only', 'Disposable']), answer: 1, category: 'product', difficulty: 'MEDIUM', order: 4, active: true },
+    { id: 'quiz_still_2e', product_id: stillProduct.id, video_id: 'vid_still_2', question: 'NOTJUST Watr Still can be consumed by people who are sensitive to:', options: JSON.stringify(['Carbonation', 'Protein', 'Fiber', 'Fat']), answer: 0, category: 'product', difficulty: 'MEDIUM', order: 5, active: true },
+    // After Video 3 — Science
+    { id: 'quiz_still_3a', product_id: stillProduct.id, video_id: 'vid_still_3', question: 'Gymnema sylvestre is known as:', options: JSON.stringify(['The sugar destroyer', 'The protein builder', 'The fat burner', 'The sleep inducer']), answer: 0, category: 'science', difficulty: 'EASY', order: 1, active: true },
+    { id: 'quiz_still_3b', product_id: stillProduct.id, video_id: 'vid_still_3', question: 'Fenugreek extract helps with:', options: JSON.stringify(['Skin health', 'Blood sugar regulation and digestion', 'Bone strength', 'Eye sight']), answer: 1, category: 'science', difficulty: 'EASY', order: 2, active: true },
+    { id: 'quiz_still_3c', product_id: stillProduct.id, video_id: 'vid_still_3', question: 'Apple cider vinegar in NOTJUST Watr Still works by:', options: JSON.stringify(['Adding flavor only', 'Slowing gastric emptying and reducing glucose absorption', 'Providing calories', 'Increasing appetite']), answer: 1, category: 'science', difficulty: 'MEDIUM', order: 3, active: true },
+    { id: 'quiz_still_3d', product_id: stillProduct.id, video_id: 'vid_still_3', question: 'The combination of gymnema and fenugreek is:', options: JSON.stringify(['A modern invention', 'Rooted in traditional Ayurvedic medicine', 'Only used in cosmetics', 'A weight loss formula']), answer: 1, category: 'science', difficulty: 'MEDIUM', order: 4, active: true },
+    { id: 'quiz_still_3e', product_id: stillProduct.id, video_id: 'vid_still_3', question: 'What does "pre-meal wellness" mean in the context of NOTJUST?', options: JSON.stringify(['Eating before exercise', 'Taking a wellness shot before eating to support glycemic response', 'Skipping meals entirely', 'A type of diet plan']), answer: 1, category: 'science', difficulty: 'HARD', order: 5, active: true },
   ]
 
   for (const q of [...fizzQuizzes, ...stillQuizzes]) {
@@ -209,9 +232,9 @@ async function seed() {
           user_id: uid,
           product_id: fizzProduct.id,
           video_progress: JSON.stringify({ vid_fizz_1: 100, vid_fizz_2: 100, vid_fizz_3: 100 }),
-          quiz_answers: JSON.stringify({ quiz_fizz_1a: 1, quiz_fizz_1b: 1, quiz_fizz_2a: 1, quiz_fizz_2b: 1, quiz_fizz_3a: 1 }),
+          quiz_answers: JSON.stringify({ quiz_fizz_1a: 1, quiz_fizz_1b: 1, quiz_fizz_1c: 2, quiz_fizz_1d: 1, quiz_fizz_1e: 1, quiz_fizz_2a: 1, quiz_fizz_2b: 1, quiz_fizz_2c: 1, quiz_fizz_2d: 1, quiz_fizz_2e: 2, quiz_fizz_3a: 1, quiz_fizz_3b: 1, quiz_fizz_3c: 1, quiz_fizz_3d: 1, quiz_fizz_3e: 1 }),
           quiz_completed: true,
-          quiz_score: 5,
+          quiz_score: 15,
           status: 'COMPLETED',
           completed_at: new Date(),
         },

@@ -27,7 +27,10 @@ const BRAND = {
   blue: '#2e91b2',
 } as const
 
-const PASS_THRESHOLD = 4 // need 4 out of 5 correct (80%)
+// Dynamic pass threshold: 80% of questions (min 1)
+function getPassThreshold(totalQuestions: number): number {
+  return Math.max(1, Math.ceil(totalQuestions * 0.8))
+}
 
 // ─── Step Types ────────────────────────────────────────────
 type LearningStep =
@@ -119,7 +122,8 @@ export function ProductLearningModule() {
         ])
         if (cancelled) return
         setProduct(prodRes.data || null)
-        const loadedVideos = vidRes.data || []
+        // Only show active videos
+        const loadedVideos = (vidRes.data || []).filter(v => v.active !== false)
         setVideos(loadedVideos)
         setProgress(progRes.data || null)
 
@@ -199,8 +203,8 @@ export function ProductLearningModule() {
       try {
         const res = await productQuizService.list(selectedProductId)
         if (!cancelled) {
-          // Filter quizzes for this specific video
-          const filtered = res.filter(q => q.video_id === video.id)
+          // Filter quizzes for this specific video, only active ones
+          const filtered = res.filter(q => q.video_id === video.id && q.active !== false)
           setQuizQuestions(filtered)
         }
       } catch (err) {
@@ -238,10 +242,22 @@ export function ProductLearningModule() {
   const saveVideoProgress = useCallback(async (pct: number) => {
     if (!selectedProductId || !currentVideo) return
     if (!user) return // Skip backend save if not logged in
-    const updatedVP = { ...(progress?.video_progress || {}), [currentVideo.id]: pct }
-    const res = await productLearningService.updateVideoProgress(user.user_id, selectedProductId, updatedVP)
-    if (res.data) setProgress(res.data)
-  }, [user, selectedProductId, currentVideo, progress?.video_progress])
+    try {
+      const updatedVP = { ...(progress?.video_progress || {}), [currentVideo.id]: pct }
+      const saved = await productLearningService.save({
+        user_id: user.user_id,
+        product_id: selectedProductId,
+        video_progress: updatedVP,
+        quiz_answers: progress?.quiz_answers || {},
+        quiz_completed: progress?.quiz_completed || false,
+        quiz_score: progress?.quiz_score || 0,
+        status: pct >= 100 ? 'IN_PROGRESS' : (progress?.status || 'IN_PROGRESS'),
+      })
+      if (saved) setProgress(saved)
+    } catch (err) {
+      console.error('Failed to save video progress:', err)
+    }
+  }, [user, selectedProductId, currentVideo, progress])
 
   // ─── Auto-save when video completes ───────────────────
   useEffect(() => {
@@ -296,7 +312,8 @@ export function ProductLearningModule() {
       })
 
       const totalQuestions = quizQuestions.length
-      const passed = correctCount >= PASS_THRESHOLD
+      const passThreshold = getPassThreshold(totalQuestions)
+      const passed = correctCount >= passThreshold
 
       const result: QuizResult = {
         correct: correctCount,
@@ -306,19 +323,35 @@ export function ProductLearningModule() {
       }
       setQuizResult(result)
 
-      // Submit via service (only if logged in — otherwise just check locally)
+      // Save progress via service (only if logged in)
       if (user) {
         const overallScore = totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0
-        const res = await productLearningService.submitQuiz(
-          user.user_id,
-          selectedProductId,
-          quizAnswersMap,
-          overallScore,
-          passed
-        )
+        try {
+          const existingVP = progress?.video_progress || {}
+          const existingQA = progress?.quiz_answers || {}
+          const updatedQA = { ...existingQA, ...quizAnswersMap }
 
-        if (res.data) {
-          setProgress(res.data)
+          // Determine new status
+          let newStatus = 'IN_PROGRESS'
+          if (passed && currentStep.type === 'quiz') {
+            const nextVideoIndex = currentStep.videoIndex + 1
+            if (nextVideoIndex >= videos.length) {
+              newStatus = 'COMPLETED'
+            }
+          }
+
+          const saved = await productLearningService.save({
+            user_id: user.user_id,
+            product_id: selectedProductId,
+            video_progress: existingVP,
+            quiz_answers: updatedQA,
+            quiz_completed: passed,
+            quiz_score: overallScore,
+            status: newStatus,
+          })
+          if (saved) setProgress(saved)
+        } catch (err) {
+          console.error('Failed to save quiz progress:', err)
         }
       }
 
@@ -330,7 +363,7 @@ export function ProductLearningModule() {
         }))
         toast.success('Quiz passed! Moving to the next lesson.')
       } else {
-        toast.error(`You got ${correctCount}/${totalQuestions} correct. You need ${PASS_THRESHOLD} to pass. Please re-watch the video and try again.`)
+        toast.error(`You got ${correctCount}/${totalQuestions} correct. You need ${passThreshold} to pass. Please re-watch the video and try again.`)
       }
     } catch (err) {
       console.error('Quiz submit failed:', err)
@@ -677,7 +710,7 @@ export function ProductLearningModule() {
                   </p>
                   <p className="text-xs mt-1" style={{ color: BRAND.muted }}>
                     You must watch the entire video before taking Quiz {currentStep.videoIndex + 1}.
-                    You need {PASS_THRESHOLD} out of 5 correct answers (80%) to pass.
+                    You need {getPassThreshold(quizQuestions.length)} out of {quizQuestions.length} correct answers (80%) to pass.
                   </p>
                 </div>
               </CardContent>
@@ -742,7 +775,7 @@ export function ProductLearningModule() {
                   <CardDescription style={{ color: BRAND.muted }}>
                     {quizResult.passed
                       ? `You scored ${quizResult.correct}/${quizResult.total} on Quiz ${currentStep.videoIndex + 1}`
-                      : `You got ${quizResult.correct}/${quizResult.total} correct — you need ${PASS_THRESHOLD} to pass`}
+                      : `You got ${quizResult.correct}/${quizResult.total} correct — you need ${getPassThreshold(quizResult.total)} to pass`}
                   </CardDescription>
                 </CardHeader>
 
@@ -765,7 +798,7 @@ export function ProductLearningModule() {
                         ? quizResult.correct === quizResult.total
                           ? 'Perfect Score!'
                           : 'You passed!'
-                        : `${PASS_THRESHOLD - quizResult.correct} more correct answer${PASS_THRESHOLD - quizResult.correct !== 1 ? 's' : ''} needed`}
+                        : `${getPassThreshold(quizResult.total) - quizResult.correct} more correct answer${getPassThreshold(quizResult.total) - quizResult.correct !== 1 ? 's' : ''} needed`}
                     </p>
                   </div>
 
@@ -855,7 +888,7 @@ export function ProductLearningModule() {
                       Quiz {currentStep.videoIndex + 1}: {currentVideo?.title || `Video ${currentStep.videoIndex + 1}`}
                     </h2>
                     <p className="text-xs" style={{ color: BRAND.muted }}>
-                      Answer all {quizQuestions.length} questions — need {PASS_THRESHOLD}/{quizQuestions.length} correct to pass
+                      Answer all {quizQuestions.length} questions — need {getPassThreshold(quizQuestions.length)}/{quizQuestions.length} correct to pass
                     </p>
                   </div>
                 </div>

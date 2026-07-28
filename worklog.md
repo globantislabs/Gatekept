@@ -744,3 +744,28 @@ Stage Summary:
 - ProductDetailPage.tsx: handleStartLearning now requires login, UI updated to show "Login to Start Learning" with Lock icon for unauthenticated users
 - ProductLearningModule.tsx: Added login guard useEffect that redirects to auth-login if user is null
 - All auth components (AuthLogin, AuthRegister, AuthWhatsAppOtpLogin) already handle redirectAfterLogin correctly
+
+---
+Task ID: 3
+Agent: Main orchestrator
+Task: Fix quiz threshold bug, learning content issues, admin panel CRUD, and push to git
+
+Work Log:
+- Investigated ProductLearningModule.tsx — found hardcoded PASS_THRESHOLD=4 causing impossible pass conditions with 2-question quizzes
+- Replaced hardcoded PASS_THRESHOLD with dynamic getPassThreshold() function: ceil(totalQuestions * 0.8), min 1
+- Fixed missing productLearningService methods: updateVideoProgress() and submitQuiz() were called but not defined — replaced with save() method
+- Fixed productQuizServiceCompat.getByVideo() stub (returned empty array) → renamed to getByProduct() with proper API call via wrapApiCall
+- Added active filter to quiz loading (q.active !== false) and video loading (v.active !== false) in ProductLearningModule
+- Added login guard in ProductLearningModule — useEffect redirects to auth-login if user is null
+- ProductDetailPage: "Start Learning" now requires login — shows "Login to Start Learning" with Lock icon for unauthenticated users
+- Updated seed data: 5 quiz questions per video (30 total across 6 videos) to match 80% threshold
+- Updated learning progress seed to include all 15 fizz quiz answer IDs
+- Verified all fixes with Agent Browser: quiz shows 5 questions, dynamic threshold "need 4 out of 5 (80%)", pass/fail UI works correctly, Questions to Review section shows actual questions
+- Pushed commit 5527080 to GitHub
+
+Stage Summary:
+- ProductLearningModule.tsx: Dynamic quiz threshold, login guard, active filters, fixed save methods
+- ProductDetailPage.tsx: "Login to Start Learning" button for unauthenticated users
+- data-service.ts: Fixed productQuizServiceCompat, no longer has missing method references
+- seed.ts: 30 quiz questions (5 per video), updated learning progress seed
+- All changes pushed to GitHub as commit 5527080

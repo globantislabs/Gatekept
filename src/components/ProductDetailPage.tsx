@@ -201,12 +201,13 @@ export default function ProductDetailPage() {
     if (!product) return
     setSelectedProductId(product.id)
     if (!user) {
-      // Allow learning without login, but suggest login to save progress
-      navigateTo('product-learning')
+      // Require login before starting learning
+      setRedirectAfterLogin('product-learning')
+      navigateTo('auth-login')
     } else {
       navigateTo('product-learning')
     }
-  }, [product, user, setSelectedProductId, navigateTo])
+  }, [product, user, setSelectedProductId, setRedirectAfterLogin, navigateTo])
 
   const handleLoginToSave = useCallback(() => {
     if (!product) return
@@ -568,28 +569,18 @@ export default function ProductDetailPage() {
                   {/* Status-based buttons */}
                   {!user && (
                     <div className="space-y-3">
-                      {/* Not logged in: Start Learning + Login to save */}
+                      {/* Not logged in: Start Learning requires login */}
                       <p className="text-xs" style={{ color: BRAND.muted }}>
-                        Learn about this product — progress saves automatically when you log in
+                        Login to start learning and track your progress
                       </p>
-                      <div className="flex flex-col sm:flex-row gap-3">
-                        <Button
-                          onClick={handleStartLearning}
-                          className="pointer-events-auto min-h-[44px] flex-1 rounded-xl font-heading font-semibold text-base"
-                          style={{ backgroundColor: BRAND.green, color: '#fff' }}
-                        >
-                          <Play className="w-5 h-5 mr-2" />
-                          Start Learning
-                        </Button>
-                        <Button
-                          onClick={handleLoginToSave}
-                          variant="outline"
-                          className="pointer-events-auto min-h-[44px] flex-1 rounded-xl font-heading font-semibold text-sm border-[#e3dfd8]"
-                        >
-                          <Lock className="w-4 h-4 mr-2" style={{ color: BRAND.blue }} />
-                          Login to save progress
-                        </Button>
-                      </div>
+                      <Button
+                        onClick={handleStartLearning}
+                        className="pointer-events-auto min-h-[44px] w-full rounded-xl font-heading font-semibold text-base"
+                        style={{ backgroundColor: BRAND.green, color: '#fff' }}
+                      >
+                        <Lock className="w-4 h-4 mr-2" />
+                        Login to Start Learning
+                      </Button>
                     </div>
                   )}
 

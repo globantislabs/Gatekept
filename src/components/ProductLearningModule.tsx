@@ -54,7 +54,15 @@ interface QuizResult {
 // Video 1 → Quiz 1 → Video 2 → Quiz 2 → Video 3 → Quiz 3 → Unlocked
 // ═══════════════════════════════════════════════════════════
 export function ProductLearningModule() {
-  const { selectedProductId, user, navigateTo } = useAppStore()
+  const { selectedProductId, user, navigateTo, setRedirectAfterLogin, setSelectedProductId } = useAppStore()
+
+  // ─── Login guard: redirect to login if not authenticated ──
+  useEffect(() => {
+    if (!user) {
+      setRedirectAfterLogin('product-learning')
+      navigateTo('auth-login')
+    }
+  }, [user, navigateTo, setRedirectAfterLogin])
 
   // ─── Data state ───────────────────────────────────────
   const [product, setProduct] = useState<Product | null>(null)

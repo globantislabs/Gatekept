@@ -725,3 +725,22 @@ Stage Summary:
 - Cart and checkout views functional
 - QR scan tracking API operational
 - NotificationLog model added to both SQLite and MySQL schemas
+
+---
+Task ID: 2
+Agent: Main orchestrator
+Task: Fix "Start Learning" button to require login before accessing learning module
+
+Work Log:
+- Investigated ProductDetailPage.tsx — found "Start Learning" button allowed unauthenticated access to learning module
+- Modified handleStartLearning to redirect to login page when user is not logged in (sets redirectAfterLogin to 'product-learning')
+- Changed the non-logged-in UI: replaced two buttons ("Start Learning" + "Login to save progress") with single "Login to Start Learning" button with Lock icon
+- Added login guard in ProductLearningModule.tsx — useEffect redirects to login page if user is null
+- Verified auth flow handles redirectAfterLogin correctly in AuthLogin, AuthRegister, and AuthWhatsAppOtpLogin components
+- Tested with Agent Browser: unauthenticated user sees "Login to Start Learning" → clicks → redirected to login page → after login → redirected to learning module
+- Tested with Agent Browser: authenticated user sees "Start Learning Module" → clicks → goes directly to learning module
+
+Stage Summary:
+- ProductDetailPage.tsx: handleStartLearning now requires login, UI updated to show "Login to Start Learning" with Lock icon for unauthenticated users
+- ProductLearningModule.tsx: Added login guard useEffect that redirects to auth-login if user is null
+- All auth components (AuthLogin, AuthRegister, AuthWhatsAppOtpLogin) already handle redirectAfterLogin correctly

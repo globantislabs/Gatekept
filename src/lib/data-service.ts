@@ -288,7 +288,8 @@ export const productService = {
   },
 
   async get(id: string): Promise<Product & { videos: ProductVideo[]; quizzes: ProductQuiz[] }> {
-    return apiFetch(`/api/products/${id}`)
+    const res = await apiFetch<{ product: Product & { videos: ProductVideo[]; quizzes: ProductQuiz[] } }>(`/api/products/${id}`)
+    return res.product || res as unknown as (Product & { videos: ProductVideo[]; quizzes: ProductQuiz[] })
   },
 
   async getBySlug(slug: string): Promise<Product & { videos: ProductVideo[]; quizzes: ProductQuiz[] }> {
@@ -639,8 +640,24 @@ export const orderService = {
 }
 
 export const qrScanService = {
-  async list() { return [] },
-  async getAll() { return [] },
+  async create(data: { campaign_id?: string; user_id?: string; device?: string; location?: string }): Promise<QrScan> {
+    const res = await apiFetch<{ scan: QrScan }>('/api/scans', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+    return res.scan
+  },
+
+  async list(filters?: { campaign_id?: string }): Promise<QrScan[]> {
+    const params = new URLSearchParams()
+    if (filters?.campaign_id) params.set('campaign_id', filters.campaign_id)
+    const res = await apiFetch<{ scans: QrScan[]; total: number }>(`/api/scans?${params.toString()}`)
+    return res.scans || res as unknown as QrScan[]
+  },
+
+  async getAll(): Promise<QrScan[]> {
+    return this.list()
+  },
 }
 
 export const subscriptionService = {

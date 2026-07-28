@@ -1,8 +1,8 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Mail, Phone, Lock, User, MapPin, Shield, Eye, EyeOff, AlertCircle, MessageCircle, Leaf, KeyRound, ArrowLeft, CheckCircle2 } from 'lucide-react'
+import { Mail, Phone, Lock, User, MapPin, Shield, Eye, EyeOff, AlertCircle, MessageCircle, Leaf, KeyRound, ArrowLeft, CheckCircle2, RefreshCw } from 'lucide-react'
 import { useAppStore } from '@/store/app-store'
 import { authService } from '@/lib/data-service'
 import type { UserProfile } from '@/lib/data-service'
@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Separator } from '@/components/ui/separator'
 import { Checkbox } from '@/components/ui/checkbox'
 import { InputOTP, InputOTPGroup, InputOTPSlot, InputOTPSeparator } from '@/components/ui/input-otp'
+import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
 
 // ─── Brand Constants ──────────────────────────────────────
@@ -26,6 +27,7 @@ const BRAND = {
   surface: '#e3dfd8',
   bg: '#f4f3f0',
   blue: '#2e91b2',
+  whatsappGreen: '#25D366',
 }
 
 // ─── Indian States List ────────────────────────────────────
@@ -52,6 +54,11 @@ const slideInRight = {
   visible: { opacity: 1, x: 0, transition: { duration: 0.4, ease: 'easeOut' } },
 }
 
+const scaleIn = {
+  hidden: { opacity: 0, scale: 0.8 },
+  visible: { opacity: 1, scale: 1, transition: { duration: 0.6, ease: 'easeOut' } },
+}
+
 // ─── Password Strength ─────────────────────────────────────
 function getPasswordStrength(password: string): { level: string; color: string; percent: number } {
   if (!password) return { level: '', color: '', percent: 0 }
@@ -67,8 +74,44 @@ function getPasswordStrength(password: string): { level: string; color: string; 
   return { level: 'Strong', color: BRAND.green, percent: 100 }
 }
 
+// ─── Contact Type Detection ─────────────────────────────────
+type ContactType = 'email' | 'phone' | 'unknown'
+
+function detectContactType(input: string): ContactType {
+  const trimmed = input.trim()
+  if (trimmed.includes('@')) return 'email'
+  // If it looks like a phone number (mostly digits)
+  const digits = trimmed.replace(/\D/g, '')
+  if (digits.length >= 10 && digits.length <= 12) return 'phone'
+  if (trimmed.length > 0 && /^\+?\d[\d\s\-()]{7,}$/.test(trimmed)) return 'phone'
+  return 'unknown'
+}
+
+function validateEmail(email: string): boolean {
+  return email.includes('@') && email.includes('.') && email.trim().length > 3
+}
+
+function validatePhone(phone: string): boolean {
+  const digits = phone.replace(/\D/g, '')
+  let localDigits = digits
+  if (localDigits.startsWith('91') && localDigits.length === 12) localDigits = localDigits.slice(2)
+  if (localDigits.startsWith('0') && localDigits.length === 11) localDigits = localDigits.slice(1)
+  return localDigits.length === 10
+}
+
+function formatPhone(phone: string): string {
+  const digits = phone.replace(/\D/g, '')
+  let localDigits = digits
+  if (localDigits.startsWith('91') && localDigits.length === 12) localDigits = localDigits.slice(2)
+  if (localDigits.startsWith('0') && localDigits.length === 11) localDigits = localDigits.slice(1)
+  return localDigits
+}
+
+// ─── OTP Slot Styling ────────────────────────────────────────
+const otpSlotClass = "h-12 w-12 text-lg font-bold border-[#e3dfd8] data-[active=true]:border-[#48805b] data-[active=true]:ring-[#48805b]/20"
+
 // ============================================================
-// LOGIN VIEW (Enhanced)
+// LOGIN VIEW (Professional)
 // ============================================================
 export function AuthLogin() {
   const { navigateTo, setUser, redirectAfterLogin, setRedirectAfterLogin } = useAppStore()
@@ -128,7 +171,7 @@ export function AuthLogin() {
       >
         <Card className="border-[#e3dfd8] shadow-xl">
           <CardHeader className="text-center pb-2">
-            {/* Brand logo/leaf icon + Shield */}
+            {/* Brand icons */}
             <div className="flex items-center justify-center gap-2 mb-2">
               <div className="w-8 h-8 rounded-full bg-[#afb75d]/20 flex items-center justify-center">
                 <Leaf className="w-4 h-4 text-[#afb75d]" />
@@ -170,7 +213,7 @@ export function AuthLogin() {
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#88837b]" />
                 <Input
                   type="text"
-                  placeholder="you@example.com or +91 98765 43210"
+                  placeholder="you@example.com or 9876543210"
                   value={identifier}
                   onChange={(e) => { setIdentifier(e.target.value); setError(null) }}
                   className="h-12 pl-10 border-[#e3dfd8] focus:border-[#48805b] focus:ring-[#48805b]/20"
@@ -250,23 +293,16 @@ export function AuthLogin() {
             </Button>
 
             <Separator className="bg-[#e3dfd8]" />
-
-            {/* Admin note */}
-            <div className="text-center text-xs text-[#88837b] bg-[#e3dfd8]/50 rounded-lg p-3">
-              <p className="font-medium">
-                Admin: use <span className="font-bold text-[#1f1e1c]">admin@notjust.com</span> / <span className="font-bold text-[#1f1e1c]">admin123</span>
-              </p>
-            </div>
           </CardContent>
 
           <CardFooter className="justify-center pb-6">
             <p className="text-sm text-[#88837b]">
-              Don&apos;t have an account?{' '}
+              New user?{' '}
               <button
                 onClick={() => navigateTo('auth-register')}
                 className="text-[#48805b] font-semibold hover:underline focus:underline min-h-[44px] inline-flex items-center"
               >
-                Register instead
+                Create an account
               </button>
             </p>
           </CardFooter>
@@ -282,42 +318,263 @@ export function AuthLogin() {
 }
 
 // ============================================================
-// REGISTER VIEW (Enhanced with Steps)
+// REGISTER VIEW — 3-Step Professional Registration Flow
 // ============================================================
 export function AuthRegister() {
   const { navigateTo, setUser, redirectAfterLogin, setRedirectAfterLogin } = useAppStore()
-  const [step, setStep] = useState(1)
-  const [form, setForm] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    password: '',
-    age: '',
-    gender: '',
-    state: '',
-  })
+
+  // ── Step management ──
+  // Step 1: 'contact' → enter mobile/email → 'otp' → verify OTP → 'existing' (if user exists) or proceed to step 2
+  // Step 2: 'details' → name + password + terms → register
+  // Step 3: 'profile' → optional age/gender/state → skip or save → auto-login & redirect
+  const [step, setStep] = useState<'contact' | 'otp' | 'existing' | 'details' | 'profile' | 'success'>('contact')
+
+  // ── Contact info (Step 1) ──
+  const [contactInput, setContactInput] = useState('')
+  const [contactType, setContactType] = useState<ContactType>('unknown')
+  const [otpId, setOtpId] = useState<string | null>(null)
+  const [otpCode, setOtpCode] = useState('')
+  const [sendingOtp, setSendingOtp] = useState(false)
+  const [verifyingOtp, setVerifyingOtp] = useState(false)
+  const [resendCooldown, setResendCooldown] = useState(0)
+  const [devOtp, setDevOtp] = useState<string | null>(null)
+  const [contactMasked, setContactMasked] = useState('')
+  const [otpAttemptsRemaining, setOtpAttemptsRemaining] = useState(3)
+
+  // ── Registration details (Step 2) ──
+  const [name, setName] = useState('')
+  const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
+  const [keepSignedIn, setKeepSignedIn] = useState(false)
   const [termsAccepted, setTermsAccepted] = useState(false)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [registering, setRegistering] = useState(false)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
 
-  const updateField = (field: string, value: string) => {
-    setForm(prev => ({ ...prev, [field]: value }))
+  // ── Optional profile (Step 3) ──
+  const [age, setAge] = useState('')
+  const [gender, setGender] = useState('')
+  const [state, setState] = useState('')
+  const [updatingProfile, setUpdatingProfile] = useState(false)
+
+  // ── Common ──
+  const [error, setError] = useState<string | null>(null)
+
+  // ── Countdown timer for resend cooldown ──
+  useEffect(() => {
+    if (resendCooldown <= 0) return
+    const timer = setInterval(() => setResendCooldown(prev => prev - 1), 1000)
+    return () => clearInterval(timer)
+  }, [resendCooldown])
+
+  // ── Auto-redirect on success ──
+  useEffect(() => {
+    if (step !== 'success') return
+    const timer = setTimeout(() => {
+      if (redirectAfterLogin) {
+        setRedirectAfterLogin(null)
+        navigateTo(redirectAfterLogin)
+      } else {
+        navigateTo('landing')
+      }
+    }, 2000)
+    return () => clearTimeout(timer)
+  }, [step])
+
+  // ── Detect contact type when input changes ──
+  const handleContactChange = (value: string) => {
+    setContactInput(value)
     setError(null)
-    // Clear field error when user types
-    if (fieldErrors[field]) {
-      setFieldErrors(prev => ({ ...prev, [field]: '' }))
+    const detected = detectContactType(value)
+    setContactType(detected)
+  }
+
+  // ── Step 1: Send OTP ──
+  const handleSendOtp = async () => {
+    setError(null)
+    const trimmed = contactInput.trim()
+    const detected = detectContactType(trimmed)
+
+    if (!trimmed) {
+      setError('Please enter your mobile number or email address')
+      return
+    }
+
+    if (detected === 'unknown') {
+      setError('Please enter a valid 10-digit mobile number or email address')
+      return
+    }
+
+    if (detected === 'email' && !validateEmail(trimmed)) {
+      setError('Please enter a valid email address (must contain @ and domain)')
+      return
+    }
+
+    if (detected === 'phone' && !validatePhone(trimmed)) {
+      setError('Please enter a valid 10-digit Indian mobile number')
+      return
+    }
+
+    setSendingOtp(true)
+    try {
+      if (detected === 'phone') {
+        // Use WhatsApp OTP for phone numbers
+        const res = await fetch('/api/auth/whatsapp-otp/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone: trimmed, purpose: 'WHATSAPP_LOGIN' }),
+        })
+        const data = await res.json()
+
+        if (!res.ok || !data.success) {
+          setError(data.message || data.error || 'Failed to send OTP')
+          setSendingOtp(false)
+          return
+        }
+
+        setOtpId(data.otp_id)
+        setContactMasked(data.phone_masked || `+91 ${trimmed.slice(0, 2)}****${trimmed.slice(-2)}`)
+
+        // In dev mode, show OTP for testing
+        if (data.message && data.message.includes('dev mode')) {
+          const code = data.message.match(/code is (\d+)/)?.[1]
+          if (code) {
+            setDevOtp(code)
+            toast.info(`[DEV] OTP: ${code}`, { duration: 10000 })
+          }
+        } else {
+          setDevOtp(null)
+        }
+
+        toast.success(`WhatsApp OTP sent to ${data.phone_masked}`)
+      } else {
+        // Use email OTP for email addresses
+        const res = await fetch('/api/auth/verify-email-otp/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: trimmed.toLowerCase() }),
+        })
+        const data = await res.json()
+
+        if (!res.ok) {
+          // Check for "already registered" error
+          if (data.error && data.error.toLowerCase().includes('already registered')) {
+            setStep('existing')
+            setSendingOtp(false)
+            return
+          }
+          setError(data.error || 'Failed to send verification code')
+          setSendingOtp(false)
+          return
+        }
+
+        setOtpId(data.otp_id)
+        setContactMasked(trimmed)
+        setDevOtp(data.dev_otp || null)
+
+        if (data.dev_otp) {
+          toast.info(`[DEV] OTP: ${data.dev_otp}`, { duration: 10000 })
+        }
+
+        toast.success('Verification code sent to your email')
+      }
+
+      setStep('otp')
+      setResendCooldown(30)
+      setOtpCode('')
+      setOtpAttemptsRemaining(3)
+      setSendingOtp(false)
+    } catch (err: any) {
+      setError('Something went wrong. Please try again.')
+      setSendingOtp(false)
     }
   }
 
-  const validateStep1 = (): boolean => {
+  // ── Step 1: Resend OTP ──
+  const handleResendOtp = async () => {
+    if (resendCooldown > 0) return
+    setOtpCode('')
+    setError(null)
+    setOtpAttemptsRemaining(3)
+    await handleSendOtp()
+  }
+
+  // ── Step 1: Verify OTP ──
+  const handleVerifyOtp = async () => {
+    if (otpCode.length !== 6 || !otpId) return
+
+    setVerifyingOtp(true)
+    setError(null)
+
+    try {
+      const detected = contactType
+      let verifyRes: Response
+
+      if (detected === 'phone') {
+        verifyRes = await fetch('/api/auth/whatsapp-otp/verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ otp_id: otpId, otp_code: otpCode }),
+        })
+      } else {
+        verifyRes = await fetch('/api/auth/verify-email-otp/verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            otp_id: otpId,
+            otp_code: otpCode,
+            email: contactInput.trim().toLowerCase(),
+          }),
+        })
+      }
+
+      const data = await verifyRes.json()
+
+      if (!data.success && !data.verified) {
+        setVerifyingOtp(false)
+        setError(data.message || data.error || 'Verification failed')
+        setOtpAttemptsRemaining(prev => Math.max(0, prev - 1))
+
+        if (data.message?.includes('expired') || data.message?.includes('Maximum')) {
+          setOtpId(null)
+        }
+        return
+      }
+
+      // OTP verified — check if user exists
+      const contact = contactInput.trim()
+      const checkRes = await fetch('/api/auth/check-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(
+          detected === 'email'
+            ? { email: contact.toLowerCase() }
+            : { phone: contact }
+        ),
+      })
+      const checkData = await checkRes.json()
+
+      if (checkData.exists) {
+        setVerifyingOtp(false)
+        setStep('existing')
+        return
+      }
+
+      // New user — proceed to step 2 (details)
+      setVerifyingOtp(false)
+      toast.success('Verified! Let\'s set up your account.')
+      setStep('details')
+    } catch (err: any) {
+      setVerifyingOtp(false)
+      setError('Verification failed. Please try again.')
+    }
+  }
+
+  // ── Step 2: Validate & Register ──
+  const validateDetails = (): boolean => {
     const errors: Record<string, string> = {}
-    if (!form.name.trim()) errors.name = 'Name is required'
-    if (!form.email.trim() && !form.phone.trim()) errors.email = 'Email or phone is required'
-    if (!form.password) errors.password = 'Password is required'
-    if (form.password && form.password.length < 6) errors.password = 'Password must be at least 6 characters'
-    if (form.email.trim() && !form.email.includes('@')) errors.email = 'Please enter a valid email address'
+    if (!name.trim()) errors.name = 'Name is required'
+    if (!password) errors.password = 'Password is required'
+    if (password && password.length < 6) errors.password = 'Password must be at least 6 characters'
     if (!termsAccepted) errors.terms = 'You must agree to the Terms of Service'
 
     setFieldErrors(errors)
@@ -325,33 +582,31 @@ export function AuthRegister() {
   }
 
   const handleRegister = async () => {
-    if (!validateStep1()) return
+    if (!validateDetails()) return
     setError(null)
     setFieldErrors({})
-    setLoading(true)
+    setRegistering(true)
 
     try {
+      const detected = contactType
+      const contact = contactInput.trim()
+
       const result = await authService.register({
-        name: form.name.trim(),
-        email: form.email.trim() || undefined,
-        phone: form.phone.trim() || undefined,
-        password: form.password,
-        age: form.age ? parseInt(form.age) : undefined,
-        gender: form.gender || undefined,
+        name: name.trim(),
+        email: detected === 'email' ? contact.toLowerCase() : undefined,
+        phone: detected === 'phone' ? formatPhone(contact) : undefined,
+        password: password,
         country: 'India',
-        state: form.state || undefined,
       })
 
       setUser(result.user as UserProfile)
-      toast.success(`Welcome, ${result.user.name}! Your account has been created.`)
 
-      if (redirectAfterLogin) {
-        setRedirectAfterLogin(null)
-        navigateTo(redirectAfterLogin)
-      } else {
-        navigateTo('landing')
-      }
+      // Proceed to optional profile step (step 3)
+      setRegistering(false)
+      toast.success(`Welcome, ${result.user.name}! Your account has been created.`)
+      setStep('profile')
     } catch (err: any) {
+      setRegistering(false)
       const msg = err?.message || 'Registration failed'
       if (msg.toLowerCase().includes('already registered') || msg.toLowerCase().includes('already exists')) {
         setError('This email or phone is already registered. Please login instead.')
@@ -360,321 +615,776 @@ export function AuthRegister() {
       } else {
         setError('Something went wrong. Please try again.')
       }
-    } finally {
-      setLoading(false)
     }
   }
 
-  const passwordStrength = getPasswordStrength(form.password)
+  // ── Step 3: Save optional profile ──
+  const handleSaveProfile = async () => {
+    setUpdatingProfile(true)
+    try {
+      // Use the current user to update profile via a direct API call
+      const currentUser = useAppStore.getState().user
+      if (!currentUser) {
+        // Skip directly to success
+        setStep('success')
+        setUpdatingProfile(false)
+        return
+      }
+
+      const res = await fetch(`/api/admin/users`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': currentUser.id,
+        },
+        body: JSON.stringify({
+          id: currentUser.id,
+          age: age ? parseInt(age) : null,
+          gender: gender || null,
+          state: state || null,
+        }),
+      })
+
+      if (res.ok) {
+        const data = await res.json()
+        if (data.user) {
+          setUser(data.user as UserProfile)
+        }
+        toast.success('Profile updated!')
+      }
+
+      setStep('success')
+    } catch (err: any) {
+      // Even if profile update fails, continue to success
+      setStep('success')
+    } finally {
+      setUpdatingProfile(false)
+    }
+  }
+
+  const handleSkipProfile = () => {
+    setStep('success')
+  }
+
+  const passwordStrength = getPasswordStrength(password)
+
+  // ── Render Step Indicator ──
+  const renderStepIndicator = () => {
+    const steps = [
+      { num: 1, label: 'Verify', active: ['contact', 'otp', 'existing'].includes(step) },
+      { num: 2, label: 'Account', active: step === 'details' },
+      { num: 3, label: 'Profile', active: step === 'profile' || step === 'success' },
+    ]
+
+    const currentStepNum = step === 'contact' || step === 'otp' || step === 'existing' ? 1
+      : step === 'details' ? 2
+      : 3
+
+    return (
+      <div className="flex items-center justify-center gap-3 mt-3">
+        {steps.map((s, i) => (
+          <React.Fragment key={s.num}>
+            <div className={`flex items-center gap-1.5 ${s.active || currentStepNum > s.num ? 'text-[#48805b]' : 'text-[#88837b]'}`}>
+              <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                currentStepNum > s.num ? 'bg-[#48805b] text-white' :
+                s.active ? 'bg-[#48805b] text-white' : 'bg-[#e3dfd8] text-[#88837b]'
+              }`}>
+                {currentStepNum > s.num ? <CheckCircle2 className="w-3.5 h-3.5" /> : s.num}
+              </div>
+              <span className="text-xs font-medium">{s.label}</span>
+            </div>
+            {i < steps.length - 1 && (
+              <div className={`w-8 h-0.5 ${currentStepNum > s.num ? 'bg-[#48805b]' : 'bg-[#e3dfd8]'}`} />
+            )}
+          </React.Fragment>
+        ))}
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#f4f3f0] pt-20 pb-12 px-4">
-      <motion.div
-        initial="hidden"
-        animate="visible"
-        variants={fadeInUp}
-        className="w-full max-w-md"
-      >
-        <Card className="border-[#e3dfd8] shadow-xl">
-          <CardHeader className="text-center pb-2">
-            {/* Brand icon */}
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <div className="w-8 h-8 rounded-full bg-[#afb75d]/20 flex items-center justify-center">
-                <Leaf className="w-4 h-4 text-[#afb75d]" />
-              </div>
-              <div className="w-14 h-14 rounded-full bg-[#48805b]/10 flex items-center justify-center">
-                <User className="w-7 h-7 text-[#48805b]" />
-              </div>
-              <div className="w-8 h-8 rounded-full bg-[#afb75d]/20 flex items-center justify-center">
-                <Leaf className="w-4 h-4 text-[#afb75d]" />
-              </div>
-            </div>
-            <CardTitle className="font-heading text-2xl font-bold text-[#1f1e1c]">
-              Create Account
-            </CardTitle>
-            <CardDescription className="text-[#88837b]">
-              Join the NotJust wellness movement
-            </CardDescription>
-
-            {/* Step indicator */}
-            <div className="flex items-center justify-center gap-3 mt-3">
-              <div className={`flex items-center gap-1.5 ${step === 1 ? 'text-[#48805b]' : 'text-[#88837b]'}`}>
-                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${step === 1 ? 'bg-[#48805b] text-white' : 'bg-[#e3dfd8] text-[#88837b]'}`}>1</div>
-                <span className="text-xs font-medium">Account</span>
-              </div>
-              <div className={`w-8 h-0.5 ${step >= 2 ? 'bg-[#48805b]' : 'bg-[#e3dfd8]'}`} />
-              <div className={`flex items-center gap-1.5 ${step === 2 ? 'text-[#48805b]' : 'text-[#88837b]'}`}>
-                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${step === 2 ? 'bg-[#48805b] text-white' : 'bg-[#e3dfd8] text-[#88837b]'}`}>2</div>
-                <span className="text-xs font-medium">Profile</span>
-              </div>
-            </div>
-          </CardHeader>
-
-          <CardContent className="space-y-3 pt-2">
-            {/* Error display */}
-            {error && (
-              <motion.div
-                initial={{ opacity: 0, y: -8 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="flex items-center gap-2 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm"
-              >
-                <AlertCircle className="w-4 h-4 shrink-0" />
-                <span>{error}</span>
-              </motion.div>
-            )}
-
-            <AnimatePresence mode="wait">
-              {step === 1 ? (
-                <motion.div key="step1" variants={slideInRight} initial="hidden" animate="visible" className="space-y-3">
-                  {/* Name field */}
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-medium text-[#1f1e1c]">
-                      Full Name <span className="text-[#48805b]">*</span>
-                    </Label>
-                    <div className="relative">
-                      <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#88837b]" />
-                      <Input
-                        placeholder="Your full name"
-                        value={form.name}
-                        onChange={(e) => updateField('name', e.target.value)}
-                        className={`h-11 pl-10 ${fieldErrors.name ? 'border-red-400 focus:border-red-400' : 'border-[#e3dfd8] focus:border-[#48805b]'} focus:ring-[#48805b]/20`}
-                      />
-                    </div>
-                    {fieldErrors.name && <p className="text-xs text-red-500">{fieldErrors.name}</p>}
+      <AnimatePresence mode="wait">
+        {/* ── Step 1a: Contact Input ── */}
+        {step === 'contact' && (
+          <motion.div
+            key="contact-step"
+            initial="hidden"
+            animate="visible"
+            variants={fadeInUp}
+            className="w-full max-w-md"
+          >
+            <Card className="border-[#e3dfd8] shadow-xl">
+              <CardHeader className="text-center pb-2">
+                <div className="flex items-center justify-center gap-2 mb-2">
+                  <div className="w-8 h-8 rounded-full bg-[#afb75d]/20 flex items-center justify-center">
+                    <Leaf className="w-4 h-4 text-[#afb75d]" />
                   </div>
-
-                  {/* Email and Phone */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div className="space-y-1.5">
-                      <Label className="text-xs font-medium text-[#1f1e1c]">
-                        Email <span className="text-[#88837b]">(or Phone below)</span>
-                      </Label>
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#88837b]" />
-                        <Input
-                          type="email"
-                          placeholder="you@example.com"
-                          value={form.email}
-                          onChange={(e) => updateField('email', e.target.value)}
-                          className={`h-11 pl-10 ${fieldErrors.email ? 'border-red-400 focus:border-red-400' : 'border-[#e3dfd8] focus:border-[#48805b]'} focus:ring-[#48805b]/20`}
-                          autoComplete="email"
-                        />
-                      </div>
-                      {fieldErrors.email && <p className="text-xs text-red-500">{fieldErrors.email}</p>}
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs font-medium text-[#1f1e1c]">
-                        Phone <span className="text-[#88837b]">(or Email above)</span>
-                      </Label>
-                      <div className="relative">
-                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#88837b]" />
-                        <Input
-                          type="tel"
-                          placeholder="+91 98765 43210"
-                          value={form.phone}
-                          onChange={(e) => updateField('phone', e.target.value)}
-                          className="h-11 pl-10 border-[#e3dfd8] focus:border-[#48805b] focus:ring-[#48805b]/20"
-                          autoComplete="tel"
-                        />
-                      </div>
-                    </div>
+                  <div className="w-14 h-14 rounded-full bg-[#48805b]/10 flex items-center justify-center">
+                    <Shield className="w-7 h-7 text-[#48805b]" />
                   </div>
+                  <div className="w-8 h-8 rounded-full bg-[#afb75d]/20 flex items-center justify-center">
+                    <Leaf className="w-4 h-4 text-[#afb75d]" />
+                  </div>
+                </div>
+                <CardTitle className="font-heading text-2xl font-bold text-[#1f1e1c]">
+                  Create Account
+                </CardTitle>
+                <CardDescription className="text-[#88837b]">
+                  Join the NotJust wellness movement
+                </CardDescription>
+                {renderStepIndicator()}
+              </CardHeader>
 
-                  {/* Password */}
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-medium text-[#1f1e1c]">
-                      Password <span className="text-[#48805b]">*</span>
-                    </Label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#88837b]" />
-                      <Input
-                        type={showPassword ? 'text' : 'password'}
-                        placeholder="At least 6 characters"
-                        value={form.password}
-                        onChange={(e) => updateField('password', e.target.value)}
-                        className={`h-11 pl-10 pr-10 ${fieldErrors.password ? 'border-red-400 focus:border-red-400' : 'border-[#e3dfd8] focus:border-[#48805b]'} focus:ring-[#48805b]/20`}
-                        autoComplete="new-password"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-[#88837b] hover:text-[#1f1e1c] transition-colors"
-                        aria-label={showPassword ? 'Hide password' : 'Show password'}
-                      >
-                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                      </button>
-                    </div>
-                    {fieldErrors.password && <p className="text-xs text-red-500">{fieldErrors.password}</p>}
+              <CardContent className="space-y-4 pt-4">
+                {error && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex items-center gap-2 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm"
+                  >
+                    <AlertCircle className="w-4 h-4 shrink-0" />
+                    <span>{error}</span>
+                  </motion.div>
+                )}
 
-                    {/* Password strength indicator */}
-                    {form.password && (
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <div className="flex-1 h-1.5 bg-[#e3dfd8] rounded-full overflow-hidden">
-                            <motion.div
-                              initial={{ width: 0 }}
-                              animate={{ width: `${passwordStrength.percent}%` }}
-                              className="h-full rounded-full"
-                              style={{ backgroundColor: passwordStrength.color }}
-                            />
-                          </div>
-                          <span className="text-xs font-medium" style={{ color: passwordStrength.color }}>
-                            {passwordStrength.level}
-                          </span>
-                        </div>
-                      </div>
+                {/* Contact type indicator */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-[#1f1e1c]">
+                    Mobile Number or Email
+                  </Label>
+                  <div className="relative">
+                    {contactType === 'email' ? (
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#48805b]" />
+                    ) : contactType === 'phone' ? (
+                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#48805b]" />
+                    ) : (
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#88837b]" />
                     )}
+                    <Input
+                      type="text"
+                      placeholder="Enter your mobile number or email"
+                      value={contactInput}
+                      onChange={(e) => handleContactChange(e.target.value)}
+                      className="h-12 pl-10 border-[#e3dfd8] focus:border-[#48805b] focus:ring-[#48805b]/20"
+                      autoComplete="username"
+                    />
                   </div>
-
-                  {/* Terms checkbox */}
-                  <div className="space-y-1">
-                    <div className="flex items-start gap-2">
-                      <Checkbox
-                        id="terms"
-                        checked={termsAccepted}
-                        onCheckedChange={(checked) => {
-                          setTermsAccepted(checked === true)
-                          if (fieldErrors.terms) setFieldErrors(prev => ({ ...prev, terms: '' }))
-                        }}
-                        className="data-[state=checked]:bg-[#48805b] data-[state=checked]:border-[#48805b] mt-0.5"
-                      />
-                      <Label htmlFor="terms" className="text-xs text-[#88837b] cursor-pointer leading-relaxed">
-                        I agree to the{' '}
-                        <span className="text-[#48805b] font-medium">Terms of Service</span> and{' '}
-                        <span className="text-[#48805b] font-medium">Privacy Policy</span>
-                      </Label>
-                    </div>
-                    {fieldErrors.terms && <p className="text-xs text-red-500">{fieldErrors.terms}</p>}
-                  </div>
-
-                  {/* Step 1: Next button */}
-                  <div className="flex gap-3">
-                    <Button
-                      onClick={() => setStep(2)}
-                      variant="outline"
-                      className="h-11 border-[#e3dfd8] text-[#88837b] hover:bg-[#e3dfd8]/50 font-heading font-semibold rounded-xl min-h-[44px]"
-                    >
-                      Skip to Profile
-                    </Button>
-                    <Button
-                      onClick={handleRegister}
-                      disabled={loading}
-                      className="flex-1 h-11 bg-[#48805b] hover:bg-[#3a6a4a] text-white font-heading font-semibold text-base rounded-xl transition-all min-h-[44px]"
-                    >
-                      {loading ? (
-                        <span className="flex items-center gap-2">
-                          <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                          Creating account...
-                        </span>
-                      ) : (
-                        'Register Now'
+                  {contactInput.trim() && contactType !== 'unknown' && (
+                    <div className="flex items-center gap-1.5">
+                      <Badge variant="outline" className="text-xs border-[#48805b]/40 text-[#48805b] bg-[#48805b]/5">
+                        {contactType === 'email' ? (
+                          <><Mail className="w-3 h-3 mr-1" /> Email detected</>
+                        ) : (
+                          <><Phone className="w-3 h-3 mr-1" /> Phone detected</>
+                        )}
+                      </Badge>
+                      {contactType === 'phone' && (
+                        <span className="text-xs text-[#88837b]">WhatsApp OTP will be sent</span>
                       )}
-                    </Button>
-                  </div>
-                </motion.div>
-              ) : (
-                <motion.div key="step2" variants={slideInRight} initial="hidden" animate="visible" className="space-y-3">
-                  {/* Age and Gender */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div className="space-y-1.5">
-                      <Label className="text-xs font-medium text-[#1f1e1c]">Age</Label>
-                      <Input
-                        type="number"
-                        placeholder="Your age"
-                        value={form.age}
-                        onChange={(e) => updateField('age', e.target.value)}
-                        className="h-11 border-[#e3dfd8] focus:border-[#48805b] focus:ring-[#48805b]/20"
-                        min={1}
-                        max={120}
-                      />
+                      {contactType === 'email' && (
+                        <span className="text-xs text-[#88837b]">Verification code will be sent to your email</span>
+                      )}
                     </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs font-medium text-[#1f1e1c]">Gender</Label>
-                      <Select
-                        value={form.gender}
-                        onValueChange={(v) => updateField('gender', v)}
-                      >
-                        <SelectTrigger className="h-11 border-[#e3dfd8] focus:border-[#48805b] focus:ring-[#48805b]/20">
-                          <SelectValue placeholder="Select gender" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Male">Male</SelectItem>
-                          <SelectItem value="Female">Female</SelectItem>
-                          <SelectItem value="Other">Other</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
+                  )}
+                </div>
 
-                  {/* State */}
+                <Button
+                  onClick={handleSendOtp}
+                  disabled={sendingOtp || !contactInput.trim() || contactType === 'unknown'}
+                  className="w-full h-12 bg-[#48805b] hover:bg-[#3a6a4a] text-white font-heading font-semibold text-base rounded-xl transition-all min-h-[44px]"
+                >
+                  {sendingOtp ? (
+                    <span className="flex items-center gap-2">
+                      <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      Sending verification code...
+                    </span>
+                  ) : (
+                    'Continue'
+                  )}
+                </Button>
+              </CardContent>
+
+              <CardFooter className="justify-center pb-6">
+                <p className="text-sm text-[#88837b]">
+                  Already have an account?{' '}
+                  <button
+                    onClick={() => navigateTo('auth-login')}
+                    className="text-[#48805b] font-semibold hover:underline focus:underline min-h-[44px] inline-flex items-center"
+                  >
+                    Login
+                  </button>
+                </p>
+              </CardFooter>
+
+              <div className="text-center text-xs text-[#88837b] pb-4">
+                <p>Privacy Policy · Terms of Service</p>
+              </div>
+            </Card>
+          </motion.div>
+        )}
+
+        {/* ── Step 1b: OTP Verification ── */}
+        {step === 'otp' && (
+          <motion.div
+            key="otp-step"
+            initial="hidden"
+            animate="visible"
+            variants={fadeInUp}
+            className="w-full max-w-md"
+          >
+            <Card className="border-[#e3dfd8] shadow-xl">
+              <CardHeader className="text-center pb-2">
+                <div className="w-14 h-14 rounded-full bg-[#48805b]/10 flex items-center justify-center mx-auto mb-3">
+                  <Shield className="w-7 h-7 text-[#48805b]" />
+                </div>
+                <CardTitle className="font-heading text-2xl font-bold text-[#1f1e1c]">
+                  Verify Your {contactType === 'phone' ? 'Phone' : 'Email'}
+                </CardTitle>
+                <CardDescription className="text-[#88837b]">
+                  We sent a 6-digit code to <span className="font-semibold text-[#1f1e1c]">{contactMasked}</span>
+                </CardDescription>
+                {renderStepIndicator()}
+              </CardHeader>
+
+              <CardContent className="space-y-4 pt-4">
+                {error && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex items-center gap-2 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm"
+                  >
+                    <AlertCircle className="w-4 h-4 shrink-0" />
+                    <span>{error}</span>
+                  </motion.div>
+                )}
+
+                {/* Dev mode hint */}
+                {devOtp && (
+                  <div className="text-center text-xs text-[#48805b] bg-[#48805b]/10 rounded-lg p-3">
+                    <p className="font-medium">Dev mode — OTP: <span className="font-bold">{devOtp}</span></p>
+                  </div>
+                )}
+
+                {/* OTP Entry */}
+                <div className="flex flex-col items-center gap-2">
+                  <InputOTP
+                    maxLength={6}
+                    value={otpCode}
+                    onChange={(value) => { setOtpCode(value); setError(null) }}
+                    disabled={verifyingOtp}
+                  >
+                    <InputOTPGroup>
+                      <InputOTPSlot index={0} className={otpSlotClass} />
+                      <InputOTPSlot index={1} className={otpSlotClass} />
+                      <InputOTPSlot index={2} className={otpSlotClass} />
+                    </InputOTPGroup>
+                    <InputOTPSeparator />
+                    <InputOTPGroup>
+                      <InputOTPSlot index={3} className={otpSlotClass} />
+                      <InputOTPSlot index={4} className={otpSlotClass} />
+                      <InputOTPSlot index={5} className={otpSlotClass} />
+                    </InputOTPGroup>
+                  </InputOTP>
+                  <p className="text-xs text-[#88837b]">
+                    {otpAttemptsRemaining > 0
+                      ? `${otpAttemptsRemaining} verification attempts remaining`
+                      : 'No attempts remaining — please resend OTP'}
+                  </p>
+                </div>
+
+                {/* Verify button */}
+                <Button
+                  onClick={handleVerifyOtp}
+                  disabled={otpCode.length !== 6 || verifyingOtp}
+                  className="w-full h-12 bg-[#48805b] hover:bg-[#3a6a4a] text-white font-heading font-semibold text-base rounded-xl transition-all min-h-[44px]"
+                >
+                  {verifyingOtp ? (
+                    <span className="flex items-center gap-2">
+                      <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      Verifying...
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-2">
+                      <CheckCircle2 className="w-5 h-5" />
+                      Verify & Continue
+                    </span>
+                  )}
+                </Button>
+
+                {/* Resend OTP */}
+                <div className="text-center">
+                  {resendCooldown > 0
+                    ? <p className="text-xs text-[#88837b]">Resend available in {resendCooldown}s</p>
+                    : <Button
+                        onClick={handleResendOtp}
+                        variant="ghost"
+                        className="text-[#48805b] text-sm min-h-[44px]"
+                        disabled={sendingOtp}
+                      >
+                        <RefreshCw className="w-4 h-4 mr-1" />
+                        {contactType === 'phone' ? 'Resend WhatsApp OTP' : 'Resend verification code'}
+                      </Button>}
+                </div>
+
+                {/* Back button */}
+                <div className="text-center">
+                  <Button
+                    variant="ghost"
+                    className="text-[#88837b] text-sm min-h-[44px]"
+                    onClick={() => {
+                      setStep('contact')
+                      setOtpCode('')
+                      setError(null)
+                      setOtpId(null)
+                      setDevOtp(null)
+                    }}
+                  >
+                    <ArrowLeft className="w-4 h-4 mr-1" />
+                    Change {contactType === 'phone' ? 'phone number' : 'email address'}
+                  </Button>
+                </div>
+              </CardContent>
+
+              <CardFooter className="justify-center pb-6">
+                <p className="text-sm text-[#88837b]">
+                  Already have an account?{' '}
+                  <button
+                    onClick={() => navigateTo('auth-login')}
+                    className="text-[#48805b] font-semibold hover:underline focus:underline min-h-[44px] inline-flex items-center"
+                  >
+                    Login
+                  </button>
+                </p>
+              </CardFooter>
+            </Card>
+          </motion.div>
+        )}
+
+        {/* ── Step 1c: Existing User ── */}
+        {step === 'existing' && (
+          <motion.div
+            key="existing-step"
+            initial="hidden"
+            animate="visible"
+            variants={fadeInUp}
+            className="w-full max-w-md"
+          >
+            <Card className="border-[#e3dfd8] shadow-xl">
+              <CardHeader className="text-center pb-2">
+                <div className="w-14 h-14 rounded-full bg-[#afb75d]/10 flex items-center justify-center mx-auto mb-3">
+                  <User className="w-7 h-7 text-[#afb75d]" />
+                </div>
+                <CardTitle className="font-heading text-2xl font-bold text-[#1f1e1c]">
+                  Account Already Exists
+                </CardTitle>
+                <CardDescription className="text-[#88837b]">
+                  {contactType === 'phone'
+                    ? `The phone number ${contactMasked} is already registered`
+                    : `The email ${contactMasked} is already registered`
+                  }
+                </CardDescription>
+              </CardHeader>
+
+              <CardContent className="space-y-4 pt-4">
+                <div className="text-center p-4 rounded-lg bg-[#48805b]/5 border border-[#48805b]/20">
+                  <p className="text-sm text-[#1f1e1c]">
+                    You already have an account with this {contactType === 'phone' ? 'phone number' : 'email address'}.
+                  </p>
+                  <p className="text-sm text-[#88837b] mt-1">
+                    Please login to continue your wellness journey.
+                  </p>
+                </div>
+
+                <Button
+                  onClick={() => navigateTo('auth-login')}
+                  className="w-full h-12 bg-[#48805b] hover:bg-[#3a6a4a] text-white font-heading font-semibold text-base rounded-xl transition-all min-h-[44px]"
+                >
+                  Go to Login
+                </Button>
+
+                <Button
+                  variant="ghost"
+                  className="text-[#88837b] text-sm min-h-[44px] w-full"
+                  onClick={() => {
+                    setStep('contact')
+                    setContactInput('')
+                    setContactType('unknown')
+                    setError(null)
+                    setOtpId(null)
+                    setOtpCode('')
+                    setDevOtp(null)
+                  }}
+                >
+                  <ArrowLeft className="w-4 h-4 mr-1" />
+                  Use a different {contactType === 'phone' ? 'phone' : 'email'}
+                </Button>
+              </CardContent>
+
+              <div className="text-center text-xs text-[#88837b] pb-4">
+                <p>Privacy Policy · Terms of Service</p>
+              </div>
+            </Card>
+          </motion.div>
+        )}
+
+        {/* ── Step 2: Basic Details ── */}
+        {step === 'details' && (
+          <motion.div
+            key="details-step"
+            initial="hidden"
+            animate="visible"
+            variants={slideInRight}
+            className="w-full max-w-md"
+          >
+            <Card className="border-[#e3dfd8] shadow-xl">
+              <CardHeader className="text-center pb-2">
+                <div className="flex items-center justify-center gap-2 mb-2">
+                  <div className="w-8 h-8 rounded-full bg-[#afb75d]/20 flex items-center justify-center">
+                    <Leaf className="w-4 h-4 text-[#afb75d]" />
+                  </div>
+                  <div className="w-14 h-14 rounded-full bg-[#48805b]/10 flex items-center justify-center">
+                    <User className="w-7 h-7 text-[#48805b]" />
+                  </div>
+                  <div className="w-8 h-8 rounded-full bg-[#afb75d]/20 flex items-center justify-center">
+                    <Leaf className="w-4 h-4 text-[#afb75d]" />
+                  </div>
+                </div>
+                <CardTitle className="font-heading text-2xl font-bold text-[#1f1e1c]">
+                  Set Up Your Account
+                </CardTitle>
+                <CardDescription className="text-[#88837b]">
+                  Verified! Now enter your name and choose a password
+                </CardDescription>
+                {renderStepIndicator()}
+              </CardHeader>
+
+              <CardContent className="space-y-3 pt-4">
+                {error && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex items-center gap-2 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm"
+                  >
+                    <AlertCircle className="w-4 h-4 shrink-0" />
+                    <span>{error}</span>
+                  </motion.div>
+                )}
+
+                {/* Verified contact badge */}
+                <div className="flex items-center gap-2 p-3 rounded-lg bg-[#48805b]/5 border border-[#48805b]/20">
+                  <CheckCircle2 className="w-4 h-4 text-[#48805b]" />
+                  <span className="text-sm text-[#1f1e1c]">
+                    {contactType === 'phone' ? 'Phone' : 'Email'} verified: <span className="font-semibold">{contactMasked}</span>
+                  </span>
+                </div>
+
+                {/* Name field */}
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium text-[#1f1e1c]">
+                    Full Name <span className="text-[#48805b]">*</span>
+                  </Label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#88837b]" />
+                    <Input
+                      placeholder="Your full name"
+                      value={name}
+                      onChange={(e) => { setName(e.target.value); setError(null); if (fieldErrors.name) setFieldErrors(prev => ({ ...prev, name: '' })) }}
+                      className={`h-11 pl-10 ${fieldErrors.name ? 'border-red-400 focus:border-red-400' : 'border-[#e3dfd8] focus:border-[#48805b]'} focus:ring-[#48805b]/20`}
+                    />
+                  </div>
+                  {fieldErrors.name && <p className="text-xs text-red-500">{fieldErrors.name}</p>}
+                </div>
+
+                {/* Password field */}
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium text-[#1f1e1c]">
+                    Password <span className="text-[#48805b]">*</span>
+                  </Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#88837b]" />
+                    <Input
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder="At least 6 characters"
+                      value={password}
+                      onChange={(e) => { setPassword(e.target.value); setError(null); if (fieldErrors.password) setFieldErrors(prev => ({ ...prev, password: '' })) }}
+                      className={`h-11 pl-10 pr-10 ${fieldErrors.password ? 'border-red-400 focus:border-red-400' : 'border-[#e3dfd8] focus:border-[#48805b]'} focus:ring-[#48805b]/20`}
+                      autoComplete="new-password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#88837b] hover:text-[#1f1e1c] transition-colors"
+                      aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                  {fieldErrors.password && <p className="text-xs text-red-500">{fieldErrors.password}</p>}
+
+                  {/* Password strength indicator */}
+                  {password && (
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 h-1.5 bg-[#e3dfd8] rounded-full overflow-hidden">
+                          <motion.div
+                            initial={{ width: 0 }}
+                            animate={{ width: `${passwordStrength.percent}%` }}
+                            className="h-full rounded-full"
+                            style={{ backgroundColor: passwordStrength.color }}
+                          />
+                        </div>
+                        <span className="text-xs font-medium" style={{ color: passwordStrength.color }}>
+                          {passwordStrength.level}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Keep me signed in */}
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="reg-keep-signed-in"
+                    checked={keepSignedIn}
+                    onCheckedChange={(checked) => setKeepSignedIn(checked === true)}
+                    className="data-[state=checked]:bg-[#48805b] data-[state=checked]:border-[#48805b]"
+                  />
+                  <Label htmlFor="reg-keep-signed-in" className="text-sm text-[#88837b] cursor-pointer">
+                    Keep me signed in
+                  </Label>
+                </div>
+
+                {/* Terms checkbox */}
+                <div className="space-y-1">
+                  <div className="flex items-start gap-2">
+                    <Checkbox
+                      id="reg-terms"
+                      checked={termsAccepted}
+                      onCheckedChange={(checked) => {
+                        setTermsAccepted(checked === true)
+                        if (fieldErrors.terms) setFieldErrors(prev => ({ ...prev, terms: '' }))
+                      }}
+                      className="data-[state=checked]:bg-[#48805b] data-[state=checked]:border-[#48805b] mt-0.5"
+                    />
+                    <Label htmlFor="reg-terms" className="text-xs text-[#88837b] cursor-pointer leading-relaxed">
+                      I agree to the{' '}
+                      <span className="text-[#48805b] font-medium">Terms of Service</span> and{' '}
+                      <span className="text-[#48805b] font-medium">Privacy Policy</span>
+                    </Label>
+                  </div>
+                  {fieldErrors.terms && <p className="text-xs text-red-500">{fieldErrors.terms}</p>}
+                </div>
+
+                {/* Create Account button */}
+                <div className="flex gap-3">
+                  <Button
+                    variant="outline"
+                    className="h-11 border-[#e3dfd8] text-[#88837b] hover:bg-[#e3dfd8]/50 font-heading font-semibold rounded-xl min-h-[44px]"
+                    onClick={() => {
+                      setStep('contact')
+                      setContactInput('')
+                      setContactType('unknown')
+                      setError(null)
+                      setOtpId(null)
+                      setOtpCode('')
+                      setName('')
+                      setPassword('')
+                      setTermsAccepted(false)
+                    }}
+                  >
+                    <ArrowLeft className="w-4 h-4 mr-1" /> Back
+                  </Button>
+                  <Button
+                    onClick={handleRegister}
+                    disabled={registering}
+                    className="flex-1 h-11 bg-[#48805b] hover:bg-[#3a6a4a] text-white font-heading font-semibold text-base rounded-xl transition-all min-h-[44px]"
+                  >
+                    {registering ? (
+                      <span className="flex items-center gap-2">
+                        <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        Creating account...
+                      </span>
+                    ) : (
+                      'Create Account'
+                    )}
+                  </Button>
+                </div>
+              </CardContent>
+
+              <CardFooter className="justify-center pb-6">
+                <p className="text-sm text-[#88837b]">
+                  Already have an account?{' '}
+                  <button
+                    onClick={() => navigateTo('auth-login')}
+                    className="text-[#48805b] font-semibold hover:underline focus:underline min-h-[44px] inline-flex items-center"
+                  >
+                    Login
+                  </button>
+                </p>
+              </CardFooter>
+            </Card>
+          </motion.div>
+        )}
+
+        {/* ── Step 3: Optional Profile ── */}
+        {step === 'profile' && (
+          <motion.div
+            key="profile-step"
+            initial="hidden"
+            animate="visible"
+            variants={slideInRight}
+            className="w-full max-w-md"
+          >
+            <Card className="border-[#e3dfd8] shadow-xl">
+              <CardHeader className="text-center pb-2">
+                <div className="w-14 h-14 rounded-full bg-[#48805b]/10 flex items-center justify-center mx-auto mb-3">
+                  <User className="w-7 h-7 text-[#48805b]" />
+                </div>
+                <CardTitle className="font-heading text-2xl font-bold text-[#1f1e1c]">
+                  Complete Your Profile
+                </CardTitle>
+                <CardDescription className="text-[#88837b]">
+                  Optional details to personalize your experience
+                </CardDescription>
+                {renderStepIndicator()}
+              </CardHeader>
+
+              <CardContent className="space-y-3 pt-4">
+                {/* Age and Gender */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-medium text-[#1f1e1c]">State</Label>
-                    <div className="relative">
-                      <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#88837b]" />
-                      <Select
-                        value={form.state}
-                        onValueChange={(v) => updateField('state', v)}
-                      >
-                        <SelectTrigger className="h-11 pl-10 border-[#e3dfd8] focus:border-[#48805b] focus:ring-[#48805b]/20 w-full">
-                          <SelectValue placeholder="Select your state" />
-                        </SelectTrigger>
-                        <SelectContent className="max-h-48">
-                          {INDIAN_STATES.map((state) => (
-                            <SelectItem key={state} value={state}>{state}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                    <Label className="text-xs font-medium text-[#1f1e1c]">
+                      Age <span className="text-[#88837b]">(optional)</span>
+                    </Label>
+                    <Input
+                      type="number"
+                      placeholder="Your age"
+                      value={age}
+                      onChange={(e) => setAge(e.target.value)}
+                      className="h-11 border-[#e3dfd8] focus:border-[#48805b] focus:ring-[#48805b]/20"
+                      min={1}
+                      max={120}
+                    />
                   </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium text-[#1f1e1c]">
+                      Gender <span className="text-[#88837b]">(optional)</span>
+                    </Label>
+                    <Select
+                      value={gender}
+                      onValueChange={(v) => setGender(v)}
+                    >
+                      <SelectTrigger className="h-11 border-[#e3dfd8] focus:border-[#48805b] focus:ring-[#48805b]/20">
+                        <SelectValue placeholder="Select gender" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Male">Male</SelectItem>
+                        <SelectItem value="Female">Female</SelectItem>
+                        <SelectItem value="Other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
 
-                  {/* Step 2 buttons */}
-                  <div className="flex gap-3">
-                    <Button
-                      onClick={() => setStep(1)}
-                      variant="outline"
-                      className="h-11 border-[#e3dfd8] text-[#88837b] hover:bg-[#e3dfd8]/50 font-heading font-semibold rounded-xl min-h-[44px]"
+                {/* State */}
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium text-[#1f1e1c]">
+                    State <span className="text-[#88837b]">(optional)</span>
+                  </Label>
+                  <div className="relative">
+                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#88837b]" />
+                    <Select
+                      value={state}
+                      onValueChange={(v) => setState(v)}
                     >
-                      <ArrowLeft className="w-4 h-4 mr-1" /> Back
-                    </Button>
-                    <Button
-                      onClick={handleRegister}
-                      disabled={loading}
-                      className="flex-1 h-11 bg-[#48805b] hover:bg-[#3a6a4a] text-white font-heading font-semibold text-base rounded-xl transition-all min-h-[44px]"
-                    >
-                      {loading ? (
-                        <span className="flex items-center gap-2">
-                          <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                          Creating account...
-                        </span>
-                      ) : (
-                        'Complete Registration'
-                      )}
-                    </Button>
+                      <SelectTrigger className="h-11 pl-10 border-[#e3dfd8] focus:border-[#48805b] focus:ring-[#48805b]/20 w-full">
+                        <SelectValue placeholder="Select your state" />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-48">
+                        {INDIAN_STATES.map((s) => (
+                          <SelectItem key={s} value={s}>{s}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
+                </div>
+
+                {/* Save & Continue / Skip buttons */}
+                <div className="flex gap-3">
+                  <Button
+                    onClick={handleSkipProfile}
+                    variant="outline"
+                    className="h-11 border-[#e3dfd8] text-[#88837b] hover:bg-[#e3dfd8]/50 font-heading font-semibold rounded-xl min-h-[44px]"
+                  >
+                    Skip & Continue
+                  </Button>
+                  <Button
+                    onClick={handleSaveProfile}
+                    disabled={updatingProfile}
+                    className="flex-1 h-11 bg-[#48805b] hover:bg-[#3a6a4a] text-white font-heading font-semibold text-base rounded-xl transition-all min-h-[44px]"
+                  >
+                    {updatingProfile ? (
+                      <span className="flex items-center gap-2">
+                        <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        Saving...
+                      </span>
+                    ) : (
+                      'Save & Continue'
+                    )}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+
+        {/* ── Success Screen ── */}
+        {step === 'success' && (
+          <motion.div
+            key="success-step"
+            initial="hidden"
+            animate="visible"
+            variants={scaleIn}
+            className="w-full max-w-md"
+          >
+            <Card className="border-[#48805b]/30 shadow-xl">
+              <CardContent className="flex flex-col items-center py-12">
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
+                  className="w-16 h-16 rounded-full bg-[#48805b]/10 flex items-center justify-center mb-4"
+                >
+                  <CheckCircle2 className="w-8 h-8 text-[#48805b]" />
                 </motion.div>
-              )}
-            </AnimatePresence>
-          </CardContent>
-
-          <CardFooter className="justify-center pb-6">
-            <p className="text-sm text-[#88837b]">
-              Already have an account?{' '}
-              <button
-                onClick={() => navigateTo('auth-login')}
-                className="text-[#48805b] font-semibold hover:underline focus:underline min-h-[44px] inline-flex items-center"
-              >
-                Login instead
-              </button>
-            </p>
-          </CardFooter>
-        </Card>
-      </motion.div>
+                <motion.h2
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.4 }}
+                  className="font-heading text-2xl font-bold text-[#1f1e1c]"
+                >
+                  Welcome!
+                </motion.h2>
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.6 }}
+                  className="text-[#88837b] mt-2 text-sm"
+                >
+                  Redirecting you now...
+                </motion.p>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
 
 // ============================================================
-// FORGOT PASSWORD VIEW (NEW — Multi-step)
+// FORGOT PASSWORD VIEW (Multi-step — mostly preserved)
 // ============================================================
 export function AuthForgotPassword() {
   const { navigateTo } = useAppStore()
@@ -689,7 +1399,7 @@ export function AuthForgotPassword() {
   const [showNewPassword, setShowNewPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [devOtp, setDevOtp] = useState<string | null>(null) // For dev mode testing
+  const [devOtp, setDevOtp] = useState<string | null>(null)
 
   // Step 1: Send verification code
   const handleSendCode = async () => {
@@ -717,7 +1427,6 @@ export function AuthForgotPassword() {
         return
       }
 
-      // Save otp_id for next step
       if (data.otp_id) {
         setOtpId(data.otp_id)
       }
@@ -946,15 +1655,15 @@ export function AuthForgotPassword() {
                         containerClassName="gap-2"
                       >
                         <InputOTPGroup>
-                          <InputOTPSlot index={0} className="h-12 w-12 text-lg font-bold border-[#e3dfd8] data-[active=true]:border-[#48805b] data-[active=true]:ring-[#48805b]/20" />
-                          <InputOTPSlot index={1} className="h-12 w-12 text-lg font-bold border-[#e3dfd8] data-[active=true]:border-[#48805b] data-[active=true]:ring-[#48805b]/20" />
-                          <InputOTPSlot index={2} className="h-12 w-12 text-lg font-bold border-[#e3dfd8] data-[active=true]:border-[#48805b] data-[active=true]:ring-[#48805b]/20" />
+                          <InputOTPSlot index={0} className={otpSlotClass} />
+                          <InputOTPSlot index={1} className={otpSlotClass} />
+                          <InputOTPSlot index={2} className={otpSlotClass} />
                         </InputOTPGroup>
                         <InputOTPSeparator />
                         <InputOTPGroup>
-                          <InputOTPSlot index={3} className="h-12 w-12 text-lg font-bold border-[#e3dfd8] data-[active=true]:border-[#48805b] data-[active=true]:ring-[#48805b]/20" />
-                          <InputOTPSlot index={4} className="h-12 w-12 text-lg font-bold border-[#e3dfd8] data-[active=true]:border-[#48805b] data-[active=true]:ring-[#48805b]/20" />
-                          <InputOTPSlot index={5} className="h-12 w-12 text-lg font-bold border-[#e3dfd8] data-[active=true]:border-[#48805b] data-[active=true]:ring-[#48805b]/20" />
+                          <InputOTPSlot index={3} className={otpSlotClass} />
+                          <InputOTPSlot index={4} className={otpSlotClass} />
+                          <InputOTPSlot index={5} className={otpSlotClass} />
                         </InputOTPGroup>
                       </InputOTP>
                     </div>

@@ -668,3 +668,26 @@ Stage Summary:
 - Order notifications via email (Zoho SMTP), WhatsApp (Business API), SMS (SMSAlert) for all lifecycle events
 - NotificationLog model tracks all attempts in database
 - All changes pushed to GitHub (commit efcbdbf)
+
+---
+Task ID: 5
+Agent: Cart & Checkout Developer
+Task: Create Cart & Checkout views for NOTJUST Watr platform
+
+Work Log:
+- Created `/home/z/my-project/src/components/CartCheckout.tsx` with 3 exported components
+- CartView: shopping cart with item list, quantity +/- controls, remove with animation, empty state, sticky footer with total
+- CheckoutView: shipping address form (name, phone +91, address, city, state dropdown, pincode), payment method selection (UPI/Card/Net Banking), order summary with GST calculation, place order via orderService.create()
+- OrderSuccessView: success page with order ID, navigation to profile/products
+- Added cart/checkout/order-success cases to ViewRenderer in page.tsx
+- Auth guard: redirects unauthenticated users to login with redirectAfterLogin='checkout'
+- Form validation: all shipping fields validated with error messages
+- Responsive: mobile-first with sticky mobile footer, lg:grid layout for checkout
+- Animations: framer-motion fadeInUp, staggerContainer, itemVariant, scaleIn
+- Brand colors: green (#48805b), lime (#afb75d), dark (#1f1e1c), muted (#88837b), surface (#e3dfd8), bg (#f4f3f0)
+- All files pass ESLint, dev server compiles successfully
+
+Stage Summary:
+- Complete cart & checkout flow ready for production
+- Order creation integrated with /api/orders POST endpoint
+- Order success view with navigation to profile orders

@@ -100,11 +100,14 @@ export default function ProductDetailPage() {
 
   // State
   const [product, setProduct] = useState<(Product & { videos: ProductVideo[]; quizzes: ProductQuiz[] }) | null>(null)
-  const [loading, setLoading] = useState(() => !selectedProductId)
-  const [error, setError] = useState<string | null>(() => selectedProductId ? null : 'No product selected')
+  const [fetchError, setFetchError] = useState<string | null>(null)
+  const [fetchedId, setFetchedId] = useState<string | null>(null)
   const [productProgress, setProductProgress] = useState<ProductLearningProgress | null>(null)
   const [copied, setCopied] = useState(false)
-  const hasFetchedRef = useRef(false)
+
+  // Derived: are we currently loading?
+  // Loading = no selectedProductId OR we haven't fetched this product yet
+  const isLoading = !selectedProductId || (selectedProductId !== fetchedId && !fetchError)
 
   // Derived: share URL computed from product
   const shareUrl = useMemo(() => {
@@ -113,25 +116,26 @@ export default function ProductDetailPage() {
     return `${window.location.origin}${window.location.pathname}?product=${slug}`
   }, [product])
 
-  // Fetch product data (async, not synchronous setState)
+  // Fetch product data when selectedProductId changes
   useEffect(() => {
-    if (!selectedProductId || hasFetchedRef.current) return
-    hasFetchedRef.current = true
+    if (!selectedProductId) return
+
+    // Skip if we already fetched this exact product ID
+    if (fetchedId === selectedProductId) return
 
     productService.get(selectedProductId)
       .then(data => {
         setProduct(data)
-        // Update share slug for URL
         const slug = data.slug || data.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
         setShareSlug(slug)
-        setLoading(false)
-        setError(null)
+        setFetchError(null)
+        setFetchedId(selectedProductId)
       })
       .catch(err => {
-        setError(err.message || 'Failed to load product')
-        setLoading(false)
+        setFetchError(err.message || 'Failed to load product')
+        setProduct(null)
       })
-  }, [selectedProductId, setShareSlug])
+  }, [selectedProductId, fetchedId, setShareSlug])
 
   // Sync URL with product slug for shareable links (external DOM update)
   useEffect(() => {
@@ -154,6 +158,17 @@ export default function ProductDetailPage() {
       }
     }
   }, [])
+
+  // Timeout redirect: if no product ID after 3 seconds, redirect to products page
+  useEffect(() => {
+    if (selectedProductId) return
+    const timer = setTimeout(() => {
+      if (!selectedProductId) {
+        navigateTo('products')
+      }
+    }, 3000)
+    return () => clearTimeout(timer)
+  }, [selectedProductId, navigateTo])
 
   // Fetch learning progress for logged-in user
   useEffect(() => {
@@ -243,7 +258,7 @@ export default function ProductDetailPage() {
   }, [shareUrl, product, handleCopyShareLink])
 
   // ─── Loading State ────────────────────────────────────────
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#f4f3f0]">
         <motion.div
@@ -259,7 +274,7 @@ export default function ProductDetailPage() {
   }
 
   // ─── Error State ──────────────────────────────────────────
-  if (error || !product) {
+  if (fetchError || (!isLoading && !product)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#f4f3f0]">
         <motion.div
@@ -271,7 +286,7 @@ export default function ProductDetailPage() {
             <Package className="w-10 h-10" style={{ color: BRAND.muted }} />
           </div>
           <h2 className="font-heading text-xl font-bold" style={{ color: BRAND.dark }}>
-            {error || 'Product not found'}
+            {fetchError || 'Product not found'}
           </h2>
           <p className="text-sm" style={{ color: BRAND.muted }}>
             The product you&apos;re looking for doesn&apos;t exist or has been removed.

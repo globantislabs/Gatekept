@@ -247,8 +247,22 @@ export default function LandingPage() {
               ))}
             </div>
 
-            {/* Right side — User / Login */}
+            {/* Right side — User / Login / Dashboard */}
             <div className="flex items-center gap-3">
+              {/* Admin Dashboard button — only for admin users */}
+              {user?.is_admin && (
+                <Button
+                  onClick={() => navigateTo('admin-dashboard')}
+                  className={`rounded-full font-heading font-semibold text-xs min-h-[44px] transition-all duration-300 ${
+                    scrolled
+                      ? 'bg-[#1f1e1c] hover:bg-[#2a2926] text-white'
+                      : 'bg-[#afb75d]/20 hover:bg-[#afb75d]/30 text-[#afb75d] border border-[#afb75d]/30 backdrop-blur-sm'
+                  }`}
+                >
+                  <BarChart3 className="w-3.5 h-3.5 mr-1.5" />
+                  Dashboard
+                </Button>
+              )}
               {user ? (
                 <button
                   onClick={() => navigateTo('profile')}
@@ -312,6 +326,17 @@ export default function LandingPage() {
                     ))}
 
                     <Separator className="my-3 bg-white/[0.06]" />
+
+                    {/* Admin Dashboard — mobile */}
+                    {user?.is_admin && (
+                      <button
+                        onClick={() => { navigateTo('admin-dashboard'); setMobileNavOpen(false) }}
+                        className="flex items-center gap-3 px-4 py-3 rounded-xl bg-[#afb75d]/20 text-[#afb75d] hover:bg-[#afb75d]/30 transition-all duration-300 text-sm font-semibold min-h-[44px]"
+                      >
+                        <BarChart3 className="w-5 h-5" />
+                        Dashboard
+                      </button>
+                    )}
 
                     {user ? (
                       <button

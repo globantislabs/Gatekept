@@ -15,6 +15,7 @@ import ProductDetailPage from '@/components/ProductDetailPage'
 import { ProductLearningModule } from '@/components/ProductLearningModule'
 import AdminPanel from '@/components/AdminPanel'
 import ProductPage from '@/components/ProductPage'
+import { CartView, CheckoutView, OrderSuccessView } from '@/components/CartCheckout'
 
 // ─── URL Sync: reads ?product=slug and navigates ────────────
 function UrlSyncHandler() {
@@ -85,6 +86,12 @@ function ViewRenderer() {
         return <AuthForgotPassword />
       case 'auth-verify-email':
         return <AuthForgotPassword />
+      case 'cart':
+        return <CartView />
+      case 'checkout':
+        return <CheckoutView />
+      case 'order-success':
+        return <OrderSuccessView />
       case 'profile':
         return <ProfilePage />
       case 'admin-dashboard':

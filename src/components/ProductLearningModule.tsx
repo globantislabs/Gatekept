@@ -245,7 +245,7 @@ export function ProductLearningModule() {
     try {
       const updatedVP = { ...(progress?.video_progress || {}), [currentVideo.id]: pct }
       const saved = await productLearningService.save({
-        user_id: user.user_id,
+        user_id: user.id,
         product_id: selectedProductId,
         video_progress: updatedVP,
         quiz_answers: progress?.quiz_answers || {},
@@ -341,7 +341,7 @@ export function ProductLearningModule() {
           }
 
           const saved = await productLearningService.save({
-            user_id: user.user_id,
+            user_id: user.id,
             product_id: selectedProductId,
             video_progress: existingVP,
             quiz_answers: updatedQA,

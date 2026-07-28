@@ -32,7 +32,8 @@ export async function GET(request: NextRequest) {
       })
 
       if (!progress) {
-        return errorResponse('Learning progress not found', 404)
+        // Return empty progress instead of 404 — client handles null case
+        return jsonResponse({ progress: null })
       }
 
       // Parse JSON fields

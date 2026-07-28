@@ -186,7 +186,7 @@ export function ProfilePage() {
       setLoadingSubs(true)
 
       try {
-        const progress = await productLearningService.get(user.user_id)
+        const progress = await productLearningService.get(user.id)
         setLearningProgress(Array.isArray(progress) ? progress : [])
         const prods = await productService.list({ active: true })
         setProducts(prods)

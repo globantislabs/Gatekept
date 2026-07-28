@@ -173,7 +173,7 @@ export default function ProductDetailPage() {
   // Fetch learning progress for logged-in user
   useEffect(() => {
     if (!user || !selectedProductId) return
-    productLearningService.get(user.user_id, selectedProductId)
+    productLearningService.get(user.id, selectedProductId)
       .then(data => {
         const prog = data.find(p => p.product_id === selectedProductId)
         setProductProgress(prog || null)

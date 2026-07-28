@@ -104,6 +104,8 @@ export default function ProductDetailPage() {
   const [fetchedId, setFetchedId] = useState<string | null>(null)
   const [productProgress, setProductProgress] = useState<ProductLearningProgress | null>(null)
   const [copied, setCopied] = useState(false)
+  const [quantity, setQuantity] = useState(1)
+  const [progressFetchKey, setProgressFetchKey] = useState(0)
 
   // Derived: are we currently loading?
   // Loading = no selectedProductId OR we haven't fetched this product yet
@@ -170,7 +172,7 @@ export default function ProductDetailPage() {
     return () => clearTimeout(timer)
   }, [selectedProductId, navigateTo])
 
-  // Fetch learning progress for logged-in user
+  // Fetch learning progress for logged-in user (re-fetch when progressFetchKey changes)
   useEffect(() => {
     if (!user || !selectedProductId) return
     productLearningService.get(user.id, selectedProductId)
@@ -181,7 +183,7 @@ export default function ProductDetailPage() {
       .catch(() => {
         // Silently fail — progress fetch is non-critical
       })
-  }, [user, selectedProductId])
+  }, [user, selectedProductId, progressFetchKey])
 
   // Learning status
   const learningStatus = getLearningStatus(productProgress)
@@ -197,6 +199,20 @@ export default function ProductDetailPage() {
   const ingredientsList = product ? parseIngredients(product.ingredients) : []
 
   // ─── Handlers ─────────────────────────────────────────────
+  const handleAddToCart = useCallback(() => {
+    if (!product || !isCompleted) return
+    addToCart({
+      productId: product.id,
+      name: product.name,
+      price: product.price,
+      quantity,
+      imageUrl: product.image_url,
+      type: product.type,
+      purchaseType: 'one-time',
+    })
+    toast.success(`${product.name} added to cart!`)
+  }, [product, isCompleted, quantity, addToCart])
+
   const handleStartLearning = useCallback(() => {
     if (!product) return
     setSelectedProductId(product.id)
@@ -609,22 +625,70 @@ export default function ProductDetailPage() {
                   )}
 
                   {user && isCompleted && (
-                    <div className="flex items-center gap-3">
-                      <Badge
-                        className="min-h-[28px] px-3 text-xs"
-                        style={{ backgroundColor: BRAND.green, color: '#fff', borderColor: 'transparent' }}
+                    <div className="space-y-4">
+                      {/* Completed badge + Review */}
+                      <div className="flex items-center gap-3">
+                        <Badge
+                          className="min-h-[28px] px-3 text-xs"
+                          style={{ backgroundColor: BRAND.green, color: '#fff', borderColor: 'transparent' }}
+                        >
+                          <CheckCircle className="w-3.5 h-3.5 mr-1" />
+                          Completed
+                        </Badge>
+                        <Button
+                          onClick={handleReview}
+                          variant="outline"
+                          className="pointer-events-auto min-h-[44px] flex-1 rounded-xl font-heading font-semibold border-[#e3dfd8]"
+                        >
+                          <Eye className="w-4 h-4 mr-2" />
+                          Review
+                        </Button>
+                      </div>
+
+                      {/* Purchase section — unlocked after learning completion */}
+                      <div className="p-4 rounded-xl space-y-3"
+                        style={{ backgroundColor: `${BRAND.lime}08`, borderColor: `${BRAND.lime}30`, borderWidth: '1px' }}
                       >
-                        <CheckCircle className="w-3.5 h-3.5 mr-1" />
-                        Completed
-                      </Badge>
-                      <Button
-                        onClick={handleReview}
-                        variant="outline"
-                        className="pointer-events-auto min-h-[44px] flex-1 rounded-xl font-heading font-semibold border-[#e3dfd8]"
-                      >
-                        <Eye className="w-4 h-4 mr-2" />
-                        Review
-                      </Button>
+                        <div className="flex items-center gap-2">
+                          <ShoppingCart className="w-4 h-4" style={{ color: BRAND.lime }} />
+                          <span className="font-heading text-sm font-semibold" style={{ color: BRAND.dark }}>
+                            Product Unlocked — Now Available for Purchase
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-1 rounded-lg border" style={{ borderColor: BRAND.surface }}>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-9 w-9 rounded-l-lg"
+                              onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                              disabled={quantity <= 1}
+                            >
+                              <Minus className="w-4 h-4" style={{ color: BRAND.muted }} />
+                            </Button>
+                            <span className="min-w-[32px] text-center font-medium text-sm" style={{ color: BRAND.dark }}>
+                              {quantity}
+                            </span>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-9 w-9 rounded-r-lg"
+                              onClick={() => setQuantity(Math.min(product.max_order_qty || 10, quantity + 1))}
+                              disabled={quantity >= (product.max_order_qty || 10)}
+                            >
+                              <Plus className="w-4 h-4" style={{ color: BRAND.muted }} />
+                            </Button>
+                          </div>
+                          <Button
+                            onClick={handleAddToCart}
+                            className="pointer-events-auto min-h-[44px] flex-1 rounded-xl font-heading font-semibold text-base"
+                            style={{ backgroundColor: BRAND.lime, color: BRAND.dark }}
+                          >
+                            <ShoppingCart className="w-4 h-4 mr-2" />
+                            Add to Cart — ₹{((product?.price || 0) * quantity).toLocaleString()}
+                          </Button>
+                        </div>
+                      </div>
                     </div>
                   )}
 

@@ -57,7 +57,7 @@ interface QuizResult {
 // Video 1 → Quiz 1 → Video 2 → Quiz 2 → Video 3 → Quiz 3 → Unlocked
 // ═══════════════════════════════════════════════════════════
 export function ProductLearningModule() {
-  const { selectedProductId, user, navigateTo, setRedirectAfterLogin, setSelectedProductId } = useAppStore()
+  const { selectedProductId, user, navigateTo, setRedirectAfterLogin, setSelectedProductId, setUser } = useAppStore()
 
   // ─── Login guard: redirect to login if not authenticated ──
   useEffect(() => {
@@ -125,11 +125,19 @@ export function ProductLearningModule() {
         // Only show active videos
         const loadedVideos = (vidRes.data || []).filter(v => v.active !== false)
         setVideos(loadedVideos)
-        setProgress(progRes.data || null)
+        // progRes.data can be an array or single object — extract single object
+        const progData = progRes.data
+        let savedProgressObj: ProductLearningProgress | null = null
+        if (Array.isArray(progData)) {
+          savedProgressObj = progData.length > 0 ? progData[0] : null
+        } else if (progData && typeof progData === 'object') {
+          savedProgressObj = progData as ProductLearningProgress
+        }
+        setProgress(savedProgressObj)
 
         // Determine which step to start on based on saved progress
-        if (progRes.data && loadedVideos.length > 0) {
-          const savedProgress = progRes.data as ProductLearningProgress
+        if (savedProgressObj && loadedVideos.length > 0) {
+          const savedProgress = savedProgressObj
           // Check quiz_answers to see which quizzes were already passed
           // We'll reconstruct the step from the progress
           const vp = savedProgress.video_progress || {}
@@ -333,10 +341,12 @@ export function ProductLearningModule() {
 
           // Determine new status
           let newStatus = 'IN_PROGRESS'
+          let allQuizzesCompleted = false
           if (passed && currentStep.type === 'quiz') {
             const nextVideoIndex = currentStep.videoIndex + 1
             if (nextVideoIndex >= videos.length) {
               newStatus = 'COMPLETED'
+              allQuizzesCompleted = true
             }
           }
 
@@ -345,11 +355,15 @@ export function ProductLearningModule() {
             product_id: selectedProductId,
             video_progress: existingVP,
             quiz_answers: updatedQA,
-            quiz_completed: passed,
+            quiz_completed: allQuizzesCompleted,
             quiz_score: overallScore,
             status: newStatus,
           })
           if (saved) setProgress(saved)
+          // If learning completed, update user's learning_completed flag in the store
+          if (newStatus === 'COMPLETED' && user) {
+            setUser({ ...user, learning_completed: true })
+          }
         } catch (err) {
           console.error('Failed to save quiz progress:', err)
         }

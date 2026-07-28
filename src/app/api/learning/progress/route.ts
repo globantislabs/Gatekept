@@ -148,6 +148,14 @@ export async function POST(request: NextRequest) {
         where: { id: existing.id },
         data: updateData,
       })
+
+      // If status is COMPLETED, update user's learning_completed flag
+      if (status === 'COMPLETED') {
+        await db.userProfile.update({
+          where: { id: user_id },
+          data: { learning_completed: true },
+        })
+      }
     } else {
       // Create new progress
       progress = await db.productLearningProgress.create({
@@ -162,6 +170,14 @@ export async function POST(request: NextRequest) {
           completed_at: quiz_completed ? new Date() : undefined,
         },
       })
+
+      // If status is COMPLETED on creation, update user's learning_completed flag
+      if (status === 'COMPLETED') {
+        await db.userProfile.update({
+          where: { id: user_id },
+          data: { learning_completed: true },
+        })
+      }
     }
 
     // Return with parsed JSON fields

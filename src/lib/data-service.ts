@@ -416,10 +416,12 @@ export const productLearningService = {
     quiz_score: number
     status: string
   }): Promise<ProductLearningProgress> {
-    return apiFetch('/api/learning/progress', {
+    const res = await apiFetch<{ progress: ProductLearningProgress }>('/api/learning/progress', {
       method: 'POST',
       body: JSON.stringify(data),
     })
+    // API returns { progress: {...} } — extract the progress object
+    return res.progress || res as unknown as ProductLearningProgress
   },
 }
 

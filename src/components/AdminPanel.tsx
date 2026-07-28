@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import {
   LayoutDashboard, Package, BookOpen, Users, Megaphone,
   Plus, Pencil, Trash2, Copy, Search,
@@ -176,6 +176,7 @@ function AdminDashboard() {
   const [editingQuiz, setEditingQuiz] = useState<ProductQuiz | null>(null)
   const [showAddVideo, setShowAddVideo] = useState(false)
   const [showAddQuiz, setShowAddQuiz] = useState(false)
+  const learningScrollRef = useRef<HTMLDivElement>(null)
   const [newVideo, setNewVideo] = useState({ title: '', duration: '', description: '', order: 1, video_url: '' })
   const [newQuiz, setNewQuiz] = useState({ question: '', options: ['', '', '', ''], answer: 0, category: '', difficulty: 'EASY', order: 1, video_id: '' })
   const [newProduct, setNewProduct] = useState({
@@ -237,8 +238,9 @@ function AdminDashboard() {
       setShowAddVideo(false)
       setNewVideo({ title: '', duration: '', description: '', order: learningVideos.length + 1, video_url: '' })
       loadLearningContent(learningProductId)
-    } catch {
-      toast.error('Failed to save video')
+    } catch (err) {
+      console.error('Failed to save video:', err)
+      toast.error('Failed to save video — check console for details')
     }
   }
 
@@ -257,8 +259,9 @@ function AdminDashboard() {
       setShowAddQuiz(false)
       setNewQuiz({ question: '', options: ['', '', '', ''], answer: 0, category: '', difficulty: 'EASY', order: 1, video_id: '' })
       loadLearningContent(learningProductId)
-    } catch {
-      toast.error('Failed to save question')
+    } catch (err) {
+      console.error('Failed to save question:', err)
+      toast.error('Failed to save question — check console for details')
     }
   }
 
@@ -270,7 +273,8 @@ function AdminDashboard() {
       await productVideoService.delete(learningProductId, videoId, userId)
       toast.success('Video deleted')
       loadLearningContent(learningProductId)
-    } catch {
+    } catch (err) {
+      console.error('Failed to delete video:', err)
       toast.error('Failed to delete video')
     }
   }
@@ -283,7 +287,8 @@ function AdminDashboard() {
       await productQuizService.delete(learningProductId, quizId, userId)
       toast.success('Question deleted')
       loadLearningContent(learningProductId)
-    } catch {
+    } catch (err) {
+      console.error('Failed to delete question:', err)
       toast.error('Failed to delete question')
     }
   }
@@ -1380,7 +1385,7 @@ function AdminDashboard() {
                     <RefreshCw className="w-8 h-8 animate-spin" style={{ color: A.green }} />
                   </div>
                 ) : (
-                  <div className="flex-1 overflow-y-auto space-y-6 pr-1" style={{ maxHeight: 'calc(92vh - 120px)' }}>
+                  <div ref={learningScrollRef} className="flex-1 overflow-y-auto space-y-6 pr-1" style={{ maxHeight: 'calc(92vh - 120px)' }}>
                     {/* ─── VIDEOS SECTION ─── */}
                     <div>
                       <div className="flex items-center justify-between mb-3">
@@ -1400,7 +1405,7 @@ function AdminDashboard() {
                       ) : (
                         <div className="space-y-2">
                           {learningVideos.map((video, idx) => (
-                            <div key={video.id} className="flex items-start gap-2 p-3 rounded-lg border group" style={{ borderColor: A.borderLight, background: '#fff' }}>
+                            <div key={video.id} className={`flex items-start gap-2 p-3 rounded-lg border group transition-colors ${editingVideo?.id === video.id ? 'ring-2' : ''}`} style={{ borderColor: editingVideo?.id === video.id ? A.lime : A.borderLight, background: editingVideo?.id === video.id ? A.limeLight : '#fff' }}>
                               <div className="flex flex-col gap-0.5 shrink-0 pt-0.5">
                                 <button onClick={() => handleReorderVideo(video.id, 'up')} disabled={idx === 0} className="p-0.5 rounded hover:bg-gray-100 disabled:opacity-30"><ChevronUp className="w-3 h-3" style={{ color: A.textMuted }} /></button>
                                 <button onClick={() => handleReorderVideo(video.id, 'down')} disabled={idx === learningVideos.length - 1} className="p-0.5 rounded hover:bg-gray-100 disabled:opacity-30"><ChevronDown className="w-3 h-3" style={{ color: A.textMuted }} /></button>
@@ -1417,7 +1422,7 @@ function AdminDashboard() {
                                   <div className="mt-2 space-y-1.5">
                                     <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: A.textSecondary }}>Quiz ({learningQuizzes.filter(q => q.video_id === video.id).length})</p>
                                     {learningQuizzes.filter(q => q.video_id === video.id).map((quiz, qIdx) => (
-                                      <div key={quiz.id} className="flex items-start gap-1.5 p-2 rounded-md border" style={{ borderColor: A.borderLight, background: A.bg }}>
+                                      <div key={quiz.id} className={`flex items-start gap-1.5 p-2 rounded-md border transition-colors ${editingQuiz?.id === quiz.id ? 'ring-2' : ''}`} style={{ borderColor: editingQuiz?.id === quiz.id ? A.blue : A.borderLight, background: editingQuiz?.id === quiz.id ? A.blueLight : A.bg }}>
                                         <div className="flex flex-col gap-0.5 shrink-0 pt-0.5">
                                           <button onClick={() => handleReorderQuiz(quiz.id, 'up')} disabled={qIdx === 0} className="p-0.5 rounded hover:bg-gray-100 disabled:opacity-30"><ChevronUp className="w-2.5 h-2.5" style={{ color: A.textMuted }} /></button>
                                           <button onClick={() => handleReorderQuiz(quiz.id, 'down')} disabled={qIdx === learningQuizzes.filter(q => q.video_id === video.id).length - 1} className="p-0.5 rounded hover:bg-gray-100 disabled:opacity-30"><ChevronDown className="w-2.5 h-2.5" style={{ color: A.textMuted }} /></button>
@@ -1432,18 +1437,18 @@ function AdminDashboard() {
                                             ))}
                                           </div>
                                         </div>
-                                        <div className="flex gap-0.5 shrink-0">
-                                          <button className="p-1 rounded hover:bg-blue-50" style={{ color: A.blue }} onClick={() => { setEditingQuiz(quiz); setShowAddQuiz(true); setNewQuiz({ question: quiz.question, options: quiz.options, answer: quiz.answer, category: quiz.category || '', difficulty: quiz.difficulty || 'EASY', order: quiz.order, video_id: quiz.video_id }) }}><Pencil className="w-3 h-3" /></button>
-                                          <button className="p-1 rounded hover:bg-red-50" style={{ color: A.red }} onClick={() => handleDeleteQuiz(quiz.id)}><Trash2 className="w-3 h-3" /></button>
+                                        <div className="flex gap-1 shrink-0">
+                                          <Button size="sm" variant="outline" className="text-[10px] h-6 px-1.5 gap-0.5" style={{ borderColor: A.blue, color: A.blue }} onClick={() => { setEditingQuiz(quiz); setShowAddQuiz(true); setNewQuiz({ question: quiz.question, options: quiz.options, answer: quiz.answer, category: quiz.category || '', difficulty: quiz.difficulty || 'EASY', order: quiz.order, video_id: quiz.video_id }); setTimeout(() => learningScrollRef.current?.querySelector('#edit-quiz-form')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100) }}><Pencil className="w-2.5 h-2.5" /> Edit</Button>
+                                          <Button size="sm" variant="outline" className="text-[10px] h-6 px-1.5 gap-0.5" style={{ borderColor: A.red, color: A.red }} onClick={() => handleDeleteQuiz(quiz.id)}><Trash2 className="w-2.5 h-2.5" /> Del</Button>
                                         </div>
                                       </div>
                                     ))}
                                   </div>
                                 )}
                               </div>
-                              <div className="flex gap-0.5 shrink-0">
-                                <button className="p-1.5 rounded hover:bg-blue-50" style={{ color: A.blue }} onClick={() => { setEditingVideo(video); setShowAddVideo(true); setNewVideo({ title: video.title, duration: video.duration, description: video.description || '', order: video.order, video_url: video.video_url || '' }) }}><Pencil className="w-3.5 h-3.5" /></button>
-                                <button className="p-1.5 rounded hover:bg-red-50" style={{ color: A.red }} onClick={() => handleDeleteVideo(video.id)}><Trash2 className="w-3.5 h-3.5" /></button>
+                              <div className="flex gap-1 shrink-0">
+                                <Button size="sm" variant="outline" className="text-[10px] h-6 px-1.5 gap-0.5" style={{ borderColor: A.blue, color: A.blue }} onClick={() => { setEditingVideo(video); setShowAddVideo(true); setNewVideo({ title: video.title, duration: video.duration, description: video.description || '', order: video.order, video_url: video.video_url || '' }); setTimeout(() => learningScrollRef.current?.querySelector('#edit-video-form')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100) }}><Pencil className="w-2.5 h-2.5" /> Edit</Button>
+                                <Button size="sm" variant="outline" className="text-[10px] h-6 px-1.5 gap-0.5" style={{ borderColor: A.red, color: A.red }} onClick={() => handleDeleteVideo(video.id)}><Trash2 className="w-2.5 h-2.5" /> Del</Button>
                               </div>
                             </div>
                           ))}
@@ -1453,9 +1458,9 @@ function AdminDashboard() {
 
                     {/* ─── ADD/EDIT VIDEO FORM ─── */}
                     {showAddVideo && (
-                      <div className="p-4 rounded-lg border" style={{ borderColor: A.lime, background: A.limeLight }}>
+                      <div id="edit-video-form" className="p-4 rounded-lg border" style={{ borderColor: A.lime, background: A.limeLight }}>
                         <h4 className="text-xs font-bold mb-3 flex items-center gap-1" style={{ color: A.green }}>
-                          <Play className="w-3.5 h-3.5" /> {editingVideo ? 'Edit Video' : 'Add Video'}
+                          <Play className="w-3.5 h-3.5" /> {editingVideo ? `Edit Video: ${editingVideo.title}` : 'Add Video'}
                         </h4>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           <div className="sm:col-span-2"><Label className="text-xs mb-1">Title *</Label><Input placeholder="e.g. Introduction" value={newVideo.title} onChange={e => setNewVideo({ ...newVideo, title: e.target.value })} className="h-8 text-sm" /></div>
@@ -1473,9 +1478,9 @@ function AdminDashboard() {
 
                     {/* ─── ADD/EDIT QUIZ FORM ─── */}
                     {showAddQuiz && (
-                      <div className="p-4 rounded-lg border" style={{ borderColor: A.blue, background: A.blueLight }}>
+                      <div id="edit-quiz-form" className="p-4 rounded-lg border" style={{ borderColor: A.blue, background: A.blueLight }}>
                         <h4 className="text-xs font-bold mb-3 flex items-center gap-1" style={{ color: A.blue }}>
-                          <BookOpen className="w-3.5 h-3.5" /> {editingQuiz ? 'Edit Quiz' : 'Add Quiz'}
+                          <BookOpen className="w-3.5 h-3.5" /> {editingQuiz ? `Edit Question: ${editingQuiz.question?.substring(0, 40)}...` : 'Add Quiz Question'}
                         </h4>
                         <div className="grid grid-cols-1 gap-3">
                           <div><Label className="text-xs mb-1">Question *</Label><Input placeholder="What is the main benefit?" value={newQuiz.question} onChange={e => setNewQuiz({ ...newQuiz, question: e.target.value })} className="h-8 text-sm" /></div>

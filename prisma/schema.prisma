@@ -36,7 +36,6 @@ model UserProfile {
   orders              Order[]
   subscriptions       Subscription[]
   otpVerifications    OtpVerification[]
-  notificationLogs    NotificationLog[]
 }
 
 // ─── Products ───────────────────────────────────────────────
@@ -297,28 +296,4 @@ model OtpVerification {
 
   @@index([phone, purpose, status])
   @@index([reference_id])
-}
-
-// ─── Notification Log ──────────────────────────────────────────
-
-model NotificationLog {
-  id              String   @id @default(cuid())
-  user_id         String?
-  order_id        String?
-  channel         String   // EMAIL, WHATSAPP, SMS
-  type            String   // ORDER_PLACED, ORDER_CONFIRMED, PAYMENT_RECEIVED, etc.
-  recipient       String   // email address or phone number
-  subject         String?
-  content         String?
-  status          String   @default("PENDING") // PENDING, SENT, FAILED, DELIVERED
-  error_message   String?
-  provider_ref    String?  // delivery reference from provider
-  sent_at         DateTime?
-  created_at      DateTime @default(now())
-  updated_at      DateTime @updatedAt
-
-  user            UserProfile? @relation(fields: [user_id], references: [id], onDelete: SetNull)
-
-  @@index([user_id, type])
-  @@index([channel, status])
 }

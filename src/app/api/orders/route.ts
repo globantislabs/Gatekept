@@ -91,7 +91,7 @@ export async function POST(req: NextRequest) {
         shipping_state,
         shipping_pincode,
         payment_method: payment_method || 'UPI',
-        payment_status: 'PENDING',
+        payment_status: payment_method === 'COD' ? 'COD_PENDING' : 'PENDING',
         notes,
         items: {
           create: items.map((item: any) => ({

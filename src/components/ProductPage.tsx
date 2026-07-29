@@ -6,7 +6,7 @@ import { motion, useInView } from 'framer-motion'
 import {
   ArrowRight, ChevronLeft, ChevronRight, CheckCircle, Leaf,
   Package, Shield, Star, Sparkles, Zap, TrendingUp, Menu, Home,
-  Store, Globe, X,
+  Store, Globe, X, Lock, Unlock,
 } from 'lucide-react'
 import { useAppStore, type AppView } from '@/store/app-store'
 import { productService } from '@/lib/data-service'
@@ -64,7 +64,7 @@ function AnimatedSection({ children, className = '', id }: { children: React.Rea
 // ProductPage — Dedicated products page with horizontal carousel
 // ═══════════════════════════════════════════════════════════
 export default function ProductPage() {
-  const { navigateTo, user, setSelectedProductId, products, setProducts } = useAppStore()
+  const { navigateTo, user, setSelectedProductId, products, setProducts, setRedirectAfterLogin } = useAppStore()
   const [localProducts, setLocalProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [scrolled, setScrolled] = useState(false)
@@ -113,6 +113,12 @@ export default function ProductPage() {
 
   // ── Product navigation handler ──
   const handleLearnMore = (product: Product) => {
+    if (!user) {
+      setRedirectAfterLogin('product-detail')
+      setSelectedProductId(product.id)
+      navigateTo('auth-login')
+      return
+    }
     setSelectedProductId(product.id)
     navigateTo('product-detail')
   }
@@ -435,6 +441,15 @@ export default function ProductPage() {
                                 </span>
                               </div>
                             )}
+
+                            {/* Locked badge — show when user is not logged in */}
+                            {!user && (
+                              <div className="absolute top-4 left-4">
+                                <span className="rounded-full bg-[#1f1e1c]/80 backdrop-blur-md px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-white/90 flex items-center gap-1.5 border border-white/10">
+                                  <Lock className="w-3 h-3" /> Locked
+                                </span>
+                              </div>
+                            )}
                           </div>
 
                           {/* Product Content */}
@@ -501,9 +516,19 @@ export default function ProductPage() {
                               </div>
                               <Button
                                 onClick={() => handleLearnMore(product)}
-                                className="bg-[#48805b] hover:bg-[#3a6a4a] text-white font-heading font-semibold rounded-full text-sm px-5 min-h-[44px] shadow-lg shadow-[#48805b]/20 transition-all duration-300"
+                                className="bg-[#48805b] hover:bg-[#3a6a4a] text-white font-heading font-semibold rounded-full text-sm px-5 min-h-[44px] shadow-lg shadow-[#48805b]/20 transition-all duration-300 flex items-center gap-1.5"
                               >
-                                Learn More <ChevronRight className="w-4 h-4 ml-1" />
+                                {!user ? (
+                                  <>
+                                    <Lock className="w-4 h-4" />
+                                    Unlock <ChevronRight className="w-3.5 h-3.5" />
+                                  </>
+                                ) : (
+                                  <>
+                                    <Unlock className="w-4 h-4" />
+                                    Learn More <ChevronRight className="w-3.5 h-3.5" />
+                                  </>
+                                )}
                               </Button>
                             </div>
 

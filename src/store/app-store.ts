@@ -193,18 +193,23 @@ export const useAppStore = create<AppState>()(
     }),
     {
       name: 'notjust-app-store',
-      partialize: (state) => ({
-        user: state.user,
-        currentView: state.currentView,
-        adminTab: state.adminTab,
-        products: state.products,
-        selectedProductId: state.selectedProductId,
-        cart: state.cart,
-        lastOrderId: state.lastOrderId,
-        pendingOtpContact: state.pendingOtpContact,
-        pendingOtpType: state.pendingOtpType,
-        scannedCampaignId: state.scannedCampaignId,
-      }),
+      partialize: (state) => {
+        // Don't persist auth-related views to prevent getting stuck on login page
+        const authViews = ['auth-login', 'auth-register', 'auth-whatsapp-otp', 'auth-forgot-password', 'auth-reset-password', 'auth-verify-email']
+        const safeView = authViews.includes(state.currentView) ? 'landing' : state.currentView
+        return {
+          user: state.user,
+          currentView: safeView,
+          adminTab: state.adminTab,
+          products: state.products,
+          selectedProductId: state.selectedProductId,
+          cart: state.cart,
+          lastOrderId: state.lastOrderId,
+          pendingOtpContact: state.pendingOtpContact,
+          pendingOtpType: state.pendingOtpType,
+          scannedCampaignId: state.scannedCampaignId,
+        }
+      },
     }
   )
 )

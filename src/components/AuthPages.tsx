@@ -114,13 +114,20 @@ const otpSlotClass = "h-12 w-12 text-lg font-bold border-[#e3dfd8] data-[active=
 // LOGIN VIEW (Professional)
 // ============================================================
 export function AuthLogin() {
-  const { navigateTo, setUser, redirectAfterLogin, setRedirectAfterLogin } = useAppStore()
+  const { navigateTo, setUser, redirectAfterLogin, setRedirectAfterLogin, user } = useAppStore()
   const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [keepSignedIn, setKeepSignedIn] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // ── Redirect if already logged in ──
+  useEffect(() => {
+    if (user) {
+      navigateTo(redirectAfterLogin || 'landing')
+    }
+  }, [user, redirectAfterLogin, navigateTo])
 
   const handleLogin = async () => {
     setError(null)
@@ -321,7 +328,14 @@ export function AuthLogin() {
 // REGISTER VIEW — 3-Step Professional Registration Flow
 // ============================================================
 export function AuthRegister() {
-  const { navigateTo, setUser, redirectAfterLogin, setRedirectAfterLogin } = useAppStore()
+  const { navigateTo, setUser, redirectAfterLogin, setRedirectAfterLogin, user } = useAppStore()
+
+  // ── Redirect if already logged in ──
+  useEffect(() => {
+    if (user) {
+      navigateTo(redirectAfterLogin || 'landing')
+    }
+  }, [user, redirectAfterLogin, navigateTo])
 
   // ── Step management ──
   // Step 1: 'contact' → enter mobile/email → 'otp' → verify OTP → 'existing' (if user exists) or proceed to step 2
@@ -1387,7 +1401,15 @@ export function AuthRegister() {
 // FORGOT PASSWORD VIEW (Multi-step — mostly preserved)
 // ============================================================
 export function AuthForgotPassword() {
-  const { navigateTo } = useAppStore()
+  const { navigateTo, user } = useAppStore()
+
+  // ── Redirect if already logged in ──
+  useEffect(() => {
+    if (user) {
+      navigateTo('landing')
+    }
+  }, [user, navigateTo])
+
   // Step: 'email' → 'otp' → 'reset'
   const [step, setStep] = useState<'email' | 'otp' | 'reset'>('email')
   const [email, setEmail] = useState('')

@@ -26,6 +26,7 @@ type NotificationType =
   | 'ORDER_DELIVERED'
   | 'ORDER_CANCELLED'
   | 'PASSWORD_RESET'
+  | 'LOGIN'
 
 type NotificationChannel = 'EMAIL' | 'WHATSAPP' | 'SMS'
 
@@ -425,6 +426,40 @@ export const notificationService = {
       } catch (err: any) {
         console.error('Failed to send order cancelled SMS:', err.message)
         await logNotification(user.id, order.id, 'ORDER_CANCELLED', 'SMS', 'FAILED', user.phone || '', undefined, undefined, err.message)
+      }
+    }
+  },
+
+  /**
+   * Send login notification (security alert)
+   */
+  async sendLoginNotification(user: UserInfo, device?: string): Promise<void> {
+    const timeStr = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'medium', timeStyle: 'short' })
+    const whatsappText = `🔐 New login to your NOTJUST Watr account detected at ${timeStr}${device ? ` from ${device}` : ''}. If this wasn't you, please change your password immediately.`
+
+    // Email
+    if (user.email) {
+      try {
+        const result = await emailService.sendLoginNotificationEmail(user.email, {
+          name: user.name,
+          device: device || 'Web Browser',
+          time: timeStr,
+        })
+        await logNotification(user.id, null, 'LOGIN', 'EMAIL', result.success ? 'SENT' : 'FAILED', user.email, 'New Login Detected', `Login at ${timeStr}`, result.success ? undefined : result.message)
+      } catch (err: any) {
+        console.error('Failed to send login notification email:', err.message)
+        await logNotification(user.id, null, 'LOGIN', 'EMAIL', 'FAILED', user.email, undefined, undefined, err.message)
+      }
+    }
+
+    // WhatsApp
+    if (user.phone) {
+      try {
+        const success = await sendWhatsAppTextMessage(user.phone, whatsappText)
+        await logNotification(user.id, null, 'LOGIN', 'WHATSAPP', success ? 'SENT' : 'FAILED', user.phone, undefined, whatsappText, success ? undefined : 'WhatsApp delivery failed or not configured')
+      } catch (err: any) {
+        console.error('Failed to send login notification WhatsApp:', err.message)
+        await logNotification(user.id, null, 'LOGIN', 'WHATSAPP', 'FAILED', user.phone, undefined, undefined, err.message)
       }
     }
   },

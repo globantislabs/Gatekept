@@ -2,6 +2,7 @@ import { whatsappOtpService } from '@/lib/whatsapp-otp-service'
 import { db } from '@/lib/db'
 import { NextRequest } from 'next/server'
 import { jsonResponse, errorResponse, handleOptions, stripSensitiveFields } from '@/lib/api-utils'
+import { notificationService } from '@/lib/notification-service'
 
 // OPTIONS - CORS preflight
 export async function OPTIONS() {
@@ -56,6 +57,17 @@ export async function POST(request: NextRequest) {
       maxAge: 60 * 60 * 24 * 7,
       path: '/',
     })
+
+    // Fire login notification asynchronously (don't block the response)
+    try {
+      const userAgent = request.headers.get('user-agent') || 'Unknown Device'
+      notificationService.sendLoginNotification(
+        { id: result.user.id, name: result.user.name, email: result.user.email, phone: result.user.phone },
+        userAgent.includes('Mobile') ? 'Mobile Browser (WhatsApp OTP)' : 'Desktop Browser (WhatsApp OTP)'
+      ).catch(err => console.error('Failed to send login notification:', err))
+    } catch (err) {
+      console.error('Error sending login notification:', err)
+    }
 
     return response
   } catch (error: any) {

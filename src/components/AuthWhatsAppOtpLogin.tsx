@@ -43,7 +43,14 @@ const RESEND_COOLDOWN_SECONDS = 30
 // WHATSAPP OTP LOGIN COMPONENT
 // ============================================================
 export function AuthWhatsAppOtpLogin() {
-  const { navigateTo, setUser, redirectAfterLogin, setRedirectAfterLogin } = useAppStore()
+  const { navigateTo, setUser, redirectAfterLogin, setRedirectAfterLogin, user } = useAppStore()
+
+  // ── Redirect if already logged in ──
+  useEffect(() => {
+    if (user) {
+      navigateTo(redirectAfterLogin || 'landing')
+    }
+  }, [user, redirectAfterLogin, navigateTo])
 
   // Step management
   const [step, setStep] = useState<'phone' | 'otp' | 'success'>('phone')

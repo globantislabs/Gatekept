@@ -8,6 +8,7 @@ import {
   CheckCircle, Clock, Users, Globe, TrendingUp, Award, Shield,
   Package, Utensils, MessageCircle, Mail, Smartphone, MapPin,
   Instagram, Twitter, Linkedin, Youtube, GraduationCap, Lock,
+  Unlock,
   ChevronDown, ChevronLeft, Sparkles, Home, Store, CreditCard,
   BarChart3, Send, ShieldCheck
 } from 'lucide-react'
@@ -107,7 +108,7 @@ function AnimatedCounter({ end, suffix = '', prefix = '' }: { end: number; suffi
 
 // ─── MAIN LANDING PAGE COMPONENT ────────────────────────────
 export default function LandingPage() {
-  const { navigateTo, user, setSelectedProductId, products, setProducts } = useAppStore()
+  const { navigateTo, user, setSelectedProductId, products, setProducts, setRedirectAfterLogin } = useAppStore()
   const [localProducts, setLocalProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [scrolled, setScrolled] = useState(false)
@@ -179,6 +180,12 @@ export default function LandingPage() {
 
   // ── Product navigation handler ──
   const handleLearnMore = (product: Product) => {
+    if (!user) {
+      setRedirectAfterLogin('product-detail')
+      setSelectedProductId(product.id)
+      navigateTo('auth-login')
+      return
+    }
     setSelectedProductId(product.id)
     navigateTo('product-detail')
   }
@@ -937,6 +944,15 @@ export default function LandingPage() {
                             </div>
                           )}
 
+                          {/* Locked badge — show when user is not logged in */}
+                          {!user && (
+                            <div className="absolute top-4 left-4">
+                              <span className="rounded-full bg-[#1f1e1c]/80 backdrop-blur-md px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-white/90 flex items-center gap-1.5 border border-white/10">
+                                <Lock className="w-3 h-3" /> Locked
+                              </span>
+                            </div>
+                          )}
+
                           {/* Discount label */}
                           {product.discount_label && (
                             <div className="absolute top-4 left-4">
@@ -1011,9 +1027,19 @@ export default function LandingPage() {
                             </div>
                             <Button
                               onClick={() => handleLearnMore(product)}
-                              className="bg-[#48805b] hover:bg-[#3a6a4a] text-white font-heading font-semibold rounded-full text-sm px-5 min-h-[44px] shadow-lg shadow-[#48805b]/20 transition-all duration-300"
+                              className="bg-[#48805b] hover:bg-[#3a6a4a] text-white font-heading font-semibold rounded-full text-sm px-5 min-h-[44px] shadow-lg shadow-[#48805b]/20 transition-all duration-300 flex items-center gap-1.5"
                             >
-                              Learn More <ChevronRight className="w-4 h-4 ml-1" />
+                              {!user ? (
+                                <>
+                                  <Lock className="w-4 h-4" />
+                                  Unlock <ChevronRight className="w-3.5 h-3.5" />
+                                </>
+                              ) : (
+                                <>
+                                  <Unlock className="w-4 h-4" />
+                                  Learn More <ChevronRight className="w-3.5 h-3.5" />
+                                </>
+                              )}
                             </Button>
                           </div>
 

@@ -287,6 +287,35 @@ export const emailService = {
   },
 
   /**
+   * Send login notification email (security alert)
+   */
+  async sendLoginNotificationEmail(to: string, details: { name: string; device?: string; time: string }): Promise<EmailResult> {
+    const subject = 'New Login to Your NOTJUST Watr Account'
+    const htmlBody = `
+      <div style="max-width:480px;margin:0 auto;font-family:'Segoe UI',system-ui,sans-serif;background:#f4f3f0;padding:32px;border-radius:12px;">
+        <div style="text-align:center;margin-bottom:24px;">
+          <h1 style="color:#48805b;font-size:24px;font-weight:700;margin:0;">NOTJUST Watr</h1>
+          <p style="color:#88837b;font-size:14px;margin:4px 0 0;">Wellness, Verified.</p>
+        </div>
+        <div style="background:#fff;border-radius:8px;padding:24px;border:1px solid #e3dfd8;">
+          <p style="color:#48805b;font-size:18px;font-weight:700;margin:0 0 12px;">🔐 New Login Detected</p>
+          <p style="color:#1f1e1c;font-size:15px;margin:0 0 8px;">Hi ${details.name},</p>
+          <p style="color:#1f1e1c;font-size:15px;margin:0 0 12px;">A new login to your NOTJUST Watr account was detected:</p>
+          <div style="background:#f4f3f0;border-radius:6px;padding:12px;margin:12px 0;">
+            <p style="color:#1f1e1c;font-size:13px;margin:0 0 4px;"><strong>Time:</strong> ${details.time}</p>
+            ${details.device ? `<p style="color:#1f1e1c;font-size:13px;margin:0;"><strong>Device:</strong> ${details.device}</p>` : ''}
+          </div>
+          <p style="color:#88837b;font-size:13px;margin:12px 0 0;">If this was you, no action is needed. If you did not log in, please change your password immediately.</p>
+        </div>
+        <p style="color:#88837b;font-size:11px;text-align:center;margin-top:16px;">NOTJUST Watr — Wellness Shots for a Better You</p>
+      </div>
+    `
+    const textBody = `Hi ${details.name}, a new login to your NOTJUST Watr account was detected at ${details.time}${details.device ? ` from ${details.device}` : ''}. If this was not you, please change your password immediately.`
+
+    return sendEmail(to, subject, htmlBody, textBody)
+  },
+
+  /**
    * Check if email service is configured
    */
   isConfigured(): boolean {

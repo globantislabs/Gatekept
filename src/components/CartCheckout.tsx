@@ -7,7 +7,7 @@ import {
   ShoppingBag, Trash2, Plus, Minus, ArrowLeft, ArrowRight,
   MapPin, Phone, CreditCard, Landmark, Smartphone, CheckCircle,
   Package, Truck, ShieldCheck, ChevronRight, X, Loader2,
-  ShoppingCart, Sparkles, Leaf
+  ShoppingCart, Sparkles, Leaf, Banknote
 } from 'lucide-react'
 import { useAppStore, type CartItem } from '@/store/app-store'
 import { orderService } from '@/lib/data-service'
@@ -66,9 +66,10 @@ const INDIAN_STATES = [
 ]
 
 // ─── Payment Method Options ─────────────────────────────────
-type PaymentMethod = 'UPI' | 'CARD' | 'NET_BANKING'
+type PaymentMethod = 'UPI' | 'CARD' | 'NET_BANKING' | 'COD'
 
 const PAYMENT_OPTIONS: { value: PaymentMethod; label: string; icon: React.ReactNode; description: string }[] = [
+  { value: 'COD', label: 'Cash on Delivery', icon: <Banknote className="w-5 h-5" />, description: 'Pay when your order arrives at your doorstep' },
   { value: 'UPI', label: 'UPI', icon: <Smartphone className="w-5 h-5" />, description: 'Pay via Google Pay, PhonePe, Paytm' },
   { value: 'CARD', label: 'Credit / Debit Card', icon: <CreditCard className="w-5 h-5" />, description: 'Visa, Mastercard, RuPay' },
   { value: 'NET_BANKING', label: 'Net Banking', icon: <Landmark className="w-5 h-5" />, description: 'All major banks supported' },
@@ -375,7 +376,7 @@ export function CheckoutView() {
   const [shippingCity, setShippingCity] = useState('')
   const [shippingState, setShippingState] = useState(user?.state || '')
   const [shippingPincode, setShippingPincode] = useState('')
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('UPI')
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('COD')
   const [placing, setPlacing] = useState(false)
   const [formErrors, setFormErrors] = useState<Record<string, string>>({})
 
@@ -712,13 +713,26 @@ export function CheckoutView() {
                   ))}
                 </RadioGroup>
 
-                {/* Razorpay note */}
-                <div className="mt-4 p-3 bg-[#afb75d]/10 border border-[#afb75d]/20 rounded-lg">
-                  <p className="text-xs text-[#88837b] flex items-center gap-1.5">
-                    <ShieldCheck className="w-3.5 h-3.5 text-[#48805b]" />
-                    Razorpay payment gateway integration coming soon. Your order will be created with &quot;PENDING&quot; payment status.
-                  </p>
-                </div>
+                {/* COD Info */}
+                {paymentMethod === 'COD' && (
+                  <div className="mt-4 p-3 bg-[#48805b]/10 border border-[#48805b]/20 rounded-lg">
+                    <p className="text-xs text-[#48805b] flex items-center gap-1.5 font-medium">
+                      <Banknote className="w-3.5 h-3.5" />
+                      Cash on Delivery — Pay ₹{totalAmount.toLocaleString('en-IN')} when your order arrives.
+                    </p>
+                    <p className="text-xs text-[#88837b] mt-1 ml-5">A small COD handling fee may apply. Please keep exact change ready.</p>
+                  </div>
+                )}
+
+                {/* Online Payment Note */}
+                {paymentMethod !== 'COD' && (
+                  <div className="mt-4 p-3 bg-[#afb75d]/10 border border-[#afb75d]/20 rounded-lg">
+                    <p className="text-xs text-[#88837b] flex items-center gap-1.5">
+                      <ShieldCheck className="w-3.5 h-3.5 text-[#48805b]" />
+                      Razorpay payment gateway integration coming soon. Your order will be created with &quot;PENDING&quot; payment status.
+                    </p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </motion.div>
@@ -822,8 +836,17 @@ export function CheckoutView() {
                     </>
                   ) : (
                     <>
-                      Place Order — &#8377;{totalAmount.toLocaleString('en-IN')}
-                      <ChevronRight className="w-4 h-4 ml-1" />
+                      {paymentMethod === 'COD' ? (
+                        <>
+                          <Banknote className="w-4 h-4 mr-1.5" />
+                          Place Order (COD) — &#8377;{totalAmount.toLocaleString('en-IN')}
+                        </>
+                      ) : (
+                        <>
+                          Place Order — &#8377;{totalAmount.toLocaleString('en-IN')}
+                          <ChevronRight className="w-4 h-4 ml-1" />
+                        </>
+                      )}
                     </>
                   )}
                 </Button>
@@ -852,7 +875,7 @@ export function CheckoutView() {
               </>
             ) : (
               <>
-                Place Order
+                {paymentMethod === 'COD' ? 'Place Order (COD)' : 'Place Order'}
                 <ChevronRight className="w-4 h-4 ml-1" />
               </>
             )}
@@ -891,7 +914,9 @@ function LockStep({ active, total, current }: { active: number; total: number; c
 // OrderSuccessView — Success page after order is placed
 // ═══════════════════════════════════════════════════════════
 export function OrderSuccessView() {
-  const { lastOrderId, navigateTo } = useAppStore()
+  const { lastOrderId, navigateTo, cart } = useAppStore()
+  // Check if last order was COD (from cart, which might be cleared by now)
+  // We'll use a simpler approach - just show the general success message
 
   return (
     <motion.div
@@ -919,6 +944,16 @@ export function OrderSuccessView() {
         >
           Your wellness shots are on their way. We&apos;ll notify you when they ship.
         </motion.p>
+
+        <motion.div
+          variants={fadeInUp}
+          className="mt-3 p-3 bg-[#48805b]/5 border border-[#48805b]/15 rounded-lg"
+        >
+          <p className="text-sm text-[#48805b] flex items-center justify-center gap-1.5 font-medium">
+            <Banknote className="w-4 h-4" />
+            Pay on Delivery — Keep the exact amount ready when your order arrives.
+          </p>
+        </motion.div>
 
         {lastOrderId && (
           <motion.p

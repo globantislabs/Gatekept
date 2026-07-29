@@ -1204,23 +1204,7 @@ export default function LandingPage() {
       {/* ═══════════════════════════════════════════════════════════
           H. STATS / COUNTER SECTION — dark bg
           ═══════════════════════════════════════════════════════════ */}
-      {/* Trust / Marquee Bar */}
-      <div className="py-10 bg-[#1f1e1c] overflow-hidden">
-        <div className="flex items-center gap-8 animate-marquee whitespace-nowrap">
-          {[...Array(2)].map((_, setIdx) => (
-            <div key={setIdx} className="flex items-center gap-8">
-              {['Fortis Healthcare', 'Columbia Asia', 'Manipal Hospitals', 'Soul Spa', 'Dr. Batras'].map((name, idx) => (
-                <div key={`${setIdx}-${idx}`} className="flex items-center gap-3 px-6 py-3 rounded-xl bg-white/[0.04] border border-white/[0.06]">
-                  <div className="w-8 h-8 rounded-lg bg-[#48805b]/20 flex items-center justify-center">
-                    <Award className="w-4 h-4 text-[#afb75d]" />
-                  </div>
-                  <span className="text-white/50 text-sm font-heading font-medium">{name}</span>
-                </div>
-              ))}
-            </div>
-          ))}
-        </div>
-      </div>
+
 
       <AnimatedSection className="py-20 md:py-28 bg-[#1f1e1c]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

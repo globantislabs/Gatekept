@@ -6,7 +6,7 @@ import { motion, useInView } from 'framer-motion'
 import {
   ArrowRight, ChevronLeft, ChevronRight, CheckCircle, Leaf,
   Package, Shield, Star, Sparkles, Zap, TrendingUp, Menu, Home,
-  Store, Globe, X, Lock, Unlock,
+  Store, Globe, X, Lock, Unlock, ShoppingBag,
 } from 'lucide-react'
 import { useAppStore, type AppView } from '@/store/app-store'
 import { productService } from '@/lib/data-service'
@@ -518,15 +518,15 @@ export default function ProductPage() {
                                 onClick={() => handleLearnMore(product)}
                                 className="bg-[#48805b] hover:bg-[#3a6a4a] text-white font-heading font-semibold rounded-full text-sm px-5 min-h-[44px] shadow-lg shadow-[#48805b]/20 transition-all duration-300 flex items-center gap-1.5"
                               >
-                                {!user ? (
+                                {!user || !user.learning_completed ? (
                                   <>
                                     <Lock className="w-4 h-4" />
                                     Unlock <ChevronRight className="w-3.5 h-3.5" />
                                   </>
                                 ) : (
                                   <>
-                                    <Unlock className="w-4 h-4" />
-                                    Learn More <ChevronRight className="w-3.5 h-3.5" />
+                                    <ShoppingBag className="w-4 h-4" />
+                                    Shop Now <ChevronRight className="w-3.5 h-3.5" />
                                   </>
                                 )}
                               </Button>

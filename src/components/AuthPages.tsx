@@ -114,7 +114,7 @@ const otpSlotClass = "h-12 w-12 text-lg font-bold border-[#e3dfd8] data-[active=
 // LOGIN VIEW (Professional)
 // ============================================================
 export function AuthLogin() {
-  const { navigateTo, setUser, redirectAfterLogin, setRedirectAfterLogin, user } = useAppStore()
+  const { navigateTo, setUser, redirectAfterLogin, setRedirectAfterLogin, user, goBack } = useAppStore()
   const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -170,6 +170,13 @@ export function AuthLogin() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#f4f3f0] pt-20 pb-12 px-4">
+      {/* Back to Home button */}
+      <button
+        onClick={goBack}
+        className="fixed top-4 left-4 z-50 flex items-center gap-1.5 text-[#88837b] hover:text-[#1f1e1c] text-sm font-medium transition-colors min-h-[44px] px-3 py-2 rounded-lg hover:bg-[#e3dfd8]/50"
+      >
+        <ArrowLeft className="w-4 h-4" /> Back
+      </button>
       <motion.div
         initial="hidden"
         animate="visible"
@@ -328,7 +335,7 @@ export function AuthLogin() {
 // REGISTER VIEW — 3-Step Professional Registration Flow
 // ============================================================
 export function AuthRegister() {
-  const { navigateTo, setUser, redirectAfterLogin, setRedirectAfterLogin, user } = useAppStore()
+  const { navigateTo, setUser, redirectAfterLogin, setRedirectAfterLogin, user, goBack } = useAppStore()
 
   // ── Redirect if already logged in ──
   useEffect(() => {
@@ -718,6 +725,13 @@ export function AuthRegister() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#f4f3f0] pt-20 pb-12 px-4">
+      {/* Back button */}
+      <button
+        onClick={goBack}
+        className="fixed top-4 left-4 z-50 flex items-center gap-1.5 text-[#88837b] hover:text-[#1f1e1c] text-sm font-medium transition-colors min-h-[44px] px-3 py-2 rounded-lg hover:bg-[#e3dfd8]/50"
+      >
+        <ArrowLeft className="w-4 h-4" /> Back
+      </button>
       <AnimatePresence mode="wait">
         {/* ── Step 1a: Contact Input ── */}
         {step === 'contact' && (
@@ -1401,7 +1415,7 @@ export function AuthRegister() {
 // FORGOT PASSWORD VIEW (Multi-step — mostly preserved)
 // ============================================================
 export function AuthForgotPassword() {
-  const { navigateTo, user } = useAppStore()
+  const { navigateTo, user, goBack } = useAppStore()
 
   // ── Redirect if already logged in ──
   useEffect(() => {
@@ -1562,6 +1576,13 @@ export function AuthForgotPassword() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#f4f3f0] pt-20 pb-12 px-4">
+      {/* Back button */}
+      <button
+        onClick={goBack}
+        className="fixed top-4 left-4 z-50 flex items-center gap-1.5 text-[#88837b] hover:text-[#1f1e1c] text-sm font-medium transition-colors min-h-[44px] px-3 py-2 rounded-lg hover:bg-[#e3dfd8]/50"
+      >
+        <ArrowLeft className="w-4 h-4" /> Back
+      </button>
       <motion.div
         initial="hidden"
         animate="visible"

@@ -43,7 +43,7 @@ const RESEND_COOLDOWN_SECONDS = 30
 // WHATSAPP OTP LOGIN COMPONENT
 // ============================================================
 export function AuthWhatsAppOtpLogin() {
-  const { navigateTo, setUser, redirectAfterLogin, setRedirectAfterLogin, user } = useAppStore()
+  const { navigateTo, setUser, redirectAfterLogin, setRedirectAfterLogin, user, goBack } = useAppStore()
 
   // ── Redirect if already logged in ──
   useEffect(() => {
@@ -243,6 +243,13 @@ export function AuthWhatsAppOtpLogin() {
   // ── Render Step ──
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#f4f3f0] pt-20 pb-12 px-4">
+      {/* Back button */}
+      <button
+        onClick={goBack}
+        className="fixed top-4 left-4 z-50 flex items-center gap-1.5 text-[#88837b] hover:text-[#1f1e1c] text-sm font-medium transition-colors min-h-[44px] px-3 py-2 rounded-lg hover:bg-[#e3dfd8]/50"
+      >
+        <ArrowLeft className="w-4 h-4" /> Back
+      </button>
       <AnimatePresence mode="wait">
         {step === 'phone' && (
           <motion.div

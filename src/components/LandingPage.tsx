@@ -10,7 +10,7 @@ import {
   Instagram, Twitter, Linkedin, Youtube, GraduationCap, Lock,
   Unlock,
   ChevronDown, ChevronLeft, Sparkles, Home, Store, CreditCard,
-  BarChart3, Send, ShieldCheck
+  BarChart3, Send, ShieldCheck, ShoppingBag
 } from 'lucide-react'
 import { useAppStore, type AppView } from '@/store/app-store'
 import { productService } from '@/lib/data-service'
@@ -495,7 +495,7 @@ export default function LandingPage() {
                   onClick={() => scrollToSection('how-it-works')}
                   className="border-white/30 text-white bg-white/10 hover:bg-white/20 hover:border-white/50 font-heading font-semibold text-sm px-7 py-5 rounded-full backdrop-blur-sm transition-all duration-300 min-h-[44px]"
                 >
-                  Learn More <ChevronDown className="w-4 h-4 ml-2" />
+                  How It Works <ChevronDown className="w-4 h-4 ml-2" />
                 </Button>
               </motion.div>
               <motion.div variants={fadeInUp} className="flex flex-wrap gap-5 text-white/50 text-xs font-medium">
@@ -1029,15 +1029,15 @@ export default function LandingPage() {
                               onClick={() => handleLearnMore(product)}
                               className="bg-[#48805b] hover:bg-[#3a6a4a] text-white font-heading font-semibold rounded-full text-sm px-5 min-h-[44px] shadow-lg shadow-[#48805b]/20 transition-all duration-300 flex items-center gap-1.5"
                             >
-                              {!user ? (
+                              {!user || !user.learning_completed ? (
                                 <>
                                   <Lock className="w-4 h-4" />
                                   Unlock <ChevronRight className="w-3.5 h-3.5" />
                                 </>
                               ) : (
                                 <>
-                                  <Unlock className="w-4 h-4" />
-                                  Learn More <ChevronRight className="w-3.5 h-3.5" />
+                                  <ShoppingBag className="w-4 h-4" />
+                                  Shop Now <ChevronRight className="w-3.5 h-3.5" />
                                 </>
                               )}
                             </Button>

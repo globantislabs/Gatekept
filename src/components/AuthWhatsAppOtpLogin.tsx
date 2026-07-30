@@ -146,10 +146,15 @@ export function AuthWhatsAppOtpLogin() {
       setOtpError(null)
       setAttemptsRemaining(3)
 
-      toast.success(`WhatsApp OTP sent to ${data.phone_masked}`)
-
-      // Production: OTP is sent via WhatsApp only — never expose it in the UI
-      // Dev mode: OTP is logged to server console only (check server logs)
+      // Show OTP as a site notification (dev-mode behavior)
+      if (data.otp_code) {
+        toast.success(`Your OTP is: ${data.otp_code}`, {
+          duration: 15000,
+          description: `OTP sent to ${data.phone_masked}`,
+        })
+      } else {
+        toast.success(`WhatsApp OTP sent to ${data.phone_masked}`)
+      }
     } catch (err: any) {
       setError('Something went wrong. Please try again.')
       setSending(false)

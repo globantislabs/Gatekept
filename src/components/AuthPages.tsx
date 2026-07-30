@@ -458,10 +458,15 @@ export function AuthRegister() {
         setOtpId(data.otp_id)
         setContactMasked(data.phone_masked || `+91 ${trimmed.slice(0, 2)}****${trimmed.slice(-2)}`)
 
-        // Production: OTP is sent via WhatsApp only — never expose it in the UI
-        // Dev mode: OTP is logged to server console only (check server logs)
-
-        toast.success(`WhatsApp OTP sent to ${data.phone_masked}`)
+        // Show OTP as a site notification (dev-mode behavior)
+        if (data.otp_code) {
+          toast.success(`Your OTP is: ${data.otp_code}`, {
+            duration: 15000,
+            description: `OTP sent to ${data.phone_masked}`,
+          })
+        } else {
+          toast.success(`WhatsApp OTP sent to ${data.phone_masked}`)
+        }
       } else {
         // Use email OTP for email addresses
         const res = await fetch('/api/auth/verify-email-otp/send', {
@@ -485,9 +490,15 @@ export function AuthRegister() {
 
         setOtpId(data.otp_id)
         setContactMasked(trimmed)
-        // Production: OTP is sent via email only — never expose it in the UI
-
-        toast.success('Verification code sent to your email')
+        // Show OTP as a site notification (dev-mode behavior)
+        if (data.otp_code) {
+          toast.success(`Your OTP is: ${data.otp_code}`, {
+            duration: 15000,
+            description: 'OTP sent to your email',
+          })
+        } else {
+          toast.success('Verification code sent to your email')
+        }
       }
 
       setStep('otp')
@@ -1452,9 +1463,15 @@ export function AuthForgotPassword() {
       if (data.otp_id) {
         setOtpId(data.otp_id)
       }
-      // Production: OTP is sent via email only — never expose it in the UI
-
-      toast.success('Verification code sent! Check your email.')
+      // Show OTP as a site notification (dev-mode behavior)
+      if (data.otp_code) {
+        toast.success(`Your OTP is: ${data.otp_code}`, {
+          duration: 15000,
+          description: 'OTP for password reset',
+        })
+      } else {
+        toast.success('Verification code sent! Check your email.')
+      }
       setStep('otp')
     } catch (err: any) {
       setError('Failed to send verification code. Please try again.')

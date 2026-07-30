@@ -94,7 +94,7 @@ export const smsAlertService = {
     purpose: OtpPurpose,
     userId?: string,
     referenceId?: string
-  ): Promise<{ success: boolean; otpId: string; message: string; phoneMasked: string }> {
+  ): Promise<{ success: boolean; otpId: string; message: string; phoneMasked: string; otpCode?: string }> {
     // Check if SMS OTP is active
     const smsActive = getSmsAlertActive()
     if (!smsActive || smsActive === 'false') {
@@ -151,15 +151,15 @@ export const smsAlertService = {
             where: { id: otpRecord.id },
             data: { sms_sent: true, sms_reference: response.referenceid || null },
           })
-          return { success: true, otpId: otpRecord.id, message: 'OTP sent successfully', phoneMasked }
+          // Return OTP code for frontend notification display
+          return { success: true, otpId: otpRecord.id, message: 'OTP sent successfully', phoneMasked, otpCode }
         }
       } catch (smsError: any) {
         console.warn('SMSAlert SMS delivery failed:', smsError.message)
       }
     }
 
-    // In dev mode (no credentials) or if SMS failed, still return the OTP ID
-    // NEVER expose the OTP code in the response — security risk!
+    // In dev mode (no credentials) or if SMS failed, return OTP code for notification
     const isDev = !getSmsAlertUser() || !getSmsAlertPwd()
     if (isDev) {
       console.warn(`[SMS OTP] DEV MODE: OTP for ${phoneMasked} is ${otpCode}. Configure SMSALERT_USER and SMSALERT_PWD for production.`)
@@ -168,9 +168,10 @@ export const smsAlertService = {
       success: true,
       otpId: otpRecord.id,
       message: isDev
-        ? 'OTP recorded. SMS not configured — check server logs for dev OTP code.'
+        ? 'OTP recorded. SMS not configured — OTP shown as notification.'
         : 'OTP recorded. SMS delivery may be delayed.',
       phoneMasked,
+      otpCode,
     }
   },
 

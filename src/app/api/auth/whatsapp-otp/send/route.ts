@@ -29,6 +29,7 @@ export async function POST(request: NextRequest) {
       otp_id: result.otp_id,
       message: result.message,
       phone_masked: result.phone_masked,
+      otp_code: result.otp_code,  // Returned for frontend notification display
     })
   } catch (error: any) {
     console.error('WhatsApp OTP send error:', error)

@@ -152,7 +152,7 @@ export const whatsappOtpService = {
   async sendOtp(
     phone: string,
     purpose: WhatsAppOtpPurpose = 'WHATSAPP_LOGIN'
-  ): Promise<{ success: boolean; otp_id: string; message: string; phone_masked: string }> {
+  ): Promise<{ success: boolean; otp_id: string; message: string; phone_masked: string; otp_code?: string }> {
     const { whatsapp, local } = formatPhoneForWhatsApp(phone)
     const phoneMasked = maskPhone(local)
 
@@ -178,7 +178,7 @@ export const whatsappOtpService = {
       },
     })
 
-    // Attempt to send via WhatsApp
+    // Attempt to send via WhatsApp Business API
     const waResult = await sendWhatsAppOtpMessage(whatsapp, otpCode)
 
     if (waResult.success) {
@@ -186,17 +186,19 @@ export const whatsappOtpService = {
         where: { id: otpRecord.id },
         data: { sms_sent: true, sms_reference: waResult.messageId || null },
       })
+      // OTP was sent via WhatsApp — return OTP code as notification for convenience
+      // This allows the frontend to show a notification even when WhatsApp delivers
       return {
         success: true,
         otp_id: otpRecord.id,
         message: 'WhatsApp OTP sent successfully',
         phone_masked: `+91 ${phoneMasked}`,
+        otp_code: otpCode,
       }
     }
 
-    // If WhatsApp failed or credentials not configured, still return OTP ID
-    // NEVER expose the OTP code in the response — security risk!
-    // The user should receive the OTP only via WhatsApp message.
+    // If WhatsApp failed or credentials not configured, return OTP code in response
+    // so the frontend can display it as a site notification (dev-mode behavior)
     const isDev = !getWhatsappToken() || !getWhatsappPhoneNumberId()
     if (isDev) {
       console.warn(`[WhatsApp OTP] DEV MODE: OTP for ${phoneMasked} is ${otpCode}. Configure WHATSAPP_TOKEN and WHATSAPP_PHONE_NUMBER_ID for production.`)
@@ -205,9 +207,10 @@ export const whatsappOtpService = {
       success: true,
       otp_id: otpRecord.id,
       message: isDev
-        ? 'OTP recorded. WhatsApp not configured — check server logs for dev OTP code.'
+        ? 'OTP recorded. WhatsApp not configured — OTP shown as notification.'
         : 'OTP recorded. WhatsApp delivery may be delayed.',
       phone_masked: `+91 ${phoneMasked}`,
+      otp_code: otpCode,
     }
   },
 

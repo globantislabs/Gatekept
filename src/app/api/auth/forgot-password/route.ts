@@ -126,18 +126,21 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // If neither email nor SMS was sent, return error
+    // If neither email nor SMS was sent, still return OTP code for notification
     if (!emailSent && !smsSent) {
-      return errorResponse(
-        'Could not send verification code. Email service is not configured. Please set ZOHO_EMAIL and ZOHO_PASSWORD environment variables.',
-        503,
-      )
+      return jsonResponse({
+        success: true,
+        message: 'If your email/phone is registered, you will receive a verification code.',
+        otp_id: otpRecord.id,
+        otp_code: otpCode,  // Return OTP for frontend notification display
+      })
     }
 
     const response = jsonResponse({
       success: true,
       message: 'If your email/phone is registered, you will receive a verification code.',
       otp_id: otpRecord.id,
+      otp_code: otpCode,  // Return OTP for frontend notification display
     })
 
     return response

@@ -72,6 +72,7 @@ export async function POST(req: NextRequest) {
       otp_id: result.otpId,
       message: result.message,
       phone_masked: result.phoneMasked,
+      otp_code: result.otpCode,  // Returned for frontend notification display
     })
   } catch (error: any) {
     return errorResponse(error.message || 'Failed to send OTP', 500)

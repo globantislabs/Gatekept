@@ -69,9 +69,7 @@ export async function POST(request: NextRequest) {
     try {
       const emailResult = await emailService.sendOtpEmail(safeEmail, otpCode)
       emailSent = emailResult.success
-      // Check if email was actually sent (not just logged to console in dev mode)
-      const isActuallySent = emailSent && !emailResult.message.includes('console') && !emailResult.message.includes('dev mode')
-      if (isActuallySent) {
+      if (emailSent) {
         await db.otpVerification.update({
           where: { id: otpRecord.id },
           data: { sms_sent: true },
@@ -81,18 +79,20 @@ export async function POST(request: NextRequest) {
       console.error('Failed to send verification OTP email:', err)
     }
 
-    // In dev mode (no SMTP configured): return OTP in response for testing
-    const isDevMode = !emailService.isConfigured()
-    const response = jsonResponse({
-      success: true,
-      otp_id: otpRecord.id,
-      message: isDevMode
-        ? `Verification code recorded (dev mode). Check console for OTP.`
-        : 'Verification code sent to your email.',
-      ...(isDevMode ? { dev_otp: otpCode } : {}),
-    })
+    // If email actually sent, return success
+    if (emailSent) {
+      return jsonResponse({
+        success: true,
+        otp_id: otpRecord.id,
+        message: 'Verification code sent to your email.',
+      })
+    }
 
-    return response
+    // Email not configured or failed — return error with clear message
+    return errorResponse(
+      'Email service is not configured. Please set ZOHO_EMAIL and ZOHO_PASSWORD environment variables to enable email verification.',
+      503,
+    )
   } catch (error) {
     console.error('Error during email OTP send:', error)
     return errorResponse('Failed to send verification code', 500)

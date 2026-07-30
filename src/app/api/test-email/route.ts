@@ -14,14 +14,16 @@ export async function POST(request: NextRequest) {
 
     const isConfigured = emailService.isConfigured()
 
+    if (!isConfigured) {
+      return errorResponse('Email service is not configured. Set ZOHO_EMAIL and ZOHO_PASSWORD in environment variables.', 503)
+    }
+
     if (type === 'otp') {
       const testOtp = Math.floor(100000 + Math.random() * 900000).toString()
       const result = await emailService.sendOtpEmail(to, testOtp)
       return jsonResponse({
         success: result.success,
         message: result.message,
-        isConfigured,
-        testOtp: isConfigured ? undefined : testOtp,
       })
     }
 
@@ -31,8 +33,6 @@ export async function POST(request: NextRequest) {
       return jsonResponse({
         success: result.success,
         message: result.message,
-        isConfigured,
-        testOtp: isConfigured ? undefined : testOtp,
       })
     }
 
@@ -45,7 +45,6 @@ export async function POST(request: NextRequest) {
     return jsonResponse({
       success: result.success,
       message: result.message,
-      isConfigured,
     })
   } catch (error: any) {
     console.error('Test email error:', error)

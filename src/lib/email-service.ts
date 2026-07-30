@@ -26,7 +26,7 @@ async function loadNodemailer(): Promise<typeof import('nodemailer') | null> {
     nodemailerModule = await import('nodemailer')
     return nodemailerModule
   } catch {
-    console.warn('nodemailer not installed — email service will log to console only')
+    console.error('nodemailer not installed — email service cannot send emails')
     return null
   }
 }
@@ -334,12 +334,11 @@ async function sendEmail(
   const tp = await getTransporter()
 
   if (!tp) {
-    // Dev mode — log to console
-    console.log(`[DEV EMAIL] To: ${to}, Subject: ${subject}`)
-    console.log(`[DEV EMAIL] Body: ${text}`)
+    // Zoho SMTP not configured — return error, do NOT silently log to console
+    console.error(`[EMAIL FAILED] Zoho SMTP not configured. Set ZOHO_EMAIL and ZOHO_PASSWORD in .env. Attempted to send to: ${to}`)
     return {
-      success: true,
-      message: 'Email logged to console (dev mode — no SMTP configured)',
+      success: false,
+      message: 'Email service not configured. Set ZOHO_EMAIL and ZOHO_PASSWORD environment variables.',
     }
   }
 

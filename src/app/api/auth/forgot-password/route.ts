@@ -126,13 +126,18 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // In dev mode (no email configured): return OTP in response for testing
-    const isDevMode = !emailSent && !smsSent
+    // If neither email nor SMS was sent, return error
+    if (!emailSent && !smsSent) {
+      return errorResponse(
+        'Could not send verification code. Email service is not configured. Please set ZOHO_EMAIL and ZOHO_PASSWORD environment variables.',
+        503,
+      )
+    }
+
     const response = jsonResponse({
       success: true,
       message: 'If your email/phone is registered, you will receive a verification code.',
       otp_id: otpRecord.id,
-      ...(isDevMode ? { dev_otp: otpCode } : {}),
     })
 
     return response

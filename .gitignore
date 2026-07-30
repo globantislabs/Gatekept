@@ -30,8 +30,14 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files — ignore real secrets, but allow example/template files
-.env*
+# env files — ignore dev secrets, but allow production & example/template files
+.env
+.env.local
+.env.development
+.env.development.local
+.env.test
+.env.test.local
+!.env.production
 !.env.production.example
 !.env.production.template
 

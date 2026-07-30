@@ -1,7 +1,14 @@
 // NOTJUST Watr — Email Test Script
 // Run with: bun run scripts/test-email.ts
+// Or: npx tsx scripts/test-email.ts
 // This script tests email sending using picasocode@gmail.com as the test recipient
 // ONLY use this for testing — in production, real customer emails are used
+
+// Load .env.production FIRST (before importing email-service which reads process.env)
+import { config as dotenvConfig } from 'dotenv'
+import { resolve } from 'path'
+dotenvConfig({ path: resolve(import.meta.dir, '..', '.env.production') })
+dotenvConfig({ path: resolve(import.meta.dir, '..', '.env') }) // dev fallback, won't override
 
 import { emailService } from '../src/lib/email-service'
 
@@ -16,7 +23,7 @@ async function main() {
 
   if (!emailService.isConfigured()) {
     console.log('❌ Zoho SMTP NOT configured — cannot send emails')
-    console.log('   Set ZOHO_EMAIL and ZOHO_PASSWORD in .env to enable email sending')
+    console.log('   Set ZOHO_EMAIL and ZOHO_PASSWORD in .env or .env.production to enable email sending')
     console.log('')
     process.exit(1)
   }

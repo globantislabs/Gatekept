@@ -2,11 +2,13 @@
 // Backend-only module for sending emails via Zoho SMTP
 // NEVER import this in client-side code
 
-// ─── Config ──────────────────────────────────────────────────
-const ZOHO_SMTP_HOST = process.env.ZOHO_SMTP_HOST || 'smtp.zoho.com'
-const ZOHO_SMTP_PORT = parseInt(process.env.ZOHO_SMTP_PORT || '465')
-const ZOHO_EMAIL = process.env.ZOHO_EMAIL || ''
-const ZOHO_PASSWORD = process.env.ZOHO_PASSWORD || ''
+// ─── Config (read lazily from process.env at call time) ────────
+// This ensures env vars are available even if dotenv loads them after
+// the module is first imported (e.g., when running via tsx/npx)
+function getZohoHost() { return process.env.ZOHO_SMTP_HOST || 'smtp.zoho.com' }
+function getZohoPort() { return parseInt(process.env.ZOHO_SMTP_PORT || '465') }
+function getZohoEmail() { return process.env.ZOHO_EMAIL || '' }
+function getZohoPassword() { return process.env.ZOHO_PASSWORD || '' }
 
 // ─── Types ───────────────────────────────────────────────────
 interface EmailResult {
@@ -37,16 +39,20 @@ let transporter: import('nodemailer').Transporter | null = null
 async function getTransporter(): Promise<import('nodemailer').Transporter | null> {
   const nm = await loadNodemailer()
   if (!nm) return null
-  if (!ZOHO_EMAIL || !ZOHO_PASSWORD) return null
 
-  if (!transporter) {
+  const email = getZohoEmail()
+  const password = getZohoPassword()
+  if (!email || !password) return null
+
+  // Recreate transporter if credentials changed (e.g., env vars loaded after first call)
+  if (!transporter || transporter.options.auth?.user !== email) {
     transporter = nm.createTransport({
-      host: ZOHO_SMTP_HOST,
-      port: ZOHO_SMTP_PORT,
+      host: getZohoHost(),
+      port: getZohoPort(),
       secure: true, // SSL for port 465
       auth: {
-        user: ZOHO_EMAIL,
-        pass: ZOHO_PASSWORD,
+        user: email,
+        pass: password,
       },
       tls: {
         rejectUnauthorized: false, // Allow self-signed certs in dev
@@ -319,7 +325,7 @@ export const emailService = {
    * Check if email service is configured
    */
   isConfigured(): boolean {
-    return Boolean(ZOHO_EMAIL && ZOHO_PASSWORD)
+    return Boolean(getZohoEmail() && getZohoPassword())
   },
 }
 
@@ -344,7 +350,7 @@ async function sendEmail(
 
   try {
     const result = await tp.sendMail({
-      from: `"NOTJUST Watr" <${ZOHO_EMAIL}>`,
+      from: `"NOTJUST Watr" <${getZohoEmail()}>`,
       to,
       subject,
       html,

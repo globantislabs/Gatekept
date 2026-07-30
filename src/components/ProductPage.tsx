@@ -5,19 +5,17 @@ import Image from 'next/image'
 import { motion, useInView } from 'framer-motion'
 import {
   ArrowRight, ChevronLeft, ChevronRight, CheckCircle, Leaf,
-  Package, Shield, Star, Sparkles, Zap, TrendingUp, Menu, Home,
-  Store, Globe, X, Lock, Unlock, ShoppingBag,
+  Package, Shield, Star, Sparkles, Zap, TrendingUp,
+  Lock, Unlock, ShoppingBag,
 } from 'lucide-react'
-import { useAppStore, type AppView } from '@/store/app-store'
+import { useAppStore } from '@/store/app-store'
 import { productService } from '@/lib/data-service'
 import type { Product } from '@/lib/data-service'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
-import {
-  Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle
-} from '@/components/ui/sheet'
+
 import { toast } from 'sonner'
 
 // ─── BRAND CONSTANTS ────────────────────────────────────────
@@ -67,8 +65,6 @@ export default function ProductPage() {
   const { navigateTo, user, setSelectedProductId, products, setProducts, setRedirectAfterLogin } = useAppStore()
   const [localProducts, setLocalProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
-  const [scrolled, setScrolled] = useState(false)
-  const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const [activeProductIndex, setActiveProductIndex] = useState(0)
   const carouselRef = useRef<HTMLDivElement>(null)
 
@@ -85,13 +81,6 @@ export default function ProductPage() {
       })
       .finally(() => setLoading(false))
   }, [setProducts])
-
-  // ── Scroll-responsive navbar ──
-  useEffect(() => {
-    const handler = () => setScrolled(window.scrollY > 40)
-    window.addEventListener('scroll', handler, { passive: true })
-    return () => window.removeEventListener('scroll', handler)
-  }, [])
 
   // ── Carousel scroll tracking ──
   const updateActiveIndex = useCallback(() => {
@@ -126,150 +115,13 @@ export default function ProductPage() {
   // ── Use store products or local ──
   const displayProducts = products.length > 0 ? products : localProducts
 
-  // ── Nav links ──
-  const navLinks = [
-    { label: 'Home', view: 'landing' as AppView, icon: Home },
-    { label: 'Product', view: 'products' as AppView, icon: Store },
-    { label: 'Our Journey', view: 'our-journey' as AppView, icon: Globe },
-  ]
-
   return (
     <div className="min-h-screen flex flex-col bg-[#f4f3f0]">
 
       {/* ═══════════════════════════════════════════════════════════
-          NAVBAR — Fixed top, scroll-responsive
-          ═══════════════════════════════════════════════════════════ */}
-      <nav
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ease-out ${
-          scrolled
-            ? 'bg-white/95 backdrop-blur-xl shadow-[0_1px_0_0_rgba(0,0,0,0.06)]'
-            : 'bg-white/95 backdrop-blur-xl shadow-[0_1px_0_0_rgba(0,0,0,0.06)]'
-        }`}
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-[72px]">
-            {/* Logo */}
-            <button
-              onClick={() => navigateTo('landing')}
-              className="flex items-center gap-2 cursor-pointer group"
-            >
-              <Image
-                src="/images/notjust-logo-clean.png"
-                alt="NotJust Watr"
-                width={120}
-                height={40}
-                className="h-9 w-auto object-contain transition-all duration-300 group-hover:scale-105"
-                loading="eager"
-              />
-            </button>
-
-            {/* Center Nav Links — Desktop */}
-            <div className="hidden md:flex items-center gap-1">
-              {navLinks.map(link => (
-                <button
-                  key={link.label}
-                  onClick={() => navigateTo(link.view)}
-                  className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 min-h-[44px] ${
-                    link.view === 'products'
-                      ? 'text-[#48805b] bg-[#48805b]/10'
-                      : 'text-[#88837b] hover:text-[#48805b] hover:bg-[#48805b]/5'
-                  }`}
-                >
-                  <link.icon className="w-4 h-4" />
-                  {link.label}
-                </button>
-              ))}
-            </div>
-
-            {/* Right side — User / Login */}
-            <div className="flex items-center gap-3">
-              {user ? (
-                <button
-                  onClick={() => navigateTo('profile')}
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-[#88837b] hover:text-[#48805b] hover:bg-[#48805b]/5 transition-all duration-300 min-h-[44px]"
-                >
-                  <div className="w-8 h-8 rounded-full bg-[#48805b] flex items-center justify-center text-white text-xs font-bold">
-                    {user.name?.charAt(0) || 'U'}
-                  </div>
-                  {user.name}
-                </button>
-              ) : (
-                <Button
-                  onClick={() => navigateTo('auth-login')}
-                  className="bg-[#48805b] hover:bg-[#3a6a4a] text-white font-heading font-semibold rounded-xl min-h-[44px]"
-                >
-                  Login
-                </Button>
-              )}
-
-              {/* Mobile hamburger */}
-              <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
-                <SheetTrigger asChild>
-                  <button
-                    className="md:hidden flex items-center justify-center w-11 h-11 rounded-lg transition-all duration-300 text-[#1f1e1c]"
-                    aria-label="Open navigation menu"
-                  >
-                    <Menu className="w-5 h-5" />
-                  </button>
-                </SheetTrigger>
-                <SheetContent side="right" className="bg-[#1f1e1c] border-l border-white/[0.06]">
-                  <SheetHeader>
-                    <SheetTitle className="text-white font-heading flex items-center gap-2">
-                      <Image src="/images/notjust-logo-clean.png" alt="NotJust" width={100} height={32} className="h-8 w-auto object-contain" />
-                    </SheetTitle>
-                  </SheetHeader>
-                  <div className="flex flex-col gap-2 mt-6 px-2">
-                    {[
-                      { label: 'Home', icon: Home, action: () => { navigateTo('landing'); setMobileNavOpen(false) } },
-                      { label: 'Product', icon: Store, action: () => { navigateTo('products'); setMobileNavOpen(false) } },
-                      { label: 'Our Journey', icon: Globe, action: () => { navigateTo('our-journey'); setMobileNavOpen(false) } },
-                    ].map(item => (
-                      <button
-                        key={item.label}
-                        onClick={item.action}
-                        className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 text-sm font-medium min-h-[44px] ${
-                          item.label === 'Product'
-                            ? 'text-white bg-white/[0.08]'
-                            : 'text-white/70 hover:text-white hover:bg-white/[0.06]'
-                        }`}
-                      >
-                        <item.icon className="w-5 h-5" />
-                        {item.label}
-                      </button>
-                    ))}
-
-                    <Separator className="my-3 bg-white/[0.06]" />
-
-                    {user ? (
-                      <button
-                        onClick={() => { navigateTo('profile'); setMobileNavOpen(false) }}
-                        className="flex items-center gap-3 px-4 py-3 rounded-xl text-white/70 hover:text-white hover:bg-white/[0.06] transition-all duration-300 text-sm font-medium min-h-[44px]"
-                      >
-                        <div className="w-8 h-8 rounded-full bg-[#48805b] flex items-center justify-center text-white text-xs font-bold">
-                          {user.name?.charAt(0) || 'U'}
-                        </div>
-                        {user.name}
-                      </button>
-                    ) : (
-                      <Button
-                        onClick={() => { navigateTo('auth-login'); setMobileNavOpen(false) }}
-                        className="bg-[#48805b] hover:bg-[#3a6a4a] text-white font-heading font-semibold rounded-xl min-h-[44px]"
-                      >
-                        Login
-                      </Button>
-                    )}
-                  </div>
-                </SheetContent>
-              </Sheet>
-            </div>
-          </div>
-        </div>
-      </nav>
-
-      {/* ═══════════════════════════════════════════════════════════
           MAIN CONTENT — Product page
           ═══════════════════════════════════════════════════════════ */}
-      <main className="flex-1 pt-[72px]">
+      <main className="flex-1">
 
         {/* ── Hero Banner ── */}
         <section className="py-12 md:py-20 bg-gradient-to-br from-[#1f1e1c] via-[#262520] to-[#1f1e1c] overflow-hidden">

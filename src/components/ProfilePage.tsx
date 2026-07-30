@@ -7,7 +7,7 @@ import {
   User, Mail, Phone, MapPin, Shield, Edit, LogOut, ArrowLeft,
   CheckCircle, Award, Globe, RefreshCw, Package, Truck, Clock,
   CreditCard, ChevronRight, AlertCircle, Calendar, Pause, Play,
-  XCircle, ShoppingBag, Repeat, Eye, Home, Store, Menu,
+  XCircle, ShoppingBag, Repeat, Eye, Store,
   MapPinned, RotateCcw, ChevronDown,
 } from 'lucide-react'
 import { useAppStore } from '@/store/app-store'
@@ -302,42 +302,15 @@ export function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-[#f4f3f0] flex flex-col">
-      {/* ── Navbar ── */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-xl shadow-[0_1px_0_0_rgba(0,0,0,0.06)]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-[72px]">
-            <button onClick={() => navigateTo('landing')} className="flex items-center gap-2 cursor-pointer group">
-              <Image src="/images/notjust-logo-clean.png" alt="NotJust Watr" width={120} height={40} className="h-9 w-auto object-contain transition-all duration-300 group-hover:scale-105" loading="eager" />
-            </button>
-            <div className="hidden md:flex items-center gap-1">
-              <button onClick={() => navigateTo('landing')} className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium text-[#88837b] hover:text-[#48805b] hover:bg-[#48805b]/5 transition-all min-h-[44px]">
-                <Home className="w-4 h-4" /> Home
-              </button>
-              <button onClick={() => navigateTo('products')} className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium text-[#88837b] hover:text-[#48805b] hover:bg-[#48805b]/5 transition-all min-h-[44px]">
-                <Store className="w-4 h-4" /> Product
-              </button>
-              <button onClick={() => navigateTo('our-journey')} className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium text-[#88837b] hover:text-[#48805b] hover:bg-[#48805b]/5 transition-all min-h-[44px]">
-                <Globe className="w-4 h-4" /> Our Journey
-              </button>
-            </div>
-            <div className="flex items-center gap-3">
-              <button onClick={() => navigateTo('profile')} className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-[#48805b] bg-[#48805b]/10 transition-all min-h-[44px]">
-                <div className="w-7 h-7 rounded-full bg-[#48805b] flex items-center justify-center text-white text-xs font-bold">{getInitials(user.name)}</div>
-                {user.name}
-              </button>
-            </div>
-          </div>
-        </div>
-      </nav>
 
       {/* ── Main Content ── */}
-      <main className="flex-1 pt-[72px] pb-12">
+      <main className="flex-1 pb-12">
         <div className="max-w-4xl mx-auto px-4 sm:px-6">
           <motion.div initial="hidden" animate="visible" variants={fadeInUp}>
             {/* ── Header ── */}
             <div className="flex items-center justify-between mb-4 mt-6">
               <h1 className="font-heading text-2xl font-bold text-[#1f1e1c]">My Account</h1>
-              <Button variant="ghost" onClick={handleLogout} className="flex items-center gap-2 text-[#88837b] hover:text-red-600 min-h-[44px]">
+              <Button variant="outline" onClick={handleLogout} className="flex items-center gap-2 text-[#88837b] border-[#e3dfd8] hover:bg-red-50 hover:text-red-600 hover:border-red-200 min-h-[44px] font-heading font-semibold">
                 <LogOut className="w-4 h-4" /> Logout
               </Button>
             </div>

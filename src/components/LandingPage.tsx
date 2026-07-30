@@ -10,7 +10,7 @@ import {
   Instagram, Twitter, Linkedin, Youtube, GraduationCap, Lock,
   Unlock,
   ChevronDown, ChevronLeft, Sparkles, Home, Store, CreditCard,
-  BarChart3, Send, ShieldCheck, ShoppingBag
+  BarChart3, Send, ShieldCheck, ShoppingBag, ShoppingCart
 } from 'lucide-react'
 import { useAppStore, type AppView } from '@/store/app-store'
 import { productService } from '@/lib/data-service'
@@ -108,7 +108,7 @@ function AnimatedCounter({ end, suffix = '', prefix = '' }: { end: number; suffi
 
 // ─── MAIN LANDING PAGE COMPONENT ────────────────────────────
 export default function LandingPage() {
-  const { navigateTo, user, setSelectedProductId, products, setProducts, setRedirectAfterLogin } = useAppStore()
+  const { navigateTo, user, setSelectedProductId, products, setProducts, setRedirectAfterLogin, cart } = useAppStore()
   const [localProducts, setLocalProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [scrolled, setScrolled] = useState(false)
@@ -256,7 +256,7 @@ export default function LandingPage() {
               ))}
             </div>
 
-            {/* Right side — User / Login / Dashboard */}
+            {/* Right side — Cart + User / Login / Dashboard */}
             <div className="flex items-center gap-3">
               {/* Admin Dashboard button — only for admin users */}
               {user?.is_admin && (
@@ -272,6 +272,25 @@ export default function LandingPage() {
                   Dashboard
                 </Button>
               )}
+
+              {/* Cart Button */}
+              <button
+                onClick={() => navigateTo('cart')}
+                className={`relative flex items-center justify-center w-11 h-11 rounded-xl transition-all duration-300 min-h-[44px] ${
+                  scrolled
+                    ? 'text-[#88837b] hover:text-[#48805b] hover:bg-[#48805b]/5'
+                    : 'text-white/70 hover:text-white hover:bg-white/10'
+                }`}
+                aria-label="Shopping cart"
+              >
+                <ShoppingCart className="w-5 h-5" />
+                {cart.reduce((sum, item) => sum + item.quantity, 0) > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 w-5 h-5 rounded-full bg-[#48805b] text-white text-[10px] font-bold flex items-center justify-center shadow-lg shadow-[#48805b]/30">
+                    {cart.reduce((sum, item) => sum + item.quantity, 0) > 9 ? '9+' : cart.reduce((sum, item) => sum + item.quantity, 0)}
+                  </span>
+                )}
+              </button>
+
               {user ? (
                 <button
                   onClick={() => navigateTo('profile')}
@@ -335,6 +354,15 @@ export default function LandingPage() {
                     ))}
 
                     <Separator className="my-3 bg-white/[0.06]" />
+
+                    {/* Cart — mobile */}
+                    <button
+                      onClick={() => { navigateTo('cart'); setMobileNavOpen(false) }}
+                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-white/70 hover:text-white hover:bg-white/[0.06] transition-all duration-300 text-sm font-medium min-h-[44px]"
+                    >
+                      <ShoppingCart className="w-5 h-5" />
+                      Cart {cart.reduce((sum, item) => sum + item.quantity, 0) > 0 && `(${cart.reduce((sum, item) => sum + item.quantity, 0)})`}
+                    </button>
 
                     {/* Admin Dashboard — mobile */}
                     {user?.is_admin && (

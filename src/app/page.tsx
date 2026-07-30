@@ -5,6 +5,9 @@ import { useSearchParams } from 'next/navigation'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useAppStore, type AppView } from '@/store/app-store'
 
+// ─── Shared Navbar ──────────────────────────────────────────
+import AppNavbar from '@/components/AppNavbar'
+
 // ─── View Components ────────────────────────────────────────
 import LandingPageComponent from '@/components/LandingPage'
 import { OurJourneyPage } from '@/components/OurJourneyPage'
@@ -16,6 +19,14 @@ import { ProductLearningModule } from '@/components/ProductLearningModule'
 import AdminPanel from '@/components/AdminPanel'
 import ProductPage from '@/components/ProductPage'
 import { CartView, CheckoutView, OrderSuccessView } from '@/components/CartCheckout'
+
+// ─── Views that should NOT show the shared navbar ────────────
+const HIDE_NAVBAR_VIEWS: AppView[] = [
+  'landing', // LandingPage has its own transparent-to-solid navbar
+  'admin-dashboard', 'admin-products', 'admin-users', 'admin-campaigns',
+  'admin-qr', 'admin-orders', 'admin-analytics', 'admin-content',
+  'admin-subscriptions', 'admin-learning',
+]
 
 // ─── URL → View mapping ─────────────────────────────────────
 const pathToView = (pathname: string): AppView => {
@@ -62,10 +73,8 @@ function UrlSyncHandler() {
     const slug = searchParams.get('product')
     if (!slug) return
 
-    // Find product by slug and navigate
     const findAndNavigate = async () => {
       if (products.length === 0) {
-        // Products not loaded yet, fetch them
         try {
           const { productService } = await import('@/lib/data-service')
           const prods = await productService.list({ active: true })
@@ -96,28 +105,23 @@ function UrlSyncHandler() {
 
 // ─── Browser History Sync: listens for back/forward ─────────
 function BrowserHistorySync() {
-  const setCurrentView = useAppStore(s => s.navigateTo)
-
   useEffect(() => {
-    const handlePopState = (_event: PopStateEvent) => {
-      // Browser back/forward was pressed — update the app view from the URL
+    const handlePopState = () => {
       const view = pathToView(window.location.pathname)
-      // We use a direct set to avoid pushing a new history entry
       useAppStore.setState({ currentView: view, previousView: null })
     }
 
     window.addEventListener('popstate', handlePopState)
     return () => window.removeEventListener('popstate', handlePopState)
-  }, [setCurrentView])
+  }, [])
 
-  // Also handle initial page load — sync view from URL
+  // Handle initial page load — sync view from URL
   useEffect(() => {
     const view = pathToView(window.location.pathname)
     const currentView = useAppStore.getState().currentView
     if (view !== 'landing' && currentView !== view) {
       useAppStore.setState({ currentView: view, previousView: null })
     }
-    // Replace the initial history entry with our state
     window.history.replaceState({ view }, '', window.location.pathname + window.location.search)
   }, [])
 
@@ -127,6 +131,7 @@ function BrowserHistorySync() {
 // ─── View Renderer ──────────────────────────────────────────
 function ViewRenderer() {
   const currentView = useAppStore(s => s.currentView)
+  const showNavbar = !HIDE_NAVBAR_VIEWS.includes(currentView)
 
   const renderView = () => {
     switch (currentView) {
@@ -176,17 +181,25 @@ function ViewRenderer() {
   }
 
   return (
-    <AnimatePresence mode="wait">
-      <motion.div
-        key={currentView}
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -8 }}
-        transition={{ duration: 0.25, ease: 'easeInOut' }}
-      >
-        {renderView()}
-      </motion.div>
-    </AnimatePresence>
+    <>
+      {/* Shared Navbar — visible on all pages except admin */}
+      {showNavbar && <AppNavbar />}
+
+      {/* Content area with top padding for fixed navbar */}
+      <div className={showNavbar ? 'pt-[72px]' : ''}>
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={currentView}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.25, ease: 'easeInOut' }}
+          >
+            {renderView()}
+          </motion.div>
+        </AnimatePresence>
+      </div>
+    </>
   )
 }
 

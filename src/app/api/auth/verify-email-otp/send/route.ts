@@ -69,7 +69,9 @@ export async function POST(request: NextRequest) {
     try {
       const emailResult = await emailService.sendOtpEmail(safeEmail, otpCode)
       emailSent = emailResult.success
-      if (emailSent) {
+      // Check if email was actually sent (not just logged to console in dev mode)
+      const isActuallySent = emailSent && !emailResult.message.includes('console') && !emailResult.message.includes('dev mode')
+      if (isActuallySent) {
         await db.otpVerification.update({
           where: { id: otpRecord.id },
           data: { sms_sent: true },
@@ -79,8 +81,8 @@ export async function POST(request: NextRequest) {
       console.error('Failed to send verification OTP email:', err)
     }
 
-    // In dev mode (no email configured): return OTP in response for testing
-    const isDevMode = !emailSent
+    // In dev mode (no SMTP configured): return OTP in response for testing
+    const isDevMode = !emailService.isConfigured()
     const response = jsonResponse({
       success: true,
       otp_id: otpRecord.id,

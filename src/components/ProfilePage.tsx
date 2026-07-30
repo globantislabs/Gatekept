@@ -155,7 +155,7 @@ function getOtpLabel(action: OtpAction): string {
 // PROFILE PAGE — Tabbed: Profile / Orders / Subscriptions
 // ============================================================
 export function ProfilePage() {
-  const { user, navigateTo, setUser, goBack, addToCart, products: cachedProducts } = useAppStore()
+  const { user, navigateTo, setUser, goBack, addToCart, resetForLogout, products: cachedProducts } = useAppStore()
   const [activeTab, setActiveTab] = useState('profile')
   const [learningProgress, setLearningProgress] = useState<ProductLearningProgress[]>([])
   const [products, setProducts] = useState<Product[]>([])
@@ -289,15 +289,37 @@ export function ProfilePage() {
   const getProductById = (productId: string) => products.find(p => p.id === productId)
 
   const handleLogout = () => {
-    setUser(null)
-    navigateTo('landing')
-    toast.info('You have been logged out')
+    // Clear localStorage directly — this ensures the persist middleware
+    // can't re-save the old state before the page reloads
+    try {
+      const store = JSON.parse(localStorage.getItem('notjust-app-store') || '{}')
+      if (store.state) {
+        store.state.user = null
+        store.state.cart = []
+        store.state.currentView = 'landing'
+        store.state.lastOrderId = null
+        store.state.selectedProductId = null
+      }
+      localStorage.setItem('notjust-app-store', JSON.stringify(store))
+    } catch { /* ignore */ }
+    // Force full page reload to clear all in-memory Zustand state
+    window.location.reload()
   }
 
   // ── Early return after all hooks ──
   if (!user) {
-    navigateTo('auth-login')
-    return null
+    // Don't redirect to login — the logout handler will navigate to landing
+    // If user becomes null for any other reason, redirect to landing
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#f4f3f0]">
+        <div className="text-center">
+          <div className="w-12 h-12 rounded-full bg-[#48805b]/10 flex items-center justify-center mx-auto mb-3">
+            <LogOut className="w-6 h-6 text-[#48805b]" />
+          </div>
+          <p className="text-[#88837b] text-sm">Logging out...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -310,8 +332,8 @@ export function ProfilePage() {
             {/* ── Header ── */}
             <div className="flex items-center justify-between mb-4 mt-6">
               <h1 className="font-heading text-2xl font-bold text-[#1f1e1c]">My Account</h1>
-              <Button variant="outline" onClick={handleLogout} className="flex items-center gap-2 text-[#88837b] border-[#e3dfd8] hover:bg-red-50 hover:text-red-600 hover:border-red-200 min-h-[44px] font-heading font-semibold">
-                <LogOut className="w-4 h-4" /> Logout
+              <Button variant="outline" onClick={handleLogout} className="flex items-center gap-2 text-white bg-[#1f1e1c] border-[#1f1e1c] hover:bg-[#2a2926] hover:border-[#2a2926] hover:text-white min-h-[44px] font-heading font-semibold rounded-xl shadow-sm">
+                <LogOut className="w-4 h-4" /> Sign Out
               </Button>
             </div>
 

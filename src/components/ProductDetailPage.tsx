@@ -95,7 +95,8 @@ export default function ProductDetailPage() {
   const {
     user, selectedProductId, navigateTo, goBack,
     setSelectedProductId, setRedirectAfterLogin,
-    addToCart, setShareSlug, shareSlug
+    addToCart, setShareSlug, shareSlug,
+    products: cachedProducts, setProducts
   } = useAppStore()
 
   // State
@@ -108,8 +109,12 @@ export default function ProductDetailPage() {
   const [progressFetchKey, setProgressFetchKey] = useState(0)
 
   // Derived: are we currently loading?
-  // Loading = no selectedProductId OR we haven't fetched this product yet
-  const isLoading = !selectedProductId || (selectedProductId !== fetchedId && !fetchError)
+  // Use cached product for immediate display — only show loading if we don't have any data at all
+  const cachedProduct = cachedProducts.find(p => p.id === selectedProductId)
+  const isLoading = !selectedProductId || (!cachedProduct && !product && !fetchError)
+
+  // Display product — use fetched product, fallback to cached product for immediate display
+  const displayProduct = product || (cachedProduct ? { ...cachedProduct, videos: [] as ProductVideo[], quizzes: [] as ProductQuiz[] } : null)
 
   // Derived: share URL computed from product
   const shareUrl = useMemo(() => {
@@ -192,11 +197,11 @@ export default function ProductDetailPage() {
   const videoProgressPct = getVideoProgressPercent(productProgress)
 
   // Discount
-  const discountInfo = product ? calculateDiscount(product.price, product.mrp) : null
+  const discountInfo = displayProduct ? calculateDiscount(displayProduct.price, displayProduct.mrp) : null
 
   // Highlights & ingredients
-  const highlights = product ? parseHighlights(product.highlights) : []
-  const ingredientsList = product ? parseIngredients(product.ingredients) : []
+  const highlights = displayProduct ? parseHighlights(displayProduct.highlights) : []
+  const ingredientsList = displayProduct ? parseIngredients(displayProduct.ingredients) : []
 
   // ─── Handlers ─────────────────────────────────────────────
   const handleAddToCart = useCallback(() => {
@@ -297,7 +302,7 @@ export default function ProductDetailPage() {
   }
 
   // ─── Error State ──────────────────────────────────────────
-  if (fetchError || (!isLoading && !product)) {
+  if (fetchError || (!isLoading && !displayProduct)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#f4f3f0]">
         <motion.div
@@ -358,7 +363,7 @@ export default function ProductDetailPage() {
               Products
             </button>
             <ChevronRight className="w-3.5 h-3.5" />
-            <span className="font-medium" style={{ color: BRAND.dark }}>{product.name}</span>
+            <span className="font-medium" style={{ color: BRAND.dark }}>{displayProduct?.name || 'Product'}</span>
           </div>
           <div className="flex items-center gap-2">
             <Button
@@ -400,8 +405,8 @@ export default function ProductDetailPage() {
 
                 {/* Product image */}
                 <Image
-                  src={product.image_url || (product.type === 'STILL' ? '/images/product-still.webp' : '/images/product-fizz.webp')}
-                  alt={product.name}
+                  src={displayProduct?.image_url || (displayProduct?.type === 'STILL' ? '/images/product-still.webp' : '/images/product-fizz.webp')}
+                  alt={displayProduct?.name || 'Product'}
                   fill
                   className="object-contain p-8 sm:p-10 lg:p-12 relative z-10"
                   priority
@@ -412,24 +417,24 @@ export default function ProductDetailPage() {
                   className="pointer-events-auto absolute top-3 right-3 z-20 text-xs shadow-md min-h-[28px]"
                   style={{ backgroundColor: BRAND.green, color: '#fff', borderColor: 'transparent' }}
                 >
-                  {product.type}
+                  {displayProduct?.type}
                 </Badge>
 
-                {product.category && (
+                {displayProduct?.category && (
                   <Badge
                     className="pointer-events-auto absolute top-3 left-12 z-20 text-xs shadow-md min-h-[28px]"
                     style={{ backgroundColor: BRAND.lime, color: BRAND.dark, borderColor: 'transparent' }}
                   >
-                    {product.category}
+                    {displayProduct.category}
                   </Badge>
                 )}
 
-                {product.discount_label && (
+                {displayProduct?.discount_label && (
                   <Badge
                     className="pointer-events-auto absolute bottom-3 left-3 z-20 text-xs shadow-md min-h-[28px]"
                     style={{ backgroundColor: '#e7b973', color: BRAND.dark, borderColor: 'transparent' }}
                   >
-                    {product.discount_label}
+                    {displayProduct.discount_label}
                   </Badge>
                 )}
 
@@ -476,11 +481,11 @@ export default function ProductDetailPage() {
               {/* Name & Short Description */}
               <div>
                 <h1 className="font-heading text-2xl sm:text-3xl lg:text-4xl font-bold mb-2" style={{ color: BRAND.dark }}>
-                  {product.name}
+                  {displayProduct?.name}
                 </h1>
-                {product.short_description && (
+                {displayProduct?.short_description && (
                   <p className="leading-relaxed text-sm sm:text-base" style={{ color: BRAND.muted }}>
-                    {product.short_description}
+                    {displayProduct.short_description}
                   </p>
                 )}
               </div>
@@ -488,12 +493,12 @@ export default function ProductDetailPage() {
               {/* Price Display */}
               <div className="flex items-baseline gap-3">
                 <span className="font-heading text-3xl sm:text-4xl font-bold" style={{ color: BRAND.green }}>
-                  ₹{product.price.toLocaleString()}
+                  ₹{displayProduct?.price.toLocaleString()}
                 </span>
                 {discountInfo && (
                   <>
                     <span className="text-lg line-through" style={{ color: BRAND.muted }}>
-                      ₹{product.mrp!.toLocaleString()}
+                      ₹{displayProduct?.mrp!.toLocaleString()}
                     </span>
                     <Badge
                       className="text-xs min-h-[24px]"
@@ -511,22 +516,22 @@ export default function ProductDetailPage() {
                   className="min-h-[28px] px-3 text-xs font-medium"
                   style={{ backgroundColor: BRAND.green, color: '#fff', borderColor: 'transparent' }}
                 >
-                  {product.type === 'FIZZ' ? '🫧 FIZZ' : '💧 STILL'}
+                  {displayProduct?.type === 'FIZZ' ? '🫧 FIZZ' : '💧 STILL'}
                 </Badge>
-                {product.category && (
+                {displayProduct?.category && (
                   <Badge
                     className="min-h-[28px] px-3 text-xs font-medium"
                     style={{ backgroundColor: `${BRAND.lime}20`, color: BRAND.dark, borderColor: `${BRAND.lime}30` }}
                   >
-                    {product.category}
+                    {displayProduct.category}
                   </Badge>
                 )}
-                {product.discount_label && (
+                {displayProduct?.discount_label && (
                   <Badge
                     className="min-h-[28px] px-3 text-xs font-medium"
                     style={{ backgroundColor: '#e7b97320', color: '#b56b20', borderColor: '#e7b97330' }}
                   >
-                    {product.discount_label}
+                    {displayProduct?.discount_label}
                   </Badge>
                 )}
               </div>
@@ -691,7 +696,7 @@ export default function ProductDetailPage() {
                             style={{ backgroundColor: BRAND.lime, color: BRAND.dark }}
                           >
                             <ShoppingCart className="w-4 h-4 mr-2" />
-                            Add to Cart — ₹{((product?.price || 0) * quantity).toLocaleString()}
+                            Add to Cart — ₹{((displayProduct?.price || 0) * quantity).toLocaleString()}
                           </Button>
                         </div>
                       </div>
@@ -769,7 +774,7 @@ export default function ProductDetailPage() {
                 <div className="flex flex-col items-center text-center p-3 rounded-xl bg-white border" style={{ borderColor: BRAND.surface }}>
                   <ShieldCheck className="w-5 h-5 mb-1" style={{ color: BRAND.green }} />
                   <p className="text-[10px] font-medium" style={{ color: BRAND.dark }}>FSSAI Certified</p>
-                  <p className="text-[9px]" style={{ color: BRAND.muted }}>{product.fssai_license || 'Licensed'}</p>
+                  <p className="text-[9px]" style={{ color: BRAND.muted }}>{displayProduct?.fssai_license || 'Licensed'}</p>
                 </div>
                 <div className="flex flex-col items-center text-center p-3 rounded-xl bg-white border" style={{ borderColor: BRAND.surface }}>
                   <Truck className="w-5 h-5 mb-1" style={{ color: BRAND.green }} />
@@ -779,7 +784,7 @@ export default function ProductDetailPage() {
                 <div className="flex flex-col items-center text-center p-3 rounded-xl bg-white border" style={{ borderColor: BRAND.surface }}>
                   <Leaf className="w-5 h-5 mb-1" style={{ color: BRAND.green }} />
                   <p className="text-[10px] font-medium" style={{ color: BRAND.dark }}>100% Natural</p>
-                  <p className="text-[9px]" style={{ color: BRAND.muted }}>{product.country_origin || 'Made in India'}</p>
+                  <p className="text-[9px]" style={{ color: BRAND.muted }}>{displayProduct?.country_origin || 'Made in India'}</p>
                 </div>
               </div>
             </motion.div>
@@ -839,13 +844,13 @@ export default function ProductDetailPage() {
                     <h3 className="font-heading font-bold text-lg" style={{ color: BRAND.dark }}>
                       About This Product
                     </h3>
-                    {product.description ? (
+                    {displayProduct?.description ? (
                       <p className="leading-relaxed text-sm sm:text-base" style={{ color: BRAND.muted }}>
-                        {product.description}
+                        {displayProduct.description}
                       </p>
                     ) : (
                       <p className="text-sm" style={{ color: BRAND.muted }}>
-                        {product.short_description || 'No description available.'}
+                        {displayProduct?.short_description || 'No description available.'}
                       </p>
                     )}
 
@@ -877,12 +882,12 @@ export default function ProductDetailPage() {
                     </h3>
                     <div className="grid grid-cols-2 gap-3">
                       {[
-                        { label: 'Weight', value: product.weight, icon: <Package className="w-3.5 h-3.5" /> },
-                        { label: 'Serving Size', value: product.serving_size, icon: <Leaf className="w-3.5 h-3.5" /> },
-                        { label: 'Flavor', value: product.flavor, icon: <Sparkles className="w-3.5 h-3.5" /> },
-                        { label: 'Brand', value: product.brand, icon: <Star className="w-3.5 h-3.5" /> },
-                        { label: 'SKU', value: product.sku, icon: <Info className="w-3.5 h-3.5" /> },
-                        { label: 'Type', value: product.type, icon: <Package className="w-3.5 h-3.5" /> },
+                        { label: 'Weight', value: displayProduct?.weight, icon: <Package className="w-3.5 h-3.5" /> },
+                        { label: 'Serving Size', value: displayProduct?.serving_size, icon: <Leaf className="w-3.5 h-3.5" /> },
+                        { label: 'Flavor', value: displayProduct?.flavor, icon: <Sparkles className="w-3.5 h-3.5" /> },
+                        { label: 'Brand', value: displayProduct?.brand, icon: <Star className="w-3.5 h-3.5" /> },
+                        { label: 'SKU', value: displayProduct?.sku, icon: <Info className="w-3.5 h-3.5" /> },
+                        { label: 'Type', value: displayProduct?.type, icon: <Package className="w-3.5 h-3.5" /> },
                       ]
                         .filter(d => d.value)
                         .map((d, i) => (
@@ -936,10 +941,10 @@ export default function ProductDetailPage() {
                           </motion.span>
                         ))}
                       </div>
-                    ) : product.ingredients ? (
+                    ) : displayProduct?.ingredients ? (
                       <div className="p-4 rounded-xl bg-white border" style={{ borderColor: BRAND.surface }}>
                         <p className="text-sm leading-relaxed" style={{ color: BRAND.dark }}>
-                          {product.ingredients}
+                          {displayProduct.ingredients}
                         </p>
                       </div>
                     ) : (
@@ -951,7 +956,7 @@ export default function ProductDetailPage() {
                     <h3 className="font-heading font-bold text-lg" style={{ color: BRAND.dark }}>
                       Allergen Information
                     </h3>
-                    {product.allergen_info ? (
+                    {displayProduct?.allergen_info ? (
                       <div className="p-4 rounded-xl border"
                         style={{ backgroundColor: '#fef2f2', borderColor: '#fecaca' }}
                       >
@@ -959,7 +964,7 @@ export default function ProductDetailPage() {
                           <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: '#dc2626' }} />
                           <div>
                             <p className="text-sm font-semibold mb-1" style={{ color: '#991b1b' }}>Allergen Warning</p>
-                            <p className="text-sm" style={{ color: '#b91c1c' }}>{product.allergen_info}</p>
+                            <p className="text-sm" style={{ color: '#b91c1c' }}>{displayProduct.allergen_info}</p>
                           </div>
                         </div>
                       </div>
@@ -990,10 +995,10 @@ export default function ProductDetailPage() {
                   <h3 className="font-heading font-bold text-lg mb-4" style={{ color: BRAND.dark }}>
                     Nutrition Information
                   </h3>
-                  {product.nutrition_info ? (
+                  {displayProduct?.nutrition_info ? (
                     <div className="p-6 rounded-xl bg-white border max-w-2xl" style={{ borderColor: BRAND.surface }}>
                       <p className="text-sm leading-relaxed" style={{ color: BRAND.dark }}>
-                        {product.nutrition_info}
+                        {displayProduct.nutrition_info}
                       </p>
                     </div>
                   ) : (
@@ -1031,13 +1036,13 @@ export default function ProductDetailPage() {
                     <h3 className="font-heading font-bold text-lg" style={{ color: BRAND.dark }}>
                       Storage Instructions
                     </h3>
-                    {product.storage_info ? (
+                    {displayProduct?.storage_info ? (
                       <div className="p-4 rounded-xl bg-white border flex items-start gap-3"
                         style={{ borderColor: BRAND.surface }}
                       >
                         <ShieldCheck className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: BRAND.green }} />
                         <p className="text-sm leading-relaxed" style={{ color: BRAND.dark }}>
-                          {product.storage_info}
+                          {displayProduct.storage_info}
                         </p>
                       </div>
                     ) : (
@@ -1053,13 +1058,13 @@ export default function ProductDetailPage() {
                     <h3 className="font-heading font-bold text-lg" style={{ color: BRAND.dark }}>
                       Shelf Life
                     </h3>
-                    {product.shelf_life ? (
+                    {displayProduct?.shelf_life ? (
                       <div className="p-4 rounded-xl bg-white border flex items-start gap-3"
                         style={{ borderColor: BRAND.surface }}
                       >
                         <Clock className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: BRAND.green }} />
                         <p className="text-sm leading-relaxed" style={{ color: BRAND.dark }}>
-                          {product.shelf_life}
+                          {displayProduct.shelf_life}
                         </p>
                       </div>
                     ) : (
@@ -1088,10 +1093,10 @@ export default function ProductDetailPage() {
                   </h3>
                   <div className="grid sm:grid-cols-2 gap-4 max-w-2xl">
                     {[
-                      { label: 'FSSAI License', value: product.fssai_license, icon: <ShieldCheck className="w-4 h-4" /> },
-                      { label: 'HSN Code', value: product.hsn_code, icon: <Package className="w-4 h-4" /> },
-                      { label: 'GST Rate', value: product.gst_rate ? `${product.gst_rate}%` : null, icon: <CreditCard className="w-4 h-4" /> },
-                      { label: 'Country of Origin', value: product.country_origin, icon: <Globe className="w-4 h-4" /> },
+                      { label: 'FSSAI License', value: displayProduct?.fssai_license, icon: <ShieldCheck className="w-4 h-4" /> },
+                      { label: 'HSN Code', value: displayProduct?.hsn_code, icon: <Package className="w-4 h-4" /> },
+                      { label: 'GST Rate', value: displayProduct?.gst_rate ? `${displayProduct.gst_rate}%` : null, icon: <CreditCard className="w-4 h-4" /> },
+                      { label: 'Country of Origin', value: displayProduct?.country_origin, icon: <Globe className="w-4 h-4" /> },
                     ]
                       .map((d, i) => (
                         <motion.div

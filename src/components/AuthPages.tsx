@@ -593,7 +593,7 @@ export function AuthRegister() {
   // ── Step 2: Validate & Register ──
   const validateDetails = (): boolean => {
     const errors: Record<string, string> = {}
-    if (!name.trim()) errors.name = 'Name is required'
+    // Name is optional — no validation needed
     if (!password) errors.password = 'Password is required'
     if (password && password.length < 6) errors.password = 'Password must be at least 6 characters'
     if (!termsAccepted) errors.terms = 'You must agree to the Terms of Service'
@@ -613,7 +613,7 @@ export function AuthRegister() {
       const contact = contactInput.trim()
 
       const result = await authService.register({
-        name: name.trim(),
+        name: name.trim() || 'User',
         email: detected === 'email' ? contact.toLowerCase() : undefined,
         phone: detected === 'phone' ? formatPhone(contact) : undefined,
         password: password,
@@ -624,7 +624,7 @@ export function AuthRegister() {
 
       // Proceed to optional profile step (step 3)
       setRegistering(false)
-      toast.success(`Welcome, ${result.user.name}! Your account has been created.`)
+      toast.success(`Welcome! Your account has been created.`)
       setStep('profile')
     } catch (err: any) {
       setRegistering(false)
@@ -1082,7 +1082,7 @@ export function AuthRegister() {
                   Set Up Your Account
                 </CardTitle>
                 <CardDescription className="text-[#88837b]">
-                  Verified! Now enter your name and choose a password
+                  Verified! Now choose a password to secure your account
                 </CardDescription>
                 {renderStepIndicator()}
               </CardHeader>
@@ -1110,12 +1110,12 @@ export function AuthRegister() {
                 {/* Name field */}
                 <div className="space-y-1.5">
                   <Label className="text-xs font-medium text-[#1f1e1c]">
-                    Full Name <span className="text-[#48805b]">*</span>
+                    Full Name <span className="text-[#88837b]">(optional)</span>
                   </Label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#88837b]" />
                     <Input
-                      placeholder="Your full name"
+                      placeholder="Your full name (optional)"
                       value={name}
                       onChange={(e) => { setName(e.target.value); setError(null); if (fieldErrors.name) setFieldErrors(prev => ({ ...prev, name: '' })) }}
                       className={`h-11 pl-10 ${fieldErrors.name ? 'border-red-400 focus:border-red-400' : 'border-[#e3dfd8] focus:border-[#48805b]'} focus:ring-[#48805b]/20`}

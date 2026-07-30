@@ -143,6 +143,9 @@ interface AppState {
   // Orders
   lastOrderId: string | null
   setLastOrderId: (id: string | null) => void
+
+  // Full logout reset
+  resetForLogout: () => void
 }
 
 export const useAppStore = create<AppState>()(
@@ -153,6 +156,8 @@ export const useAppStore = create<AppState>()(
       previousView: null,
       navigateTo: (view, extra) => {
         const prev = get().currentView
+        // Prevent navigating to the same view
+        if (prev === view) return
         set({ previousView: prev, currentView: view })
         // Sync browser URL with the view
         if (typeof window !== 'undefined') {
@@ -238,11 +243,43 @@ export const useAppStore = create<AppState>()(
         }
       },
       cartTotal: () => get().cart.reduce((sum, item) => sum + item.price * item.quantity, 0),
-      clearCart: () => set({ cart: [] }),
+      clearCart: () => {
+        set({ cart: [] })
+        // Also clear from localStorage immediately
+        if (typeof window !== 'undefined') {
+          try {
+            const stored = localStorage.getItem('notjust-app-store')
+            if (stored) {
+              const parsed = JSON.parse(stored)
+              parsed.state.cart = []
+              localStorage.setItem('notjust-app-store', JSON.stringify(parsed))
+            }
+          } catch { /* ignore */ }
+        }
+      },
 
       // Orders
       lastOrderId: null,
       setLastOrderId: (id) => set({ lastOrderId: id }),
+
+      // Full reset for logout
+      resetForLogout: () => {
+        // First set all state to defaults
+        set({
+          user: null,
+          cart: [],
+          lastOrderId: null,
+          selectedProductId: null,
+          pendingOtpContact: null,
+          pendingOtpType: null,
+          scannedCampaignId: null,
+          selectedSubscriptionId: null,
+          redirectAfterLogin: null,
+          shareSlug: null,
+          currentView: 'landing',
+          previousView: null,
+        })
+      },
 
     }),
     {

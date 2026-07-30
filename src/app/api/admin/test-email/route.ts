@@ -8,7 +8,7 @@ export async function OPTIONS() {
 }
 
 // POST /api/admin/test-email — Send a test email (admin only)
-// Uses picasocode@gmail.com as the test email when running from admin panel
+// Uses picasocode@gmail.com as the default test email
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
@@ -39,8 +39,42 @@ export async function POST(request: NextRequest) {
       // Send a test password reset email
       const testOtp = Math.floor(100000 + Math.random() * 900000).toString()
       result = await emailService.sendPasswordResetEmail(testEmail, testOtp)
+    } else if (type === 'order-placed') {
+      // Send a test order placed email
+      result = await emailService.sendOrderPlacedEmail(testEmail, {
+        orderNumber: 'TEST-001',
+        totalAmount: 599,
+        items: 'NOTJUST Watr Fizz — Pre-Meal Wellness Shot x1',
+      })
+    } else if (type === 'order-confirmed') {
+      // Send a test order confirmed email
+      result = await emailService.sendOrderConfirmedEmail(testEmail, {
+        orderNumber: 'TEST-001',
+      })
+    } else if (type === 'order-shipped') {
+      // Send a test order shipped email
+      result = await emailService.sendOrderShippedEmail(testEmail, {
+        orderNumber: 'TEST-001',
+      })
+    } else if (type === 'order-delivered') {
+      // Send a test order delivered email
+      result = await emailService.sendOrderDeliveredEmail(testEmail, {
+        orderNumber: 'TEST-001',
+      })
+    } else if (type === 'order-cancelled') {
+      // Send a test order cancelled email
+      result = await emailService.sendOrderCancelledEmail(testEmail, {
+        orderNumber: 'TEST-001',
+      })
+    } else if (type === 'login') {
+      // Send a test login notification email
+      result = await emailService.sendLoginNotificationEmail(testEmail, {
+        name: 'Test User',
+        time: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
+        device: 'Chrome on Windows',
+      })
     } else {
-      return errorResponse('Invalid email type. Use "otp", "notification", or "password-reset".', 400)
+      return errorResponse('Invalid email type. Use: otp, notification, password-reset, order-placed, order-confirmed, order-shipped, order-delivered, order-cancelled, login', 400)
     }
 
     if (result.success) {

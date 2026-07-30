@@ -15,9 +15,10 @@ async function main() {
   console.log('')
 
   if (!emailService.isConfigured()) {
-    console.log('⚠️  No SMTP configured — emails will be logged to console only')
-    console.log('   Set ZOHO_EMAIL and ZOHO_PASSWORD in .env to send real emails')
+    console.log('❌ Zoho SMTP NOT configured — cannot send emails')
+    console.log('   Set ZOHO_EMAIL and ZOHO_PASSWORD in .env to enable email sending')
     console.log('')
+    process.exit(1)
   }
 
   // Test 1: OTP Email
@@ -39,7 +40,7 @@ async function main() {
   const orderResult = await emailService.sendOrderPlacedEmail(TEST_EMAIL, {
     orderNumber: 'TEST-001',
     totalAmount: 599,
-    items: 'NOTJUST WATER™ Pre-Meal Wellness Shot x1',
+    items: 'NOTJUST Watr Fizz — Pre-Meal Wellness Shot x1',
   })
   console.log(`   Result: ${orderResult.success ? '✅ Success' : '❌ Failed'}`)
   console.log(`   Message: ${orderResult.message}`)
@@ -54,6 +55,17 @@ async function main() {
   })
   console.log(`   Result: ${loginResult.success ? '✅ Success' : '❌ Failed'}`)
   console.log(`   Message: ${loginResult.message}`)
+  console.log('')
+
+  // Test 5: Notification Email
+  console.log('📧 Test 5: Sending notification email...')
+  const notifResult = await emailService.sendNotificationEmail(
+    TEST_EMAIL,
+    'NOTJUST Watr — Test Notification',
+    'This is a test notification from NOTJUST Watr. If you received this, email delivery is working correctly!'
+  )
+  console.log(`   Result: ${notifResult.success ? '✅ Success' : '❌ Failed'}`)
+  console.log(`   Message: ${notifResult.message}`)
   console.log('')
 
   console.log('✅ Email test complete!')

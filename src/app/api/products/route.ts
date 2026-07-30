@@ -111,6 +111,7 @@ export async function POST(request: NextRequest) {
       max_order_qty,
       discount_label,
       highlights,
+      qr_code_url,
     } = sanitized
 
     // Check slug uniqueness
@@ -153,8 +154,20 @@ export async function POST(request: NextRequest) {
         max_order_qty: max_order_qty ? parseInt(String(max_order_qty)) : 10,
         discount_label: discount_label as string || null,
         highlights: highlights as string || null,
+        qr_code_url: qr_code_url as string || null,
       },
     })
+
+    // Auto-generate QR code URL if not provided
+    if (!product.qr_code_url) {
+      const baseUrl = process.env.NEXTAUTH_URL || 'https://notjustwatr.com'
+      const qrUrl = `${baseUrl}/?product=${product.slug}`
+      await db.product.update({
+        where: { id: product.id },
+        data: { qr_code_url: qrUrl },
+      })
+      product.qr_code_url = qrUrl
+    }
 
     return jsonResponse({ product }, 201)
   } catch (error) {

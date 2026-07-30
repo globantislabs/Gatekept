@@ -2,11 +2,14 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   output: "standalone",
-  // Prisma needs to be bundled as an external package for standalone mode.
-  // For MySQL/MariaDB, mysql2 is automatically handled by Prisma.
-  // For SQLite (local dev), better-sqlite3 would need to be added here:
-  //   serverExternalPackages: ["@prisma/client", "better-sqlite3"]
-  serverExternalPackages: ["@prisma/client"],
+  // Packages that need to be external in standalone mode because they
+  // use native binaries or have special bundling requirements.
+  serverExternalPackages: [
+    "@prisma/client",
+    "prisma",
+    "sharp",          // Native image processing — must be external for standalone
+    "better-sqlite3", // SQLite native driver (local dev only)
+  ],
   typescript: {
     // Keep ignoreBuildErrors true during active development.
     // For a strict production build, set this to false.

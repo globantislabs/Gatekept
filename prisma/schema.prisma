@@ -74,6 +74,7 @@ model Product {
   max_order_qty   Int?     @default(10)
   discount_label  String?
   highlights      String?
+  qr_code_url     String?
   created_at      DateTime @default(now())
   updated_at      DateTime @updatedAt
 

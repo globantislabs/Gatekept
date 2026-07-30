@@ -56,6 +56,7 @@ export interface Product {
   max_order_qty?: number | null
   discount_label?: string | null
   highlights?: string | null
+  qr_code_url?: string | null
   created_at: string
   updated_at: string
 }

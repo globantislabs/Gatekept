@@ -57,7 +57,7 @@ interface QuizResult {
 // Video 1 → Quiz 1 → Video 2 → Quiz 2 → Video 3 → Quiz 3 → Unlocked
 // ═══════════════════════════════════════════════════════════
 export function ProductLearningModule() {
-  const { selectedProductId, user, navigateTo, setRedirectAfterLogin, setSelectedProductId, setUser } = useAppStore()
+  const { selectedProductId, user, navigateTo, setRedirectAfterLogin, setSelectedProductId } = useAppStore()
 
   // ─── Login guard: redirect to login if not authenticated ──
   useEffect(() => {
@@ -360,10 +360,6 @@ export function ProductLearningModule() {
             status: newStatus,
           })
           if (saved) setProgress(saved)
-          // If learning completed, update user's learning_completed flag in the store
-          if (newStatus === 'COMPLETED' && user) {
-            setUser({ ...user, learning_completed: true })
-          }
         } catch (err) {
           console.error('Failed to save quiz progress:', err)
         }

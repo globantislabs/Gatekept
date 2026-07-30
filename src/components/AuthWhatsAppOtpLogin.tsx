@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { MessageCircle, Phone, ArrowLeft, RefreshCw, CheckCircle, AlertCircle } from 'lucide-react'
+import { MessageCircle, Phone, ArrowLeft, RefreshCw, CheckCircle, AlertCircle, User } from 'lucide-react'
 import { useAppStore } from '@/store/app-store'
 import type { UserProfile } from '@/lib/data-service'
 
@@ -53,7 +53,7 @@ export function AuthWhatsAppOtpLogin() {
   }, [user, redirectAfterLogin, navigateTo])
 
   // Step management
-  const [step, setStep] = useState<'phone' | 'otp' | 'success'>('phone')
+  const [step, setStep] = useState<'phone' | 'otp' | 'name' | 'success'>('phone')
 
   // Step 1: Phone input
   const [phone, setPhone] = useState('')
@@ -69,7 +69,11 @@ export function AuthWhatsAppOtpLogin() {
   const [attemptsRemaining, setAttemptsRemaining] = useState(3)
   const [resendCooldown, setResendCooldown] = useState(0)
 
-  // Step 3: Login after OTP verified
+  // Step 3: Name input (for new users)
+  const [newUserName, setNewUserName] = useState('')
+  const [isNewUser, setIsNewUser] = useState(false)
+
+  // Step 4: Login after OTP verified
   const [loggingIn, setLoggingIn] = useState(false)
 
   // ── Countdown timer ──
@@ -184,8 +188,30 @@ export function AuthWhatsAppOtpLogin() {
       const data = await res.json()
 
       if (data.success) {
-        // OTP verified — now login
-        await handleLogin()
+        // OTP verified — check if user exists before deciding next step
+        try {
+          const checkRes = await fetch('/api/auth/check-user', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ phone: phone.trim() }),
+          })
+          const checkData = await checkRes.json()
+
+          if (checkData.exists) {
+            // Existing user — login directly
+            setIsNewUser(false)
+            await handleLogin()
+          } else {
+            // New user — show name input step
+            setIsNewUser(true)
+            setVerifying(false)
+            setStep('name')
+          }
+        } catch {
+          // If check fails, proceed with login directly
+          setIsNewUser(false)
+          await handleLogin()
+        }
       } else {
         setVerifying(false)
         setOtpError(data.message || 'Verification failed')
@@ -204,17 +230,24 @@ export function AuthWhatsAppOtpLogin() {
   }
 
   // ── Login with verified OTP ──
-  const handleLogin = async () => {
+  const handleLogin = async (name?: string) => {
     setLoggingIn(true)
 
     try {
+      const requestBody: Record<string, string> = {
+        otp_id: otpId!,
+        phone: phone.trim(),
+      }
+
+      // Only include name if provided
+      if (name && name.trim()) {
+        requestBody.name = name.trim()
+      }
+
       const res = await fetch('/api/auth/whatsapp-otp/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          otp_id: otpId,
-          phone: phone.trim(),
-        }),
+        body: JSON.stringify(requestBody),
       })
 
       const data = await res.json()
@@ -236,6 +269,16 @@ export function AuthWhatsAppOtpLogin() {
       setLoggingIn(false)
       setOtpError('Login failed. Please try again.')
     }
+  }
+
+  // ── Handle name step submit (with name) ──
+  const handleNameSubmit = async () => {
+    await handleLogin(newUserName.trim() || undefined)
+  }
+
+  // ── Handle name step skip (without name) ──
+  const handleNameSkip = async () => {
+    await handleLogin(undefined)
   }
 
   // ── Render Step ──
@@ -452,6 +495,104 @@ export function AuthWhatsAppOtpLogin() {
                     }}
                   >
                     <ArrowLeft className="w-4 h-4 mr-1" /> Change phone number
+                  </Button>
+                </div>
+              </CardContent>
+
+              <CardFooter className="flex flex-col gap-3 pb-6">
+                <div className="flex gap-4 text-sm text-[#88837b]">
+                  <button
+                    onClick={() => navigateTo('auth-login')}
+                    className="text-[#48805b] font-semibold hover:underline focus:underline min-h-[44px] inline-flex items-center"
+                  >
+                    Login with password
+                  </button>
+                  <span className="text-[#e3dfd8]">|</span>
+                  <button
+                    onClick={() => navigateTo('auth-register')}
+                    className="text-[#48805b] font-semibold hover:underline focus:underline min-h-[44px] inline-flex items-center"
+                  >
+                    Register instead
+                  </button>
+                </div>
+              </CardFooter>
+            </Card>
+          </motion.div>
+        )}
+
+        {/* ── Name Step (New Users Only) ── */}
+        {step === 'name' && (
+          <motion.div
+            key="name-step"
+            initial="hidden"
+            animate="visible"
+            variants={fadeInUp}
+            className="w-full max-w-md"
+          >
+            <Card className="border-[#e3dfd8] shadow-xl">
+              <CardHeader className="text-center pb-2">
+                <div className="w-14 h-14 rounded-full bg-[#25D366]/10 flex items-center justify-center mx-auto mb-3">
+                  <User className="w-7 h-7 text-[#25D366]" />
+                </div>
+                <CardTitle className="font-heading text-2xl font-bold text-[#1f1e1c]">
+                  What&apos;s your name?
+                </CardTitle>
+                <CardDescription className="text-[#88837b]">
+                  Help us personalize your experience. This is optional — you can skip it.
+                </CardDescription>
+              </CardHeader>
+
+              <CardContent className="space-y-4 pt-4">
+                {/* Name input */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-[#1f1e1c]">
+                    Your Name <span className="text-[#88837b] font-normal">(optional)</span>
+                  </Label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#88837b]" />
+                    <Input
+                      type="text"
+                      placeholder="Enter your name"
+                      value={newUserName}
+                      onChange={(e) => setNewUserName(e.target.value)}
+                      className="h-12 pl-10 border-[#e3dfd8] focus:border-[#25D366] focus:ring-[#25D366]/20"
+                      autoComplete="name"
+                      autoFocus
+                    />
+                  </div>
+                  <p className="text-xs text-[#88837b]">
+                    If you skip this, we&apos;ll use a default name based on your phone number.
+                  </p>
+                </div>
+
+                {/* Continue button */}
+                <Button
+                  onClick={handleNameSubmit}
+                  disabled={loggingIn}
+                  className="w-full h-12 bg-[#25D366] hover:bg-[#20b85a] text-white font-heading font-semibold text-base rounded-xl transition-all min-h-[44px]"
+                >
+                  {loggingIn ? (
+                    <span className="flex items-center gap-2">
+                      <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      Setting up your account...
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-2">
+                      <CheckCircle className="w-5 h-5" />
+                      Continue
+                    </span>
+                  )}
+                </Button>
+
+                {/* Skip link */}
+                <div className="text-center">
+                  <Button
+                    variant="ghost"
+                    className="text-[#88837b] text-sm min-h-[44px]"
+                    disabled={loggingIn}
+                    onClick={handleNameSkip}
+                  >
+                    Skip for now
                   </Button>
                 </div>
               </CardContent>

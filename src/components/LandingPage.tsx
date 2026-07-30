@@ -13,8 +13,8 @@ import {
   BarChart3, Send, ShieldCheck, ShoppingBag, ShoppingCart
 } from 'lucide-react'
 import { useAppStore, type AppView } from '@/store/app-store'
-import { productService } from '@/lib/data-service'
-import type { Product } from '@/lib/data-service'
+import { productService, productLearningService } from '@/lib/data-service'
+import type { Product, ProductLearningProgress } from '@/lib/data-service'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -114,6 +114,7 @@ export default function LandingPage() {
   const [scrolled, setScrolled] = useState(false)
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const [activeProductIndex, setActiveProductIndex] = useState(0)
+  const [completedProductIds, setCompletedProductIds] = useState<Set<string>>(new Set())
   const carouselRef = useRef<HTMLDivElement>(null)
 
   // ── Fetch products on mount ──
@@ -129,6 +130,22 @@ export default function LandingPage() {
       })
       .finally(() => setLoading(false))
   }, [setProducts])
+
+  // ── Fetch per-product learning progress for the current user ──
+  useEffect(() => {
+    if (!user) return
+    productLearningService.get(user.id)
+      .then((progressList: ProductLearningProgress[]) => {
+        const completed = new Set<string>()
+        for (const p of progressList) {
+          if (p.status === 'COMPLETED') completed.add(p.product_id)
+        }
+        setCompletedProductIds(completed)
+      })
+      .catch(() => {
+        // Silently fail — progress fetch is non-critical
+      })
+  }, [user])
 
   // ── Scroll-responsive navbar ──
   useEffect(() => {
@@ -1059,7 +1076,7 @@ export default function LandingPage() {
                               onClick={() => handleLearnMore(product)}
                               className="bg-[#48805b] hover:bg-[#3a6a4a] text-white font-heading font-semibold rounded-full text-sm px-5 min-h-[44px] shadow-lg shadow-[#48805b]/20 transition-all duration-300 flex items-center gap-1.5"
                             >
-                              {!user || !user.learning_completed ? (
+                              {!user || !completedProductIds.has(product.id) ? (
                                 <>
                                   <Lock className="w-4 h-4" />
                                   Unlock <ChevronRight className="w-3.5 h-3.5" />

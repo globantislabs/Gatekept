@@ -80,6 +80,7 @@ model Product {
   max_order_qty   Int?     @default(10)
   discount_label  String?  @db.VarChar(255)
   highlights      String?  @db.Text    // JSON data
+  qr_code_url     String?  @db.Text
   created_at      DateTime @default(now()) @db.DateTime(3)
   updated_at      DateTime @updatedAt @db.DateTime(3)
 

@@ -102,6 +102,7 @@ export async function PUT(
       'brand', 'flavor', 'serving_size', 'allergen_info', 'storage_info',
       'shelf_life', 'country_origin', 'fssai_license', 'hsn_code', 'gst_rate',
       'min_order_qty', 'max_order_qty', 'discount_label', 'highlights',
+      'qr_code_url',
     ]
 
     for (const field of allowedFields) {

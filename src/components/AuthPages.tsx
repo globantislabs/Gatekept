@@ -298,15 +298,19 @@ export function AuthLogin() {
               )}
             </Button>
 
+            {/* Or divider */}
+            <div className="relative flex items-center gap-3 my-1">
+              <div className="flex-1 h-px bg-[#e3dfd8]" />
+              <span className="text-xs text-[#88837b] font-medium uppercase tracking-wider">Or</span>
+              <div className="flex-1 h-px bg-[#e3dfd8]" />
+            </div>
+
             <Button
               onClick={() => navigateTo('auth-whatsapp-otp')}
-              variant="outline"
-              className="w-full h-12 border-[#25D366]/40 text-[#25D366] hover:bg-[#25D366]/10 font-heading font-semibold text-base rounded-xl transition-all min-h-[44px]"
+              className="w-full h-12 bg-[#25D366] hover:bg-[#20b85a] text-white font-heading font-semibold text-base rounded-xl transition-all min-h-[44px]"
             >
-              <MessageCircle className="w-5 h-5 mr-2" /> Login with WhatsApp OTP
+              <MessageCircle className="w-5 h-5 mr-2" /> Login with WhatsApp
             </Button>
-
-            <Separator className="bg-[#e3dfd8]" />
           </CardContent>
 
           <CardFooter className="justify-center pb-6">
@@ -829,7 +833,7 @@ export function AuthRegister() {
                 </Button>
               </CardContent>
 
-              <CardFooter className="justify-center pb-6">
+              <CardFooter className="flex flex-col gap-2 pb-6">
                 <p className="text-sm text-[#88837b]">
                   Already have an account?{' '}
                   <button
@@ -839,6 +843,12 @@ export function AuthRegister() {
                     Login
                   </button>
                 </p>
+                <button
+                  onClick={() => navigateTo('auth-whatsapp-otp')}
+                  className="text-sm text-[#25D366] font-semibold hover:underline focus:underline min-h-[44px] inline-flex items-center gap-1"
+                >
+                  <MessageCircle className="w-4 h-4" /> Login with WhatsApp
+                </button>
               </CardFooter>
 
               <div className="text-center text-xs text-[#88837b] pb-4">

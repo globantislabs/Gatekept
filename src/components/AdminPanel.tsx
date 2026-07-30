@@ -1346,17 +1346,14 @@ function AdminDashboard() {
                         </Button>
                         <Button variant="ghost" size="sm" className="h-7 text-[11px] gap-1" style={{ color: A.textSecondary }} onClick={() => {
                           const slug = product.slug || product.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
-                          const qrUrl = `https://notjustwatr.com?product=${slug}`
-                          const svg = document.createElement('div')
-                          svg.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#fff"/><text x="50" y="10" text-anchor="middle" font-size="5" font-weight="bold" fill="#1f1e1c">${product.name}</text></svg>`
-                          // Use QRCodeSVG via a simple approach - open a new window with the QR
-                          const w = window.open('', '_blank', 'width=400,height=500')
-                          if (w) {
-                            w.document.write(`<html><head><title>QR Code - ${product.name}</title></head><body style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;font-family:system-ui;margin:0;padding:20px"><h2 style="color:#1f1e1c">${product.name}</h2><div id="qr"></div><p style="color:#88837b;font-size:12px;word-break:break-all;max-width:300px">${qrUrl}</p><button onclick="navigator.clipboard.writeText('${qrUrl}');this.textContent='Copied!'" style="margin-top:12px;padding:8px 16px;background:#48805b;color:#fff;border:none;border-radius:8px;cursor:pointer">Copy URL</button></body></html>`)
-                            w.document.close()
-                          }
+                          const qrUrl = product.qr_code_url || `https://notjustwatr.com?product=${slug}`
                           navigator.clipboard.writeText(qrUrl)
                           toast.success(`QR URL copied: ${qrUrl}`)
+                          const w = window.open('', '_blank', 'width=400,height=500')
+                          if (w) {
+                            w.document.write(`<html><head><title>QR Code - ${product.name}</title><script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script></head><body style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;font-family:system-ui;margin:0;padding:20px"><h2 style="color:#1f1e1c">${product.name}</h2><canvas id="qr-canvas"></canvas><p style="color:#88837b;font-size:12px;word-break:break-all;max-width:300px">${qrUrl}</p><button onclick="navigator.clipboard.writeText('${qrUrl}');this.textContent='Copied!'" style="margin-top:12px;padding:8px 16px;background:#48805b;color:#fff;border:none;border-radius:8px;cursor:pointer">Copy URL</button><script>QRCode.toCanvas(document.getElementById('qr-canvas'),'${qrUrl}',{width:200,color:{dark:'#1f1e1c',light:'#ffffff'}},function(){})</script></body></html>`)
+                            w.document.close()
+                          }
                         }}>
                           <QrCode className="w-3 h-3" /> QR
                         </Button>

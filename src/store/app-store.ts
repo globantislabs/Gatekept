@@ -32,6 +32,43 @@ export type AppView =
   | 'learning'
   | 'quiz'
 
+// ─── View → URL path mapping ─────────────────────────────────
+const viewToPath: Record<AppView, string> = {
+  'landing': '/',
+  'our-journey': '/journey',
+  'products': '/products',
+  'product-detail': '/product',
+  'product-learning': '/learn',
+  'auth-login': '/login',
+  'auth-register': '/register',
+  'auth-whatsapp-otp': '/whatsapp-login',
+  'auth-forgot-password': '/forgot-password',
+  'auth-reset-password': '/reset-password',
+  'auth-verify-email': '/verify-email',
+  'cart': '/cart',
+  'checkout': '/checkout',
+  'order-success': '/order-success',
+  'subscriptions': '/subscriptions',
+  'profile': '/profile',
+  'admin-dashboard': '/admin',
+  'admin-products': '/admin/products',
+  'admin-users': '/admin/users',
+  'admin-campaigns': '/admin/campaigns',
+  'admin-qr': '/admin/qr',
+  'admin-orders': '/admin/orders',
+  'admin-analytics': '/admin/analytics',
+  'admin-content': '/admin/content',
+  'admin-subscriptions': '/admin/subscriptions',
+  'admin-learning': '/admin/learning',
+  'learning': '/learn',
+  'quiz': '/quiz',
+}
+
+export function getViewPath(view: AppView, extra?: string): string {
+  const base = viewToPath[view] || '/'
+  return extra ? `${base}?${extra}` : base
+}
+
 export interface CartItem {
   productId: string
   name: string
@@ -49,7 +86,7 @@ interface AppState {
   // Navigation
   currentView: AppView
   previousView: AppView | null
-  navigateTo: (view: AppView) => void
+  navigateTo: (view: AppView, extra?: string) => void
   goBack: () => void
 
   // Auth
@@ -114,11 +151,28 @@ export const useAppStore = create<AppState>()(
       // Navigation
       currentView: 'landing',
       previousView: null,
-      navigateTo: (view) => set({ previousView: get().currentView, currentView: view }),
+      navigateTo: (view, extra) => {
+        const prev = get().currentView
+        set({ previousView: prev, currentView: view })
+        // Sync browser URL with the view
+        if (typeof window !== 'undefined') {
+          const path = getViewPath(view, extra)
+          // Only push if the path is different from current URL
+          if (window.location.pathname + window.location.search !== path) {
+            window.history.pushState({ view, extra }, '', path)
+          }
+        }
+      },
       goBack: () => {
-        const prev = get().previousView
-        if (prev) set({ currentView: prev, previousView: null })
-        else set({ currentView: 'landing' })
+        if (typeof window !== 'undefined') {
+          // Use browser history for back navigation — popstate listener will update Zustand
+          window.history.back()
+        } else {
+          // Fallback for SSR
+          const prev = get().previousView
+          if (prev) set({ currentView: prev, previousView: null })
+          else set({ currentView: 'landing' })
+        }
       },
 
       // Auth

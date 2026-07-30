@@ -890,7 +890,7 @@ function JourneyNavbar() {
               </span>
             ) : (
               <Button
-                onClick={() => navigateTo('login')}
+                onClick={() => navigateTo('auth-login')}
                 className="bg-[#48805b] hover:bg-[#48805b]/90 text-white px-4 py-2 rounded-md text-sm font-medium min-h-[44px]"
               >
                 Login
@@ -954,7 +954,7 @@ function JourneyNavbar() {
               </span>
             ) : (
               <Button
-                onClick={() => { navigateTo('login'); setMobileNavOpen(false) }}
+                onClick={() => { navigateTo('auth-login'); setMobileNavOpen(false) }}
                 className="bg-[#48805b] hover:bg-[#48805b]/90 text-white px-4 py-2 rounded-md text-sm font-medium min-h-[44px] w-full"
               >
                 Login

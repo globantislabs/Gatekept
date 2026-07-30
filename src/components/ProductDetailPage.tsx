@@ -210,8 +210,14 @@ export default function ProductDetailPage() {
       type: product.type,
       purchaseType: 'one-time',
     })
-    toast.success(`${product.name} added to cart!`)
-  }, [product, isCompleted, quantity, addToCart])
+    toast.success(`${product.name} added to cart!`, {
+      action: {
+        label: 'Go to Cart →',
+        onClick: () => navigateTo('cart'),
+      },
+      duration: 5000,
+    })
+  }, [product, isCompleted, quantity, addToCart, navigateTo])
 
   const handleStartLearning = useCallback(() => {
     if (!product) return

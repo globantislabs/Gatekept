@@ -178,16 +178,21 @@ export default function ProductDetailPage() {
   }, [selectedProductId, navigateTo])
 
   // Fetch learning progress for logged-in user (re-fetch when progressFetchKey changes)
+  // Uses a cancelled flag to prevent stale data from a previous product overwriting current product's progress
   useEffect(() => {
     if (!user || !selectedProductId) return
+    let cancelled = false
     productLearningService.get(user.id, selectedProductId)
       .then(data => {
+        if (cancelled) return
+        // Only set progress that matches this specific product
         const prog = data.find(p => p.product_id === selectedProductId)
         setProductProgress(prog || null)
       })
       .catch(() => {
         // Silently fail — progress fetch is non-critical
       })
+    return () => { cancelled = true }
   }, [user, selectedProductId, progressFetchKey])
 
   // Learning status

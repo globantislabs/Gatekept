@@ -126,6 +126,28 @@ async function handleImageUploadApi(file: File): Promise<string | null> {
   }
 }
 
+// ─── QR Code Download Helper ──────────────────────────────
+function downloadQrCodeAsPng(svgElement: SVGElement | null, filename: string) {
+  if (!svgElement) return
+  const svgData = new XMLSerializer().serializeToString(svgElement)
+  const canvas = document.createElement('canvas')
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return
+  const img = new Image()
+  img.onload = () => {
+    canvas.width = 400
+    canvas.height = 400
+    ctx.fillStyle = '#ffffff'
+    ctx.fillRect(0, 0, 400, 400)
+    ctx.drawImage(img, 0, 0, 400, 400)
+    const link = document.createElement('a')
+    link.download = `${filename}.png`
+    link.href = canvas.toDataURL('image/png')
+    link.click()
+  }
+  img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)))
+}
+
 // ─── QuizQuestion type for content tab ────────────────────
 interface QuizQuestion {
   id: string
@@ -167,6 +189,7 @@ function AdminDashboard() {
   const [productSearch, setProductSearch] = useState('')
   const [productFilter, setProductFilter] = useState<'all' | 'active' | 'inactive'>('all')
   const [galleryUploading, setGalleryUploading] = useState(false)
+  const [showProductQrCodes, setShowProductQrCodes] = useState(false)
   // Manage Learning Content dialog
   const [showManageLearning, setShowManageLearning] = useState(false)
   const [learningProductId, setLearningProductId] = useState<string | null>(null)
@@ -179,7 +202,7 @@ function AdminDashboard() {
   const [showAddQuiz, setShowAddQuiz] = useState(false)
   const [videoUploading, setVideoUploading] = useState(false)
   const learningScrollRef = useRef<HTMLDivElement>(null)
-  const [newVideo, setNewVideo] = useState({ title: '', duration: '', description: '', order: 1, video_url: '' })
+  const [newVideo, setNewVideo] = useState({ title: '', duration: '', description: '', order: 1, video_url: '', thumbnail_url: '' })
   const [newQuiz, setNewQuiz] = useState({ question: '', options: ['', '', '', ''], answer: 0, category: '', difficulty: 'EASY', order: 1, video_id: '' })
   const [newProduct, setNewProduct] = useState({
     name: '', description: '', short_description: '', price: 0, mrp: 0, stock: 0,
@@ -238,7 +261,7 @@ function AdminDashboard() {
       }
       setEditingVideo(null)
       setShowAddVideo(false)
-      setNewVideo({ title: '', duration: '', description: '', order: learningVideos.length + 1, video_url: '' })
+      setNewVideo({ title: '', duration: '', description: '', order: learningVideos.length + 1, video_url: '', thumbnail_url: '' })
       loadLearningContent(learningProductId)
     } catch (err) {
       console.error('Failed to save video:', err)
@@ -1417,6 +1440,58 @@ function AdminDashboard() {
               )}
             </div>
 
+            {/* ═══ PRODUCT QR CODES ═══ */}
+            <div className="rounded-xl border overflow-hidden" style={{ borderColor: A.border, background: '#fff' }}>
+              <button onClick={() => setShowProductQrCodes(!showProductQrCodes)} className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
+                <div className="flex items-center gap-2">
+                  <QrCode className="w-4 h-4" style={{ color: A.green }} />
+                  <h3 className="text-sm font-bold" style={{ color: A.text }}>Product QR Codes</h3>
+                  <Badge className="text-[9px] font-bold px-1.5 py-0 h-5 rounded-md" style={{ background: A.greenLight, color: A.green }}>{filteredProducts.length}</Badge>
+                </div>
+                {showProductQrCodes ? <ChevronUp className="w-4 h-4" style={{ color: A.textMuted }} /> : <ChevronDown className="w-4 h-4" style={{ color: A.textMuted }} />}
+              </button>
+              {showProductQrCodes && (
+                <div className="p-4 pt-0">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                    {filteredProducts.map(product => {
+                      const slug = product.slug || product.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+                      const qrUrl = product.qr_code_url || `https://notjustwatr.com/?product=${slug}`
+                      const qrId = `product-qr-${product.id}`
+                      return (
+                        <div key={product.id} className="rounded-lg border p-3 text-center hover:shadow-sm transition-shadow" style={{ borderColor: A.borderLight, background: A.bg }}>
+                          <div className="inline-block p-2 bg-white rounded-lg border mb-2" style={{ borderColor: A.borderLight }}>
+                            <QRCodeSVG id={qrId} value={qrUrl} size={100} bgColor="#ffffff" fgColor="#1f1e1c" level="M" />
+                          </div>
+                          <h4 className="text-xs font-semibold truncate mb-1" style={{ color: A.text }}>{product.name}</h4>
+                          <p className="text-[9px] truncate mb-2" style={{ color: A.textMuted }}>{qrUrl}</p>
+                          <div className="flex gap-1 justify-center">
+                            <Button variant="outline" size="sm" className="text-[9px] h-6 px-1.5 gap-0.5" style={{ borderColor: A.border, color: A.textSecondary }} onClick={() => {
+                              const svgEl = document.getElementById(qrId) as unknown as SVGElement | null
+                              downloadQrCodeAsPng(svgEl, `qr-${slug}`)
+                            }}>
+                              <Download className="w-2.5 h-2.5" /> PNG
+                            </Button>
+                            <Button variant="outline" size="sm" className="text-[9px] h-6 px-1.5 gap-0.5" style={{ borderColor: A.border, color: A.textSecondary }} onClick={() => {
+                              navigator.clipboard.writeText(qrUrl)
+                              toast.success('QR URL copied!')
+                            }}>
+                              <Copy className="w-2.5 h-2.5" /> URL
+                            </Button>
+                          </div>
+                        </div>
+                      )
+                    })}
+                    {filteredProducts.length === 0 && (
+                      <div className="col-span-full text-center py-8">
+                        <QrCode className="w-10 h-10 mx-auto mb-2" style={{ color: A.textMuted }} />
+                        <p className="text-xs" style={{ color: A.textMuted }}>No products to generate QR codes for</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
             {/* ═══ MANAGE LEARNING CONTENT DIALOG ═══ */}
             <Dialog open={showManageLearning} onOpenChange={(open) => { setShowManageLearning(open); if (!open) { setLearningProductId(null); setLearningVideos([]); setLearningQuizzes([]); setShowAddVideo(false); setShowAddQuiz(false); setEditingVideo(null); setEditingQuiz(null) } }}>
               <DialogContent className="sm:max-w-[900px] max-h-[92vh] overflow-hidden flex flex-col">
@@ -1441,7 +1516,7 @@ function AdminDashboard() {
                         <h3 className="text-sm font-bold flex items-center gap-2" style={{ color: A.text }}>
                           <Play className="w-4 h-4" style={{ color: A.green }} /> Videos ({learningVideos.length})
                         </h3>
-                        <Button size="sm" className="text-xs gap-1 h-7" style={{ background: A.green, color: '#fff' }} onClick={() => { setShowAddVideo(true); setEditingVideo(null); setNewVideo({ title: '', duration: '', description: '', order: learningVideos.length + 1, video_url: '' }) }}>
+                        <Button size="sm" className="text-xs gap-1 h-7" style={{ background: A.green, color: '#fff' }} onClick={() => { setShowAddVideo(true); setEditingVideo(null); setNewVideo({ title: '', duration: '', description: '', order: learningVideos.length + 1, video_url: '', thumbnail_url: '' }) }}>
                           <Plus className="w-3 h-3" /> Add Video
                         </Button>
                       </div>
@@ -1496,7 +1571,7 @@ function AdminDashboard() {
                                 )}
                               </div>
                               <div className="flex gap-1 shrink-0">
-                                <Button size="sm" variant="outline" className="text-[10px] h-6 px-1.5 gap-0.5" style={{ borderColor: A.blue, color: A.blue }} onClick={() => { setEditingVideo(video); setShowAddVideo(true); setNewVideo({ title: video.title, duration: video.duration, description: video.description || '', order: video.order, video_url: video.video_url || '' }); setTimeout(() => learningScrollRef.current?.querySelector('#edit-video-form')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100) }}><Pencil className="w-2.5 h-2.5" /> Edit</Button>
+                                <Button size="sm" variant="outline" className="text-[10px] h-6 px-1.5 gap-0.5" style={{ borderColor: A.blue, color: A.blue }} onClick={() => { setEditingVideo(video); setShowAddVideo(true); setNewVideo({ title: video.title, duration: video.duration, description: video.description || '', order: video.order, video_url: video.video_url || '', thumbnail_url: video.thumbnail_url || '' }); setTimeout(() => learningScrollRef.current?.querySelector('#edit-video-form')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100) }}><Pencil className="w-2.5 h-2.5" /> Edit</Button>
                                 <Button size="sm" variant="outline" className="text-[10px] h-6 px-1.5 gap-0.5" style={{ borderColor: A.red, color: A.red }} onClick={() => handleDeleteVideo(video.id)}><Trash2 className="w-2.5 h-2.5" /> Del</Button>
                               </div>
                             </div>
@@ -1517,29 +1592,27 @@ function AdminDashboard() {
                           <div><Label className="text-xs mb-1">Order</Label><Input type="number" value={newVideo.order} onChange={e => setNewVideo({ ...newVideo, order: Number(e.target.value) })} className="h-8 text-sm" /></div>
                           <div className="sm:col-span-2"><Label className="text-xs mb-1">Description</Label><Textarea placeholder="Video description..." rows={2} value={newVideo.description} onChange={e => setNewVideo({ ...newVideo, description: e.target.value })} className="text-sm resize-none" /></div>
                           <div className="sm:col-span-2">
-                            <Label className="text-xs mb-1">Video</Label>
+                            <Label className="text-xs mb-1">Video File</Label>
                             <div className="space-y-2">
-                              <div className="flex items-center gap-2">
-                                <label className="flex-1 flex items-center gap-2 p-2 rounded-lg border border-dashed cursor-pointer hover:bg-gray-50 transition-colors" style={{ borderColor: A.border }}>
-                                  <Upload className="w-4 h-4 shrink-0" style={{ color: A.textMuted }} />
-                                  <span className="text-xs truncate" style={{ color: A.textMuted }}>{videoUploading ? 'Uploading...' : 'Upload video file (MP4/WebM, max 50MB)'}</span>
-                                  <input type="file" accept="video/mp4,video/webm,video/ogg" className="hidden" onChange={async (e) => {
-                                    const f = e.target.files?.[0]
-                                    if (!f) return
-                                    if (f.size > 50 * 1024 * 1024) { toast.error('Video too large (max 50MB)'); return }
-                                    setVideoUploading(true)
-                                    const fd = new FormData()
-                                    fd.append('file', f)
-                                    fd.append('type', 'video')
-                                    try {
-                                      const res = await fetch('/api/upload', { method: 'POST', body: fd })
-                                      const data = await res.json()
-                                      if (data.url) { setNewVideo({ ...newVideo, video_url: data.url }); toast.success('Video uploaded!') }
-                                      else toast.error(data.error || 'Upload failed')
-                                    } catch { toast.error('Upload failed') } finally { setVideoUploading(false) }
-                                  }} disabled={videoUploading} />
-                                </label>
-                              </div>
+                              <label className="flex items-center gap-2 p-2 rounded-lg border border-dashed cursor-pointer hover:bg-gray-50 transition-colors" style={{ borderColor: A.border }}>
+                                <Upload className="w-4 h-4 shrink-0" style={{ color: A.textMuted }} />
+                                <span className="text-xs truncate" style={{ color: A.textMuted }}>{videoUploading ? 'Uploading...' : 'Upload video file (MP4/WebM, max 50MB)'}</span>
+                                <input type="file" accept="video/mp4,video/webm,video/ogg" className="hidden" onChange={async (e) => {
+                                  const f = e.target.files?.[0]
+                                  if (!f) return
+                                  if (f.size > 50 * 1024 * 1024) { toast.error('Video too large (max 50MB)'); return }
+                                  setVideoUploading(true)
+                                  const fd = new FormData()
+                                  fd.append('file', f)
+                                  fd.append('type', 'video')
+                                  try {
+                                    const res = await fetch('/api/upload', { method: 'POST', body: fd })
+                                    const data = await res.json()
+                                    if (data.url) { setNewVideo({ ...newVideo, video_url: data.url }); toast.success('Video uploaded!') }
+                                    else toast.error(data.error || 'Upload failed')
+                                  } catch { toast.error('Upload failed') } finally { setVideoUploading(false) }
+                                }} disabled={videoUploading} />
+                              </label>
                               {newVideo.video_url && (
                                 <div className="flex items-center gap-2 p-2 rounded-lg" style={{ background: A.bg }}>
                                   <Play className="w-3 h-3" style={{ color: A.green }} />
@@ -1547,10 +1620,38 @@ function AdminDashboard() {
                                   <button onClick={() => setNewVideo({ ...newVideo, video_url: '' })} className="text-xs text-red-500 hover:underline">Remove</button>
                                 </div>
                               )}
-                              <details className="text-xs" style={{ color: A.textMuted }}>
-                                <summary className="cursor-pointer hover:underline">Or paste a URL manually</summary>
-                                <Input placeholder="https://..." value={newVideo.video_url} onChange={e => setNewVideo({ ...newVideo, video_url: e.target.value })} className="h-8 text-sm mt-1" />
-                              </details>
+                              <div className="flex items-center gap-2 pt-1">
+                                <span className="text-[10px] font-medium" style={{ color: A.textMuted }}>Or paste URL:</span>
+                                <Input placeholder="https://..." value={newVideo.video_url} onChange={e => setNewVideo({ ...newVideo, video_url: e.target.value })} className="h-8 text-sm flex-1" />
+                              </div>
+                            </div>
+                          </div>
+                          <div className="sm:col-span-2">
+                            <Label className="text-xs mb-1">Thumbnail Image</Label>
+                            <div className="space-y-2">
+                              <div className="flex items-start gap-3">
+                                <div className="relative w-20 h-14 rounded-lg border-2 border-dashed overflow-hidden flex items-center justify-center shrink-0 cursor-pointer" style={{ borderColor: newVideo.thumbnail_url ? A.green : A.border, background: newVideo.thumbnail_url ? 'transparent' : A.bg }}>
+                                  {newVideo.thumbnail_url ? (
+                                    <img src={newVideo.thumbnail_url} alt="Thumbnail" className="w-full h-full object-cover" />
+                                  ) : (
+                                    <p className="text-[8px] text-center" style={{ color: A.textMuted }}>Upload</p>
+                                  )}
+                                  <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer" onChange={async (e) => {
+                                    const f = e.target.files?.[0]
+                                    if (!f) return
+                                    setVideoUploading(true)
+                                    const url = await handleImageUploadApi(f)
+                                    setVideoUploading(false)
+                                    if (url) setNewVideo({ ...newVideo, thumbnail_url: url })
+                                  }} disabled={videoUploading} />
+                                </div>
+                                <div className="flex-1">
+                                  <Input placeholder="Or paste thumbnail URL..." value={newVideo.thumbnail_url} onChange={e => setNewVideo({ ...newVideo, thumbnail_url: e.target.value })} className="h-8 text-sm" />
+                                  {newVideo.thumbnail_url && (
+                                    <button onClick={() => setNewVideo({ ...newVideo, thumbnail_url: '' })} className="text-[10px] text-red-500 hover:underline mt-1">Remove thumbnail</button>
+                                  )}
+                                </div>
+                              </div>
                             </div>
                           </div>
                         </div>

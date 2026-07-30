@@ -112,6 +112,10 @@ export function ProductLearningModule() {
     let cancelled = false
     async function load() {
       setLoading(true)
+      // Reset per-product state to avoid cross-product contamination
+      setPassedQuizzes({})
+      setCurrentStep({ type: 'video', videoIndex: 0 })
+      setProgress(null)
       try {
         const [prodRes, vidRes, progRes] = await Promise.all([
           productServiceCompat.getById(selectedProductId),
@@ -135,6 +139,9 @@ export function ProductLearningModule() {
         }
         setProgress(savedProgressObj)
 
+        // Get quizzes from product data for reconstructing passed state
+        const productQuizzes = (prodRes.data as (Product & { quizzes?: ProductQuiz[] }) | null)?.quizzes || []
+
         // Determine which step to start on based on saved progress
         if (savedProgressObj && loadedVideos.length > 0) {
           const savedProgress = savedProgressObj
@@ -142,19 +149,6 @@ export function ProductLearningModule() {
           // We'll reconstruct the step from the progress
           const vp = savedProgress.video_progress || {}
           const qa = savedProgress.quiz_answers || {}
-
-          // Find the first video that is not 100% complete
-          let startVideoIdx = 0
-          for (let i = 0; i < loadedVideos.length; i++) {
-            const vidProg = vp[loadedVideos[i].id] ?? 0
-            if (vidProg < 100) {
-              startVideoIdx = i
-              break
-            }
-            if (i === loadedVideos.length - 1) {
-              startVideoIdx = loadedVideos.length - 1
-            }
-          }
 
           // If the status is already UNLOCKED or COMPLETED, go to completed
           if (savedProgress.status === 'UNLOCKED' || savedProgress.status === 'COMPLETED') {
@@ -165,6 +159,54 @@ export function ProductLearningModule() {
             setPassedQuizzes(allPassed)
             setCurrentStep({ type: 'completed' })
           } else {
+            // Reconstruct passedQuizzes from saved quiz answers for this product only
+            const reconstructedPassed: Record<number, boolean> = {}
+            for (let vi = 0; vi < loadedVideos.length; vi++) {
+              const videoId = loadedVideos[vi].id
+              // Get quizzes for this video
+              const videoQuizzes = productQuizzes.filter(
+                q => q.video_id === videoId && q.active !== false
+              )
+              if (videoQuizzes.length === 0) continue
+              // Check if all answers for this video's quizzes are saved and correct
+              const videoQA = qa as Record<string, number>
+              let correctCount = 0
+              let answeredCount = 0
+              for (const quiz of videoQuizzes) {
+                const userAnswer = videoQA[quiz.id]
+                if (userAnswer !== undefined && userAnswer !== -1) {
+                  answeredCount++
+                  if (userAnswer === quiz.answer) {
+                    correctCount++
+                  }
+                }
+              }
+              // Quiz is passed if enough questions answered correctly (80% threshold)
+              const passThreshold = getPassThreshold(videoQuizzes.length)
+              if (answeredCount === videoQuizzes.length && correctCount >= passThreshold) {
+                reconstructedPassed[vi] = true
+              }
+            }
+            setPassedQuizzes(reconstructedPassed)
+
+            // Find the first video that is not 100% complete or whose quiz is not passed
+            let startVideoIdx = 0
+            for (let i = 0; i < loadedVideos.length; i++) {
+              const vidProg = vp[loadedVideos[i].id] ?? 0
+              if (vidProg < 100) {
+                startVideoIdx = i
+                break
+              }
+              // Video is complete but quiz not passed — go back to quiz
+              if (!reconstructedPassed[i]) {
+                startVideoIdx = i
+                break
+              }
+              if (i === loadedVideos.length - 1) {
+                startVideoIdx = loadedVideos.length - 1
+              }
+            }
+
             // Start on the appropriate video
             setCurrentStep({ type: 'video', videoIndex: startVideoIdx })
           }

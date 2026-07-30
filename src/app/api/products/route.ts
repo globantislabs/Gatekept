@@ -1,10 +1,68 @@
-import { db } from '@/lib/db'
+import { db, safeDbQuery } from '@/lib/db'
 import { NextRequest } from 'next/server'
 import { jsonResponse, errorResponse, checkAdmin, handleOptions, validateRequired, validateNumeric, sanitizeStringFields } from '@/lib/api-utils'
+import { Prisma } from '@prisma/client'
 
 // OPTIONS - CORS preflight
 export async function OPTIONS() {
   return handleOptions()
+}
+
+// ─── Helper: Check if error is a missing column/table error ─────
+function isSchemaMismatchError(error: unknown): boolean {
+  if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    // P2021: Table does not exist, P2022: Column does not exist
+    return error.errorCode === 'P2021' || error.errorCode === 'P2022'
+  }
+  if (error instanceof Error) {
+    const msg = error.message.toLowerCase()
+    return msg.includes('unknown column') || msg.includes("doesn't exist")
+  }
+  return false
+}
+
+// ─── Helper: Build a safe "select" that excludes qr_code_url if needed ──
+// If the production MySQL DB doesn't have the qr_code_url column yet,
+// we can fall back to a select that excludes it.
+function getSafeProductSelect() {
+  return {
+    id: true,
+    name: true,
+    slug: true,
+    description: true,
+    short_description: true,
+    price: true,
+    mrp: true,
+    stock: true,
+    image_url: true,
+    gallery_images: true,
+    type: true,
+    category: true,
+    sku: true,
+    weight: true,
+    ingredients: true,
+    nutrition_info: true,
+    tags: true,
+    active: true,
+    featured: true,
+    brand: true,
+    flavor: true,
+    serving_size: true,
+    allergen_info: true,
+    storage_info: true,
+    shelf_life: true,
+    country_origin: true,
+    fssai_license: true,
+    hsn_code: true,
+    gst_rate: true,
+    min_order_qty: true,
+    max_order_qty: true,
+    discount_label: true,
+    highlights: true,
+    qr_code_url: true,
+    created_at: true,
+    updated_at: true,
+  }
 }
 
 // GET /api/products - List all products with optional filters
@@ -31,15 +89,95 @@ export async function GET(request: NextRequest) {
       where.category = category
     }
 
-    const products = await db.product.findMany({
-      where,
-      orderBy: { created_at: 'desc' },
-    })
+    // First attempt: try with full select (includes qr_code_url)
+    const result = await safeDbQuery(
+      (client) => client.product.findMany({
+        where,
+        orderBy: { created_at: 'desc' },
+      }),
+      { operationName: 'GET /api/products (findMany)' }
+    )
 
-    return jsonResponse({ products, total: products.length })
+    if (result.success) {
+      return jsonResponse({ products: result.data, total: result.data!.length })
+    }
+
+    // If the error is a schema mismatch (e.g., qr_code_url column missing),
+    // retry with a select that excludes the problematic column
+    if (result.error?.type === 'schema' || isSchemaMismatchError(result.error?.originalError)) {
+      console.warn('[API /products] Schema mismatch detected, retrying without qr_code_url select')
+
+      const fallbackResult = await safeDbQuery(
+        (client) => client.product.findMany({
+          where,
+          orderBy: { created_at: 'desc' },
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            description: true,
+            short_description: true,
+            price: true,
+            mrp: true,
+            stock: true,
+            image_url: true,
+            gallery_images: true,
+            type: true,
+            category: true,
+            sku: true,
+            weight: true,
+            ingredients: true,
+            nutrition_info: true,
+            tags: true,
+            active: true,
+            featured: true,
+            brand: true,
+            flavor: true,
+            serving_size: true,
+            allergen_info: true,
+            storage_info: true,
+            shelf_life: true,
+            country_origin: true,
+            fssai_license: true,
+            hsn_code: true,
+            gst_rate: true,
+            min_order_qty: true,
+            max_order_qty: true,
+            discount_label: true,
+            highlights: true,
+            // qr_code_url intentionally excluded — column may not exist in production DB
+            created_at: true,
+            updated_at: true,
+          },
+        }),
+        { operationName: 'GET /api/products (findMany fallback without qr_code_url)' }
+      )
+
+      if (fallbackResult.success) {
+        // Add qr_code_url: null to each product so the API contract is consistent
+        const products = fallbackResult.data!.map((p) => ({ ...p, qr_code_url: null }))
+        return jsonResponse({ products, total: products.length })
+      }
+
+      // Fallback also failed
+      console.error('[API /products] Fallback query also failed:', fallbackResult.error?.message)
+      return errorResponse(
+        `Database error: ${fallbackResult.error?.type === 'connection' ? 'Unable to connect to database' : fallbackResult.error?.message || 'Unknown error'}`,
+        500
+      )
+    }
+
+    // Connection or other error
+    const errorType = result.error?.type
+    const errorMsg = result.error?.message || 'Unknown database error'
+    if (errorType === 'connection') {
+      return errorResponse(`Database connection error: ${errorMsg}`, 503)
+    }
+    return errorResponse(`Failed to fetch products: ${errorMsg}`, 500)
   } catch (error) {
-    console.error('Error listing products:', error)
-    return errorResponse('Failed to fetch products', 500)
+    console.error('[API /products] Unexpected error:', error)
+    const message = error instanceof Error ? error.message : 'Unknown error'
+    return errorResponse(`Unexpected error fetching products: ${message}`, 500)
   }
 }
 
@@ -115,63 +253,109 @@ export async function POST(request: NextRequest) {
     } = sanitized
 
     // Check slug uniqueness
-    const existing = await db.product.findUnique({ where: { slug: slug as string } })
-    if (existing) {
+    const slugResult = await safeDbQuery(
+      (client) => client.product.findUnique({ where: { slug: slug as string } }),
+      { operationName: 'POST /api/products (slug check)' }
+    )
+    if (!slugResult.success) {
+      return errorResponse(
+        `Database error checking slug uniqueness: ${slugResult.error?.message || 'Unknown error'}`,
+        500
+      )
+    }
+    if (slugResult.data) {
       return errorResponse('Product with this slug already exists', 400)
     }
 
-    const product = await db.product.create({
-      data: {
-        name: name as string,
-        slug: slug as string,
-        description: description as string || null,
-        short_description: short_description as string || null,
-        price: parseFloat(String(price)),
-        mrp: mrp ? parseFloat(String(mrp)) : null,
-        stock: stock ? parseInt(String(stock)) : 0,
-        image_url: image_url as string || null,
-        gallery_images: gallery_images as string || null,
-        type: type as string || 'FIZZ',
-        category: category as string || null,
-        sku: sku as string || null,
-        weight: weight as string || null,
-        ingredients: ingredients as string || null,
-        nutrition_info: nutrition_info as string || null,
-        tags: tags as string || null,
-        active: typeof active === 'boolean' ? active : true,
-        featured: typeof featured === 'boolean' ? featured : false,
-        brand: brand as string || 'NOTJUST',
-        flavor: flavor as string || null,
-        serving_size: serving_size as string || null,
-        allergen_info: allergen_info as string || null,
-        storage_info: storage_info as string || null,
-        shelf_life: shelf_life as string || null,
-        country_origin: country_origin as string || 'India',
-        fssai_license: fssai_license as string || null,
-        hsn_code: hsn_code as string || null,
-        gst_rate: gst_rate ? parseFloat(String(gst_rate)) : 18,
-        min_order_qty: min_order_qty ? parseInt(String(min_order_qty)) : 1,
-        max_order_qty: max_order_qty ? parseInt(String(max_order_qty)) : 10,
-        discount_label: discount_label as string || null,
-        highlights: highlights as string || null,
-        qr_code_url: qr_code_url as string || null,
-      },
-    })
+    const productData = {
+      name: name as string,
+      slug: slug as string,
+      description: description as string || null,
+      short_description: short_description as string || null,
+      price: parseFloat(String(price)),
+      mrp: mrp ? parseFloat(String(mrp)) : null,
+      stock: stock ? parseInt(String(stock)) : 0,
+      image_url: image_url as string || null,
+      gallery_images: gallery_images as string || null,
+      type: type as string || 'FIZZ',
+      category: category as string || null,
+      sku: sku as string || null,
+      weight: weight as string || null,
+      ingredients: ingredients as string || null,
+      nutrition_info: nutrition_info as string || null,
+      tags: tags as string || null,
+      active: typeof active === 'boolean' ? active : true,
+      featured: typeof featured === 'boolean' ? featured : false,
+      brand: brand as string || 'NOTJUST',
+      flavor: flavor as string || null,
+      serving_size: serving_size as string || null,
+      allergen_info: allergen_info as string || null,
+      storage_info: storage_info as string || null,
+      shelf_life: shelf_life as string || null,
+      country_origin: country_origin as string || 'India',
+      fssai_license: fssai_license as string || null,
+      hsn_code: hsn_code as string || null,
+      gst_rate: gst_rate ? parseFloat(String(gst_rate)) : 18,
+      min_order_qty: min_order_qty ? parseInt(String(min_order_qty)) : 1,
+      max_order_qty: max_order_qty ? parseInt(String(max_order_qty)) : 10,
+      discount_label: discount_label as string || null,
+      highlights: highlights as string || null,
+      qr_code_url: qr_code_url as string || null,
+    }
+
+    const createResult = await safeDbQuery(
+      (client) => client.product.create({ data: productData }),
+      { operationName: 'POST /api/products (create)' }
+    )
+
+    if (!createResult.success) {
+      // If qr_code_url column doesn't exist in production, retry without it
+      if (createResult.error?.type === 'schema' || isSchemaMismatchError(createResult.error?.originalError)) {
+        console.warn('[API /products] qr_code_url column missing, creating product without it')
+        const { qr_code_url: _qrc, ...dataWithoutQr } = productData
+        const fallbackResult = await safeDbQuery(
+          (client) => client.product.create({ data: dataWithoutQr }),
+          { operationName: 'POST /api/products (create without qr_code_url)' }
+        )
+        if (fallbackResult.success) {
+          return jsonResponse({ product: { ...fallbackResult.data, qr_code_url: null } }, 201)
+        }
+        return errorResponse(
+          `Failed to create product: ${fallbackResult.error?.message || 'Unknown error'}`,
+          500
+        )
+      }
+      return errorResponse(
+        `Failed to create product: ${createResult.error?.message || 'Unknown error'}`,
+        500
+      )
+    }
+
+    const product = createResult.data!
 
     // Auto-generate QR code URL if not provided
     if (!product.qr_code_url) {
       const baseUrl = process.env.NEXTAUTH_URL || 'https://notjustwatr.com'
       const qrUrl = `${baseUrl}/?product=${product.slug}`
-      await db.product.update({
-        where: { id: product.id },
-        data: { qr_code_url: qrUrl },
-      })
-      product.qr_code_url = qrUrl
+      const updateResult = await safeDbQuery(
+        (client) => client.product.update({
+          where: { id: product.id },
+          data: { qr_code_url: qrUrl },
+        }),
+        { operationName: 'POST /api/products (update qr_code_url)' }
+      )
+      if (updateResult.success) {
+        product.qr_code_url = qrUrl
+      } else {
+        // Non-fatal: QR code URL update failed, but product was created
+        console.warn('[API /products] Failed to update qr_code_url:', updateResult.error?.message)
+      }
     }
 
     return jsonResponse({ product }, 201)
   } catch (error) {
-    console.error('Error creating product:', error)
-    return errorResponse('Failed to create product', 500)
+    console.error('[API /products] Unexpected error creating product:', error)
+    const message = error instanceof Error ? error.message : 'Unknown error'
+    return errorResponse(`Unexpected error creating product: ${message}`, 500)
   }
 }

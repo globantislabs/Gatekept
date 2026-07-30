@@ -6,10 +6,15 @@ import { db } from '@/lib/db'
 import { createHash } from 'crypto'
 
 // ─── Config ──────────────────────────────────────────────────
-const WHATSAPP_TOKEN = process.env.WHATSAPP_TOKEN || ''
-const WHATSAPP_PHONE_NUMBER_ID = process.env.WHATSAPP_PHONE_NUMBER_ID || ''
+// Lazy env var reading — these are read at CALL TIME, not import time,
+// so they work correctly when the server loads .env.production at startup.
+function getWhatsappToken() { return process.env.WHATSAPP_TOKEN || '' }
+function getWhatsappPhoneNumberId() { return process.env.WHATSAPP_PHONE_NUMBER_ID || '' }
 const WHATSAPP_API_VERSION = 'v19.0'
-const WHATSAPP_BASE_URL = `https://graph.facebook.com/${WHATSAPP_API_VERSION}/${WHATSAPP_PHONE_NUMBER_ID}/messages`
+function getWhatsappBaseUrl() {
+  const phoneId = getWhatsappPhoneNumberId()
+  return `https://graph.facebook.com/${WHATSAPP_API_VERSION}/${phoneId}/messages`
+}
 const OTP_LENGTH = 6
 const OTP_EXPIRY_MINUTES = 5
 
@@ -70,8 +75,10 @@ async function sendWhatsAppOtpMessage(
   whatsappPhone: string,
   otpCode: string
 ): Promise<{ success: boolean; messageId?: string; error?: string }> {
-  if (!WHATSAPP_TOKEN || !WHATSAPP_PHONE_NUMBER_ID) {
-    console.warn('WhatsApp credentials not configured — OTP not sent via WhatsApp')
+  const token = getWhatsappToken()
+  const phoneId = getWhatsappPhoneNumberId()
+  if (!token || !phoneId) {
+    console.warn('[WhatsApp OTP] Credentials not configured — OTP not sent via WhatsApp. Set WHATSAPP_TOKEN and WHATSAPP_PHONE_NUMBER_ID in environment.')
     return { success: false, error: 'WhatsApp credentials not configured' }
   }
 
@@ -105,10 +112,11 @@ async function sendWhatsAppOtpMessage(
   }
 
   try {
-    const response = await fetch(WHATSAPP_BASE_URL, {
+    const baseUrl = getWhatsappBaseUrl()
+    const response = await fetch(baseUrl, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${WHATSAPP_TOKEN}`,
+        'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(payload),
@@ -187,13 +195,17 @@ export const whatsappOtpService = {
     }
 
     // If WhatsApp failed or credentials not configured, still return OTP ID
-    // In dev mode, include the OTP code for testing
-    const isDev = !WHATSAPP_TOKEN || !WHATSAPP_PHONE_NUMBER_ID
+    // NEVER expose the OTP code in the response — security risk!
+    // The user should receive the OTP only via WhatsApp message.
+    const isDev = !getWhatsappToken() || !getWhatsappPhoneNumberId()
+    if (isDev) {
+      console.warn(`[WhatsApp OTP] DEV MODE: OTP for ${phoneMasked} is ${otpCode}. Configure WHATSAPP_TOKEN and WHATSAPP_PHONE_NUMBER_ID for production.`)
+    }
     return {
       success: true,
       otp_id: otpRecord.id,
       message: isDev
-        ? `OTP recorded (dev mode: code is ${otpCode}). WhatsApp delivery pending.`
+        ? 'OTP recorded. WhatsApp not configured — check server logs for dev OTP code.'
         : 'OTP recorded. WhatsApp delivery may be delayed.',
       phone_masked: `+91 ${phoneMasked}`,
     }

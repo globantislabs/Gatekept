@@ -148,14 +148,8 @@ export function AuthWhatsAppOtpLogin() {
 
       toast.success(`WhatsApp OTP sent to ${data.phone_masked}`)
 
-      // In dev mode, show OTP code for testing
-      if (data.message && data.message.includes('dev mode')) {
-        const code = data.message.match(/code is (\d+)/)?.[1]
-        if (code) {
-          console.log(`[DEV] OTP code for testing: ${code}`)
-          toast.info(`[DEV] OTP: ${code}`, { duration: 10000 })
-        }
-      }
+      // Production: OTP is sent via WhatsApp only — never expose it in the UI
+      // Dev mode: OTP is logged to server console only (check server logs)
     } catch (err: any) {
       setError('Something went wrong. Please try again.')
       setSending(false)

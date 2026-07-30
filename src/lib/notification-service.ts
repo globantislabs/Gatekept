@@ -8,13 +8,18 @@ import { emailService } from '@/lib/email-service'
 import { smsAlertService } from '@/lib/smsalert-service'
 
 // ─── WhatsApp Config ─────────────────────────────────────────
-const WHATSAPP_TOKEN = process.env.WHATSAPP_TOKEN || ''
-const WHATSAPP_PHONE_NUMBER_ID = process.env.WHATSAPP_PHONE_NUMBER_ID || ''
+// Lazy env var reading — these are read at CALL TIME, not import time,
+// so they work correctly when the server loads .env.production at startup.
+function getWhatsappToken() { return process.env.WHATSAPP_TOKEN || '' }
+function getWhatsappPhoneNumberId() { return process.env.WHATSAPP_PHONE_NUMBER_ID || '' }
 const WHATSAPP_API_VERSION = 'v19.0'
-const WHATSAPP_BASE_URL = `https://graph.facebook.com/${WHATSAPP_API_VERSION}/${WHATSAPP_PHONE_NUMBER_ID}/messages`
+function getWhatsappBaseUrl() {
+  const phoneId = getWhatsappPhoneNumberId()
+  return `https://graph.facebook.com/${WHATSAPP_API_VERSION}/${phoneId}/messages`
+}
 
 // ─── SMS Config ──────────────────────────────────────────────
-const SMSALERT_ACTIVE = process.env.SMSALERT_ACTIVE || ''
+function getSmsAlertActive() { return process.env.SMSALERT_ACTIVE || '' }
 
 // ─── Types ────────────────────────────────────────────────────
 
@@ -68,17 +73,20 @@ function formatItemsForDisplay(items?: { product_name: string; quantity: number;
 
 // ─── WhatsApp Text Message Sender ─────────────────────────────
 async function sendWhatsAppTextMessage(phone: string, text: string): Promise<boolean> {
-  if (!WHATSAPP_TOKEN || !WHATSAPP_PHONE_NUMBER_ID) {
-    console.log('[DEV WhatsApp] Would send to:', phone, 'Text:', text.substring(0, 100))
+  const token = getWhatsappToken()
+  const phoneId = getWhatsappPhoneNumberId()
+  if (!token || !phoneId) {
+    console.log('[WhatsApp] Credentials not configured — message not sent to:', phone, 'Text:', text.substring(0, 100))
     return false
   }
 
   try {
     const whatsappPhone = formatPhoneForWhatsApp(phone)
-    const response = await fetch(WHATSAPP_BASE_URL, {
+    const baseUrl = getWhatsappBaseUrl()
+    const response = await fetch(baseUrl, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${WHATSAPP_TOKEN}`,
+        'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -193,7 +201,7 @@ export const notificationService = {
     }
 
     // SMS
-    if (user.phone && SMSALERT_ACTIVE === 'true') {
+    if (user.phone && getSmsAlertActive() === 'true') {
       try {
         const result = await smsAlertService.sendSms(user.phone, smsText)
         await logNotification(
@@ -246,7 +254,7 @@ export const notificationService = {
     }
 
     // SMS
-    if (user.phone && SMSALERT_ACTIVE === 'true') {
+    if (user.phone && getSmsAlertActive() === 'true') {
       try {
         const result = await smsAlertService.sendSms(user.phone, smsText)
         await logNotification(user.id, order.id, 'ORDER_CONFIRMED', 'SMS', result.success ? 'SENT' : 'FAILED', user.phone || '', undefined, smsText, result.success ? undefined : result.message)
@@ -290,7 +298,7 @@ export const notificationService = {
     }
 
     // SMS
-    if (user.phone && SMSALERT_ACTIVE === 'true') {
+    if (user.phone && getSmsAlertActive() === 'true') {
       try {
         const result = await smsAlertService.sendSms(user.phone, smsText)
         await logNotification(user.id, order.id, 'PAYMENT_RECEIVED', 'SMS', result.success ? 'SENT' : 'FAILED', user.phone || '', undefined, smsText, result.success ? undefined : result.message)
@@ -333,7 +341,7 @@ export const notificationService = {
     }
 
     // SMS
-    if (user.phone && SMSALERT_ACTIVE === 'true') {
+    if (user.phone && getSmsAlertActive() === 'true') {
       try {
         const result = await smsAlertService.sendSms(user.phone, smsText)
         await logNotification(user.id, order.id, 'ORDER_SHIPPED', 'SMS', result.success ? 'SENT' : 'FAILED', user.phone || '', undefined, smsText, result.success ? undefined : result.message)
@@ -376,7 +384,7 @@ export const notificationService = {
     }
 
     // SMS
-    if (user.phone && SMSALERT_ACTIVE === 'true') {
+    if (user.phone && getSmsAlertActive() === 'true') {
       try {
         const result = await smsAlertService.sendSms(user.phone, smsText)
         await logNotification(user.id, order.id, 'ORDER_DELIVERED', 'SMS', result.success ? 'SENT' : 'FAILED', user.phone || '', undefined, smsText, result.success ? undefined : result.message)
@@ -419,7 +427,7 @@ export const notificationService = {
     }
 
     // SMS
-    if (user.phone && SMSALERT_ACTIVE === 'true') {
+    if (user.phone && getSmsAlertActive() === 'true') {
       try {
         const result = await smsAlertService.sendSms(user.phone, smsText)
         await logNotification(user.id, order.id, 'ORDER_CANCELLED', 'SMS', result.success ? 'SENT' : 'FAILED', user.phone || '', undefined, smsText, result.success ? undefined : result.message)

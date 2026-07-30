@@ -362,7 +362,6 @@ export function AuthRegister() {
   const [sendingOtp, setSendingOtp] = useState(false)
   const [verifyingOtp, setVerifyingOtp] = useState(false)
   const [resendCooldown, setResendCooldown] = useState(0)
-  const [devOtp, setDevOtp] = useState<string | null>(null)
   const [contactMasked, setContactMasked] = useState('')
   const [otpAttemptsRemaining, setOtpAttemptsRemaining] = useState(3)
 
@@ -459,16 +458,8 @@ export function AuthRegister() {
         setOtpId(data.otp_id)
         setContactMasked(data.phone_masked || `+91 ${trimmed.slice(0, 2)}****${trimmed.slice(-2)}`)
 
-        // In dev mode, show OTP for testing
-        if (data.message && data.message.includes('dev mode')) {
-          const code = data.message.match(/code is (\d+)/)?.[1]
-          if (code) {
-            setDevOtp(code)
-            toast.info(`[DEV] OTP: ${code}`, { duration: 10000 })
-          }
-        } else {
-          setDevOtp(null)
-        }
+        // Production: OTP is sent via WhatsApp only — never expose it in the UI
+        // Dev mode: OTP is logged to server console only (check server logs)
 
         toast.success(`WhatsApp OTP sent to ${data.phone_masked}`)
       } else {
@@ -494,11 +485,7 @@ export function AuthRegister() {
 
         setOtpId(data.otp_id)
         setContactMasked(trimmed)
-        setDevOtp(data.dev_otp || null)
-
-        if (data.dev_otp) {
-          toast.info(`[DEV] OTP: ${data.dev_otp}`, { duration: 10000 })
-        }
+        // Production: OTP is sent via email only — never expose it in the UI
 
         toast.success('Verification code sent to your email')
       }
@@ -893,12 +880,6 @@ export function AuthRegister() {
                   </motion.div>
                 )}
 
-                {/* Dev mode hint */}
-                {devOtp && (
-                  <div className="text-center text-xs text-[#48805b] bg-[#48805b]/10 rounded-lg p-3">
-                    <p className="font-medium">Dev mode — OTP: <span className="font-bold">{devOtp}</span></p>
-                  </div>
-                )}
 
                 {/* OTP Entry */}
                 <div className="flex flex-col items-center gap-2">
@@ -971,7 +952,6 @@ export function AuthRegister() {
                       setOtpCode('')
                       setError(null)
                       setOtpId(null)
-                      setDevOtp(null)
                     }}
                   >
                     <ArrowLeft className="w-4 h-4 mr-1" />
@@ -1047,7 +1027,6 @@ export function AuthRegister() {
                     setError(null)
                     setOtpId(null)
                     setOtpCode('')
-                    setDevOtp(null)
                   }}
                 >
                   <ArrowLeft className="w-4 h-4 mr-1" />
@@ -1443,7 +1422,6 @@ export function AuthForgotPassword() {
   const [showNewPassword, setShowNewPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [devOtp, setDevOtp] = useState<string | null>(null)
 
   // Step 1: Send verification code
   const handleSendCode = async () => {
@@ -1474,9 +1452,7 @@ export function AuthForgotPassword() {
       if (data.otp_id) {
         setOtpId(data.otp_id)
       }
-      if (data.dev_otp) {
-        setDevOtp(data.dev_otp)
-      }
+      // Production: OTP is sent via email only — never expose it in the UI
 
       toast.success('Verification code sent! Check your email.')
       setStep('otp')
@@ -1687,12 +1663,6 @@ export function AuthForgotPassword() {
               {/* Step: OTP verification */}
               {step === 'otp' && (
                 <motion.div key="otp-step" variants={slideInRight} initial="hidden" animate="visible" className="space-y-4">
-                  {/* Dev mode hint */}
-                  {devOtp && (
-                    <div className="text-center text-xs text-[#48805b] bg-[#48805b]/10 rounded-lg p-3">
-                      <p className="font-medium">Dev mode — OTP: <span className="font-bold">{devOtp}</span></p>
-                    </div>
-                  )}
 
                   <div className="space-y-2">
                     <Label className="text-sm font-medium text-[#1f1e1c]">

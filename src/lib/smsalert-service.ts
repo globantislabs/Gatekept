@@ -6,9 +6,12 @@ import { db } from '@/lib/db'
 import { createHash } from 'crypto'
 
 // ─── Config ──────────────────────────────────────────────────
-const SMSALERT_USER = process.env.SMSALERT_USER || ''
-const SMSALERT_PWD = process.env.SMSALERT_PWD || ''
-const SMSALERT_SENDER = process.env.SMSALERT_SENDER || 'NJWATR'
+// Lazy env var reading — these are read at CALL TIME, not import time,
+// so they work correctly when the server loads .env.production at startup.
+function getSmsAlertUser() { return process.env.SMSALERT_USER || '' }
+function getSmsAlertPwd() { return process.env.SMSALERT_PWD || '' }
+function getSmsAlertSender() { return process.env.SMSALERT_SENDER || 'NJWATR' }
+function getSmsAlertActive() { return process.env.SMSALERT_ACTIVE || '' }
 const SMSALERT_OTP_LENGTH = 6
 const SMSALERT_OTP_EXPIRY_MINUTES = 5
 const SMSALERT_BASE_URL = 'https://www.smsalert.co.in/api'
@@ -93,7 +96,7 @@ export const smsAlertService = {
     referenceId?: string
   ): Promise<{ success: boolean; otpId: string; message: string; phoneMasked: string }> {
     // Check if SMS OTP is active
-    const smsActive = process.env.SMSALERT_ACTIVE
+    const smsActive = getSmsAlertActive()
     if (!smsActive || smsActive === 'false') {
       throw new Error('SMS OTP is currently inactive. Please use WhatsApp OTP instead.')
     }
@@ -126,13 +129,16 @@ export const smsAlertService = {
     })
 
     // If SMSAlert credentials are configured, attempt to send SMS
-    if (SMSALERT_USER && SMSALERT_PWD) {
+    const smsUser = getSmsAlertUser()
+    const smsPwd = getSmsAlertPwd()
+    const smsSender = getSmsAlertSender()
+    if (smsUser && smsPwd) {
       try {
         const smsTemplate = `Your NOTJUST Watr verification code is ${otpCode}. Valid for ${SMSALERT_OTP_EXPIRY_MINUTES} minutes. Do not share this code. -NJWATR`
         const response = await callSmsAlertApi('/mverify.json', {
-          user: SMSALERT_USER,
-          pwd: SMSALERT_PWD,
-          sender: SMSALERT_SENDER,
+          user: smsUser,
+          pwd: smsPwd,
+          sender: smsSender,
           mobileno: formattedPhone,
           otp: otpCode,
           otp_length: String(SMSALERT_OTP_LENGTH),
@@ -153,13 +159,16 @@ export const smsAlertService = {
     }
 
     // In dev mode (no credentials) or if SMS failed, still return the OTP ID
-    // Dev mode: include the OTP code in the response for testing
-    const isDev = !SMSALERT_USER || !SMSALERT_PWD
+    // NEVER expose the OTP code in the response — security risk!
+    const isDev = !getSmsAlertUser() || !getSmsAlertPwd()
+    if (isDev) {
+      console.warn(`[SMS OTP] DEV MODE: OTP for ${phoneMasked} is ${otpCode}. Configure SMSALERT_USER and SMSALERT_PWD for production.`)
+    }
     return {
       success: true,
       otpId: otpRecord.id,
       message: isDev
-        ? `OTP recorded (dev mode: code is ${otpCode}). SMS delivery pending.`
+        ? 'OTP recorded. SMS not configured — check server logs for dev OTP code.'
         : 'OTP recorded. SMS delivery may be delayed.',
       phoneMasked,
     }
@@ -212,11 +221,13 @@ export const smsAlertService = {
     })
 
     // Also try SMSAlert verify endpoint (for their dashboard tracking)
-    if (SMSALERT_USER && SMSALERT_PWD && record.sms_reference) {
+    const smsUser = getSmsAlertUser()
+    const smsPwd = getSmsAlertPwd()
+    if (smsUser && smsPwd && record.sms_reference) {
       try {
         await callSmsAlertApi('/mverify.json', {
-          user: SMSALERT_USER,
-          pwd: SMSALERT_PWD,
+          user: smsUser,
+          pwd: smsPwd,
           mobileno: record.phone,
           otp: otpCode,
           reference_id: record.sms_reference,
@@ -238,16 +249,19 @@ export const smsAlertService = {
   async sendSms(phone: string, text: string): Promise<{ success: boolean; message: string }> {
     const formattedPhone = formatIndianPhone(phone)
 
-    if (!SMSALERT_USER || !SMSALERT_PWD) {
+    const smsUser = getSmsAlertUser()
+    const smsPwd = getSmsAlertPwd()
+    const smsSender = getSmsAlertSender()
+    if (!smsUser || !smsPwd) {
       console.warn('SMSAlert credentials not configured — SMS not sent')
       return { success: false, message: 'SMS gateway not configured' }
     }
 
     try {
       const response = await callSmsAlertApi('/push.json', {
-        user: SMSALERT_USER,
-        pwd: SMSALERT_PWD,
-        sender: SMSALERT_SENDER,
+        user: smsUser,
+        pwd: smsPwd,
+        sender: smsSender,
         mobileno: formattedPhone,
         text,
       })
@@ -262,6 +276,6 @@ export const smsAlertService = {
    * Check if SMSAlert credentials are configured
    */
   isConfigured(): boolean {
-    return Boolean(SMSALERT_USER && SMSALERT_PWD)
+    return Boolean(getSmsAlertUser() && getSmsAlertPwd())
   },
 }

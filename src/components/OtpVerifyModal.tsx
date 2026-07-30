@@ -67,14 +67,8 @@ export function OtpVerifyModal({
       setResendCooldown(RESEND_COOLDOWN_SECONDS)
       setAttemptsRemaining(3)
       toast.success(`OTP sent to ${result.phone_masked}`)
-      // In dev mode, show OTP code for testing
-      if (result.message.includes('dev mode')) {
-        const code = result.message.match(/code is (\d+)/)?.[1]
-        if (code) {
-          console.log(`[DEV] OTP code for testing: ${code}`)
-          toast.info(`[DEV] OTP: ${code}`, { duration: 10000 })
-        }
-      }
+      // Production: OTP is sent via SMS only — never expose it in the UI
+      // Dev mode: OTP is logged to server console only (check server logs)
     } catch (err: any) {
       setSending(false)
       setErrorState(err.message || 'Failed to send OTP. Please ensure you have a registered phone number.')

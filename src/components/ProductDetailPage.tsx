@@ -684,8 +684,8 @@ export default function ProductDetailPage() {
                               variant="ghost"
                               size="icon"
                               className="h-9 w-9 rounded-r-lg"
-                              onClick={() => setQuantity(Math.min(product.max_order_qty || 10, quantity + 1))}
-                              disabled={quantity >= (product.max_order_qty || 10)}
+                              onClick={() => setQuantity(Math.min(displayProduct?.max_order_qty || 10, quantity + 1))}
+                              disabled={quantity >= (displayProduct?.max_order_qty || 10)}
                             >
                               <Plus className="w-4 h-4" style={{ color: BRAND.muted }} />
                             </Button>

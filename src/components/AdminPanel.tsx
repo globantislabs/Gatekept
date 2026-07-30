@@ -1062,6 +1062,40 @@ function AdminDashboard() {
                           </div>
                         </div>
                         <Separator />
+                        {/* ─── Gallery Images ─── */}
+                        <div className="space-y-2">
+                          <Label className="text-xs font-bold uppercase tracking-wider" style={{ color: A.textSecondary }}>Gallery Images</Label>
+                          <div className="flex flex-wrap gap-2">
+                            {getGalleryUrls().map((url, idx) => (
+                              <div key={idx} className="relative w-20 h-20 rounded-lg border overflow-hidden group" style={{ borderColor: A.border }}>
+                                <img src={url} alt={`Gallery ${idx + 1}`} className="w-full h-full object-cover" />
+                                <button onClick={() => removeGalleryImage(idx)} className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-red-500 text-white text-[10px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><X className="w-3 h-3" /></button>
+                              </div>
+                            ))}
+                            <label className="w-20 h-20 rounded-lg border-2 border-dashed flex items-center justify-center cursor-pointer hover:bg-gray-50 transition-colors" style={{ borderColor: A.border }}>
+                              <div className="text-center">
+                                <Upload className="w-4 h-4 mx-auto" style={{ color: A.textMuted }} />
+                                <p className="text-[8px] mt-0.5" style={{ color: A.textMuted }}>Add</p>
+                              </div>
+                              <input type="file" accept="image/*" className="hidden" onChange={async e => {
+                                const file = e.target.files?.[0]
+                                if (!file) return
+                                setGalleryUploading(true)
+                                const url = await handleImageUploadApi(file)
+                                setGalleryUploading(false)
+                                if (url) addGalleryImage(url)
+                              }} disabled={galleryUploading} />
+                            </label>
+                          </div>
+                          {galleryUploading && <p className="text-[10px]" style={{ color: A.textMuted }}>Uploading...</p>}
+                          <Input placeholder="Or paste gallery image URL and press Enter..." className="text-xs h-8" onKeyDown={e => {
+                            if (e.key === 'Enter') {
+                              const val = (e.target as HTMLInputElement).value.trim()
+                              if (val) { addGalleryImage(val); (e.target as HTMLInputElement).value = '' }
+                            }
+                          }} />
+                        </div>
+                        <Separator />
                         <div className="space-y-3">
                           <Label className="text-xs font-bold uppercase tracking-wider" style={{ color: A.textSecondary }}>Basic Information</Label>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

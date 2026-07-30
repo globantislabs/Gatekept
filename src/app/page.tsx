@@ -1,63 +1,21 @@
 'use client'
 
-import React, { useEffect, Suspense, lazy } from 'react'
+import React, { useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { AnimatePresence } from 'framer-motion'
 import { useAppStore, type AppView } from '@/store/app-store'
 
-// ─── Eager: Landing + Product (most common views) ────────────
+// ─── View Components ────────────────────────────────────────
 import LandingPageComponent from '@/components/LandingPage'
+import { OurJourneyPage } from '@/components/OurJourneyPage'
+import { AuthLogin, AuthRegister, AuthForgotPassword } from '@/components/AuthPages'
+import { AuthWhatsAppOtpLogin } from '@/components/AuthWhatsAppOtpLogin'
+import { ProfilePage } from '@/components/ProfilePage'
+import ProductDetailPage from '@/components/ProductDetailPage'
+import { ProductLearningModule } from '@/components/ProductLearningModule'
+import AdminPanel from '@/components/AdminPanel'
 import ProductPage from '@/components/ProductPage'
-
-// ─── Lazy-loaded: Heavy components (code-split for faster initial load) ──
-const OurJourneyPage = lazy(() =>
-  import('@/components/OurJourneyPage').then(m => ({ default: m.OurJourneyPage }))
-)
-const AuthLogin = lazy(() =>
-  import('@/components/AuthPages').then(m => ({ default: m.AuthLogin }))
-)
-const AuthRegister = lazy(() =>
-  import('@/components/AuthPages').then(m => ({ default: m.AuthRegister }))
-)
-const AuthForgotPassword = lazy(() =>
-  import('@/components/AuthPages').then(m => ({ default: m.AuthForgotPassword }))
-)
-const AuthWhatsAppOtpLogin = lazy(() =>
-  import('@/components/AuthWhatsAppOtpLogin').then(m => ({ default: m.AuthWhatsAppOtpLogin }))
-)
-const ProfilePage = lazy(() =>
-  import('@/components/ProfilePage').then(m => ({ default: m.ProfilePage }))
-)
-const ProductDetailPage = lazy(() =>
-  import('@/components/ProductDetailPage').then(m => ({ default: m.default }))
-)
-const ProductLearningModule = lazy(() =>
-  import('@/components/ProductLearningModule').then(m => ({ default: m.ProductLearningModule }))
-)
-const AdminPanel = lazy(() =>
-  import('@/components/AdminPanel').then(m => ({ default: m.default }))
-)
-const CartView = lazy(() =>
-  import('@/components/CartCheckout').then(m => ({ default: m.CartView }))
-)
-const CheckoutView = lazy(() =>
-  import('@/components/CartCheckout').then(m => ({ default: m.CheckoutView }))
-)
-const OrderSuccessView = lazy(() =>
-  import('@/components/CartCheckout').then(m => ({ default: m.OrderSuccessView }))
-)
-
-// ─── Loading fallback for lazy views ─────────────────────────
-function ViewLoadingFallback() {
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-[#f4f3f0]">
-      <div className="flex flex-col items-center gap-3">
-        <div className="w-8 h-8 border-3 border-[#48805b]/30 border-t-[#48805b] rounded-full animate-spin" />
-        <span className="text-[#88837b] font-heading text-sm">Loading...</span>
-      </div>
-    </div>
-  )
-}
+import { CartView, CheckoutView, OrderSuccessView } from '@/components/CartCheckout'
 
 // ─── URL Sync: reads ?product=slug and navigates ────────────
 function UrlSyncHandler() {
@@ -153,11 +111,9 @@ function ViewRenderer() {
   }
 
   return (
-    <Suspense fallback={<ViewLoadingFallback />}>
-      <AnimatePresence mode="wait">
-        {renderView()}
-      </AnimatePresence>
-    </Suspense>
+    <AnimatePresence mode="wait">
+      {renderView()}
+    </AnimatePresence>
   )
 }
 

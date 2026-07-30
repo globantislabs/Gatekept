@@ -226,6 +226,8 @@ export default function LandingPage() {
                 width={120}
                 height={40}
                 className="h-9 w-auto object-contain transition-all duration-300 group-hover:scale-105"
+                loading="eager"
+                priority
               />
             </button>
 

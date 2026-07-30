@@ -25,3 +25,33 @@ Stage Summary:
 - Browser verification confirmed: no errors, proper navigation, logout clears cart
 - Email service is in dev mode (no Zoho SMTP configured locally) - works in production
 - Lint passes with no errors
+---
+Task ID: 1
+Agent: Main
+Task: Fix all pending issues for Plesk production deployment
+
+Work Log:
+- Rewrote server.js: removed dotenv dependency, added manual .env parser, robust error handling
+- Added sharp, prisma, better-sqlite3 to serverExternalPackages in next.config.ts
+- Updated build:plesk script to copy Prisma client, .env.production, and uploads dir
+- Added .gitkeep files for public/uploads subdirectories
+- Removed global learning_completed flag update from learning progress API
+- Updated ProductPage and LandingPage to use per-product completedProductIds
+- Removed global setUser update from ProductLearningModule
+- Added qr_code_url field to Product model (all schemas)
+- Auto-generate QR code URL when product is created
+- QR code button in admin panel now uses actual QR code rendering
+- Added 'Login with WhatsApp' button on login page with Or divider
+- Added 'Login with WhatsApp' link on register page
+- Added optional name step for new users after WhatsApp OTP verification
+- Added audio upload support (MP3, WAV, OGG, WebM, AAC - max 20MB)
+- Improved upload directory path handling for standalone mode
+- Verified app works with browser agent (landing, login, WhatsApp login, products pages)
+- All changes committed and pushed to git (223e6ea)
+
+Stage Summary:
+- Plesk production: server.js rewritten, next.config updated, build script improved
+- Independent product progress: global flag removed, per-product tracking used
+- QR codes: auto-generated per product, displayed in admin panel
+- WhatsApp login: button on login page, optional name step for new users
+- Media uploads: audio support added, standalone mode path handling fixed

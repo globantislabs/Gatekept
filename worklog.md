@@ -66,3 +66,27 @@ Stage Summary:
 - No more 503 errors when email/SMS services are not configured
 - Production build with MySQL schema ready for Plesk deployment
 - All changes pushed to git
+
+---
+Task ID: 4
+Agent: main
+Task: CRITICAL FIX — Remove OTP exposure from API/UI, fix WhatsApp OTP delivery to phone
+
+Work Log:
+- REVERTED all otp_code from API responses — OTP must NEVER be exposed in frontend
+- FIXED WhatsApp template message: `index` field was string `"0"` instead of number `0`, causing API error (#131008)
+- ADDED fallback: if template message fails, sends plain text WhatsApp message as fallback
+- ADDED better error logging for WhatsApp API failures (logs full error JSON)
+- Verified WhatsApp Business API works with production credentials (both template and plain text)
+- Verified Zoho SMTP email service works for OTP delivery (tested via /api/test-email)
+- WhatsApp OTP now properly delivered to user's phone via WhatsApp Business API
+- Email OTP properly delivered via Zoho SMTP
+- Production build with MySQL schema for Plesk deployment
+- All changes pushed to git (commit ad2ca71)
+
+Stage Summary:
+- OTP is NEVER exposed in API responses or frontend UI — security fix
+- WhatsApp OTP is delivered to user's phone via WhatsApp Business API
+- Email OTP is delivered via Zoho SMTP
+- If WhatsApp template fails, falls back to plain text message
+- Root cause of WhatsApp failure: template `index` field was string "0" instead of number 0

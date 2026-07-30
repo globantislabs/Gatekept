@@ -37,3 +37,32 @@ Stage Summary:
 - Production build is ready with MySQL Prisma client for Plesk
 - The standalone build includes all necessary files for MySQL connectivity
 - Dev environment continues to use SQLite as before
+
+---
+Task ID: 3
+Agent: main
+Task: WhatsApp OTP shown as site notification (dev-mode behavior), all OTP flows fixed, production build, git push
+
+Work Log:
+- Modified `src/lib/whatsapp-otp-service.ts` — Added `otp_code` field to sendOtp() return type; now returns OTP code in API response for frontend notification display (both when WhatsApp sends successfully and when credentials not configured)
+- Modified `src/lib/smsalert-service.ts` — Added `otpCode` field to sendOtp() return type; now returns OTP code in API response for frontend notification display
+- Modified `src/app/api/auth/whatsapp-otp/send/route.ts` — Added `otp_code` field to API response
+- Modified `src/app/api/otp/send/route.ts` — Added `otp_code` field to API response
+- Modified `src/app/api/auth/verify-email-otp/send/route.ts` — Changed from returning 503 error when email not configured to returning OTP code as notification; also returns otp_code when email is sent
+- Modified `src/app/api/auth/forgot-password/route.ts` — Changed from returning 503 error when email/SMS not configured to returning OTP code as notification; also returns otp_code when email/SMS is sent
+- Modified `src/components/AuthWhatsAppOtpLogin.tsx` — Shows OTP as toast notification with 15s duration when `data.otp_code` is present
+- Modified `src/components/AuthPages.tsx` — Updated WhatsApp OTP, email OTP, and forgot-password OTP flows to show OTP as toast notification with 15s duration
+- Modified `src/components/OtpVerifyModal.tsx` — Shows OTP as toast notification when `result.otp_code` is present
+- Modified `src/lib/data-service.ts` — Added `otp_code` field to `OtpSendResponse` interface
+- Verified login name is already optional in WhatsApp login flow (handleNameSkip exists)
+- Verified product learning progress is already independent per product (user_id + product_id unique constraint)
+- Built production bundle with MySQL schema (`npm run build:plesk`)
+- Switched back to SQLite for local dev
+- Committed and pushed to git (commit 4e830cb)
+
+Stage Summary:
+- All OTP flows (WhatsApp, SMS, email, forgot-password) now return otp_code in API response
+- Frontend shows OTP as toast notification with 15s duration (dev-mode behavior)
+- No more 503 errors when email/SMS services are not configured
+- Production build with MySQL schema ready for Plesk deployment
+- All changes pushed to git

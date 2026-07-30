@@ -124,6 +124,10 @@ async function logNotification(
   errorMessage?: string
 ): Promise<void> {
   try {
+    if (!db?.notificationLog) {
+      console.warn('NotificationLog model not available — skipping notification log')
+      return
+    }
     await db.notificationLog.create({
       data: {
         user_id: userId,

@@ -7,7 +7,7 @@ import {
   ShoppingBag, Trash2, Plus, Minus, ArrowLeft, ArrowRight,
   MapPin, Phone, CreditCard, Landmark, Smartphone, CheckCircle,
   Package, Truck, ShieldCheck, ChevronRight, X, Loader2,
-  ShoppingCart, Sparkles, Leaf, Banknote
+  ShoppingCart, Sparkles, Leaf, Banknote, Mail
 } from 'lucide-react'
 import { useAppStore, type CartItem } from '@/store/app-store'
 import { orderService } from '@/lib/data-service'
@@ -366,12 +366,13 @@ function CartItemCard({
 export function CheckoutView() {
   const {
     user, cart, cartTotal, clearCart, navigateTo, goBack,
-    setLastOrderId, setRedirectAfterLogin
+    setLastOrderId, setRedirectAfterLogin, setUser
   } = useAppStore()
 
   // ── Form State ──
   const [shippingName, setShippingName] = useState(user?.name || '')
   const [shippingPhone, setShippingPhone] = useState(user?.phone || '')
+  const [shippingEmail, setShippingEmail] = useState(user?.email || '')
   const [shippingAddress, setShippingAddress] = useState('')
   const [shippingCity, setShippingCity] = useState('')
   const [shippingState, setShippingState] = useState(user?.state || '')
@@ -402,6 +403,8 @@ export function CheckoutView() {
     if (!shippingName.trim()) errors.shippingName = 'Name is required'
     if (!shippingPhone.trim()) errors.shippingPhone = 'Phone is required'
     else if (!/^[\d]{10}$/.test(shippingPhone.trim())) errors.shippingPhone = 'Enter a valid 10-digit phone number'
+    if (!shippingEmail.trim()) errors.shippingEmail = 'Email is required for order confirmation'
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(shippingEmail.trim())) errors.shippingEmail = 'Enter a valid email address'
     if (!shippingAddress.trim()) errors.shippingAddress = 'Address is required'
     if (!shippingCity.trim()) errors.shippingCity = 'City is required'
     if (!shippingState) errors.shippingState = 'State is required'
@@ -443,6 +446,7 @@ export function CheckoutView() {
         })),
         shipping_name: shippingName.trim(),
         shipping_phone: shippingPhone.trim(),
+        shipping_email: shippingEmail.trim(),
         shipping_address: shippingAddress.trim(),
         shipping_city: shippingCity.trim(),
         shipping_state: shippingState,
@@ -452,7 +456,11 @@ export function CheckoutView() {
 
       const order = await orderService.create(orderData)
 
-      // Success
+      // Success — update local user state with email if it was missing from profile
+      if (user && shippingEmail.trim() && !user.email) {
+        setUser({ ...user, email: shippingEmail.trim() })
+      }
+
       setLastOrderId(order.id)
       clearCart()
       toast.success('Order placed successfully! 🎉', {
@@ -591,6 +599,26 @@ export function CheckoutView() {
                     />
                   </div>
                   {formErrors.shippingPhone && <p className="text-xs text-red-500">{formErrors.shippingPhone}</p>}
+                </div>
+
+                {/* Email — Required for order confirmation */}
+                <div className="space-y-1.5">
+                  <Label htmlFor="shipping-email" className="text-sm font-medium text-[#1f1e1c]">
+                    Email <span className="text-red-400">*</span>
+                    <span className="text-[#88837b] font-normal ml-1">(for order confirmation)</span>
+                  </Label>
+                  <div className="flex items-center gap-2">
+                    <Mail className="w-4 h-4 text-[#88837b] shrink-0" />
+                    <Input
+                      id="shipping-email"
+                      type="email"
+                      value={shippingEmail}
+                      onChange={e => setShippingEmail(e.target.value)}
+                      placeholder="you@example.com"
+                      className={`bg-[#f4f3f0] border-[#e3dfd8] focus:border-[#48805b] focus:ring-[#48805b]/20 rounded-lg ${formErrors.shippingEmail ? 'border-red-400 focus:border-red-400' : ''}`}
+                    />
+                  </div>
+                  {formErrors.shippingEmail && <p className="text-xs text-red-500">{formErrors.shippingEmail}</p>}
                 </div>
 
                 {/* Address */}
@@ -914,9 +942,7 @@ function LockStep({ active, total, current }: { active: number; total: number; c
 // OrderSuccessView — Success page after order is placed
 // ═══════════════════════════════════════════════════════════
 export function OrderSuccessView() {
-  const { lastOrderId, navigateTo, cart } = useAppStore()
-  // Check if last order was COD (from cart, which might be cleared by now)
-  // We'll use a simpler approach - just show the general success message
+  const { lastOrderId, navigateTo, cart, user } = useAppStore()
 
   return (
     <motion.div
@@ -944,6 +970,19 @@ export function OrderSuccessView() {
         >
           Your wellness shots are on their way. We&apos;ll notify you when they ship.
         </motion.p>
+
+        {/* Email confirmation notice */}
+        {user?.email && (
+          <motion.div
+            variants={fadeInUp}
+            className="mt-3 p-3 bg-[#2e91b2]/5 border border-[#2e91b2]/15 rounded-lg"
+          >
+            <p className="text-sm text-[#2e91b2] flex items-center justify-center gap-1.5 font-medium">
+              <Mail className="w-4 h-4" />
+              Order confirmation sent to {user.email}
+            </p>
+          </motion.div>
+        )}
 
         <motion.div
           variants={fadeInUp}

@@ -60,7 +60,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { user_id, items, shipping_name, shipping_phone, shipping_address, shipping_city, shipping_state, shipping_pincode, payment_method, notes } = body
+    const { user_id, items, shipping_name, shipping_phone, shipping_email, shipping_address, shipping_city, shipping_state, shipping_pincode, payment_method, notes } = body
 
     if (!user_id || !items || items.length === 0) {
       return NextResponse.json({ error: 'user_id and items are required' }, { status: 400 })
@@ -123,6 +123,20 @@ export async function POST(req: NextRequest) {
     try {
       const user = await db.userProfile.findUnique({ where: { id: user_id } })
       if (user) {
+        // If user provided an email at checkout and their profile doesn't have one, save it
+        const emailToUse = shipping_email?.trim()?.toLowerCase() || user.email
+        if (emailToUse && !user.email) {
+          try {
+            await db.userProfile.update({
+              where: { id: user_id },
+              data: { email: emailToUse },
+            })
+          } catch (emailErr: any) {
+            // Email might be taken by another user — log but don't block
+            console.error('Could not save email to profile:', emailErr.message)
+          }
+        }
+
         notificationService.sendOrderPlacedNotification(
           {
             id: order.id,
@@ -135,7 +149,7 @@ export async function POST(req: NextRequest) {
               total_price: i.total_price,
             })),
           },
-          { id: user.id, name: user.name, email: user.email, phone: user.phone }
+          { id: user.id, name: user.name, email: emailToUse || user.email, phone: user.phone }
         ).catch(err => console.error('Failed to send order placed notification:', err))
       }
     } catch (err) {

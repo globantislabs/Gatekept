@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { MessageCircle, Phone, ArrowLeft, RefreshCw, CheckCircle, AlertCircle, User } from 'lucide-react'
+import { MessageCircle, Phone, ArrowLeft, RefreshCw, CheckCircle, AlertCircle } from 'lucide-react'
 import { useAppStore } from '@/store/app-store'
 import type { UserProfile } from '@/lib/data-service'
 
@@ -56,7 +56,6 @@ export function AuthWhatsAppOtpLogin() {
   const [step, setStep] = useState<'phone' | 'otp' | 'success'>('phone')
 
   // Step 1: Phone input
-  const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
   const [sending, setSending] = useState(false)
   const [otpId, setOtpId] = useState<string | null>(null)
@@ -215,7 +214,6 @@ export function AuthWhatsAppOtpLogin() {
         body: JSON.stringify({
           otp_id: otpId,
           phone: phone.trim(),
-          name: name.trim() || undefined,
         }),
       })
 
@@ -284,23 +282,6 @@ export function AuthWhatsAppOtpLogin() {
                     <span>{error}</span>
                   </motion.div>
                 )}
-
-                {/* Name input (optional) */}
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium text-[#1f1e1c]">
-                    Name <span className="text-[#88837b]">(optional)</span>
-                  </Label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#88837b]" />
-                    <Input
-                      type="text"
-                      placeholder="Your name (for new accounts)"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      className="h-12 pl-10 border-[#e3dfd8] focus:border-[#25D366] focus:ring-[#25D366]/20"
-                    />
-                  </div>
-                </div>
 
                 {/* Phone input */}
                 <div className="space-y-2">

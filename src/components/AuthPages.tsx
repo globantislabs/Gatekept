@@ -593,7 +593,7 @@ export function AuthRegister() {
   // ── Step 2: Validate & Register ──
   const validateDetails = (): boolean => {
     const errors: Record<string, string> = {}
-    // Name is optional — no validation needed
+    if (!name.trim()) errors.name = 'Name is required'
     if (!password) errors.password = 'Password is required'
     if (password && password.length < 6) errors.password = 'Password must be at least 6 characters'
     if (!termsAccepted) errors.terms = 'You must agree to the Terms of Service'
@@ -613,7 +613,7 @@ export function AuthRegister() {
       const contact = contactInput.trim()
 
       const result = await authService.register({
-        name: name.trim() || 'User',
+        name: name.trim(),
         email: detected === 'email' ? contact.toLowerCase() : undefined,
         phone: detected === 'phone' ? formatPhone(contact) : undefined,
         password: password,
@@ -643,23 +643,20 @@ export function AuthRegister() {
   const handleSaveProfile = async () => {
     setUpdatingProfile(true)
     try {
-      // Use the current user to update profile via a direct API call
       const currentUser = useAppStore.getState().user
       if (!currentUser) {
-        // Skip directly to success
         setStep('success')
         setUpdatingProfile(false)
         return
       }
 
-      const res = await fetch(`/api/admin/users`, {
+      const res = await fetch('/api/user/profile', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'x-user-id': currentUser.id,
         },
         body: JSON.stringify({
-          id: currentUser.id,
           age: age ? parseInt(age) : null,
           gender: gender || null,
           state: state || null,
@@ -676,7 +673,6 @@ export function AuthRegister() {
 
       setStep('success')
     } catch (err: any) {
-      // Even if profile update fails, continue to success
       setStep('success')
     } finally {
       setUpdatingProfile(false)
@@ -1110,15 +1106,16 @@ export function AuthRegister() {
                 {/* Name field */}
                 <div className="space-y-1.5">
                   <Label className="text-xs font-medium text-[#1f1e1c]">
-                    Full Name <span className="text-[#88837b]">(optional)</span>
+                    Full Name <span className="text-[#48805b]">*</span>
                   </Label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#88837b]" />
                     <Input
-                      placeholder="Your full name (optional)"
+                      placeholder="Your full name"
                       value={name}
                       onChange={(e) => { setName(e.target.value); setError(null); if (fieldErrors.name) setFieldErrors(prev => ({ ...prev, name: '' })) }}
                       className={`h-11 pl-10 ${fieldErrors.name ? 'border-red-400 focus:border-red-400' : 'border-[#e3dfd8] focus:border-[#48805b]'} focus:ring-[#48805b]/20`}
+                      autoComplete="off"
                     />
                   </div>
                   {fieldErrors.name && <p className="text-xs text-red-500">{fieldErrors.name}</p>}
@@ -1293,6 +1290,7 @@ export function AuthRegister() {
                       className="h-11 border-[#e3dfd8] focus:border-[#48805b] focus:ring-[#48805b]/20"
                       min={1}
                       max={120}
+                      autoComplete="off"
                     />
                   </div>
                   <div className="space-y-1.5">

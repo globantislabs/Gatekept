@@ -495,10 +495,10 @@ export const userService = {
   },
 
   async update(id: string, data: Partial<UserProfile>, userId: string): Promise<UserProfile> {
-    const res = await apiFetch<{ user: UserProfile }>('/api/admin/users', {
+    const res = await apiFetch<{ user: UserProfile }>('/api/user/profile', {
       method: 'PUT',
-      body: JSON.stringify({ id, ...data }),
-      headers: getAdminHeaders(userId),
+      body: JSON.stringify({ ...data }),
+      headers: { 'Content-Type': 'application/json', 'x-user-id': userId },
     })
     return res.user || res as unknown as UserProfile
   },

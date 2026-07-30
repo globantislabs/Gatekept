@@ -24,7 +24,10 @@ export async function POST(request: NextRequest) {
     } = body
 
     // Validate required fields
-    // Name is optional — removed from required validation
+    if (!name || typeof name !== 'string' || !name.trim()) {
+      return errorResponse('Name is required', 400)
+    }
+
     if (!email && !phone) {
       return errorResponse('Email or phone is required', 400)
     }
@@ -39,7 +42,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Sanitize string inputs
-    const safeName = sanitizeString(name || 'User', 100)
+    const safeName = sanitizeString(name, 100)
     const safeEmail = email ? sanitizeString(email, 255) : undefined
     const safePhone = phone ? sanitizeString(phone, 20) : undefined
     const safeGender = gender ? sanitizeString(gender, 20) : undefined

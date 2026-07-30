@@ -1183,20 +1183,36 @@ function EditProfileButton({ user, setUser, editOpen, setEditOpen }: { user: Use
     if (!form.name.trim()) { setError('Name is required'); return }
     setLoading(true)
     try {
-      const updatedUser = await userService.update(user.id, { name: form.name.trim(), email: form.email.trim() || null, phone: form.phone.trim() || null, age: form.age ? parseInt(form.age) : null, gender: form.gender || null, state: form.state || null }, user.id)
-      setUser(updatedUser)
+      const res = await fetch('/api/user/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'x-user-id': user.id },
+        body: JSON.stringify({
+          name: form.name.trim(),
+          email: form.email.trim() || null,
+          phone: form.phone.trim() || null,
+          age: form.age ? parseInt(form.age) : null,
+          gender: form.gender || null,
+          state: form.state || null,
+        }),
+      })
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error || 'Failed to update profile')
+      }
+      const data = await res.json()
+      if (data.user) setUser(data.user as UserProfile)
       setEditOpen(false)
       toast.success('Profile updated successfully!')
-    } catch { setError('Failed to update profile.') } finally { setLoading(false) }
+    } catch (err: any) { setError(err.message || 'Failed to update profile.') } finally { setLoading(false) }
   }
 
   const editFormContent = (
     <div className="space-y-4">
       {error && <div className="flex items-center gap-2 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm"><AlertCircle className="w-4 h-4 shrink-0" /><span>{error}</span></div>}
-      <div className="space-y-2"><Label className="text-sm font-medium">Full Name <span className="text-[#48805b]">*</span></Label><Input value={form.name} onChange={e => updateField('name', e.target.value)} className="h-11 border-[#e3dfd8] focus:border-[#48805b]" /></div>
-      <div className="space-y-2"><Label className="text-sm font-medium">Email</Label><Input type="email" value={form.email} onChange={e => updateField('email', e.target.value)} className="h-11 border-[#e3dfd8] focus:border-[#48805b]" /></div>
-      <div className="space-y-2"><Label className="text-sm font-medium">Phone</Label><Input type="tel" value={form.phone} onChange={e => updateField('phone', e.target.value)} className="h-11 border-[#e3dfd8] focus:border-[#48805b]" /></div>
-      <div className="space-y-2"><Label className="text-sm font-medium">Age</Label><Input type="number" value={form.age} onChange={e => updateField('age', e.target.value)} className="h-11 border-[#e3dfd8] focus:border-[#48805b]" min={1} max={120} /></div>
+      <div className="space-y-2"><Label className="text-sm font-medium">Full Name <span className="text-[#48805b]">*</span></Label><Input value={form.name} onChange={e => updateField('name', e.target.value)} className="h-11 border-[#e3dfd8] focus:border-[#48805b]" autoComplete="off" /></div>
+      <div className="space-y-2"><Label className="text-sm font-medium">Email</Label><Input type="email" value={form.email} onChange={e => updateField('email', e.target.value)} className="h-11 border-[#e3dfd8] focus:border-[#48805b]" autoComplete="off" /></div>
+      <div className="space-y-2"><Label className="text-sm font-medium">Phone</Label><Input type="tel" value={form.phone} onChange={e => updateField('phone', e.target.value)} className="h-11 border-[#e3dfd8] focus:border-[#48805b]" autoComplete="off" /></div>
+      <div className="space-y-2"><Label className="text-sm font-medium">Age</Label><Input type="number" value={form.age} onChange={e => updateField('age', e.target.value)} className="h-11 border-[#e3dfd8] focus:border-[#48805b]" min={1} max={120} autoComplete="off" /></div>
       <div className="space-y-2"><Label className="text-sm font-medium">Gender</Label><Select value={form.gender} onValueChange={v => updateField('gender', v)}><SelectTrigger className="h-11 border-[#e3dfd8] w-full"><SelectValue placeholder="Select gender" /></SelectTrigger><SelectContent><SelectItem value="Male">Male</SelectItem><SelectItem value="Female">Female</SelectItem><SelectItem value="Other">Other</SelectItem></SelectContent></Select></div>
       <div className="space-y-2"><Label className="text-sm font-medium">State</Label><Select value={form.state} onValueChange={v => updateField('state', v)}><SelectTrigger className="h-11 border-[#e3dfd8] w-full"><SelectValue placeholder="Select your state" /></SelectTrigger><SelectContent className="max-h-48">{INDIAN_STATES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent></Select></div>
       <div className="flex gap-3 pt-2">

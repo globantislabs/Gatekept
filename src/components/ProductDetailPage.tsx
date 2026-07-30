@@ -166,14 +166,14 @@ export default function ProductDetailPage() {
     }
   }, [])
 
-  // Timeout redirect: if no product ID after 3 seconds, redirect to products page
+  // Timeout redirect: if no product ID after 1 second, redirect to products page
   useEffect(() => {
     if (selectedProductId) return
     const timer = setTimeout(() => {
       if (!selectedProductId) {
         navigateTo('products')
       }
-    }, 3000)
+    }, 1000)
     return () => clearTimeout(timer)
   }, [selectedProductId, navigateTo])
 
@@ -704,16 +704,16 @@ export default function ProductDetailPage() {
                   )}
 
                   {/* Video & Quiz count info */}
-                  {product.videos && product.videos.length > 0 && (
+                  {displayProduct?.videos && displayProduct.videos.length > 0 && (
                     <div className="flex items-center gap-4 text-xs pt-1" style={{ color: BRAND.muted }}>
                       <span className="flex items-center gap-1">
                         <Play className="w-3.5 h-3.5" />
-                        {product.videos.length} videos
+                        {displayProduct.videos.length} videos
                       </span>
-                      {product.quizzes && product.quizzes.length > 0 && (
+                      {displayProduct.quizzes && displayProduct.quizzes.length > 0 && (
                         <span className="flex items-center gap-1">
                           <GraduationCap className="w-3.5 h-3.5" />
-                          {product.quizzes.length} quiz questions
+                          {displayProduct.quizzes.length} quiz questions
                         </span>
                       )}
                       <span className="flex items-center gap-1">
@@ -1012,10 +1012,10 @@ export default function ProductDetailPage() {
                     </div>
                   )}
 
-                  {product.serving_size && (
+                  {displayProduct?.serving_size && (
                     <div className="mt-4 flex items-center gap-2 text-xs" style={{ color: BRAND.muted }}>
                       <Leaf className="w-3.5 h-3.5" />
-                      <span>Serving size: {product.serving_size}</span>
+                      <span>Serving size: {displayProduct.serving_size}</span>
                     </div>
                   )}
                 </motion.div>

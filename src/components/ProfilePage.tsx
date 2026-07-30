@@ -289,21 +289,17 @@ export function ProfilePage() {
   const getProductById = (productId: string) => products.find(p => p.id === productId)
 
   const handleLogout = () => {
-    // Clear localStorage directly — this ensures the persist middleware
+    // First, call resetForLogout to clear all Zustand state in memory
+    resetForLogout()
+
+    // Then clear localStorage directly — this ensures the persist middleware
     // can't re-save the old state before the page reloads
     try {
-      const store = JSON.parse(localStorage.getItem('notjust-app-store') || '{}')
-      if (store.state) {
-        store.state.user = null
-        store.state.cart = []
-        store.state.currentView = 'landing'
-        store.state.lastOrderId = null
-        store.state.selectedProductId = null
-      }
-      localStorage.setItem('notjust-app-store', JSON.stringify(store))
+      localStorage.removeItem('notjust-app-store')
     } catch { /* ignore */ }
-    // Force full page reload to clear all in-memory Zustand state
-    window.location.reload()
+
+    // Force full page reload to clear all in-memory state and reset to landing
+    window.location.href = '/'
   }
 
   // ── Early return after all hooks ──

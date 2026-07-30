@@ -66,16 +66,8 @@ export function OtpVerifyModal({
       setSending(false)
       setResendCooldown(RESEND_COOLDOWN_SECONDS)
       setAttemptsRemaining(3)
-
-      // Show OTP as a site notification (dev-mode behavior)
-      if (result.otp_code) {
-        toast.success(`Your OTP is: ${result.otp_code}`, {
-          duration: 15000,
-          description: `OTP sent to ${result.phone_masked}`,
-        })
-      } else {
-        toast.success(`OTP sent to ${result.phone_masked}`)
-      }
+      toast.success(`OTP sent to ${result.phone_masked}`)
+      // OTP is sent via SMS to the user's phone — never expose it in the UI
     } catch (err: any) {
       setSending(false)
       setErrorState(err.message || 'Failed to send OTP. Please ensure you have a registered phone number.')

@@ -82,8 +82,8 @@ async function sendWhatsAppOtpMessage(
     return { success: false, error: 'WhatsApp credentials not configured' }
   }
 
-  // Build the exact payload format as specified
-  const payload = {
+  // ─── Strategy 1: Try template message first ───
+  const templatePayload = {
     messaging_product: 'whatsapp',
     to: whatsappPhone,
     type: 'template',
@@ -102,7 +102,7 @@ async function sendWhatsAppOtpMessage(
         {
           type: 'button',
           sub_type: 'url',
-          index: '0',
+          index: 0,  // MUST be number, not string
           parameters: [
             { type: 'text', text: otpCode },
           ],
@@ -113,30 +113,82 @@ async function sendWhatsAppOtpMessage(
 
   try {
     const baseUrl = getWhatsappBaseUrl()
+
+    // Try template message first
     const response = await fetch(baseUrl, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(templatePayload),
     })
 
     const data: WhatsAppApiResponse = await response.json()
 
     if (data.error) {
-      console.error('WhatsApp API error:', data.error.message)
-      return { success: false, error: data.error.message }
+      console.error('[WhatsApp OTP] Template message error:', JSON.stringify(data.error))
+
+      // If template fails, try plain text message as fallback
+      console.log('[WhatsApp OTP] Template failed — trying plain text message fallback...')
+      return await sendPlainTextWhatsAppMessage(baseUrl, token, whatsappPhone, otpCode)
     }
 
     if (data.message_id) {
+      console.log(`[WhatsApp OTP] Template message sent successfully to ${whatsappPhone}, message_id: ${data.message_id}`)
       return { success: true, messageId: data.message_id }
     }
 
     // If no error but no message_id either — might still be success
     return { success: response.ok, messageId: data.message_id }
   } catch (error: any) {
-    console.error('WhatsApp API request failed:', error.message)
+    console.error('[WhatsApp OTP] API request failed:', error.message)
+    return { success: false, error: error.message }
+  }
+}
+
+// ─── Fallback: Send plain text WhatsApp message ───
+async function sendPlainTextWhatsAppMessage(
+  baseUrl: string,
+  token: string,
+  whatsappPhone: string,
+  otpCode: string
+): Promise<{ success: boolean; messageId?: string; error?: string }> {
+  const textPayload = {
+    messaging_product: 'whatsapp',
+    to: whatsappPhone,
+    type: 'text',
+    text: {
+      preview_url: false,
+      body: `Your NOTJUST Watr verification code is ${otpCode}. Valid for ${OTP_EXPIRY_MINUTES} minutes. Do not share this code.`,
+    },
+  }
+
+  try {
+    const response = await fetch(baseUrl, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(textPayload),
+    })
+
+    const data: WhatsAppApiResponse = await response.json()
+
+    if (data.error) {
+      console.error('[WhatsApp OTP] Plain text message error:', JSON.stringify(data.error))
+      return { success: false, error: data.error.message }
+    }
+
+    if (data.message_id) {
+      console.log(`[WhatsApp OTP] Plain text message sent to ${whatsappPhone}, message_id: ${data.message_id}`)
+      return { success: true, messageId: data.message_id }
+    }
+
+    return { success: response.ok, messageId: data.message_id }
+  } catch (error: any) {
+    console.error('[WhatsApp OTP] Plain text message request failed:', error.message)
     return { success: false, error: error.message }
   }
 }
@@ -152,7 +204,7 @@ export const whatsappOtpService = {
   async sendOtp(
     phone: string,
     purpose: WhatsAppOtpPurpose = 'WHATSAPP_LOGIN'
-  ): Promise<{ success: boolean; otp_id: string; message: string; phone_masked: string; otp_code?: string }> {
+  ): Promise<{ success: boolean; otp_id: string; message: string; phone_masked: string; whatsapp_sent: boolean }> {
     const { whatsapp, local } = formatPhoneForWhatsApp(phone)
     const phoneMasked = maskPhone(local)
 
@@ -186,31 +238,29 @@ export const whatsappOtpService = {
         where: { id: otpRecord.id },
         data: { sms_sent: true, sms_reference: waResult.messageId || null },
       })
-      // OTP was sent via WhatsApp — return OTP code as notification for convenience
-      // This allows the frontend to show a notification even when WhatsApp delivers
       return {
         success: true,
         otp_id: otpRecord.id,
         message: 'WhatsApp OTP sent successfully',
         phone_masked: `+91 ${phoneMasked}`,
-        otp_code: otpCode,
+        whatsapp_sent: true,
       }
     }
 
-    // If WhatsApp failed or credentials not configured, return OTP code in response
-    // so the frontend can display it as a site notification (dev-mode behavior)
+    // WhatsApp failed — log the error for debugging
     const isDev = !getWhatsappToken() || !getWhatsappPhoneNumberId()
+    console.error(`[WhatsApp OTP] FAILED to send OTP to ${whatsapp}: ${waResult.error || 'unknown error'}`)
     if (isDev) {
       console.warn(`[WhatsApp OTP] DEV MODE: OTP for ${phoneMasked} is ${otpCode}. Configure WHATSAPP_TOKEN and WHATSAPP_PHONE_NUMBER_ID for production.`)
     }
     return {
       success: true,
       otp_id: otpRecord.id,
-      message: isDev
-        ? 'OTP recorded. WhatsApp not configured — OTP shown as notification.'
-        : 'OTP recorded. WhatsApp delivery may be delayed.',
+      message: waResult.error
+        ? `WhatsApp delivery failed: ${waResult.error}. Please try again.`
+        : 'WhatsApp not configured. Please contact support.',
       phone_masked: `+91 ${phoneMasked}`,
-      otp_code: otpCode,
+      whatsapp_sent: false,
     }
   },
 

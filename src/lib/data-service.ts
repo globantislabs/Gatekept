@@ -732,7 +732,6 @@ export interface OtpSendResponse {
   otp_id: string
   message: string
   phone_masked: string
-  otp_code?: string  // Returned for frontend notification display
 }
 
 export interface OtpVerifyResponse {

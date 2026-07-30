@@ -85,17 +85,14 @@ export async function POST(request: NextRequest) {
         success: true,
         otp_id: otpRecord.id,
         message: 'Verification code sent to your email.',
-        otp_code: otpCode,  // Return OTP for frontend notification display
       })
     }
 
-    // Email not configured or failed — still return OTP code for notification (dev-mode)
-    return jsonResponse({
-      success: true,
-      otp_id: otpRecord.id,
-      message: 'Email service not configured — OTP shown as notification.',
-      otp_code: otpCode,
-    })
+    // Email not configured or failed — return error with clear message
+    return errorResponse(
+      'Email service is not configured. Please set ZOHO_EMAIL and ZOHO_PASSWORD environment variables to enable email verification.',
+      503,
+    )
   } catch (error) {
     console.error('Error during email OTP send:', error)
     return errorResponse('Failed to send verification code', 500)

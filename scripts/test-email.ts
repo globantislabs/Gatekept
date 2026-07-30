@@ -6,9 +6,15 @@
 
 // Load .env.production FIRST (before importing email-service which reads process.env)
 import { config as dotenvConfig } from 'dotenv'
-import { resolve } from 'path'
-dotenvConfig({ path: resolve(import.meta.dir, '..', '.env.production') })
-dotenvConfig({ path: resolve(import.meta.dir, '..', '.env') }) // dev fallback, won't override
+import { resolve, dirname } from 'path'
+import { fileURLToPath } from 'url'
+
+// Cross-platform __dirname (works in both Bun and Node.js tsx)
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
+
+dotenvConfig({ path: resolve(__dirname, '..', '.env.production') })
+dotenvConfig({ path: resolve(__dirname, '..', '.env') }) // dev fallback, won't override
 
 import { emailService } from '../src/lib/email-service'
 

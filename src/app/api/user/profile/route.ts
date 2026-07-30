@@ -77,7 +77,7 @@ export async function PUT(request: NextRequest) {
     }
 
     if (body.country !== undefined) {
-      updateData.country = body.state ? sanitizeString(body.country, 50) : null
+      updateData.country = body.country ? sanitizeString(body.country, 50) : 'India'
     }
 
     // Update user
@@ -104,8 +104,22 @@ export async function PUT(request: NextRequest) {
     })
 
     return jsonResponse({ user })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error updating user profile:', error)
-    return errorResponse('Failed to update profile', 500)
+
+    // Handle Prisma unique constraint errors with user-friendly messages
+    if (error?.code === 'P2002') {
+      const field = error?.meta?.target?.[0] || 'field'
+      if (field === 'email') return errorResponse('This email is already used by another account', 409)
+      if (field === 'phone') return errorResponse('This phone number is already used by another account', 409)
+      return errorResponse(`This ${field} is already taken`, 409)
+    }
+
+    // Handle MySQL NOT NULL constraint errors
+    if (error?.code === 'P2003' || error?.message?.includes('cannot be null')) {
+      return errorResponse('A required field is missing. Please fill in all required fields.', 400)
+    }
+
+    return errorResponse('Failed to update profile. Please try again.', 500)
   }
 }

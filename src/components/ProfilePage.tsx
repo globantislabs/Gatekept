@@ -151,6 +151,49 @@ function getOtpLabel(action: OtpAction): string {
   }
 }
 
+// ─── Media Query Hook ──────────────────────────────────────
+function useMediaQuery(query: string): boolean {
+  const [matches, setMatches] = useState(() => {
+    if (typeof window === 'undefined') return false
+    return window.matchMedia(query).matches
+  })
+  useEffect(() => {
+    const mql = window.matchMedia(query)
+    const handler = (e: MediaQueryListEvent) => setMatches(e.matches)
+    mql.addEventListener('change', handler)
+    return () => mql.removeEventListener('change', handler)
+  }, [query])
+  return matches
+}
+
+// ─── MediaDialog: Dialog on desktop, Sheet on mobile ──────
+// Avoids CSS hidden class conflicts with Radix portals in production
+function MediaDialog({ open, onOpenChange, title, description, children }: {
+  open: boolean; onOpenChange: (o: boolean) => void; title: string; description: string; children: React.ReactNode
+}) {
+  const isDesktop = useMediaQuery('(min-width: 768px)')
+  if (isDesktop) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-md border-[#e3dfd8] max-h-[85vh] overflow-y-auto">
+          <DialogHeader><DialogTitle className="font-heading text-lg font-bold flex items-center gap-2"><Edit className="w-5 h-5 text-[#48805b]" />{title}</DialogTitle><DialogDescription className="text-[#88837b]">{description}</DialogDescription></DialogHeader>
+          <Separator className="bg-[#e3dfd8]" />
+          {children}
+        </DialogContent>
+      </Dialog>
+    )
+  }
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="bottom" className="h-[90vh] rounded-t-2xl border-[#e3dfd8] overflow-y-auto">
+        <SheetHeader className="px-6 pt-4 pb-2"><SheetTitle className="font-heading text-lg font-bold flex items-center gap-2"><Edit className="w-5 h-5 text-[#48805b]" />{title}</SheetTitle><SheetDescription className="text-[#88837b]">{description}</SheetDescription></SheetHeader>
+        <Separator className="bg-[#e3dfd8]" />
+        <div className="px-6 pt-4 pb-6">{children}</div>
+      </SheetContent>
+    </Sheet>
+  )
+}
+
 // ============================================================
 // PROFILE PAGE — Tabbed: Profile / Orders / Subscriptions
 // ============================================================
@@ -1170,11 +1213,11 @@ function AddressEditModal({
 
 // ─── Edit Profile ─────────────────────────────────────────
 function EditProfileButton({ user, setUser, editOpen, setEditOpen }: { user: UserProfile; setUser: (u: UserProfile | null) => void; editOpen: boolean; setEditOpen: (o: boolean) => void }) {
-  const [form, setForm] = useState({ name: user.name || '', email: user.email || '', phone: user.phone || '', age: user.age ? String(user.age) : '', gender: user.gender || '', state: user.state || '' })
+  const [form, setForm] = useState({ name: user.name || '', email: user.email || '', phone: user.phone || '', age: user.age ? String(user.age) : '', gender: user.gender || '', country: user.country || 'India', state: user.state || '' })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => { if (editOpen) { setForm({ name: user.name || '', email: user.email || '', phone: user.phone || '', age: user.age ? String(user.age) : '', gender: user.gender || '', state: user.state || '' }); setError(null) } }, [editOpen, user])
+  useEffect(() => { if (editOpen) { setForm({ name: user.name || '', email: user.email || '', phone: user.phone || '', age: user.age ? String(user.age) : '', gender: user.gender || '', country: user.country || 'India', state: user.state || '' }); setError(null) } }, [editOpen, user])
 
   const updateField = (field: string, value: string) => { setForm(prev => ({ ...prev, [field]: value })); setError(null) }
 
@@ -1192,18 +1235,19 @@ function EditProfileButton({ user, setUser, editOpen, setEditOpen }: { user: Use
           phone: form.phone.trim() || null,
           age: form.age ? parseInt(form.age) : null,
           gender: form.gender || null,
+          country: form.country || 'India',
           state: form.state || null,
         }),
       })
       if (!res.ok) {
-        const data = await res.json()
+        const data = await res.json().catch(() => ({ error: 'Failed to update profile' }))
         throw new Error(data.error || 'Failed to update profile')
       }
       const data = await res.json()
       if (data.user) setUser(data.user as UserProfile)
       setEditOpen(false)
       toast.success('Profile updated successfully!')
-    } catch (err: any) { setError(err.message || 'Failed to update profile.') } finally { setLoading(false) }
+    } catch (err: any) { setError(err.message || 'Failed to update profile. Please try again.') } finally { setLoading(false) }
   }
 
   const editFormContent = (
@@ -1214,7 +1258,8 @@ function EditProfileButton({ user, setUser, editOpen, setEditOpen }: { user: Use
       <div className="space-y-2"><Label className="text-sm font-medium">Phone</Label><Input type="tel" value={form.phone} onChange={e => updateField('phone', e.target.value)} className="h-11 border-[#e3dfd8] focus:border-[#48805b]" autoComplete="off" /></div>
       <div className="space-y-2"><Label className="text-sm font-medium">Age</Label><Input type="number" value={form.age} onChange={e => updateField('age', e.target.value)} className="h-11 border-[#e3dfd8] focus:border-[#48805b]" min={1} max={120} autoComplete="off" /></div>
       <div className="space-y-2"><Label className="text-sm font-medium">Gender</Label><Select value={form.gender} onValueChange={v => updateField('gender', v)}><SelectTrigger className="h-11 border-[#e3dfd8] w-full"><SelectValue placeholder="Select gender" /></SelectTrigger><SelectContent><SelectItem value="Male">Male</SelectItem><SelectItem value="Female">Female</SelectItem><SelectItem value="Other">Other</SelectItem></SelectContent></Select></div>
-      <div className="space-y-2"><Label className="text-sm font-medium">State</Label><Select value={form.state} onValueChange={v => updateField('state', v)}><SelectTrigger className="h-11 border-[#e3dfd8] w-full"><SelectValue placeholder="Select your state" /></SelectTrigger><SelectContent className="max-h-48">{INDIAN_STATES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent></Select></div>
+      <div className="space-y-2"><Label className="text-sm font-medium">Country</Label><Select value={form.country} onValueChange={v => updateField('country', v)}><SelectTrigger className="h-11 border-[#e3dfd8] w-full"><SelectValue placeholder="Select country" /></SelectTrigger><SelectContent><SelectItem value="India">India</SelectItem><SelectItem value="Other">Other</SelectItem></SelectContent></Select></div>
+      {form.country === 'India' && <div className="space-y-2"><Label className="text-sm font-medium">State</Label><Select value={form.state} onValueChange={v => updateField('state', v)}><SelectTrigger className="h-11 border-[#e3dfd8] w-full"><SelectValue placeholder="Select your state" /></SelectTrigger><SelectContent className="max-h-48">{INDIAN_STATES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent></Select></div>}
       <div className="flex gap-3 pt-2">
         <Button onClick={handleSave} disabled={loading} className="flex-1 h-11 bg-[#48805b] hover:bg-[#3a6a4a] text-white font-heading font-semibold min-h-[44px]">{loading ? <span className="flex items-center gap-2"><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Saving...</span> : 'Save Changes'}</Button>
         <Button variant="outline" onClick={() => setEditOpen(false)} disabled={loading} className="flex-1 h-11 border-[#e3dfd8] text-[#88837b] min-h-[44px]">Cancel</Button>
@@ -1225,20 +1270,10 @@ function EditProfileButton({ user, setUser, editOpen, setEditOpen }: { user: Use
   return (
     <>
       <Button onClick={() => setEditOpen(true)} className="w-full h-11 bg-[#48805b] hover:bg-[#3a6a4a] text-white font-heading font-semibold min-h-[44px] flex items-center gap-2"><Edit className="w-4 h-4" />Edit Profile</Button>
-      <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent className="sm:max-w-md border-[#e3dfd8] max-h-[85vh] overflow-y-auto hidden md:block">
-          <DialogHeader><DialogTitle className="font-heading text-lg font-bold flex items-center gap-2"><Edit className="w-5 h-5 text-[#48805b]" />Edit Profile</DialogTitle><DialogDescription className="text-[#88837b]">Update your personal information</DialogDescription></DialogHeader>
-          <Separator className="bg-[#e3dfd8]" />
-          {editFormContent}
-        </DialogContent>
-      </Dialog>
-      <Sheet open={editOpen} onOpenChange={setEditOpen}>
-        <SheetContent side="bottom" className="h-[90vh] md:hidden rounded-t-2xl border-[#e3dfd8] overflow-y-auto">
-          <SheetHeader className="px-6 pt-4 pb-2"><SheetTitle className="font-heading text-lg font-bold flex items-center gap-2"><Edit className="w-5 h-5 text-[#48805b]" />Edit Profile</SheetTitle><SheetDescription className="text-[#88837b]">Update your personal information</SheetDescription></SheetHeader>
-          <Separator className="bg-[#e3dfd8]" />
-          <div className="px-6 pt-4 pb-6">{editFormContent}</div>
-        </SheetContent>
-      </Sheet>
+      {/* Desktop: Dialog / Mobile: Sheet — use media query hook to avoid hidden class conflicts with Radix portals */}
+      <MediaDialog open={editOpen} onOpenChange={setEditOpen} title="Edit Profile" description="Update your personal information">
+        {editFormContent}
+      </MediaDialog>
     </>
   )
 }

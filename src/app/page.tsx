@@ -20,7 +20,10 @@ import { CartView, CheckoutView, OrderSuccessView } from '@/components/CartCheck
 // ─── URL Sync: reads ?product=slug and navigates ────────────
 function UrlSyncHandler() {
   const searchParams = useSearchParams()
-  const { navigateTo, setSelectedProductId, products, setProducts } = useAppStore()
+  const navigateTo = useAppStore(s => s.navigateTo)
+  const setSelectedProductId = useAppStore(s => s.setSelectedProductId)
+  const products = useAppStore(s => s.products)
+  const setProducts = useAppStore(s => s.setProducts)
   const currentView = useAppStore(s => s.currentView)
 
   useEffect(() => {
@@ -54,7 +57,7 @@ function UrlSyncHandler() {
       }
     }
     findAndNavigate()
-  }, [searchParams]) // Only re-run when URL changes
+  }, [searchParams, products, setProducts, setSelectedProductId, navigateTo, currentView])
 
   return null
 }

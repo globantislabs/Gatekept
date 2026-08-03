@@ -8,7 +8,7 @@ import {
   CheckCircle, Award, Globe, RefreshCw, Package, Truck, Clock,
   CreditCard, ChevronRight, AlertCircle, Calendar, Pause, Play,
   XCircle, ShoppingBag, Repeat, Eye, Store,
-  MapPinned, RotateCcw, ChevronDown,
+  MapPinned, RotateCcw, ChevronDown, KeyRound, EyeOff,
 } from 'lucide-react'
 import { useAppStore } from '@/store/app-store'
 import { userService, productLearningService, productService, orderService, subscriptionService } from '@/lib/data-service'
@@ -420,7 +420,10 @@ export function ProfilePage() {
                         {user.state && <div className="flex items-center gap-3 text-sm"><MapPin className="w-4 h-4 text-[#48805b]" /><span className="text-[#88837b]">State:</span><span className="text-[#1f1e1c] font-medium">{user.state}</span></div>}
                       </div>
                       <Separator className="bg-[#e3dfd8] mt-4 mb-4" />
-                      <EditProfileButton user={user} setUser={setUser} editOpen={editOpen} setEditOpen={setEditOpen} />
+                      <div className="space-y-2">
+                        <EditProfileButton user={user} setUser={setUser} editOpen={editOpen} setEditOpen={setEditOpen} />
+                        <ChangePasswordButton user={user} />
+                      </div>
                     </CardContent>
                   </Card>
 
@@ -1273,6 +1276,139 @@ function EditProfileButton({ user, setUser, editOpen, setEditOpen }: { user: Use
       {/* Desktop: Dialog / Mobile: Sheet — use media query hook to avoid hidden class conflicts with Radix portals */}
       <MediaDialog open={editOpen} onOpenChange={setEditOpen} title="Edit Profile" description="Update your personal information">
         {editFormContent}
+      </MediaDialog>
+    </>
+  )
+}
+
+// ─── Change Password Button ──────────────────────────────────
+function ChangePasswordButton({ user }: { user: UserProfile }) {
+  const [open, setOpen] = useState(false)
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [showCurrent, setShowCurrent] = useState(false)
+  const [showNew, setShowNew] = useState(false)
+
+  const resetForm = () => {
+    setCurrentPassword('')
+    setNewPassword('')
+    setConfirmPassword('')
+    setError(null)
+    setShowCurrent(false)
+    setShowNew(false)
+  }
+
+  useEffect(() => { if (open) resetForm() }, [open])
+
+  const handleChangePassword = async () => {
+    setError(null)
+
+    // Validate
+    if (!newPassword || newPassword.length < 6) {
+      setError('New password must be at least 6 characters')
+      return
+    }
+    if (newPassword !== confirmPassword) {
+      setError('New password and confirm password do not match')
+      return
+    }
+
+    setLoading(true)
+    try {
+      const res = await fetch('/api/user/change-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': user.id,
+        },
+        body: JSON.stringify({
+          currentPassword: currentPassword || '',
+          newPassword,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to change password')
+      }
+      toast.success('Password changed successfully!')
+      setOpen(false)
+      resetForm()
+    } catch (err: any) {
+      setError(err.message || 'Failed to change password. Please try again.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const changePasswordForm = (
+    <div className="space-y-4">
+      {error && <div className="flex items-center gap-2 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm"><AlertCircle className="w-4 h-4 shrink-0" /><span>{error}</span></div>}
+
+      {/* Current Password — only show if user likely has a password set */}
+      <div className="space-y-2">
+        <Label className="text-sm font-medium">Current Password</Label>
+        <div className="relative">
+          <Input
+            type={showCurrent ? 'text' : 'password'}
+            value={currentPassword}
+            onChange={e => { setCurrentPassword(e.target.value); setError(null) }}
+            placeholder="Enter current password"
+            className="h-11 border-[#e3dfd8] focus:border-[#48805b] pr-10"
+            autoComplete="off"
+          />
+          <button type="button" onClick={() => setShowCurrent(!showCurrent)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#88837b] hover:text-[#48805b]">
+            {showCurrent ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+          </button>
+        </div>
+        <p className="text-[11px] text-[#88837b]">Leave empty if you login via WhatsApp OTP</p>
+      </div>
+
+      <div className="space-y-2">
+        <Label className="text-sm font-medium">New Password <span className="text-[#48805b]">*</span></Label>
+        <div className="relative">
+          <Input
+            type={showNew ? 'text' : 'password'}
+            value={newPassword}
+            onChange={e => { setNewPassword(e.target.value); setError(null) }}
+            placeholder="Enter new password (min 6 characters)"
+            className="h-11 border-[#e3dfd8] focus:border-[#48805b] pr-10"
+            autoComplete="off"
+          />
+          <button type="button" onClick={() => setShowNew(!showNew)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#88837b] hover:text-[#48805b]">
+            {showNew ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+          </button>
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label className="text-sm font-medium">Confirm New Password <span className="text-[#48805b]">*</span></Label>
+        <Input
+          type="password"
+          value={confirmPassword}
+          onChange={e => { setConfirmPassword(e.target.value); setError(null) }}
+          placeholder="Confirm new password"
+          className="h-11 border-[#e3dfd8] focus:border-[#48805b]"
+          autoComplete="off"
+        />
+      </div>
+
+      <div className="flex gap-3 pt-2">
+        <Button onClick={handleChangePassword} disabled={loading} className="flex-1 h-11 bg-[#48805b] hover:bg-[#3a6a4a] text-white font-heading font-semibold min-h-[44px]">
+          {loading ? <span className="flex items-center gap-2"><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Updating...</span> : 'Update Password'}
+        </Button>
+        <Button variant="outline" onClick={() => setOpen(false)} disabled={loading} className="flex-1 h-11 border-[#e3dfd8] text-[#88837b] min-h-[44px]">Cancel</Button>
+      </div>
+    </div>
+  )
+
+  return (
+    <>
+      <Button onClick={() => setOpen(true)} variant="outline" className="w-full h-11 border-[#48805b] text-[#48805b] font-heading font-semibold min-h-[44px] flex items-center gap-2 hover:bg-[#48805b]/5"><KeyRound className="w-4 h-4" />Change Password</Button>
+      <MediaDialog open={open} onOpenChange={setOpen} title="Change Password" description="Update your account password">
+        {changePasswordForm}
       </MediaDialog>
     </>
   )

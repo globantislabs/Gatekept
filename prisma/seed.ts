@@ -18,7 +18,7 @@ async function seed() {
       age: 35,
       gender: 'male',
       phone: '+919876543210',
-      email: 'admin@notjust.com',
+      email: 'admin@notjustwatr.com',
       country: 'India',
       state: 'Maharashtra',
       learning_completed: true,

@@ -176,6 +176,12 @@ function AdminDashboard() {
 
   const [loading, setLoading] = useState(true)
   const [userSearch, setUserSearch] = useState('')
+  const [editingUser, setEditingUser] = useState<UserProfile | null>(null)
+  const [editUserForm, setEditUserForm] = useState({ name: '', email: '', phone: '', age: '', gender: '', country: 'India', state: '', is_admin: false, learning_completed: false, new_password: '' })
+  const [editUserLoading, setEditUserLoading] = useState(false)
+  const [editUserError, setEditUserError] = useState<string | null>(null)
+  const [deletingUser, setDeletingUser] = useState<UserProfile | null>(null)
+  const [deleteUserLoading, setDeleteUserLoading] = useState(false)
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [orderView, setOrderView] = useState<'kanban' | 'table'>('table')
@@ -459,6 +465,81 @@ function AdminDashboard() {
     setLoading(false)
   }
 
+  // ─── User CRUD handlers ────────────────────────────────────
+  const openEditUser = (u: UserProfile) => {
+    setEditingUser(u)
+    setEditUserForm({
+      name: u.name || '', email: u.email || '', phone: u.phone || '',
+      age: u.age ? String(u.age) : '', gender: u.gender || '',
+      country: u.country || 'India', state: u.state || '',
+      is_admin: u.is_admin || false, learning_completed: u.learning_completed || false,
+      new_password: '',
+    })
+    setEditUserError(null)
+  }
+
+  const handleEditUser = async () => {
+    if (!editingUser) return
+    setEditUserLoading(true)
+    setEditUserError(null)
+    try {
+      const body: Record<string, unknown> = {
+        name: editUserForm.name.trim(),
+        email: editUserForm.email.trim() || null,
+        phone: editUserForm.phone.trim() || null,
+        age: editUserForm.age ? parseInt(editUserForm.age) : null,
+        gender: editUserForm.gender || null,
+        country: editUserForm.country || 'India',
+        state: editUserForm.state || null,
+        is_admin: editUserForm.is_admin,
+        learning_completed: editUserForm.learning_completed,
+      }
+      if (editUserForm.new_password.trim()) {
+        if (editUserForm.new_password.trim().length < 6) {
+          setEditUserError('New password must be at least 6 characters')
+          setEditUserLoading(false)
+          return
+        }
+        body.new_password = editUserForm.new_password.trim()
+      }
+      const res = await fetch(`/api/admin/users/${editingUser.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'x-admin-key': 'true', 'x-user-id': userId },
+        body: JSON.stringify(body),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to update user')
+      // Update local state
+      setUsers(prev => prev.map(u => u.id === editingUser.id ? { ...u, ...data.user } : u))
+      toast.success(`User "${data.user.name}" updated successfully`)
+      setEditingUser(null)
+    } catch (err: any) {
+      setEditUserError(err.message || 'Failed to update user')
+    } finally {
+      setEditUserLoading(false)
+    }
+  }
+
+  const handleDeleteUser = async () => {
+    if (!deletingUser) return
+    setDeleteUserLoading(true)
+    try {
+      const res = await fetch(`/api/admin/users/${deletingUser.id}`, {
+        method: 'DELETE',
+        headers: { 'x-admin-key': 'true', 'x-user-id': userId },
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to delete user')
+      setUsers(prev => prev.filter(u => u.id !== deletingUser.id))
+      toast.success(`User "${deletingUser.name}" deleted successfully`)
+      setDeletingUser(null)
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to delete user')
+    } finally {
+      setDeleteUserLoading(false)
+    }
+  }
+
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center" style={{ background: A.bg }}>
       <div className="flex flex-col items-center gap-3">
@@ -688,6 +769,7 @@ function AdminDashboard() {
                     <TableHead className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: A.textMuted }}>Contact</TableHead>
                     <TableHead className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: A.textMuted }}>Learning</TableHead>
                     <TableHead className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: A.textMuted }}>Joined</TableHead>
+                    <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-right" style={{ color: A.textMuted }}>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -704,7 +786,10 @@ function AdminDashboard() {
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell className="text-[12px]" style={{ color: A.textSecondary }}>{u.email || u.phone || '-'}</TableCell>
+                      <TableCell className="text-[12px]" style={{ color: A.textSecondary }}>
+                        <div>{u.email || '-'}</div>
+                        <div className="text-[10px]" style={{ color: A.textMuted }}>{u.phone || ''}</div>
+                      </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <div className="w-16 h-1.5 rounded-full overflow-hidden" style={{ background: A.borderLight }}>
@@ -714,11 +799,146 @@ function AdminDashboard() {
                         </div>
                       </TableCell>
                       <TableCell className="text-[11px]" style={{ color: A.textMuted }}>{new Date(u.created_at).toLocaleDateString()}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => openEditUser(u)} title="Edit user">
+                            <Pencil className="w-3.5 h-3.5" style={{ color: A.blue }} />
+                          </Button>
+                          {u.id !== userId && (
+                            <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => setDeletingUser(u)} title="Delete user">
+                              <Trash2 className="w-3.5 h-3.5" style={{ color: '#ef4444' }} />
+                            </Button>
+                          )}
+                        </div>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
             </div>
+
+            {/* ─── Edit User Dialog ─── */}
+            <Dialog open={!!editingUser} onOpenChange={(open) => { if (!open) setEditingUser(null) }}>
+              <DialogContent className="sm:max-w-lg border-[#e3dfd8] max-h-[85vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle className="font-heading text-lg font-bold flex items-center gap-2">
+                    <Edit className="w-5 h-5" style={{ color: A.green }} />
+                    Edit User — {editingUser?.name}
+                  </DialogTitle>
+                  <DialogDescription className="text-[#88837b]">Update user details, admin status, or reset password</DialogDescription>
+                </DialogHeader>
+                <Separator style={{ background: A.borderLight }} />
+                {editUserError && (
+                  <div className="flex items-center gap-2 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
+                    <AlertCircle className="w-4 h-4 shrink-0" /><span>{editUserError}</span>
+                  </div>
+                )}
+                <div className="space-y-4 py-2">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-medium">Name</Label>
+                      <Input value={editUserForm.name} onChange={e => setEditUserForm(p => ({ ...p, name: e.target.value }))} className="h-9 text-sm" style={{ borderColor: A.border }} />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-medium">Email</Label>
+                      <Input type="email" value={editUserForm.email} onChange={e => setEditUserForm(p => ({ ...p, email: e.target.value }))} className="h-9 text-sm" style={{ borderColor: A.border }} />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-medium">Phone</Label>
+                      <Input type="tel" value={editUserForm.phone} onChange={e => setEditUserForm(p => ({ ...p, phone: e.target.value }))} className="h-9 text-sm" style={{ borderColor: A.border }} />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-medium">Age</Label>
+                      <Input type="number" value={editUserForm.age} onChange={e => setEditUserForm(p => ({ ...p, age: e.target.value }))} className="h-9 text-sm" style={{ borderColor: A.border }} min={1} max={120} />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-medium">Gender</Label>
+                      <Select value={editUserForm.gender} onValueChange={v => setEditUserForm(p => ({ ...p, gender: v }))}>
+                        <SelectTrigger className="h-9 text-sm" style={{ borderColor: A.border }}><SelectValue placeholder="Select" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Male">Male</SelectItem>
+                          <SelectItem value="Female">Female</SelectItem>
+                          <SelectItem value="Other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-medium">Country</Label>
+                      <Select value={editUserForm.country} onValueChange={v => setEditUserForm(p => ({ ...p, country: v }))}>
+                        <SelectTrigger className="h-9 text-sm" style={{ borderColor: A.border }}><SelectValue placeholder="Select" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="India">India</SelectItem>
+                          <SelectItem value="Other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  {editUserForm.country === 'India' && (
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-medium">State</Label>
+                      <Input value={editUserForm.state} onChange={e => setEditUserForm(p => ({ ...p, state: e.target.value }))} className="h-9 text-sm" style={{ borderColor: A.border }} />
+                    </div>
+                  )}
+                  <Separator style={{ background: A.borderLight }} />
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label className="text-xs font-medium">Admin Access</Label>
+                        <p className="text-[10px]" style={{ color: A.textMuted }}>Grant or revoke admin privileges</p>
+                      </div>
+                      <Switch checked={editUserForm.is_admin} onCheckedChange={v => setEditUserForm(p => ({ ...p, is_admin: v }))} />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label className="text-xs font-medium">Learning Completed</Label>
+                        <p className="text-[10px]" style={{ color: A.textMuted }}>Mark learning as completed</p>
+                      </div>
+                      <Switch checked={editUserForm.learning_completed} onCheckedChange={v => setEditUserForm(p => ({ ...p, learning_completed: v }))} />
+                    </div>
+                  </div>
+                  <Separator style={{ background: A.borderLight }} />
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium">Reset Password</Label>
+                    <p className="text-[10px]" style={{ color: A.textMuted }}>Leave empty to keep current password. Min 6 characters.</p>
+                    <Input type="password" value={editUserForm.new_password} onChange={e => setEditUserForm(p => ({ ...p, new_password: e.target.value }))} placeholder="Enter new password" className="h-9 text-sm" style={{ borderColor: A.border }} />
+                  </div>
+                </div>
+                <DialogFooter className="gap-2">
+                  <Button variant="outline" onClick={() => setEditingUser(null)} disabled={editUserLoading} className="border-[#e3dfd8] text-[#88837b]">Cancel</Button>
+                  <Button onClick={handleEditUser} disabled={editUserLoading} className="text-white" style={{ background: A.green }}>
+                    {editUserLoading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Saving...</> : <><Save className="w-4 h-4 mr-2" />Save Changes</>}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+
+            {/* ─── Delete User Confirmation ─── */}
+            <Dialog open={!!deletingUser} onOpenChange={(open) => { if (!open) setDeletingUser(null) }}>
+              <DialogContent className="sm:max-w-md border-[#e3dfd8]">
+                <DialogHeader>
+                  <DialogTitle className="font-heading text-lg font-bold flex items-center gap-2">
+                    <AlertCircle className="w-5 h-5 text-red-500" />
+                    Delete User
+                  </DialogTitle>
+                  <DialogDescription className="text-[#88837b]">
+                    Are you sure you want to delete <strong>{deletingUser?.name}</strong>? This action cannot be undone.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700">
+                  All associated data (orders, subscriptions, learning progress) will be permanently deleted.
+                </div>
+                <DialogFooter className="gap-2">
+                  <Button variant="outline" onClick={() => setDeletingUser(null)} disabled={deleteUserLoading} className="border-[#e3dfd8] text-[#88837b]">Cancel</Button>
+                  <Button onClick={handleDeleteUser} disabled={deleteUserLoading} className="bg-red-500 hover:bg-red-600 text-white">
+                    {deleteUserLoading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Deleting...</> : <><Trash2 className="w-4 h-4 mr-2" />Delete User</>}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </div>
         )
 

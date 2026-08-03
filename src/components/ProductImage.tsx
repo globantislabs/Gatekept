@@ -66,7 +66,7 @@ export default function ProductImage({
         className={className}
         onError={() => setImgError(true)}
         loading={priority ? 'eager' : 'lazy'}
-        style={fill ? { objectFit: 'contain', width: '100%', height: '100%' } : undefined}
+        style={fill ? { width: '100%', height: '100%' } : undefined}
       />
     )
   }

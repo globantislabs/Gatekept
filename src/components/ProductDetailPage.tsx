@@ -402,8 +402,8 @@ export default function ProductDetailPage() {
           <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
 
             {/* Left: Product Image */}
-            <motion.div variants={staggerItem} className="space-y-4">
-              <div className="relative aspect-square rounded-2xl lg:rounded-3xl overflow-hidden flex items-center justify-center border"
+            <motion.div variants={staggerItem} className="space-y-4 lg:sticky lg:top-4 self-start">
+              <div className="relative h-[300px] sm:h-[350px] lg:h-[420px] rounded-2xl lg:rounded-3xl overflow-hidden flex items-center justify-center border"
                 style={{ borderColor: BRAND.surface, backgroundColor: `${BRAND.surface}30` }}
               >
                 {/* Gradient background */}
@@ -415,7 +415,7 @@ export default function ProductDetailPage() {
                   alt={displayProduct?.name || 'Product'}
                   productType={displayProduct?.type}
                   fill
-                  className="object-contain p-8 sm:p-10 lg:p-12 relative z-10"
+                  className="object-contain object-center relative z-10"
                   priority
                 />
 

@@ -495,6 +495,18 @@ export default function ProductDetailPage() {
                 )}
               </div>
 
+              {/* About This Product — moved to right sidebar */}
+              {displayProduct?.description && (
+                <div className="space-y-2">
+                  <h3 className="font-heading font-semibold text-sm" style={{ color: BRAND.dark }}>
+                    About This Product
+                  </h3>
+                  <p className="leading-relaxed text-sm" style={{ color: BRAND.muted }}>
+                    {displayProduct.description}
+                  </p>
+                </div>
+              )}
+
               {/* Price Display */}
               <div className="flex items-baseline gap-3">
                 <span className="font-heading text-3xl sm:text-4xl font-bold" style={{ color: BRAND.green }}>
@@ -715,7 +727,46 @@ export default function ProductDetailPage() {
                 </CardContent>
               </Card>
 
-
+              {/* ─── Share Section (Dashed Link) ──────────────── */}
+              {shareUrl && (
+                <div className="p-4 rounded-xl border-2 border-dashed" style={{ borderColor: `${BRAND.muted}40` }}>
+                  <div className="flex items-center gap-2 mb-3">
+                    <Share2 className="w-4 h-4" style={{ color: BRAND.green }} />
+                    <span className="font-heading text-sm font-semibold" style={{ color: BRAND.dark }}>
+                      Share this product
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 min-w-0 px-3 py-2 rounded-lg text-xs truncate border border-dashed"
+                      style={{ borderColor: `${BRAND.muted}30`, backgroundColor: `${BRAND.surface}20`, color: BRAND.muted }}
+                    >
+                      {shareUrl}
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleCopyShareLink}
+                      className="pointer-events-auto min-h-[44px] min-w-[44px] rounded-lg border-dashed"
+                      style={{ borderColor: `${BRAND.muted}40` }}
+                    >
+                      {copied ? (
+                        <CheckCircle className="w-4 h-4" style={{ color: BRAND.green }} />
+                      ) : (
+                        <Copy className="w-4 h-4" style={{ color: BRAND.muted }} />
+                      )}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleNativeShare}
+                      className="pointer-events-auto min-h-[44px] min-w-[44px] rounded-lg border-dashed"
+                      style={{ borderColor: `${BRAND.muted}40` }}
+                    >
+                      <Link2 className="w-4 h-4" style={{ color: BRAND.blue }} />
+                    </Button>
+                  </div>
+                </div>
+              )}
 
               {/* ─── Trust Badges ─────────────────────────────── */}
               <div className="grid grid-cols-3 gap-3">
@@ -787,21 +838,8 @@ export default function ProductDetailPage() {
                   transition={{ duration: 0.3 }}
                   className="grid md:grid-cols-2 gap-8"
                 >
-                  {/* Full description + highlights */}
+                  {/* Key Highlights */}
                   <div className="space-y-4">
-                    <h3 className="font-heading font-bold text-lg" style={{ color: BRAND.dark }}>
-                      About This Product
-                    </h3>
-                    {displayProduct?.description ? (
-                      <p className="leading-relaxed text-sm sm:text-base" style={{ color: BRAND.muted }}>
-                        {displayProduct.description}
-                      </p>
-                    ) : (
-                      <p className="text-sm" style={{ color: BRAND.muted }}>
-                        {displayProduct?.short_description || 'No description available.'}
-                      </p>
-                    )}
-
                     {highlights.length > 0 && (
                       <div className="space-y-2 pt-2">
                         <h4 className="font-heading font-semibold text-sm" style={{ color: BRAND.dark }}>

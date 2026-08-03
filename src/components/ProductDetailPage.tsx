@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
 import ProductImage from '@/components/ProductImage'
 import {
-  ArrowLeft, Play, CheckCircle, Lock, Share2, Copy, Link2, Package,
+  ArrowLeft, Play, CheckCircle, Lock, Unlock, Share2, Copy, Link2, Package,
   ChevronRight, Home, GraduationCap, RefreshCw, ShieldCheck, Truck,
   Leaf, Clock, Globe, Mail, MessageCircle, Smartphone, ShoppingCart,
   Minus, Plus, CreditCard, BookOpen, Star, AlertTriangle, Info,
@@ -509,7 +509,7 @@ export default function ProductDetailPage() {
                 )}
               </div>
 
-              {/* About This Product — moved to right sidebar */}
+              {/* About This Product — at the top */}
               {displayProduct?.description && (
                 <div className="space-y-2">
                   <h3 className="font-heading font-semibold text-sm" style={{ color: BRAND.dark }}>
@@ -521,246 +521,7 @@ export default function ProductDetailPage() {
                 </div>
               )}
 
-              {/* Price Display */}
-              <div className="flex items-baseline gap-3">
-                <span className="font-heading text-3xl sm:text-4xl font-bold" style={{ color: BRAND.green }}>
-                  ₹{displayProduct?.price.toLocaleString()}
-                </span>
-                {discountInfo && (
-                  <>
-                    <span className="text-lg line-through" style={{ color: BRAND.muted }}>
-                      ₹{displayProduct?.mrp!.toLocaleString()}
-                    </span>
-                    <Badge
-                      className="text-xs min-h-[24px]"
-                      style={{ backgroundColor: '#e7b97320', color: '#b56b20', borderColor: '#e7b97330' }}
-                    >
-                      {discountInfo.discountPercent}% OFF
-                    </Badge>
-                  </>
-                )}
-              </div>
-
-              {/* Type & Category Badges */}
-              <div className="flex flex-wrap gap-2">
-                <Badge
-                  className="min-h-[28px] px-3 text-xs font-medium"
-                  style={{ backgroundColor: BRAND.green, color: '#fff', borderColor: 'transparent' }}
-                >
-                  {displayProduct?.type === 'FIZZ' ? '🫧 FIZZ' : '💧 STILL'}
-                </Badge>
-                {displayProduct?.category && (
-                  <Badge
-                    className="min-h-[28px] px-3 text-xs font-medium"
-                    style={{ backgroundColor: `${BRAND.lime}20`, color: BRAND.dark, borderColor: `${BRAND.lime}30` }}
-                  >
-                    {displayProduct.category}
-                  </Badge>
-                )}
-                {displayProduct?.discount_label && (
-                  <Badge
-                    className="min-h-[28px] px-3 text-xs font-medium"
-                    style={{ backgroundColor: '#e7b97320', color: '#b56b20', borderColor: '#e7b97330' }}
-                  >
-                    {displayProduct?.discount_label}
-                  </Badge>
-                )}
-              </div>
-
-              <Separator style={{ backgroundColor: BRAND.surface }} />
-
-              {/* ─── Learning Access Section ─────────────────── */}
-              <Card className="border rounded-xl" style={{ borderColor: BRAND.surface }}>
-                <CardHeader className="pb-3">
-                  <CardTitle className="font-heading text-base font-semibold flex items-center gap-2" style={{ color: BRAND.dark }}>
-                    <GraduationCap className="w-5 h-5" style={{ color: BRAND.green }} />
-                    Learning Module
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-
-                  {/* Progress display if user has progress */}
-                  {user && productProgress && (isInProgress || isCompleted) && (
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="space-y-3"
-                    >
-                      {/* Video Progress */}
-                      <div className="space-y-1.5">
-                        <div className="flex justify-between text-xs">
-                          <span style={{ color: BRAND.muted }}>Video Progress</span>
-                          <span className="font-medium" style={{ color: BRAND.green }}>{videoProgressPct}%</span>
-                        </div>
-                        <Progress
-                          value={videoProgressPct}
-                          className="h-2 rounded-full"
-                          style={{ backgroundColor: `${BRAND.surface}60` }}
-                        />
-                      </div>
-
-                      {/* Quiz Score */}
-                      {productProgress.quiz_completed && (
-                        <div className="flex items-center gap-2 p-2.5 rounded-lg"
-                          style={{ backgroundColor: isCompleted ? `${BRAND.green}08` : `${BRAND.lime}08` }}
-                        >
-                          {isCompleted ? (
-                            <CheckCircle className="w-4 h-4" style={{ color: BRAND.green }} />
-                          ) : (
-                            <Star className="w-4 h-4" style={{ color: BRAND.lime }} />
-                          )}
-                          <span className="text-sm font-medium" style={{ color: BRAND.dark }}>
-                            Quiz Score: {productProgress.quiz_score}%
-                          </span>
-                          {isCompleted && (
-                            <Badge className="text-[10px] ml-auto min-h-[20px]"
-                              style={{ backgroundColor: BRAND.green, color: '#fff', borderColor: 'transparent' }}
-                            >
-                              Passed
-                            </Badge>
-                          )}
-                        </div>
-                      )}
-                    </motion.div>
-                  )}
-
-                  {/* Status-based buttons */}
-
-
-                  {user && learningStatus === 'NOT_STARTED' && (
-                    <div className="space-y-2">
-                      <Button
-                        onClick={handleStartLearning}
-                        className="pointer-events-auto min-h-[44px] w-full rounded-xl font-heading font-semibold text-base"
-                        style={{ backgroundColor: BRAND.green, color: '#fff' }}
-                      >
-                        <Play className="w-5 h-5 mr-2" />
-                        Start Learning Module
-                      </Button>
-                    </div>
-                  )}
-
-                  {user && isInProgress && (
-                    <Button
-                      onClick={handleContinueLearning}
-                      className="pointer-events-auto min-h-[44px] w-full rounded-xl font-heading font-semibold text-base"
-                      style={{ backgroundColor: BRAND.green, color: '#fff' }}
-                    >
-                      <BookOpen className="w-5 h-5 mr-2" />
-                      Continue Learning
-                    </Button>
-                  )}
-
-                  {user && isCompleted && (
-                    <div className="space-y-4">
-                      {/* Completed badge + Review */}
-                      <div className="flex items-center gap-3">
-                        <Badge
-                          className="min-h-[28px] px-3 text-xs"
-                          style={{ backgroundColor: BRAND.green, color: '#fff', borderColor: 'transparent' }}
-                        >
-                          <CheckCircle className="w-3.5 h-3.5 mr-1" />
-                          Completed
-                        </Badge>
-                        <Button
-                          onClick={handleReview}
-                          variant="outline"
-                          className="pointer-events-auto min-h-[44px] flex-1 rounded-xl font-heading font-semibold border-[#e3dfd8]"
-                        >
-                          <Eye className="w-4 h-4 mr-2" />
-                          Review
-                        </Button>
-                      </div>
-
-                      {/* Purchase section — unlocked after learning completion */}
-                      <div className="p-4 rounded-xl space-y-3"
-                        style={{ backgroundColor: `${BRAND.lime}08`, borderColor: `${BRAND.lime}30`, borderWidth: '1px' }}
-                      >
-                        <div className="flex items-center gap-2">
-                          <ShoppingCart className="w-4 h-4" style={{ color: BRAND.lime }} />
-                          <span className="font-heading text-sm font-semibold" style={{ color: BRAND.dark }}>
-                            Product Unlocked — Now Available for Purchase
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <div className="flex items-center gap-1 rounded-lg border" style={{ borderColor: BRAND.surface }}>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-9 w-9 rounded-l-lg"
-                              onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                              disabled={quantity <= 1}
-                            >
-                              <Minus className="w-4 h-4" style={{ color: BRAND.muted }} />
-                            </Button>
-                            <span className="min-w-[32px] text-center font-medium text-sm" style={{ color: BRAND.dark }}>
-                              {quantity}
-                            </span>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-9 w-9 rounded-r-lg"
-                              onClick={() => setQuantity(Math.min(displayProduct?.max_order_qty || 10, quantity + 1))}
-                              disabled={quantity >= (displayProduct?.max_order_qty || 10)}
-                            >
-                              <Plus className="w-4 h-4" style={{ color: BRAND.muted }} />
-                            </Button>
-                          </div>
-                          <Button
-                            onClick={handleAddToCart}
-                            className="pointer-events-auto min-h-[44px] flex-1 rounded-xl font-heading font-semibold text-base"
-                            style={{ backgroundColor: BRAND.lime, color: BRAND.dark }}
-                          >
-                            <ShoppingCart className="w-4 h-4 mr-2" />
-                            Add to Cart — ₹{((displayProduct?.price || 0) * quantity).toLocaleString()}
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Video & Quiz count info */}
-                  {displayProduct?.videos && displayProduct.videos.length > 0 && (
-                    <div className="flex items-center gap-4 text-xs pt-1" style={{ color: BRAND.muted }}>
-                      <span className="flex items-center gap-1">
-                        <Play className="w-3.5 h-3.5" />
-                        {displayProduct.videos.length} videos
-                      </span>
-                      {displayProduct.quizzes && displayProduct.quizzes.length > 0 && (
-                        <span className="flex items-center gap-1">
-                          <GraduationCap className="w-3.5 h-3.5" />
-                          {displayProduct.quizzes.length} quiz questions
-                        </span>
-                      )}
-                      <span className="flex items-center gap-1">
-                        <Clock className="w-3.5 h-3.5" />
-                        ~10 min
-                      </span>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* ─── Trust Badges ─────────────────────────────── */}
-              <div className="grid grid-cols-3 gap-3">
-                <div className="flex flex-col items-center text-center p-3 rounded-xl bg-white border" style={{ borderColor: BRAND.surface }}>
-                  <ShieldCheck className="w-5 h-5 mb-1" style={{ color: BRAND.green }} />
-                  <p className="text-[10px] font-medium" style={{ color: BRAND.dark }}>FSSAI Certified</p>
-                  <p className="text-[9px]" style={{ color: BRAND.muted }}>{displayProduct?.fssai_license || 'Licensed'}</p>
-                </div>
-                <div className="flex flex-col items-center text-center p-3 rounded-xl bg-white border" style={{ borderColor: BRAND.surface }}>
-                  <Truck className="w-5 h-5 mb-1" style={{ color: BRAND.green }} />
-                  <p className="text-[10px] font-medium" style={{ color: BRAND.dark }}>Free Shipping</p>
-                  <p className="text-[9px]" style={{ color: BRAND.muted }}>Pan India</p>
-                </div>
-                <div className="flex flex-col items-center text-center p-3 rounded-xl bg-white border" style={{ borderColor: BRAND.surface }}>
-                  <Leaf className="w-5 h-5 mb-1" style={{ color: BRAND.green }} />
-                  <p className="text-[10px] font-medium" style={{ color: BRAND.dark }}>100% Natural</p>
-                  <p className="text-[9px]" style={{ color: BRAND.muted }}>{displayProduct?.country_origin || 'Made in India'}</p>
-                </div>
-              </div>
-
-              {/* ─── Product Details Tabs (in right sidebar) ──── */}
+              {/* ─── Product Details Tabs (at the top) ──── */}
               <Tabs defaultValue="overview" className="w-full">
 
                 {/* Scrollable Tabs List */}
@@ -1068,6 +829,296 @@ export default function ProductDetailPage() {
                   </AnimatePresence>
                 </TabsContent>
               </Tabs>
+
+              <Separator style={{ backgroundColor: BRAND.surface }} />
+
+              {/* Price Display */}
+              <div className="flex items-baseline gap-3">
+                <span className="font-heading text-3xl sm:text-4xl font-bold" style={{ color: BRAND.green }}>
+                  ₹{displayProduct?.price.toLocaleString()}
+                </span>
+                {discountInfo && (
+                  <>
+                    <span className="text-lg line-through" style={{ color: BRAND.muted }}>
+                      ₹{displayProduct?.mrp!.toLocaleString()}
+                    </span>
+                    <Badge
+                      className="text-xs min-h-[24px]"
+                      style={{ backgroundColor: '#e7b97320', color: '#b56b20', borderColor: '#e7b97330' }}
+                    >
+                      {discountInfo.discountPercent}% OFF
+                    </Badge>
+                  </>
+                )}
+              </div>
+
+              {/* Type & Category Badges */}
+              <div className="flex flex-wrap gap-2">
+                <Badge
+                  className="min-h-[28px] px-3 text-xs font-medium"
+                  style={{ backgroundColor: BRAND.green, color: '#fff', borderColor: 'transparent' }}
+                >
+                  {displayProduct?.type === 'FIZZ' ? '🫧 FIZZ' : '💧 STILL'}
+                </Badge>
+                {displayProduct?.category && (
+                  <Badge
+                    className="min-h-[28px] px-3 text-xs font-medium"
+                    style={{ backgroundColor: `${BRAND.lime}20`, color: BRAND.dark, borderColor: `${BRAND.lime}30` }}
+                  >
+                    {displayProduct.category}
+                  </Badge>
+                )}
+                {displayProduct?.discount_label && (
+                  <Badge
+                    className="min-h-[28px] px-3 text-xs font-medium"
+                    style={{ backgroundColor: '#e7b97320', color: '#b56b20', borderColor: '#e7b97330' }}
+                  >
+                    {displayProduct?.discount_label}
+                  </Badge>
+                )}
+              </div>
+
+              {/* ─── Buy Now & Unlock Now Buttons ─────────────── */}
+              <div className="flex gap-3">
+                {/* Buy Now — Locked until learning completed */}
+                <Button
+                  onClick={isCompleted ? handleAddToCart : undefined}
+                  disabled={!isCompleted}
+                  className="pointer-events-auto min-h-[48px] flex-1 rounded-xl font-heading font-semibold text-base transition-all"
+                  style={{
+                    backgroundColor: isCompleted ? BRAND.green : `${BRAND.muted}30`,
+                    color: isCompleted ? '#fff' : BRAND.muted,
+                    borderColor: 'transparent',
+                    cursor: isCompleted ? 'pointer' : 'not-allowed',
+                  }}
+                >
+                  {isCompleted ? (
+                    <>
+                      <ShoppingCart className="w-5 h-5 mr-2" />
+                      Buy Now — ₹{((displayProduct?.price || 0) * quantity).toLocaleString()}
+                    </>
+                  ) : (
+                    <>
+                      <Lock className="w-5 h-5 mr-2" />
+                      Buy Now
+                    </>
+                  )}
+                </Button>
+
+                {/* Unlock Now — Starts learning module */}
+                <Button
+                  onClick={isCompleted ? handleReview : (user ? handleStartLearning : handleLoginToSave)}
+                  className="pointer-events-auto min-h-[48px] flex-1 rounded-xl font-heading font-semibold text-base transition-all"
+                  style={{
+                    backgroundColor: isCompleted ? `${BRAND.lime}20` : BRAND.lime,
+                    color: isCompleted ? BRAND.green : BRAND.dark,
+                    borderColor: isCompleted ? `${BRAND.lime}30` : 'transparent',
+                  }}
+                >
+                  {isCompleted ? (
+                    <>
+                      <CheckCircle className="w-5 h-5 mr-2" />
+                      Unlocked
+                    </>
+                  ) : (
+                    <>
+                      <Unlock className="w-5 h-5 mr-2" />
+                      Unlock Now
+                    </>
+                  )}
+                </Button>
+              </div>
+
+              {/* ─── Learning Access Section ─────────────────── */}
+              <Card className="border rounded-xl" style={{ borderColor: BRAND.surface }}>
+                <CardHeader className="pb-3">
+                  <CardTitle className="font-heading text-base font-semibold flex items-center gap-2" style={{ color: BRAND.dark }}>
+                    <GraduationCap className="w-5 h-5" style={{ color: BRAND.green }} />
+                    Learning Module
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+
+                  {/* Progress display if user has progress */}
+                  {user && productProgress && (isInProgress || isCompleted) && (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="space-y-3"
+                    >
+                      {/* Video Progress */}
+                      <div className="space-y-1.5">
+                        <div className="flex justify-between text-xs">
+                          <span style={{ color: BRAND.muted }}>Video Progress</span>
+                          <span className="font-medium" style={{ color: BRAND.green }}>{videoProgressPct}%</span>
+                        </div>
+                        <Progress
+                          value={videoProgressPct}
+                          className="h-2 rounded-full"
+                          style={{ backgroundColor: `${BRAND.surface}60` }}
+                        />
+                      </div>
+
+                      {/* Quiz Score */}
+                      {productProgress.quiz_completed && (
+                        <div className="flex items-center gap-2 p-2.5 rounded-lg"
+                          style={{ backgroundColor: isCompleted ? `${BRAND.green}08` : `${BRAND.lime}08` }}
+                        >
+                          {isCompleted ? (
+                            <CheckCircle className="w-4 h-4" style={{ color: BRAND.green }} />
+                          ) : (
+                            <Star className="w-4 h-4" style={{ color: BRAND.lime }} />
+                          )}
+                          <span className="text-sm font-medium" style={{ color: BRAND.dark }}>
+                            Quiz Score: {productProgress.quiz_score}%
+                          </span>
+                          {isCompleted && (
+                            <Badge className="text-[10px] ml-auto min-h-[20px]"
+                              style={{ backgroundColor: BRAND.green, color: '#fff', borderColor: 'transparent' }}
+                            >
+                              Passed
+                            </Badge>
+                          )}
+                        </div>
+                      )}
+                    </motion.div>
+                  )}
+
+                  {/* Status-based buttons */}
+
+
+                  {user && learningStatus === 'NOT_STARTED' && (
+                    <div className="space-y-2">
+                      <Button
+                        onClick={handleStartLearning}
+                        className="pointer-events-auto min-h-[44px] w-full rounded-xl font-heading font-semibold text-base"
+                        style={{ backgroundColor: BRAND.green, color: '#fff' }}
+                      >
+                        <Play className="w-5 h-5 mr-2" />
+                        Start Learning Module
+                      </Button>
+                    </div>
+                  )}
+
+                  {user && isInProgress && (
+                    <Button
+                      onClick={handleContinueLearning}
+                      className="pointer-events-auto min-h-[44px] w-full rounded-xl font-heading font-semibold text-base"
+                      style={{ backgroundColor: BRAND.green, color: '#fff' }}
+                    >
+                      <BookOpen className="w-5 h-5 mr-2" />
+                      Continue Learning
+                    </Button>
+                  )}
+
+                  {user && isCompleted && (
+                    <div className="space-y-4">
+                      {/* Completed badge + Review */}
+                      <div className="flex items-center gap-3">
+                        <Badge
+                          className="min-h-[28px] px-3 text-xs"
+                          style={{ backgroundColor: BRAND.green, color: '#fff', borderColor: 'transparent' }}
+                        >
+                          <CheckCircle className="w-3.5 h-3.5 mr-1" />
+                          Completed
+                        </Badge>
+                        <Button
+                          onClick={handleReview}
+                          variant="outline"
+                          className="pointer-events-auto min-h-[44px] flex-1 rounded-xl font-heading font-semibold border-[#e3dfd8]"
+                        >
+                          <Eye className="w-4 h-4 mr-2" />
+                          Review
+                        </Button>
+                      </div>
+
+                      {/* Purchase section — unlocked after learning completion */}
+                      <div className="p-4 rounded-xl space-y-3"
+                        style={{ backgroundColor: `${BRAND.lime}08`, borderColor: `${BRAND.lime}30`, borderWidth: '1px' }}
+                      >
+                        <div className="flex items-center gap-2">
+                          <ShoppingCart className="w-4 h-4" style={{ color: BRAND.lime }} />
+                          <span className="font-heading text-sm font-semibold" style={{ color: BRAND.dark }}>
+                            Product Unlocked — Now Available for Purchase
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-1 rounded-lg border" style={{ borderColor: BRAND.surface }}>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-9 w-9 rounded-l-lg"
+                              onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                              disabled={quantity <= 1}
+                            >
+                              <Minus className="w-4 h-4" style={{ color: BRAND.muted }} />
+                            </Button>
+                            <span className="min-w-[32px] text-center font-medium text-sm" style={{ color: BRAND.dark }}>
+                              {quantity}
+                            </span>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-9 w-9 rounded-r-lg"
+                              onClick={() => setQuantity(Math.min(displayProduct?.max_order_qty || 10, quantity + 1))}
+                              disabled={quantity >= (displayProduct?.max_order_qty || 10)}
+                            >
+                              <Plus className="w-4 h-4" style={{ color: BRAND.muted }} />
+                            </Button>
+                          </div>
+                          <Button
+                            onClick={handleAddToCart}
+                            className="pointer-events-auto min-h-[44px] flex-1 rounded-xl font-heading font-semibold text-base"
+                            style={{ backgroundColor: BRAND.lime, color: BRAND.dark }}
+                          >
+                            <ShoppingCart className="w-4 h-4 mr-2" />
+                            Add to Cart — ₹{((displayProduct?.price || 0) * quantity).toLocaleString()}
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Video & Quiz count info */}
+                  {displayProduct?.videos && displayProduct.videos.length > 0 && (
+                    <div className="flex items-center gap-4 text-xs pt-1" style={{ color: BRAND.muted }}>
+                      <span className="flex items-center gap-1">
+                        <Play className="w-3.5 h-3.5" />
+                        {displayProduct.videos.length} videos
+                      </span>
+                      {displayProduct.quizzes && displayProduct.quizzes.length > 0 && (
+                        <span className="flex items-center gap-1">
+                          <GraduationCap className="w-3.5 h-3.5" />
+                          {displayProduct.quizzes.length} quiz questions
+                        </span>
+                      )}
+                      <span className="flex items-center gap-1">
+                        <Clock className="w-3.5 h-3.5" />
+                        ~10 min
+                      </span>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* ─── Trust Badges ─────────────────────────────── */}
+              <div className="grid grid-cols-3 gap-3">
+                <div className="flex flex-col items-center text-center p-3 rounded-xl bg-white border" style={{ borderColor: BRAND.surface }}>
+                  <ShieldCheck className="w-5 h-5 mb-1" style={{ color: BRAND.green }} />
+                  <p className="text-[10px] font-medium" style={{ color: BRAND.dark }}>FSSAI Certified</p>
+                  <p className="text-[9px]" style={{ color: BRAND.muted }}>{displayProduct?.fssai_license || 'Licensed'}</p>
+                </div>
+                <div className="flex flex-col items-center text-center p-3 rounded-xl bg-white border" style={{ borderColor: BRAND.surface }}>
+                  <Truck className="w-5 h-5 mb-1" style={{ color: BRAND.green }} />
+                  <p className="text-[10px] font-medium" style={{ color: BRAND.dark }}>Free Shipping</p>
+                  <p className="text-[9px]" style={{ color: BRAND.muted }}>Pan India</p>
+                </div>
+                <div className="flex flex-col items-center text-center p-3 rounded-xl bg-white border" style={{ borderColor: BRAND.surface }}>
+                  <Leaf className="w-5 h-5 mb-1" style={{ color: BRAND.green }} />
+                  <p className="text-[10px] font-medium" style={{ color: BRAND.dark }}>100% Natural</p>
+                  <p className="text-[9px]" style={{ color: BRAND.muted }}>{displayProduct?.country_origin || 'Made in India'}</p>
+                </div>
+              </div>
             </motion.div>
           </div>
         </motion.div>

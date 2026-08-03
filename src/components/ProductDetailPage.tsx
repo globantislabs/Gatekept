@@ -858,202 +858,6 @@ export default function ProductDetailPage() {
                 )}
               </div>
 
-              {/* ─── Learning Access Section ─────────────────── */}
-              <Card className="border rounded-xl" style={{ borderColor: BRAND.surface }}>
-                <CardHeader className="pb-3">
-                  <CardTitle className="font-heading text-base font-semibold flex items-center gap-2" style={{ color: BRAND.dark }}>
-                    <GraduationCap className="w-5 h-5" style={{ color: BRAND.green }} />
-                    Learning Module
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4 p-0">
-
-                  {/* Video & Quiz count info */}
-                  {displayProduct?.videos && displayProduct.videos.length > 0 && (
-                    <div className="flex items-center gap-4 text-xs px-6 pt-4" style={{ color: BRAND.muted }}>
-                      <span className="flex items-center gap-1">
-                        <Play className="w-3.5 h-3.5" />
-                        {displayProduct.videos.length} videos
-                      </span>
-                      {displayProduct.quizzes && displayProduct.quizzes.length > 0 && (
-                        <span className="flex items-center gap-1">
-                          <GraduationCap className="w-3.5 h-3.5" />
-                          {displayProduct.quizzes.length} quiz questions
-                        </span>
-                      )}
-                      <span className="flex items-center gap-1">
-                        <Clock className="w-3.5 h-3.5" />
-                        ~10 min
-                      </span>
-                    </div>
-                  )}
-
-                  {/* Progress display if user has progress */}
-                  {user && productProgress && (isInProgress || isCompleted) && (
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="space-y-3 px-6"
-                    >
-                      {/* Video Progress */}
-                      <div className="space-y-1.5">
-                        <div className="flex justify-between text-xs">
-                          <span style={{ color: BRAND.muted }}>Video Progress</span>
-                          <span className="font-medium" style={{ color: BRAND.green }}>{videoProgressPct}%</span>
-                        </div>
-                        <Progress
-                          value={videoProgressPct}
-                          className="h-2 rounded-full"
-                          style={{ backgroundColor: `${BRAND.surface}60` }}
-                        />
-                      </div>
-
-                      {/* Quiz Score */}
-                      {productProgress.quiz_completed && (
-                        <div className="flex items-center gap-2 p-2.5 rounded-lg"
-                          style={{ backgroundColor: isCompleted ? `${BRAND.green}08` : `${BRAND.lime}08` }}
-                        >
-                          {isCompleted ? (
-                            <CheckCircle className="w-4 h-4" style={{ color: BRAND.green }} />
-                          ) : (
-                            <Star className="w-4 h-4" style={{ color: BRAND.lime }} />
-                          )}
-                          <span className="text-sm font-medium" style={{ color: BRAND.dark }}>
-                            Quiz Score: {productProgress.quiz_score}%
-                          </span>
-                          {isCompleted && (
-                            <Badge className="text-[10px] ml-auto min-h-[20px]"
-                              style={{ backgroundColor: BRAND.green, color: '#fff', borderColor: 'transparent' }}
-                            >
-                              Passed
-                            </Badge>
-                          )}
-                        </div>
-                      )}
-                    </motion.div>
-                  )}
-
-                  {/* ─── Action Button (sign/learn) ──────────────── */}
-                  <div className="px-6">
-                    {!user ? (
-                      /* Non-signed user: Sign to access */
-                      <Button
-                        onClick={handleLoginToSave}
-                        className="pointer-events-auto min-h-[48px] w-full rounded-xl font-heading font-semibold text-sm"
-                        style={{ backgroundColor: BRAND.green, color: '#fff' }}
-                      >
-                        <Lock className="w-5 h-5 mr-2" />
-                        Sign to Access Product Learning & Enable Purchase
-                      </Button>
-                    ) : learningStatus === 'NOT_STARTED' ? (
-                      /* Signed user, not started: Start learning */
-                      <Button
-                        onClick={handleStartLearning}
-                        className="pointer-events-auto min-h-[48px] w-full rounded-xl font-heading font-semibold text-sm"
-                        style={{ backgroundColor: BRAND.green, color: '#fff' }}
-                      >
-                        <Play className="w-5 h-5 mr-2" />
-                        Complete Learning to Unlock Purchase
-                      </Button>
-                    ) : isInProgress ? (
-                      /* Signed user, in progress: Continue learning */
-                      <Button
-                        onClick={handleContinueLearning}
-                        className="pointer-events-auto min-h-[48px] w-full rounded-xl font-heading font-semibold text-sm"
-                        style={{ backgroundColor: BRAND.green, color: '#fff' }}
-                      >
-                        <BookOpen className="w-5 h-5 mr-2" />
-                        Continue Learning to Unlock Purchase
-                      </Button>
-                    ) : (
-                      /* Completed: Review */
-                      <Button
-                        onClick={handleReview}
-                        variant="outline"
-                        className="pointer-events-auto min-h-[48px] w-full rounded-xl font-heading font-semibold text-sm border-[#e3dfd8]"
-                      >
-                        <Eye className="w-5 h-5 mr-2" />
-                        Review Learning Module
-                      </Button>
-                    )}
-                  </div>
-
-                  {/* ─── Bottom: Price + Buy Now + Unlock Now ────── */}
-                  <div className="px-6 pt-3 pb-4" style={{ backgroundColor: `${BRAND.surface}40`, borderTop: `1px solid ${BRAND.surface}` }}>
-                    {/* Price row */}
-                    <div className="flex items-baseline gap-2 mb-3">
-                      <span className="font-heading text-2xl font-bold" style={{ color: BRAND.green }}>
-                        ₹{displayProduct?.price.toLocaleString()}
-                      </span>
-                      {discountInfo && (
-                        <>
-                          <span className="text-sm line-through" style={{ color: BRAND.muted }}>
-                            ₹{displayProduct?.mrp!.toLocaleString()}
-                          </span>
-                          <Badge
-                            className="text-[10px] min-h-[20px]"
-                            style={{ backgroundColor: '#e7b97320', color: '#b56b20', borderColor: '#e7b97330' }}
-                          >
-                            {discountInfo.discountPercent}% OFF
-                          </Badge>
-                        </>
-                      )}
-                    </div>
-
-                    {/* Buy Now + Unlock Now buttons */}
-                    <div className="flex gap-3">
-                      {/* Buy Now — Locked until learning completed */}
-                      <Button
-                        onClick={isCompleted ? handleAddToCart : undefined}
-                        disabled={!isCompleted}
-                        className="pointer-events-auto min-h-[48px] flex-1 rounded-xl font-heading font-semibold text-base transition-all"
-                        style={{
-                          backgroundColor: isCompleted ? BRAND.green : `${BRAND.muted}30`,
-                          color: isCompleted ? '#fff' : BRAND.muted,
-                          borderColor: 'transparent',
-                          cursor: isCompleted ? 'pointer' : 'not-allowed',
-                        }}
-                      >
-                        {isCompleted ? (
-                          <>
-                            <ShoppingCart className="w-5 h-5 mr-2" />
-                            Buy Now
-                          </>
-                        ) : (
-                          <>
-                            <Lock className="w-5 h-5 mr-2" />
-                            Buy Now
-                          </>
-                        )}
-                      </Button>
-
-                      {/* Unlock Now — Starts learning module */}
-                      <Button
-                        onClick={isCompleted ? handleReview : (user ? handleStartLearning : handleLoginToSave)}
-                        className="pointer-events-auto min-h-[48px] flex-1 rounded-xl font-heading font-semibold text-base transition-all"
-                        style={{
-                          backgroundColor: isCompleted ? `${BRAND.lime}20` : BRAND.lime,
-                          color: isCompleted ? BRAND.green : BRAND.dark,
-                          borderColor: isCompleted ? `${BRAND.lime}30` : 'transparent',
-                        }}
-                      >
-                        {isCompleted ? (
-                          <>
-                            <CheckCircle className="w-5 h-5 mr-2" />
-                            Unlocked
-                          </>
-                        ) : (
-                          <>
-                            <Unlock className="w-5 h-5 mr-2" />
-                            Unlock Now
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
               {/* ─── Trust Badges ─────────────────────────────── */}
               <div className="grid grid-cols-3 gap-3">
                 <div className="flex flex-col items-center text-center p-3 rounded-xl bg-white border" style={{ borderColor: BRAND.surface }}>
@@ -1074,6 +878,209 @@ export default function ProductDetailPage() {
               </div>
             </motion.div>
           </div>
+        </motion.div>
+
+        {/* ─── Learning Module — Full Width Below Image ─────── */}
+        <motion.div
+          initial="hidden"
+          animate="visible"
+          variants={fadeInUp}
+          className="mt-8"
+        >
+          <Card className="border rounded-2xl overflow-hidden" style={{ borderColor: BRAND.surface }}>
+            <CardHeader className="pb-3">
+              <CardTitle className="font-heading text-base font-semibold flex items-center gap-2" style={{ color: BRAND.dark }}>
+                <GraduationCap className="w-5 h-5" style={{ color: BRAND.green }} />
+                Learning Module
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 p-0">
+
+              {/* Video & Quiz count info */}
+              {displayProduct?.videos && displayProduct.videos.length > 0 && (
+                <div className="flex items-center gap-4 text-xs px-6 pt-4" style={{ color: BRAND.muted }}>
+                  <span className="flex items-center gap-1">
+                    <Play className="w-3.5 h-3.5" />
+                    {displayProduct.videos.length} videos
+                  </span>
+                  {displayProduct.quizzes && displayProduct.quizzes.length > 0 && (
+                    <span className="flex items-center gap-1">
+                      <GraduationCap className="w-3.5 h-3.5" />
+                      {displayProduct.quizzes.length} quiz questions
+                    </span>
+                  )}
+                  <span className="flex items-center gap-1">
+                    <Clock className="w-3.5 h-3.5" />
+                    ~10 min
+                  </span>
+                </div>
+              )}
+
+              {/* Progress display if user has progress */}
+              {user && productProgress && (isInProgress || isCompleted) && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="space-y-3 px-6"
+                >
+                  {/* Video Progress */}
+                  <div className="space-y-1.5">
+                    <div className="flex justify-between text-xs">
+                      <span style={{ color: BRAND.muted }}>Video Progress</span>
+                      <span className="font-medium" style={{ color: BRAND.green }}>{videoProgressPct}%</span>
+                    </div>
+                    <Progress
+                      value={videoProgressPct}
+                      className="h-2 rounded-full"
+                      style={{ backgroundColor: `${BRAND.surface}60` }}
+                    />
+                  </div>
+
+                  {/* Quiz Score */}
+                  {productProgress.quiz_completed && (
+                    <div className="flex items-center gap-2 p-2.5 rounded-lg"
+                      style={{ backgroundColor: isCompleted ? `${BRAND.green}08` : `${BRAND.lime}08` }}
+                    >
+                      {isCompleted ? (
+                        <CheckCircle className="w-4 h-4" style={{ color: BRAND.green }} />
+                      ) : (
+                        <Star className="w-4 h-4" style={{ color: BRAND.lime }} />
+                      )}
+                      <span className="text-sm font-medium" style={{ color: BRAND.dark }}>
+                        Quiz Score: {productProgress.quiz_score}%
+                      </span>
+                      {isCompleted && (
+                        <Badge className="text-[10px] ml-auto min-h-[20px]"
+                          style={{ backgroundColor: BRAND.green, color: '#fff', borderColor: 'transparent' }}
+                        >
+                          Passed
+                        </Badge>
+                      )}
+                    </div>
+                  )}
+                </motion.div>
+              )}
+
+              {/* ─── Action Button (sign/learn) ──────────────── */}
+              <div className="px-6">
+                {!user ? (
+                  /* Non-signed user: Sign to access */
+                  <Button
+                    onClick={handleLoginToSave}
+                    className="pointer-events-auto min-h-[48px] w-full rounded-xl font-heading font-semibold text-sm"
+                    style={{ backgroundColor: BRAND.green, color: '#fff' }}
+                  >
+                    <Lock className="w-5 h-5 mr-2" />
+                    Sign to Access Product Learning & Enable Purchase
+                  </Button>
+                ) : learningStatus === 'NOT_STARTED' ? (
+                  /* Signed user, not started: Start learning */
+                  <Button
+                    onClick={handleStartLearning}
+                    className="pointer-events-auto min-h-[48px] w-full rounded-xl font-heading font-semibold text-sm"
+                    style={{ backgroundColor: BRAND.green, color: '#fff' }}
+                  >
+                    <Play className="w-5 h-5 mr-2" />
+                    Complete Learning to Unlock Purchase
+                  </Button>
+                ) : isInProgress ? (
+                  /* Signed user, in progress: Continue learning */
+                  <Button
+                    onClick={handleContinueLearning}
+                    className="pointer-events-auto min-h-[48px] w-full rounded-xl font-heading font-semibold text-sm"
+                    style={{ backgroundColor: BRAND.green, color: '#fff' }}
+                  >
+                    <BookOpen className="w-5 h-5 mr-2" />
+                    Continue Learning to Unlock Purchase
+                  </Button>
+                ) : (
+                  /* Completed: Review */
+                  <Button
+                    onClick={handleReview}
+                    variant="outline"
+                    className="pointer-events-auto min-h-[48px] w-full rounded-xl font-heading font-semibold text-sm border-[#e3dfd8]"
+                  >
+                    <Eye className="w-5 h-5 mr-2" />
+                    Review Learning Module
+                  </Button>
+                )}
+              </div>
+
+              {/* ─── Bottom: Price + Buy Now + Unlock Now ────── */}
+              <div className="px-6 pt-3 pb-4" style={{ backgroundColor: `${BRAND.surface}40`, borderTop: `1px solid ${BRAND.surface}` }}>
+                {/* Price row */}
+                <div className="flex items-baseline gap-2 mb-3">
+                  <span className="font-heading text-2xl font-bold" style={{ color: BRAND.green }}>
+                    ₹{displayProduct?.price.toLocaleString()}
+                  </span>
+                  {discountInfo && (
+                    <>
+                      <span className="text-sm line-through" style={{ color: BRAND.muted }}>
+                        ₹{displayProduct?.mrp!.toLocaleString()}
+                      </span>
+                      <Badge
+                        className="text-[10px] min-h-[20px]"
+                        style={{ backgroundColor: '#e7b97320', color: '#b56b20', borderColor: '#e7b97330' }}
+                      >
+                        {discountInfo.discountPercent}% OFF
+                      </Badge>
+                    </>
+                  )}
+                </div>
+
+                {/* Buy Now + Unlock Now buttons */}
+                <div className="flex gap-3">
+                  {/* Buy Now — Locked until learning completed */}
+                  <Button
+                    onClick={isCompleted ? handleAddToCart : undefined}
+                    disabled={!isCompleted}
+                    className="pointer-events-auto min-h-[48px] flex-1 rounded-xl font-heading font-semibold text-base transition-all"
+                    style={{
+                      backgroundColor: isCompleted ? BRAND.green : `${BRAND.muted}30`,
+                      color: isCompleted ? '#fff' : BRAND.muted,
+                      borderColor: 'transparent',
+                      cursor: isCompleted ? 'pointer' : 'not-allowed',
+                    }}
+                  >
+                    {isCompleted ? (
+                      <>
+                        <ShoppingCart className="w-5 h-5 mr-2" />
+                        Buy Now
+                      </>
+                    ) : (
+                      <>
+                        <Lock className="w-5 h-5 mr-2" />
+                        Buy Now
+                      </>
+                    )}
+                  </Button>
+
+                  {/* Unlock Now — Starts learning module */}
+                  <Button
+                    onClick={isCompleted ? handleReview : (user ? handleStartLearning : handleLoginToSave)}
+                    className="pointer-events-auto min-h-[48px] flex-1 rounded-xl font-heading font-semibold text-base transition-all"
+                    style={{
+                      backgroundColor: isCompleted ? `${BRAND.lime}20` : BRAND.lime,
+                      color: isCompleted ? BRAND.green : BRAND.dark,
+                      borderColor: isCompleted ? `${BRAND.lime}30` : 'transparent',
+                    }}
+                  >
+                    {isCompleted ? (
+                      <>
+                        <CheckCircle className="w-5 h-5 mr-2" />
+                        Unlocked
+                      </>
+                    ) : (
+                      <>
+                        <Unlock className="w-5 h-5 mr-2" />
+                        Unlock Now
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </motion.div>
 
         {/* ─── Contact Section ──────────────────────────────── */}

@@ -603,13 +603,13 @@ export default function ProductDetailPage() {
                       transition={{ duration: 0.3 }}
                       className="space-y-4"
                     >
-                      {ingredients.length > 0 ? (
+                      {ingredientsList.length > 0 ? (
                         <div className="space-y-3">
                           <h3 className="font-heading font-bold text-lg" style={{ color: BRAND.dark }}>
                             Ingredients
                           </h3>
                           <div className="flex flex-wrap gap-2">
-                            {ingredients.map((ing, i) => (
+                            {ingredientsList.map((ing, i) => (
                               <motion.span
                                 key={i}
                                 initial={{ opacity: 0, scale: 0.9 }}
@@ -774,7 +774,7 @@ export default function ProductDetailPage() {
             </motion.div>
 
             {/* Right: Product Info — Price, Badges, CTA, Learning Module, Trust */}
-            <motion.div variants={staggerItem} className="space-y-5">
+            <motion.div variants={staggerItem} className="space-y-5 lg:sticky lg:top-4 self-start">
               {/* Name & Short Description */}
               <div>
                 <div className="flex items-start justify-between gap-3">

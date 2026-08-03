@@ -21,9 +21,10 @@ function isSchemaMismatchError(error: unknown): boolean {
   return false
 }
 
-// ─── Helper: Build a safe "select" that excludes qr_code_url if needed ──
-// If the production MySQL DB doesn't have the qr_code_url column yet,
-// we can fall back to a select that excludes it.
+// ─── Helper: Build a safe "select" that works with or without qr_code_url ──
+// Uses explicit column selection to avoid "unknown column" errors.
+// If qr_code_url doesn't exist in the production DB, the fallback
+// query (without select) will still work.
 function getSafeProductSelect() {
   return {
     id: true,
@@ -59,7 +60,7 @@ function getSafeProductSelect() {
     max_order_qty: true,
     discount_label: true,
     highlights: true,
-    qr_code_url: true,
+    // qr_code_url excluded from safe select — column may not exist in production DB
     created_at: true,
     updated_at: true,
   }
@@ -89,78 +90,44 @@ export async function GET(request: NextRequest) {
       where.category = category
     }
 
-    // First attempt: try with full select (includes qr_code_url)
+    // Use safe select first to avoid schema mismatch errors on production
+    // (e.g., qr_code_url column may not exist in production DB yet)
+    const safeSelect = getSafeProductSelect()
+
     const result = await safeDbQuery(
       (client) => client.product.findMany({
         where,
         orderBy: { created_at: 'desc' },
+        select: safeSelect,
       }),
-      { operationName: 'GET /api/products (findMany)' }
+      { operationName: 'GET /api/products (findMany safe select)' }
     )
 
     if (result.success) {
-      return jsonResponse({ products: result.data, total: result.data!.length })
+      // Add qr_code_url: null to each product so the API contract is consistent
+      const products = result.data!.map((p: Record<string, unknown>) => ({ ...p, qr_code_url: (p as Record<string, unknown>).qr_code_url ?? null }))
+      return jsonResponse({ products, total: products.length })
     }
 
-    // If the error is a schema mismatch (e.g., qr_code_url column missing),
-    // retry with a select that excludes the problematic column
+    // If the safe select also fails, try without select (full include)
     if (result.error?.type === 'schema' || isSchemaMismatchError(result.error?.originalError)) {
-      console.warn('[API /products] Schema mismatch detected, retrying without qr_code_url select')
+      console.warn('[API /products] Safe select failed, trying findMany without select')
 
       const fallbackResult = await safeDbQuery(
         (client) => client.product.findMany({
           where,
           orderBy: { created_at: 'desc' },
-          select: {
-            id: true,
-            name: true,
-            slug: true,
-            description: true,
-            short_description: true,
-            price: true,
-            mrp: true,
-            stock: true,
-            image_url: true,
-            gallery_images: true,
-            type: true,
-            category: true,
-            sku: true,
-            weight: true,
-            ingredients: true,
-            nutrition_info: true,
-            tags: true,
-            active: true,
-            featured: true,
-            brand: true,
-            flavor: true,
-            serving_size: true,
-            allergen_info: true,
-            storage_info: true,
-            shelf_life: true,
-            country_origin: true,
-            fssai_license: true,
-            hsn_code: true,
-            gst_rate: true,
-            min_order_qty: true,
-            max_order_qty: true,
-            discount_label: true,
-            highlights: true,
-            // qr_code_url intentionally excluded — column may not exist in production DB
-            created_at: true,
-            updated_at: true,
-          },
         }),
-        { operationName: 'GET /api/products (findMany fallback without qr_code_url)' }
+        { operationName: 'GET /api/products (findMany fallback without select)' }
       )
 
       if (fallbackResult.success) {
-        // Add qr_code_url: null to each product so the API contract is consistent
-        const products = fallbackResult.data!.map((p) => ({ ...p, qr_code_url: null }))
+        const products = fallbackResult.data!.map((p: Record<string, unknown>) => ({ ...p, qr_code_url: (p as Record<string, unknown>).qr_code_url ?? null }))
         return jsonResponse({ products, total: products.length })
       }
 
       // Fallback also failed
-      console.error('[API /products] Fallback query also failed:', fallbackResult.error?.message)
+      console.error('[API /products] All queries failed:', fallbackResult.error?.message)
       return errorResponse(
         `Database error: ${fallbackResult.error?.type === 'connection' ? 'Unable to connect to database' : fallbackResult.error?.message || 'Unknown error'}`,
         500

@@ -1557,7 +1557,9 @@ function AdminDashboard() {
                     {/* Image */}
                     <div className="relative h-48 overflow-hidden" style={{ background: A.bg }}>
                       {product.image_url ? (
-                        <img src={product.image_url} alt={product.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                        <img src={product.image_url} alt={product.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                          onError={(e) => { (e.target as HTMLImageElement).src = product.type === 'STILL' ? '/images/product-still.webp' : '/images/product-fizz.webp' }}
+                        />
                       ) : (
                         <div className="flex items-center justify-center h-full">
                           <Package className="w-12 h-12" style={{ color: A.textMuted }} />

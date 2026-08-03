@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import Image from 'next/image'
 import { motion, AnimatePresence, useInView } from 'framer-motion'
+import ProductImage from '@/components/ProductImage'
 import {
   ArrowRight, Heart, Zap, Leaf, ChevronRight, Menu, X, Star,
   CheckCircle, Clock, Users, Globe, TrendingUp, Award, Shield,
@@ -565,9 +566,10 @@ export default function LandingPage() {
                       onClick={() => handleLearnMore(product)}
                     >
                       <div className="relative h-[250px] bg-gradient-to-b from-[#1a1917] to-[#2a2926] overflow-hidden">
-                        <Image
-                          src={product.image_url || (product.type === 'STILL' ? '/images/product-still.webp' : '/images/product-fizz.webp')}
+                        <ProductImage
+                          src={product.image_url}
                           alt={product.name}
+                          productType={product.type}
                           fill
                           className="object-contain group-hover:scale-105 transition-transform duration-500 p-4"
                         />
@@ -956,9 +958,10 @@ export default function LandingPage() {
                       <Card className="border-[#3c3a35] bg-[#262520] text-white overflow-hidden rounded-2xl shadow-2xl shadow-black/15 hover:shadow-3xl hover:shadow-black/20 transition-shadow duration-500 premium-card h-full">
                         {/* Product Image */}
                         <div className="relative min-h-[280px] lg:min-h-[320px] overflow-hidden bg-[#1f1e1c]">
-                          <Image
-                            src={product.image_url || (isStill ? '/images/product-still.webp' : '/images/product-fizz.webp')}
+                          <ProductImage
+                            src={product.image_url}
                             alt={product.name}
+                            productType={product.type}
                             fill
                             className="object-contain p-8"
                           />

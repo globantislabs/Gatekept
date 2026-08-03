@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
+import ProductImage from '@/components/ProductImage'
 import {
   ArrowLeft, Play, CheckCircle, Lock, Share2, Copy, Link2, Package,
   ChevronRight, Home, GraduationCap, RefreshCw, ShieldCheck, Truck,
@@ -409,9 +410,10 @@ export default function ProductDetailPage() {
                 <div className="absolute inset-0 bg-gradient-to-br from-[#e3dfd8]/20 to-[#f4f3f0]" />
 
                 {/* Product image */}
-                <Image
-                  src={displayProduct?.image_url || (displayProduct?.type === 'STILL' ? '/images/product-still.webp' : '/images/product-fizz.webp')}
+                <ProductImage
+                  src={displayProduct?.image_url}
                   alt={displayProduct?.name || 'Product'}
+                  productType={displayProduct?.type}
                   fill
                   className="object-contain p-8 sm:p-10 lg:p-12 relative z-10"
                   priority

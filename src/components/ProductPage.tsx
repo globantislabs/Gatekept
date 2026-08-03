@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import Image from 'next/image'
 import { motion, useInView } from 'framer-motion'
+import ProductImage from '@/components/ProductImage'
 import {
   ArrowRight, ChevronLeft, ChevronRight, CheckCircle, Leaf,
   Package, Shield, Star, Sparkles, Zap, TrendingUp,
@@ -266,9 +267,10 @@ export default function ProductPage() {
                         <Card className="border-[#3c3a35] bg-[#262520] text-white overflow-hidden rounded-2xl shadow-2xl shadow-black/15 hover:shadow-3xl hover:shadow-black/20 transition-shadow duration-500 premium-card h-full">
                           {/* Product Image */}
                           <div className="relative min-h-[280px] lg:min-h-[320px] overflow-hidden bg-[#1f1e1c]">
-                            <Image
-                              src={product.image_url || (isStill ? '/images/product-still.webp' : '/images/product-fizz.webp')}
+                            <ProductImage
+                              src={product.image_url}
                               alt={product.name}
+                              productType={product.type}
                               fill
                               sizes="(max-width: 768px) 85vw, 400px"
                               className="object-contain p-8"

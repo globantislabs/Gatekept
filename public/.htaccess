@@ -1,0 +1,45 @@
+# NOTJUST Watr — Apache/Nginx SPA Routing for Plesk
+# This file ensures that all page routes are served by the Node.js app,
+# preventing 404 errors on browser refresh for client-side routes.
+#
+# Place this file in the Plesk document root (e.g., httpdocs/).
+# If Plesk uses Nginx only (no Apache), you need to add the
+# Nginx directives in Plesk > Domains > yourdomain.com > 
+# Apache & Nginx Settings > Additional Nginx directives.
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # Don't rewrite files or directories that exist
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+
+  # Don't rewrite API routes, _next static files, or uploads
+  RewriteCond %{REQUEST_URI} !^/api/ [NC]
+  RewriteCond %{REQUEST_URI} !^/_next/ [NC]
+  RewriteCond %{REQUEST_URI} !^/images/ [NC]
+  RewriteCond %{REQUEST_URI} !^/uploads/ [NC]
+
+  # Rewrite all other requests to index (Node.js app handles routing)
+  RewriteRule ^(.*)$ / [L,QSA]
+</IfModule>
+
+# Cache static assets
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType image/jpeg "access plus 1 month"
+  ExpiresByType image/png "access plus 1 month"
+  ExpiresByType image/webp "access plus 1 month"
+  ExpiresByType image/gif "access plus 1 month"
+  ExpiresByType image/svg+xml "access plus 1 month"
+  ExpiresByType text/css "access plus 1 week"
+  ExpiresByType application/javascript "access plus 1 week"
+  ExpiresByType font/woff2 "access plus 1 month"
+</IfModule>
+
+# Security headers
+<IfModule mod_headers.c>
+  Header set X-Content-Type-Options "nosniff"
+  Header set X-Frame-Options "SAMEORIGIN"
+  Header set X-XSS-Protection "1; mode=block"
+</IfModule>

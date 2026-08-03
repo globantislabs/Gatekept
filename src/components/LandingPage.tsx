@@ -1437,10 +1437,7 @@ export default function LandingPage() {
                   </button>
                 ))}
               </div>
-              <div className="mt-4 p-3 rounded-lg bg-white/[0.03] border border-white/[0.06]">
-                <p className="text-[10px] text-white/30 font-medium mb-1">POWERED BY</p>
-                <p className="text-xs text-white/50">Zoho Mail · Zoho SMS</p>
-              </div>
+
             </div>
           </div>
           <Separator className="my-8 bg-white/[0.06]" />

@@ -401,8 +401,8 @@ export default function ProductDetailPage() {
         >
           <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
 
-            {/* Left: Product Image */}
-            <motion.div variants={staggerItem} className="space-y-4 lg:sticky lg:top-4 self-start">
+            {/* Left: Product Image + About/Overview below */}
+            <motion.div variants={staggerItem} className="space-y-4">
               <div className="relative h-[300px] sm:h-[350px] lg:h-[420px] rounded-2xl lg:rounded-3xl overflow-hidden flex items-center justify-center border"
                 style={{ borderColor: BRAND.surface, backgroundColor: `${BRAND.surface}30` }}
               >
@@ -481,35 +481,8 @@ export default function ProductDetailPage() {
                   ))}
                 </div>
               )}
-            </motion.div>
 
-            {/* Right: Product Info */}
-            <motion.div variants={staggerItem} className="space-y-5">
-              {/* Name & Short Description */}
-              <div>
-                <div className="flex items-start justify-between gap-3">
-                  <h1 className="font-heading text-2xl sm:text-3xl lg:text-4xl font-bold mb-2" style={{ color: BRAND.dark }}>
-                    {displayProduct?.name}
-                  </h1>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={handleNativeShare}
-                    className="pointer-events-auto min-h-[40px] min-w-[40px] rounded-lg border flex-shrink-0"
-                    style={{ borderColor: BRAND.surface }}
-                    title="Share"
-                  >
-                    <Share2 className="w-4 h-4" style={{ color: BRAND.muted }} />
-                  </Button>
-                </div>
-                {displayProduct?.short_description && (
-                  <p className="leading-relaxed text-sm sm:text-base" style={{ color: BRAND.muted }}>
-                    {displayProduct.short_description}
-                  </p>
-                )}
-              </div>
-
-              {/* About This Product — at the top */}
+              {/* About This Product — below image on left */}
               {displayProduct?.description && (
                 <div className="space-y-2">
                   <h3 className="font-heading font-semibold text-sm" style={{ color: BRAND.dark }}>
@@ -521,7 +494,7 @@ export default function ProductDetailPage() {
                 </div>
               )}
 
-              {/* ─── Product Details Tabs (at the top) ──── */}
+              {/* ─── Product Details Tabs (below image on left) ──── */}
               <Tabs defaultValue="overview" className="w-full">
 
                 {/* Scrollable Tabs List */}
@@ -596,24 +569,24 @@ export default function ProductDetailPage() {
                             { label: 'Brand', value: displayProduct?.brand, icon: <Star className="w-3.5 h-3.5" /> },
                             { label: 'SKU', value: displayProduct?.sku, icon: <Info className="w-3.5 h-3.5" /> },
                             { label: 'Type', value: displayProduct?.type, icon: <Package className="w-3.5 h-3.5" /> },
-                          ]
-                            .filter(d => d.value)
-                            .map((d, i) => (
-                              <motion.div
-                                key={i}
-                                initial={{ opacity: 0, y: 5 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: i * 0.04 }}
-                                className="p-3 rounded-lg bg-white border"
-                                style={{ borderColor: BRAND.surface }}
-                              >
-                                <div className="flex items-center gap-1.5 mb-1">
-                                  {d.icon}
-                                  <p className="text-[10px] uppercase tracking-wider" style={{ color: BRAND.muted }}>{d.label}</p>
-                                </div>
-                                <p className="text-sm font-medium" style={{ color: BRAND.dark }}>{d.value}</p>
-                              </motion.div>
-                            ))}
+                          ].filter(d => d.value).map((d, i) => (
+                            <motion.div
+                              key={d.label}
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ delay: i * 0.05 }}
+                              className="p-3 rounded-xl bg-white border"
+                              style={{ borderColor: BRAND.surface }}
+                            >
+                              <div className="flex items-center gap-1.5 mb-1">
+                                {d.icon}
+                                <p className="text-xs uppercase tracking-wider" style={{ color: BRAND.muted }}>{d.label}</p>
+                              </div>
+                              <p className="text-sm font-medium" style={{ color: d.value ? BRAND.dark : BRAND.muted }}>
+                                {d.value || 'Not available'}
+                              </p>
+                            </motion.div>
+                          ))}
                         </div>
                       </div>
                     </motion.div>
@@ -630,68 +603,53 @@ export default function ProductDetailPage() {
                       transition={{ duration: 0.3 }}
                       className="space-y-4"
                     >
-                      <div className="space-y-4">
-                        <h3 className="font-heading font-bold text-lg" style={{ color: BRAND.dark }}>
-                          Ingredients
-                        </h3>
-                        {ingredientsList.length > 0 ? (
+                      {ingredients.length > 0 ? (
+                        <div className="space-y-3">
+                          <h3 className="font-heading font-bold text-lg" style={{ color: BRAND.dark }}>
+                            Ingredients
+                          </h3>
                           <div className="flex flex-wrap gap-2">
-                            {ingredientsList.map((ing, i) => (
+                            {ingredients.map((ing, i) => (
                               <motion.span
                                 key={i}
                                 initial={{ opacity: 0, scale: 0.9 }}
                                 animate={{ opacity: 1, scale: 1 }}
-                                transition={{ delay: i * 0.03 }}
-                                className="pointer-events-auto px-3 py-2 rounded-full text-xs font-medium min-h-[32px]"
-                                style={{ backgroundColor: '#edf5ee', color: BRAND.green }}
+                                transition={{ delay: i * 0.04 }}
+                                className="px-3 py-1.5 rounded-full text-xs font-medium border"
+                                style={{
+                                  backgroundColor: `${BRAND.green}08`,
+                                  color: BRAND.green,
+                                  borderColor: `${BRAND.green}18`
+                                }}
                               >
+                                <Leaf className="w-3 h-3 mr-1 inline" />
                                 {ing}
                               </motion.span>
                             ))}
                           </div>
-                        ) : displayProduct?.ingredients ? (
-                          <div className="p-4 rounded-xl bg-white border" style={{ borderColor: BRAND.surface }}>
-                            <p className="text-sm leading-relaxed" style={{ color: BRAND.dark }}>
-                              {displayProduct.ingredients}
-                            </p>
-                          </div>
-                        ) : (
-                          <p className="text-sm" style={{ color: BRAND.muted }}>No ingredients info available</p>
-                        )}
-                      </div>
+                        </div>
+                      ) : (
+                        <p className="text-sm" style={{ color: BRAND.muted }}>
+                          No ingredient information available.
+                        </p>
+                      )}
 
-                      <div className="space-y-4">
-                        <h3 className="font-heading font-bold text-lg" style={{ color: BRAND.dark }}>
-                          Allergen Information
-                        </h3>
-                        {displayProduct?.allergen_info ? (
-                          <div className="p-4 rounded-xl border"
-                            style={{ backgroundColor: '#fef2f2', borderColor: '#fecaca' }}
-                          >
-                            <div className="flex items-start gap-3">
-                              <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: '#dc2626' }} />
-                              <div>
-                                <p className="text-sm font-semibold mb-1" style={{ color: '#991b1b' }}>Allergen Warning</p>
-                                <p className="text-sm" style={{ color: '#b91c1c' }}>{displayProduct.allergen_info}</p>
-                              </div>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="p-4 rounded-xl bg-white border" style={{ borderColor: BRAND.surface }}>
-                            <div className="flex items-center gap-2">
-                              <CheckCircle className="w-4 h-4" style={{ color: BRAND.green }} />
-                              <p className="text-sm" style={{ color: BRAND.muted }}>
-                                No known allergens — always check the label for the most current information.
-                              </p>
-                            </div>
-                          </div>
-                        )}
-                      </div>
+                      {displayProduct?.allergen_info && (
+                        <div className="p-4 rounded-xl bg-white border" style={{ borderColor: BRAND.surface }}>
+                          <h4 className="font-heading font-semibold text-sm mb-2 flex items-center gap-2" style={{ color: BRAND.dark }}>
+                            <AlertTriangle className="w-4 h-4" style={{ color: '#dc2626' }} />
+                            Allergen Information
+                          </h4>
+                          <p className="text-sm" style={{ color: BRAND.muted }}>
+                            {displayProduct.allergen_info}
+                          </p>
+                        </div>
+                      )}
                     </motion.div>
                   </AnimatePresence>
                 </TabsContent>
 
-                {/* ─── Nutrition Tab ─────────────────────────────── */}
+                {/* ─── Nutrition Tab ──────────────────────────────── */}
                 <TabsContent value="nutrition" className="mt-6">
                   <AnimatePresence mode="wait">
                     <motion.div
@@ -699,31 +657,31 @@ export default function ProductDetailPage() {
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.3 }}
+                      className="space-y-4"
                     >
-                      <h3 className="font-heading font-bold text-lg mb-4" style={{ color: BRAND.dark }}>
-                        Nutrition Information
-                      </h3>
                       {displayProduct?.nutrition_info ? (
-                        <div className="p-6 rounded-xl bg-white border" style={{ borderColor: BRAND.surface }}>
-                          <p className="text-sm leading-relaxed" style={{ color: BRAND.dark }}>
+                        <div className="p-4 rounded-xl bg-white border" style={{ borderColor: BRAND.surface }}>
+                          <h3 className="font-heading font-bold text-lg mb-3" style={{ color: BRAND.dark }}>
+                            Nutrition Information
+                          </h3>
+                          <p className="text-sm leading-relaxed" style={{ color: BRAND.muted }}>
                             {displayProduct.nutrition_info}
                           </p>
                         </div>
                       ) : (
-                        <div className="p-6 rounded-xl bg-white border" style={{ borderColor: BRAND.surface }}>
-                          <div className="flex items-center gap-3">
-                            <Info className="w-5 h-5" style={{ color: BRAND.muted }} />
-                            <p className="text-sm" style={{ color: BRAND.muted }}>
-                              Nutrition information will be available soon. Check the product label for details.
-                            </p>
-                          </div>
-                        </div>
+                        <p className="text-sm" style={{ color: BRAND.muted }}>
+                          No nutrition information available.
+                        </p>
                       )}
 
                       {displayProduct?.serving_size && (
-                        <div className="mt-4 flex items-center gap-2 text-xs" style={{ color: BRAND.muted }}>
-                          <Leaf className="w-3.5 h-3.5" />
-                          <span>Serving size: {displayProduct.serving_size}</span>
+                        <div className="p-4 rounded-xl bg-white border" style={{ borderColor: BRAND.surface }}>
+                          <h4 className="font-heading font-semibold text-sm mb-2" style={{ color: BRAND.dark }}>
+                            Serving Size
+                          </h4>
+                          <p className="text-sm" style={{ color: BRAND.muted }}>
+                            {displayProduct.serving_size}
+                          </p>
                         </div>
                       )}
                     </motion.div>
@@ -740,54 +698,41 @@ export default function ProductDetailPage() {
                       transition={{ duration: 0.3 }}
                       className="space-y-4"
                     >
-                      <div className="space-y-4">
-                        <h3 className="font-heading font-bold text-lg" style={{ color: BRAND.dark }}>
-                          Storage Instructions
-                        </h3>
-                        {displayProduct?.storage_info ? (
-                          <div className="p-4 rounded-xl bg-white border flex items-start gap-3"
-                            style={{ borderColor: BRAND.surface }}
-                          >
-                            <ShieldCheck className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: BRAND.green }} />
-                            <p className="text-sm leading-relaxed" style={{ color: BRAND.dark }}>
+                      {displayProduct?.storage_info ? (
+                        <div className="p-4 rounded-xl bg-white border flex items-start gap-3"
+                          style={{ borderColor: BRAND.surface }}
+                        >
+                          <ShieldCheck className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: BRAND.green }} />
+                          <div>
+                            <h4 className="font-heading font-semibold text-sm mb-1" style={{ color: BRAND.dark }}>
+                              Storage Instructions
+                            </h4>
+                            <p className="text-sm" style={{ color: BRAND.muted }}>
                               {displayProduct.storage_info}
                             </p>
                           </div>
-                        ) : (
-                          <div className="p-4 rounded-xl bg-white border" style={{ borderColor: BRAND.surface }}>
-                            <p className="text-sm" style={{ color: BRAND.muted }}>
-                              Store in a cool, dry place away from direct sunlight.
-                            </p>
-                          </div>
-                        )}
-                      </div>
+                        </div>
+                      ) : (
+                        <p className="text-sm" style={{ color: BRAND.muted }}>
+                          No storage information available.
+                        </p>
+                      )}
 
-                      <div className="space-y-4">
-                        <h3 className="font-heading font-bold text-lg" style={{ color: BRAND.dark }}>
-                          Shelf Life
-                        </h3>
-                        {displayProduct?.shelf_life ? (
-                          <div className="p-4 rounded-xl bg-white border flex items-start gap-3"
-                            style={{ borderColor: BRAND.surface }}
-                          >
-                            <Clock className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: BRAND.green }} />
-                            <p className="text-sm leading-relaxed" style={{ color: BRAND.dark }}>
-                              {displayProduct.shelf_life}
-                            </p>
-                          </div>
-                        ) : (
-                          <div className="p-4 rounded-xl bg-white border" style={{ borderColor: BRAND.surface }}>
-                            <p className="text-sm" style={{ color: BRAND.muted }}>
-                              Shelf life information will be available on the product label.
-                            </p>
-                          </div>
-                        )}
-                      </div>
+                      {displayProduct?.shelf_life && (
+                        <div className="p-4 rounded-xl bg-white border" style={{ borderColor: BRAND.surface }}>
+                          <h4 className="font-heading font-semibold text-sm mb-2" style={{ color: BRAND.dark }}>
+                            Shelf Life
+                          </h4>
+                          <p className="text-sm" style={{ color: BRAND.muted }}>
+                            {displayProduct.shelf_life}
+                          </p>
+                        </div>
+                      )}
                     </motion.div>
                   </AnimatePresence>
                 </TabsContent>
 
-                {/* ─── Legal Tab ──────────────────────────────────── */}
+                {/* ─── Legal Tab ───────────────────────────────────── */}
                 <TabsContent value="legal" className="mt-6">
                   <AnimatePresence mode="wait">
                     <motion.div
@@ -795,44 +740,88 @@ export default function ProductDetailPage() {
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.3 }}
+                      className="space-y-4"
                     >
-                      <h3 className="font-heading font-bold text-lg mb-4" style={{ color: BRAND.dark }}>
-                        Legal & Compliance
-                      </h3>
                       <div className="grid grid-cols-2 gap-4">
                         {[
                           { label: 'FSSAI License', value: displayProduct?.fssai_license, icon: <ShieldCheck className="w-4 h-4" /> },
                           { label: 'HSN Code', value: displayProduct?.hsn_code, icon: <Package className="w-4 h-4" /> },
-                          { label: 'GST Rate', value: displayProduct?.gst_rate ? `${displayProduct.gst_rate}%` : null, icon: <CreditCard className="w-4 h-4" /> },
+                          { label: 'GST Rate', value: displayProduct?.gst_rate, icon: <Info className="w-4 h-4" /> },
                           { label: 'Country of Origin', value: displayProduct?.country_origin, icon: <Globe className="w-4 h-4" /> },
-                        ]
-                          .map((d, i) => (
-                            <motion.div
-                              key={i}
-                              initial={{ opacity: 0, y: 5 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              transition={{ delay: i * 0.05 }}
-                              className="p-4 rounded-xl bg-white border"
-                              style={{ borderColor: BRAND.surface }}
-                            >
-                              <div className="flex items-center gap-2 mb-1">
-                                {d.icon}
-                                <p className="text-xs uppercase tracking-wider" style={{ color: BRAND.muted }}>{d.label}</p>
-                              </div>
-                              <p className="text-sm font-medium" style={{ color: d.value ? BRAND.dark : BRAND.muted }}>
-                                {d.value || 'Not available'}
-                              </p>
-                            </motion.div>
-                          ))}
+                        ].filter(d => d.value).map((d, i) => (
+                          <motion.div
+                            key={d.label}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: i * 0.05 }}
+                            className="p-4 rounded-xl bg-white border"
+                            style={{ borderColor: BRAND.surface }}
+                          >
+                            <div className="flex items-center gap-2 mb-1">
+                              {d.icon}
+                              <p className="text-xs uppercase tracking-wider" style={{ color: BRAND.muted }}>{d.label}</p>
+                            </div>
+                            <p className="text-sm font-medium" style={{ color: BRAND.dark }}>
+                              {d.value || 'Not available'}
+                            </p>
+                          </motion.div>
+                        ))}
                       </div>
                     </motion.div>
                   </AnimatePresence>
                 </TabsContent>
               </Tabs>
+            </motion.div>
+
+            {/* Right: Product Info — Price, Badges, CTA, Learning Module, Trust */}
+            <motion.div variants={staggerItem} className="space-y-5">
+              {/* Name & Short Description */}
+              <div>
+                <div className="flex items-start justify-between gap-3">
+                  <h1 className="font-heading text-2xl sm:text-3xl lg:text-4xl font-bold mb-2" style={{ color: BRAND.dark }}>
+                    {displayProduct?.name}
+                  </h1>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={handleNativeShare}
+                    className="pointer-events-auto min-h-[40px] min-w-[40px] rounded-lg border flex-shrink-0"
+                    style={{ borderColor: BRAND.surface }}
+                    title="Share"
+                  >
+                    <Share2 className="w-4 h-4" style={{ color: BRAND.muted }} />
+                  </Button>
+                </div>
+                {displayProduct?.short_description && (
+                  <p className="leading-relaxed text-sm sm:text-base" style={{ color: BRAND.muted }}>
+                    {displayProduct.short_description}
+                  </p>
+                )}
+              </div>
 
               <Separator style={{ backgroundColor: BRAND.surface }} />
 
-              {/* Type & Category Badges */}
+              {/* ─── Price + Discount ──────────────────────────── */}
+              <div className="flex items-baseline gap-2">
+                <span className="font-heading text-3xl font-bold" style={{ color: BRAND.green }}>
+                  ₹{displayProduct?.price.toLocaleString()}
+                </span>
+                {discountInfo && (
+                  <>
+                    <span className="text-base line-through" style={{ color: BRAND.muted }}>
+                      ₹{displayProduct?.mrp!.toLocaleString()}
+                    </span>
+                    <Badge
+                      className="text-[11px] min-h-[22px] px-2.5"
+                      style={{ backgroundColor: '#e7b97320', color: '#b56b20', borderColor: '#e7b97330' }}
+                    >
+                      {discountInfo.discountPercent}% OFF
+                    </Badge>
+                  </>
+                )}
+              </div>
+
+              {/* ─── Type & Category Badges ────────────────────── */}
               <div className="flex flex-wrap gap-2">
                 <Badge
                   className="min-h-[28px] px-3 text-xs font-medium"
@@ -853,10 +842,189 @@ export default function ProductDetailPage() {
                     className="min-h-[28px] px-3 text-xs font-medium"
                     style={{ backgroundColor: '#e7b97320', color: '#b56b20', borderColor: '#e7b97330' }}
                   >
-                    {displayProduct?.discount_label}
+                    {displayProduct.discount_label}
                   </Badge>
                 )}
               </div>
+
+              {/* ─── Buy Now + Unlock Now Buttons ──────────────── */}
+              <div className="flex gap-3">
+                {/* Buy Now — Locked until learning completed */}
+                <Button
+                  onClick={isCompleted ? handleAddToCart : undefined}
+                  disabled={!isCompleted}
+                  className="pointer-events-auto min-h-[48px] flex-1 rounded-xl font-heading font-semibold text-base transition-all"
+                  style={{
+                    backgroundColor: isCompleted ? BRAND.green : `${BRAND.muted}30`,
+                    color: isCompleted ? '#fff' : BRAND.muted,
+                    borderColor: 'transparent',
+                    cursor: isCompleted ? 'pointer' : 'not-allowed',
+                  }}
+                >
+                  {isCompleted ? (
+                    <>
+                      <ShoppingCart className="w-5 h-5 mr-2" />
+                      Buy Now
+                    </>
+                  ) : (
+                    <>
+                      <Lock className="w-5 h-5 mr-2" />
+                      Buy Now
+                    </>
+                  )}
+                </Button>
+
+                {/* Unlock Now — Starts learning module */}
+                <Button
+                  onClick={isCompleted ? handleReview : (user ? handleStartLearning : handleLoginToSave)}
+                  className="pointer-events-auto min-h-[48px] flex-1 rounded-xl font-heading font-semibold text-base transition-all"
+                  style={{
+                    backgroundColor: isCompleted ? `${BRAND.lime}20` : BRAND.lime,
+                    color: isCompleted ? BRAND.green : BRAND.dark,
+                    borderColor: isCompleted ? `${BRAND.lime}30` : 'transparent',
+                  }}
+                >
+                  {isCompleted ? (
+                    <>
+                      <CheckCircle className="w-5 h-5 mr-2" />
+                      Unlocked
+                    </>
+                  ) : (
+                    <>
+                      <Unlock className="w-5 h-5 mr-2" />
+                      Unlock Now
+                    </>
+                  )}
+                </Button>
+              </div>
+
+              {/* ─── Learning Module Card ───────────────────────── */}
+              <Card className="border rounded-2xl overflow-hidden" style={{ borderColor: BRAND.surface }}>
+                <CardHeader className="pb-3">
+                  <CardTitle className="font-heading text-base font-semibold flex items-center gap-2" style={{ color: BRAND.dark }}>
+                    <GraduationCap className="w-5 h-5" style={{ color: BRAND.green }} />
+                    Learning Module
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4 p-0">
+
+                  {/* Video & Quiz count info */}
+                  {displayProduct?.videos && displayProduct.videos.length > 0 && (
+                    <div className="flex items-center gap-4 text-xs px-6 pt-4" style={{ color: BRAND.muted }}>
+                      <span className="flex items-center gap-1">
+                        <Play className="w-3.5 h-3.5" />
+                        {displayProduct.videos.length} videos
+                      </span>
+                      {displayProduct.quizzes && displayProduct.quizzes.length > 0 && (
+                        <span className="flex items-center gap-1">
+                          <GraduationCap className="w-3.5 h-3.5" />
+                          {displayProduct.quizzes.length} quiz questions
+                        </span>
+                      )}
+                      <span className="flex items-center gap-1">
+                        <Clock className="w-3.5 h-3.5" />
+                        ~10 min
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Progress display if user has progress */}
+                  {user && productProgress && (isInProgress || isCompleted) && (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="space-y-3 px-6"
+                    >
+                      {/* Video Progress */}
+                      <div className="space-y-1.5">
+                        <div className="flex justify-between text-xs">
+                          <span style={{ color: BRAND.muted }}>Video Progress</span>
+                          <span className="font-medium" style={{ color: BRAND.green }}>{videoProgressPct}%</span>
+                        </div>
+                        <Progress
+                          value={videoProgressPct}
+                          className="h-2 rounded-full"
+                          style={{ backgroundColor: `${BRAND.surface}60` }}
+                        />
+                      </div>
+
+                      {/* Quiz Score */}
+                      {productProgress.quiz_completed && (
+                        <div className="flex items-center gap-2 p-2.5 rounded-lg"
+                          style={{ backgroundColor: isCompleted ? `${BRAND.green}08` : `${BRAND.lime}08` }}
+                        >
+                          {isCompleted ? (
+                            <CheckCircle className="w-4 h-4" style={{ color: BRAND.green }} />
+                          ) : (
+                            <Star className="w-4 h-4" style={{ color: BRAND.lime }} />
+                          )}
+                          <span className="text-sm font-medium" style={{ color: BRAND.dark }}>
+                            Quiz Score: {productProgress.quiz_score}%
+                          </span>
+                          {isCompleted && (
+                            <Badge className="text-[10px] ml-auto min-h-[20px]"
+                              style={{ backgroundColor: BRAND.green, color: '#fff', borderColor: 'transparent' }}
+                            >
+                              Passed
+                            </Badge>
+                          )}
+                        </div>
+                      )}
+                    </motion.div>
+                  )}
+
+                  {/* ─── Action Button (sign/learn) ──────────────── */}
+                  <div className="px-6">
+                    {!user ? (
+                      <Button
+                        onClick={handleLoginToSave}
+                        className="pointer-events-auto min-h-[48px] w-full rounded-xl font-heading font-semibold text-sm"
+                        style={{ backgroundColor: BRAND.green, color: '#fff' }}
+                      >
+                        <Play className="w-5 h-5 mr-2" />
+                        Start Learning Module
+                      </Button>
+                    ) : learningStatus === 'NOT_STARTED' ? (
+                      <Button
+                        onClick={handleStartLearning}
+                        className="pointer-events-auto min-h-[48px] w-full rounded-xl font-heading font-semibold text-sm"
+                        style={{ backgroundColor: BRAND.green, color: '#fff' }}
+                      >
+                        <Play className="w-5 h-5 mr-2" />
+                        Start Learning Module
+                      </Button>
+                    ) : isInProgress ? (
+                      <Button
+                        onClick={handleContinueLearning}
+                        className="pointer-events-auto min-h-[48px] w-full rounded-xl font-heading font-semibold text-sm"
+                        style={{ backgroundColor: BRAND.green, color: '#fff' }}
+                      >
+                        <BookOpen className="w-5 h-5 mr-2" />
+                        Continue Learning to Unlock Purchase
+                      </Button>
+                    ) : (
+                      <Button
+                        onClick={handleReview}
+                        variant="outline"
+                        className="pointer-events-auto min-h-[48px] w-full rounded-xl font-heading font-semibold text-sm border-[#e3dfd8]"
+                      >
+                        <Eye className="w-5 h-5 mr-2" />
+                        Review Learning Module
+                      </Button>
+                    )}
+                  </div>
+
+                  {/* ─── Bottom: Sign to access note ────── */}
+                  {!user && (
+                    <div className="px-6 pt-2 pb-4">
+                      <p className="text-xs text-center" style={{ color: BRAND.muted }}>
+                        <Lock className="w-3 h-3 inline mr-1" />
+                        Sign in to access product learning & enable purchase
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
 
               {/* ─── Trust Badges ─────────────────────────────── */}
               <div className="grid grid-cols-3 gap-3">
@@ -878,209 +1046,6 @@ export default function ProductDetailPage() {
               </div>
             </motion.div>
           </div>
-        </motion.div>
-
-        {/* ─── Learning Module — Full Width Below Image ─────── */}
-        <motion.div
-          initial="hidden"
-          animate="visible"
-          variants={fadeInUp}
-          className="mt-8"
-        >
-          <Card className="border rounded-2xl overflow-hidden" style={{ borderColor: BRAND.surface }}>
-            <CardHeader className="pb-3">
-              <CardTitle className="font-heading text-base font-semibold flex items-center gap-2" style={{ color: BRAND.dark }}>
-                <GraduationCap className="w-5 h-5" style={{ color: BRAND.green }} />
-                Learning Module
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4 p-0">
-
-              {/* Video & Quiz count info */}
-              {displayProduct?.videos && displayProduct.videos.length > 0 && (
-                <div className="flex items-center gap-4 text-xs px-6 pt-4" style={{ color: BRAND.muted }}>
-                  <span className="flex items-center gap-1">
-                    <Play className="w-3.5 h-3.5" />
-                    {displayProduct.videos.length} videos
-                  </span>
-                  {displayProduct.quizzes && displayProduct.quizzes.length > 0 && (
-                    <span className="flex items-center gap-1">
-                      <GraduationCap className="w-3.5 h-3.5" />
-                      {displayProduct.quizzes.length} quiz questions
-                    </span>
-                  )}
-                  <span className="flex items-center gap-1">
-                    <Clock className="w-3.5 h-3.5" />
-                    ~10 min
-                  </span>
-                </div>
-              )}
-
-              {/* Progress display if user has progress */}
-              {user && productProgress && (isInProgress || isCompleted) && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="space-y-3 px-6"
-                >
-                  {/* Video Progress */}
-                  <div className="space-y-1.5">
-                    <div className="flex justify-between text-xs">
-                      <span style={{ color: BRAND.muted }}>Video Progress</span>
-                      <span className="font-medium" style={{ color: BRAND.green }}>{videoProgressPct}%</span>
-                    </div>
-                    <Progress
-                      value={videoProgressPct}
-                      className="h-2 rounded-full"
-                      style={{ backgroundColor: `${BRAND.surface}60` }}
-                    />
-                  </div>
-
-                  {/* Quiz Score */}
-                  {productProgress.quiz_completed && (
-                    <div className="flex items-center gap-2 p-2.5 rounded-lg"
-                      style={{ backgroundColor: isCompleted ? `${BRAND.green}08` : `${BRAND.lime}08` }}
-                    >
-                      {isCompleted ? (
-                        <CheckCircle className="w-4 h-4" style={{ color: BRAND.green }} />
-                      ) : (
-                        <Star className="w-4 h-4" style={{ color: BRAND.lime }} />
-                      )}
-                      <span className="text-sm font-medium" style={{ color: BRAND.dark }}>
-                        Quiz Score: {productProgress.quiz_score}%
-                      </span>
-                      {isCompleted && (
-                        <Badge className="text-[10px] ml-auto min-h-[20px]"
-                          style={{ backgroundColor: BRAND.green, color: '#fff', borderColor: 'transparent' }}
-                        >
-                          Passed
-                        </Badge>
-                      )}
-                    </div>
-                  )}
-                </motion.div>
-              )}
-
-              {/* ─── Action Button (sign/learn) ──────────────── */}
-              <div className="px-6">
-                {!user ? (
-                  /* Non-signed user: Sign to access */
-                  <Button
-                    onClick={handleLoginToSave}
-                    className="pointer-events-auto min-h-[48px] w-full rounded-xl font-heading font-semibold text-sm"
-                    style={{ backgroundColor: BRAND.green, color: '#fff' }}
-                  >
-                    <Lock className="w-5 h-5 mr-2" />
-                    Sign to Access Product Learning & Enable Purchase
-                  </Button>
-                ) : learningStatus === 'NOT_STARTED' ? (
-                  /* Signed user, not started: Start learning */
-                  <Button
-                    onClick={handleStartLearning}
-                    className="pointer-events-auto min-h-[48px] w-full rounded-xl font-heading font-semibold text-sm"
-                    style={{ backgroundColor: BRAND.green, color: '#fff' }}
-                  >
-                    <Play className="w-5 h-5 mr-2" />
-                    Complete Learning to Unlock Purchase
-                  </Button>
-                ) : isInProgress ? (
-                  /* Signed user, in progress: Continue learning */
-                  <Button
-                    onClick={handleContinueLearning}
-                    className="pointer-events-auto min-h-[48px] w-full rounded-xl font-heading font-semibold text-sm"
-                    style={{ backgroundColor: BRAND.green, color: '#fff' }}
-                  >
-                    <BookOpen className="w-5 h-5 mr-2" />
-                    Continue Learning to Unlock Purchase
-                  </Button>
-                ) : (
-                  /* Completed: Review */
-                  <Button
-                    onClick={handleReview}
-                    variant="outline"
-                    className="pointer-events-auto min-h-[48px] w-full rounded-xl font-heading font-semibold text-sm border-[#e3dfd8]"
-                  >
-                    <Eye className="w-5 h-5 mr-2" />
-                    Review Learning Module
-                  </Button>
-                )}
-              </div>
-
-              {/* ─── Bottom: Price + Buy Now + Unlock Now ────── */}
-              <div className="px-6 pt-3 pb-4" style={{ backgroundColor: `${BRAND.surface}40`, borderTop: `1px solid ${BRAND.surface}` }}>
-                {/* Price row */}
-                <div className="flex items-baseline gap-2 mb-3">
-                  <span className="font-heading text-2xl font-bold" style={{ color: BRAND.green }}>
-                    ₹{displayProduct?.price.toLocaleString()}
-                  </span>
-                  {discountInfo && (
-                    <>
-                      <span className="text-sm line-through" style={{ color: BRAND.muted }}>
-                        ₹{displayProduct?.mrp!.toLocaleString()}
-                      </span>
-                      <Badge
-                        className="text-[10px] min-h-[20px]"
-                        style={{ backgroundColor: '#e7b97320', color: '#b56b20', borderColor: '#e7b97330' }}
-                      >
-                        {discountInfo.discountPercent}% OFF
-                      </Badge>
-                    </>
-                  )}
-                </div>
-
-                {/* Buy Now + Unlock Now buttons */}
-                <div className="flex gap-3">
-                  {/* Buy Now — Locked until learning completed */}
-                  <Button
-                    onClick={isCompleted ? handleAddToCart : undefined}
-                    disabled={!isCompleted}
-                    className="pointer-events-auto min-h-[48px] flex-1 rounded-xl font-heading font-semibold text-base transition-all"
-                    style={{
-                      backgroundColor: isCompleted ? BRAND.green : `${BRAND.muted}30`,
-                      color: isCompleted ? '#fff' : BRAND.muted,
-                      borderColor: 'transparent',
-                      cursor: isCompleted ? 'pointer' : 'not-allowed',
-                    }}
-                  >
-                    {isCompleted ? (
-                      <>
-                        <ShoppingCart className="w-5 h-5 mr-2" />
-                        Buy Now
-                      </>
-                    ) : (
-                      <>
-                        <Lock className="w-5 h-5 mr-2" />
-                        Buy Now
-                      </>
-                    )}
-                  </Button>
-
-                  {/* Unlock Now — Starts learning module */}
-                  <Button
-                    onClick={isCompleted ? handleReview : (user ? handleStartLearning : handleLoginToSave)}
-                    className="pointer-events-auto min-h-[48px] flex-1 rounded-xl font-heading font-semibold text-base transition-all"
-                    style={{
-                      backgroundColor: isCompleted ? `${BRAND.lime}20` : BRAND.lime,
-                      color: isCompleted ? BRAND.green : BRAND.dark,
-                      borderColor: isCompleted ? `${BRAND.lime}30` : 'transparent',
-                    }}
-                  >
-                    {isCompleted ? (
-                      <>
-                        <CheckCircle className="w-5 h-5 mr-2" />
-                        Unlocked
-                      </>
-                    ) : (
-                      <>
-                        <Unlock className="w-5 h-5 mr-2" />
-                        Unlock Now
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </motion.div>
 
         {/* ─── Contact Section ──────────────────────────────── */}

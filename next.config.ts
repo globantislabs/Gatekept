@@ -29,6 +29,20 @@ const nextConfig: NextConfig = {
     // Disable image optimization in standalone mode to avoid sharp dependency issues
     unoptimized: true,
   },
+
+  // SPA rewrites: all page routes → / so client-side routing works on refresh
+  async rewrites() {
+    return {
+      beforeFiles: [
+        // Rewrite all non-API, non-static, non-_next paths to /
+        // This ensures refresh on /products, /admin, etc. works without 404
+        {
+          source: '/((?!api|_next|images|favicon\\.ico|robots\\.txt|sitemap\\.xml|.*\\..*).*)',
+          destination: '/',
+        },
+      ],
+    }
+  },
 };
 
 export default nextConfig;

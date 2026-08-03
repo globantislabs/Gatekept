@@ -599,22 +599,7 @@ export default function ProductDetailPage() {
                   )}
 
                   {/* Status-based buttons */}
-                  {!user && (
-                    <div className="space-y-3">
-                      {/* Not logged in: Start Learning requires login */}
-                      <p className="text-xs" style={{ color: BRAND.muted }}>
-                        Login to start learning and track your progress
-                      </p>
-                      <Button
-                        onClick={handleStartLearning}
-                        className="pointer-events-auto min-h-[44px] w-full rounded-xl font-heading font-semibold text-base"
-                        style={{ backgroundColor: BRAND.green, color: '#fff' }}
-                      >
-                        <Lock className="w-4 h-4 mr-2" />
-                        Login to Start Learning
-                      </Button>
-                    </div>
-                  )}
+
 
                   {user && learningStatus === 'NOT_STARTED' && (
                     <div className="space-y-2">
@@ -730,49 +715,7 @@ export default function ProductDetailPage() {
                 </CardContent>
               </Card>
 
-              <Separator style={{ backgroundColor: BRAND.surface }} />
 
-              {/* ─── Share Section ────────────────────────────── */}
-              <Card className="border rounded-xl" style={{ borderColor: BRAND.surface }}>
-                <CardContent className="p-4 space-y-3">
-                  <div className="flex items-center gap-2">
-                    <Share2 className="w-4 h-4" style={{ color: BRAND.green }} />
-                    <span className="font-heading text-sm font-semibold" style={{ color: BRAND.dark }}>
-                      Share this product
-                    </span>
-                  </div>
-
-                  {shareUrl && (
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1 min-w-0 px-3 py-2.5 rounded-lg text-xs truncate"
-                        style={{ backgroundColor: `${BRAND.surface}40`, color: BRAND.muted }}
-                      >
-                        {shareUrl}
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleCopyShareLink}
-                        className="pointer-events-auto min-h-[44px] min-w-[44px] rounded-lg border-[#e3dfd8]"
-                      >
-                        {copied ? (
-                          <CheckCircle className="w-4 h-4" style={{ color: BRAND.green }} />
-                        ) : (
-                          <Copy className="w-4 h-4" style={{ color: BRAND.muted }} />
-                        )}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleNativeShare}
-                        className="pointer-events-auto min-h-[44px] min-w-[44px] rounded-lg border-[#e3dfd8]"
-                      >
-                        <Link2 className="w-4 h-4" style={{ color: BRAND.blue }} />
-                      </Button>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
 
               {/* ─── Trust Badges ─────────────────────────────── */}
               <div className="grid grid-cols-3 gap-3">

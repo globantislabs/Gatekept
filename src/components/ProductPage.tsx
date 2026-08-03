@@ -384,8 +384,7 @@ export default function ProductPage() {
                               >
                                 {!user || !completedProductIds.has(product.id) ? (
                                   <>
-                                    <Lock className="w-4 h-4" />
-                                    Unlock <ChevronRight className="w-3.5 h-3.5" />
+                                    Learn More <ChevronRight className="w-3.5 h-3.5" />
                                   </>
                                 ) : (
                                   <>

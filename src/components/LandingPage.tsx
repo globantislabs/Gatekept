@@ -197,12 +197,7 @@ export default function LandingPage() {
 
   // ── Product navigation handler ──
   const handleLearnMore = (product: Product) => {
-    if (!user) {
-      setRedirectAfterLogin('product-detail')
-      setSelectedProductId(product.id)
-      navigateTo('auth-login')
-      return
-    }
+    // Always go to product detail page first — login prompt happens on the product page
     setSelectedProductId(product.id)
     navigateTo('product-detail')
   }
@@ -1416,21 +1411,21 @@ export default function LandingPage() {
               <h4 className="font-heading font-semibold text-white text-sm mb-4">Contact</h4>
               <ul className="space-y-2.5 text-sm text-white/40">
                 <li>
-                  <button className="flex items-center gap-2 hover:text-[#25D366] transition-colors min-h-[44px]" onClick={() => window.open('https://wa.me/919876543210?text=Hi%2C%20I%20have%20a%20question%20about%20NOTJUST%20Watr', '_blank')}>
+                  <button className="flex items-center gap-2 hover:text-[#25D366] transition-colors min-h-[44px]" onClick={() => window.open('https://wa.me/919288007431?text=Hi%2C%20I%20have%20a%20question%20about%20NOTJUST%20Watr', '_blank')}>
                     <MessageCircle className="w-3.5 h-3.5" /> WhatsApp
                   </button>
                 </li>
                 <li>
-                  <button className="flex items-center gap-2 hover:text-[#2e91b2] transition-colors min-h-[44px]" onClick={() => window.open('mailto:hello@notjust.health?subject=Query%20about%20NOTJUST%20Watr', '_blank')}>
-                    <Mail className="w-3.5 h-3.5" /> hello@notjust.health
+                  <button className="flex items-center gap-2 hover:text-[#2e91b2] transition-colors min-h-[44px]" onClick={() => window.open('mailto:info@zh-onehealth.com?subject=Query%20about%20NOTJUST%20Watr', '_blank')}>
+                    <Mail className="w-3.5 h-3.5" /> info@zh-onehealth.com
                   </button>
                 </li>
                 <li>
-                  <button className="flex items-center gap-2 hover:text-[#48805b] transition-colors min-h-[44px]" onClick={() => window.open('sms:+919876543210?body=Hi%2C%20I%20have%20a%20question%20about%20NOTJUST%20Watr', '_blank')}>
-                    <Smartphone className="w-3.5 h-3.5" /> SMS +91 98765 43210
+                  <button className="flex items-center gap-2 hover:text-[#48805b] transition-colors min-h-[44px]" onClick={() => window.open('tel:+919288007431', '_blank')}>
+                    <Smartphone className="w-3.5 h-3.5" /> +91 92880 07431
                   </button>
                 </li>
-                <li className="flex items-center gap-2 min-h-[44px]"><MapPin className="w-3.5 h-3.5" /> Mumbai, India</li>
+                <li className="flex items-start gap-2 min-h-[44px]"><MapPin className="w-3.5 h-3.5 mt-0.5" /> <span>Zum Heilen Healthcare Pvt. Ltd.,<br />9/36, 203, Vaishnavi Sapphire Centre,<br />2nd Floor, Tumkur Road, Yeshwanthpura,<br />Bengaluru, Karnataka 560022</span></li>
               </ul>
             </div>
             <div>
@@ -1450,7 +1445,7 @@ export default function LandingPage() {
           </div>
           <Separator className="my-8 bg-white/[0.06]" />
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-white/30">
-            <p>&copy; 2026 NotJust Health. All rights reserved.</p>
+            <p>&copy; 2026 Zum Heilen Healthcare Private Limited. All rights reserved.</p>
             <div className="flex gap-6">
               <span className="hover:text-white/60 cursor-pointer transition-colors duration-300">Privacy Policy</span>
               <span className="hover:text-white/60 cursor-pointer transition-colors duration-300">Terms of Service</span>

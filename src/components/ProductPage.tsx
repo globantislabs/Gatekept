@@ -119,12 +119,7 @@ export default function ProductPage() {
 
   // ── Product navigation handler ──
   const handleLearnMore = (product: Product) => {
-    if (!user) {
-      setRedirectAfterLogin('product-detail')
-      setSelectedProductId(product.id)
-      navigateTo('auth-login')
-      return
-    }
+    // Always go to product detail page first — login prompt happens on the product page
     setSelectedProductId(product.id)
     navigateTo('product-detail')
   }

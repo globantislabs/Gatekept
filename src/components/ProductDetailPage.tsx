@@ -485,9 +485,21 @@ export default function ProductDetailPage() {
             <motion.div variants={staggerItem} className="space-y-5">
               {/* Name & Short Description */}
               <div>
-                <h1 className="font-heading text-2xl sm:text-3xl lg:text-4xl font-bold mb-2" style={{ color: BRAND.dark }}>
-                  {displayProduct?.name}
-                </h1>
+                <div className="flex items-start justify-between gap-3">
+                  <h1 className="font-heading text-2xl sm:text-3xl lg:text-4xl font-bold mb-2" style={{ color: BRAND.dark }}>
+                    {displayProduct?.name}
+                  </h1>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={handleNativeShare}
+                    className="pointer-events-auto min-h-[40px] min-w-[40px] rounded-lg border flex-shrink-0"
+                    style={{ borderColor: BRAND.surface }}
+                    title="Share"
+                  >
+                    <Share2 className="w-4 h-4" style={{ color: BRAND.muted }} />
+                  </Button>
+                </div>
                 {displayProduct?.short_description && (
                   <p className="leading-relaxed text-sm sm:text-base" style={{ color: BRAND.muted }}>
                     {displayProduct.short_description}
@@ -727,47 +739,6 @@ export default function ProductDetailPage() {
                 </CardContent>
               </Card>
 
-              {/* ─── Share Section (Dashed Link) ──────────────── */}
-              {shareUrl && (
-                <div className="p-4 rounded-xl border-2 border-dashed" style={{ borderColor: `${BRAND.muted}40` }}>
-                  <div className="flex items-center gap-2 mb-3">
-                    <Share2 className="w-4 h-4" style={{ color: BRAND.green }} />
-                    <span className="font-heading text-sm font-semibold" style={{ color: BRAND.dark }}>
-                      Share this product
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="flex-1 min-w-0 px-3 py-2 rounded-lg text-xs truncate border border-dashed"
-                      style={{ borderColor: `${BRAND.muted}30`, backgroundColor: `${BRAND.surface}20`, color: BRAND.muted }}
-                    >
-                      {shareUrl}
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleCopyShareLink}
-                      className="pointer-events-auto min-h-[44px] min-w-[44px] rounded-lg border-dashed"
-                      style={{ borderColor: `${BRAND.muted}40` }}
-                    >
-                      {copied ? (
-                        <CheckCircle className="w-4 h-4" style={{ color: BRAND.green }} />
-                      ) : (
-                        <Copy className="w-4 h-4" style={{ color: BRAND.muted }} />
-                      )}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleNativeShare}
-                      className="pointer-events-auto min-h-[44px] min-w-[44px] rounded-lg border-dashed"
-                      style={{ borderColor: `${BRAND.muted}40` }}
-                    >
-                      <Link2 className="w-4 h-4" style={{ color: BRAND.blue }} />
-                    </Button>
-                  </div>
-                </div>
-              )}
-
               {/* ─── Trust Badges ─────────────────────────────── */}
               <div className="grid grid-cols-3 gap-3">
                 <div className="flex flex-col items-center text-center p-3 rounded-xl bg-white border" style={{ borderColor: BRAND.surface }}>
@@ -786,327 +757,317 @@ export default function ProductDetailPage() {
                   <p className="text-[9px]" style={{ color: BRAND.muted }}>{displayProduct?.country_origin || 'Made in India'}</p>
                 </div>
               </div>
-            </motion.div>
-          </div>
-        </motion.div>
 
-        {/* ─── Product Details Tabs ─────────────────────────── */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          className="mt-10 lg:mt-12"
-        >
-          <Tabs defaultValue="overview" className="w-full">
+              {/* ─── Product Details Tabs (in right sidebar) ──── */}
+              <Tabs defaultValue="overview" className="w-full">
 
-            {/* Scrollable Tabs List */}
-            <TabsList className="w-full flex overflow-x-auto gap-0 h-auto p-0 bg-transparent rounded-none border-b"
-              style={{ borderColor: BRAND.surface }}
-            >
-              {[
-                { value: 'overview', label: 'Overview', icon: <Info className="w-4 h-4" /> },
-                { value: 'ingredients', label: 'Ingredients', icon: <Leaf className="w-4 h-4" /> },
-                { value: 'nutrition', label: 'Nutrition', icon: <Package className="w-4 h-4" /> },
-                { value: 'storage', label: 'Storage', icon: <ShieldCheck className="w-4 h-4" /> },
-                { value: 'legal', label: 'Legal', icon: <Globe className="w-4 h-4" /> },
-              ].map(tab => (
-                <TabsTrigger
-                  key={tab.value}
-                  value={tab.value}
-                  className="pointer-events-auto min-h-[44px] px-4 sm:px-5 py-2.5 text-sm font-heading font-medium transition-all border-b-2 -mb-px rounded-none data-[state=active]:border-b-2 data-[state=active]:shadow-none shrink-0"
-                  style={{
-                    borderColor: 'transparent',
-                    color: BRAND.muted,
-                  }}
-                  // Use CSS for active state coloring via data attribute
+                {/* Scrollable Tabs List */}
+                <TabsList className="w-full flex overflow-x-auto gap-0 h-auto p-0 bg-transparent rounded-none border-b"
+                  style={{ borderColor: BRAND.surface }}
                 >
-                  <span className="flex items-center gap-1.5">
-                    {tab.icon}
-                    {tab.label}
-                  </span>
-                </TabsTrigger>
-              ))}
-            </TabsList>
+                  {[
+                    { value: 'overview', label: 'Overview', icon: <Info className="w-4 h-4" /> },
+                    { value: 'ingredients', label: 'Ingredients', icon: <Leaf className="w-4 h-4" /> },
+                    { value: 'nutrition', label: 'Nutrition', icon: <Package className="w-4 h-4" /> },
+                    { value: 'storage', label: 'Storage', icon: <ShieldCheck className="w-4 h-4" /> },
+                    { value: 'legal', label: 'Legal', icon: <Globe className="w-4 h-4" /> },
+                  ].map(tab => (
+                    <TabsTrigger
+                      key={tab.value}
+                      value={tab.value}
+                      className="pointer-events-auto min-h-[44px] px-4 sm:px-5 py-2.5 text-sm font-heading font-medium transition-all border-b-2 -mb-px rounded-none data-[state=active]:border-b-2 data-[state=active]:shadow-none shrink-0"
+                      style={{
+                        borderColor: 'transparent',
+                        color: BRAND.muted,
+                      }}
+                    >
+                      <span className="flex items-center gap-1.5">
+                        {tab.icon}
+                        {tab.label}
+                      </span>
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
 
-            {/* ─── Overview Tab ──────────────────────────────── */}
-            <TabsContent value="overview" className="mt-6">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key="overview"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
-                  className="grid md:grid-cols-2 gap-8"
-                >
-                  {/* Key Highlights */}
-                  <div className="space-y-4">
-                    {highlights.length > 0 && (
-                      <div className="space-y-2 pt-2">
-                        <h4 className="font-heading font-semibold text-sm" style={{ color: BRAND.dark }}>
-                          Key Highlights
-                        </h4>
-                        {highlights.map((h, i) => (
-                          <motion.div
-                            key={i}
-                            initial={{ opacity: 0, x: -10 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: i * 0.05 }}
-                            className="flex items-center gap-2"
-                          >
-                            <CheckCircle className="w-4 h-4 flex-shrink-0" style={{ color: BRAND.green }} />
-                            <span className="text-sm" style={{ color: BRAND.dark }}>{h}</span>
-                          </motion.div>
-                        ))}
+                {/* ─── Overview Tab ──────────────────────────────── */}
+                <TabsContent value="overview" className="mt-6">
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key="overview"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3 }}
+                      className="space-y-4"
+                    >
+                      {/* Key Highlights */}
+                      {highlights.length > 0 && (
+                        <div className="space-y-2 pt-2">
+                          <h4 className="font-heading font-semibold text-sm" style={{ color: BRAND.dark }}>
+                            Key Highlights
+                          </h4>
+                          {highlights.map((h, i) => (
+                            <motion.div
+                              key={i}
+                              initial={{ opacity: 0, x: -10 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{ delay: i * 0.05 }}
+                              className="flex items-center gap-2"
+                            >
+                              <CheckCircle className="w-4 h-4 flex-shrink-0" style={{ color: BRAND.green }} />
+                              <span className="text-sm" style={{ color: BRAND.dark }}>{h}</span>
+                            </motion.div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Product Details Grid */}
+                      <div className="space-y-3">
+                        <h3 className="font-heading font-bold text-lg" style={{ color: BRAND.dark }}>
+                          Product Details
+                        </h3>
+                        <div className="grid grid-cols-2 gap-3">
+                          {[
+                            { label: 'Weight', value: displayProduct?.weight, icon: <Package className="w-3.5 h-3.5" /> },
+                            { label: 'Serving Size', value: displayProduct?.serving_size, icon: <Leaf className="w-3.5 h-3.5" /> },
+                            { label: 'Flavor', value: displayProduct?.flavor, icon: <Sparkles className="w-3.5 h-3.5" /> },
+                            { label: 'Brand', value: displayProduct?.brand, icon: <Star className="w-3.5 h-3.5" /> },
+                            { label: 'SKU', value: displayProduct?.sku, icon: <Info className="w-3.5 h-3.5" /> },
+                            { label: 'Type', value: displayProduct?.type, icon: <Package className="w-3.5 h-3.5" /> },
+                          ]
+                            .filter(d => d.value)
+                            .map((d, i) => (
+                              <motion.div
+                                key={i}
+                                initial={{ opacity: 0, y: 5 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: i * 0.04 }}
+                                className="p-3 rounded-lg bg-white border"
+                                style={{ borderColor: BRAND.surface }}
+                              >
+                                <div className="flex items-center gap-1.5 mb-1">
+                                  {d.icon}
+                                  <p className="text-[10px] uppercase tracking-wider" style={{ color: BRAND.muted }}>{d.label}</p>
+                                </div>
+                                <p className="text-sm font-medium" style={{ color: BRAND.dark }}>{d.value}</p>
+                              </motion.div>
+                            ))}
+                        </div>
                       </div>
-                    )}
-                  </div>
+                    </motion.div>
+                  </AnimatePresence>
+                </TabsContent>
 
-                  {/* Product Details Grid */}
-                  <div className="space-y-3">
-                    <h3 className="font-heading font-bold text-lg" style={{ color: BRAND.dark }}>
-                      Product Details
-                    </h3>
-                    <div className="grid grid-cols-2 gap-3">
-                      {[
-                        { label: 'Weight', value: displayProduct?.weight, icon: <Package className="w-3.5 h-3.5" /> },
-                        { label: 'Serving Size', value: displayProduct?.serving_size, icon: <Leaf className="w-3.5 h-3.5" /> },
-                        { label: 'Flavor', value: displayProduct?.flavor, icon: <Sparkles className="w-3.5 h-3.5" /> },
-                        { label: 'Brand', value: displayProduct?.brand, icon: <Star className="w-3.5 h-3.5" /> },
-                        { label: 'SKU', value: displayProduct?.sku, icon: <Info className="w-3.5 h-3.5" /> },
-                        { label: 'Type', value: displayProduct?.type, icon: <Package className="w-3.5 h-3.5" /> },
-                      ]
-                        .filter(d => d.value)
-                        .map((d, i) => (
-                          <motion.div
-                            key={i}
-                            initial={{ opacity: 0, y: 5 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: i * 0.04 }}
-                            className="p-3 rounded-lg bg-white border"
+                {/* ─── Ingredients Tab ────────────────────────────── */}
+                <TabsContent value="ingredients" className="mt-6">
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key="ingredients"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3 }}
+                      className="space-y-4"
+                    >
+                      <div className="space-y-4">
+                        <h3 className="font-heading font-bold text-lg" style={{ color: BRAND.dark }}>
+                          Ingredients
+                        </h3>
+                        {ingredientsList.length > 0 ? (
+                          <div className="flex flex-wrap gap-2">
+                            {ingredientsList.map((ing, i) => (
+                              <motion.span
+                                key={i}
+                                initial={{ opacity: 0, scale: 0.9 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                transition={{ delay: i * 0.03 }}
+                                className="pointer-events-auto px-3 py-2 rounded-full text-xs font-medium min-h-[32px]"
+                                style={{ backgroundColor: '#edf5ee', color: BRAND.green }}
+                              >
+                                {ing}
+                              </motion.span>
+                            ))}
+                          </div>
+                        ) : displayProduct?.ingredients ? (
+                          <div className="p-4 rounded-xl bg-white border" style={{ borderColor: BRAND.surface }}>
+                            <p className="text-sm leading-relaxed" style={{ color: BRAND.dark }}>
+                              {displayProduct.ingredients}
+                            </p>
+                          </div>
+                        ) : (
+                          <p className="text-sm" style={{ color: BRAND.muted }}>No ingredients info available</p>
+                        )}
+                      </div>
+
+                      <div className="space-y-4">
+                        <h3 className="font-heading font-bold text-lg" style={{ color: BRAND.dark }}>
+                          Allergen Information
+                        </h3>
+                        {displayProduct?.allergen_info ? (
+                          <div className="p-4 rounded-xl border"
+                            style={{ backgroundColor: '#fef2f2', borderColor: '#fecaca' }}
+                          >
+                            <div className="flex items-start gap-3">
+                              <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: '#dc2626' }} />
+                              <div>
+                                <p className="text-sm font-semibold mb-1" style={{ color: '#991b1b' }}>Allergen Warning</p>
+                                <p className="text-sm" style={{ color: '#b91c1c' }}>{displayProduct.allergen_info}</p>
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="p-4 rounded-xl bg-white border" style={{ borderColor: BRAND.surface }}>
+                            <div className="flex items-center gap-2">
+                              <CheckCircle className="w-4 h-4" style={{ color: BRAND.green }} />
+                              <p className="text-sm" style={{ color: BRAND.muted }}>
+                                No known allergens — always check the label for the most current information.
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </motion.div>
+                  </AnimatePresence>
+                </TabsContent>
+
+                {/* ─── Nutrition Tab ─────────────────────────────── */}
+                <TabsContent value="nutrition" className="mt-6">
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key="nutrition"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <h3 className="font-heading font-bold text-lg mb-4" style={{ color: BRAND.dark }}>
+                        Nutrition Information
+                      </h3>
+                      {displayProduct?.nutrition_info ? (
+                        <div className="p-6 rounded-xl bg-white border" style={{ borderColor: BRAND.surface }}>
+                          <p className="text-sm leading-relaxed" style={{ color: BRAND.dark }}>
+                            {displayProduct.nutrition_info}
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="p-6 rounded-xl bg-white border" style={{ borderColor: BRAND.surface }}>
+                          <div className="flex items-center gap-3">
+                            <Info className="w-5 h-5" style={{ color: BRAND.muted }} />
+                            <p className="text-sm" style={{ color: BRAND.muted }}>
+                              Nutrition information will be available soon. Check the product label for details.
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
+                      {displayProduct?.serving_size && (
+                        <div className="mt-4 flex items-center gap-2 text-xs" style={{ color: BRAND.muted }}>
+                          <Leaf className="w-3.5 h-3.5" />
+                          <span>Serving size: {displayProduct.serving_size}</span>
+                        </div>
+                      )}
+                    </motion.div>
+                  </AnimatePresence>
+                </TabsContent>
+
+                {/* ─── Storage Tab ────────────────────────────────── */}
+                <TabsContent value="storage" className="mt-6">
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key="storage"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3 }}
+                      className="space-y-4"
+                    >
+                      <div className="space-y-4">
+                        <h3 className="font-heading font-bold text-lg" style={{ color: BRAND.dark }}>
+                          Storage Instructions
+                        </h3>
+                        {displayProduct?.storage_info ? (
+                          <div className="p-4 rounded-xl bg-white border flex items-start gap-3"
                             style={{ borderColor: BRAND.surface }}
                           >
-                            <div className="flex items-center gap-1.5 mb-1">
-                              {d.icon}
-                              <p className="text-[10px] uppercase tracking-wider" style={{ color: BRAND.muted }}>{d.label}</p>
-                            </div>
-                            <p className="text-sm font-medium" style={{ color: BRAND.dark }}>{d.value}</p>
-                          </motion.div>
-                        ))}
-                    </div>
-                  </div>
-                </motion.div>
-              </AnimatePresence>
-            </TabsContent>
+                            <ShieldCheck className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: BRAND.green }} />
+                            <p className="text-sm leading-relaxed" style={{ color: BRAND.dark }}>
+                              {displayProduct.storage_info}
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="p-4 rounded-xl bg-white border" style={{ borderColor: BRAND.surface }}>
+                            <p className="text-sm" style={{ color: BRAND.muted }}>
+                              Store in a cool, dry place away from direct sunlight.
+                            </p>
+                          </div>
+                        )}
+                      </div>
 
-            {/* ─── Ingredients Tab ────────────────────────────── */}
-            <TabsContent value="ingredients" className="mt-6">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key="ingredients"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
-                  className="grid md:grid-cols-2 gap-8"
-                >
-                  <div className="space-y-4">
-                    <h3 className="font-heading font-bold text-lg" style={{ color: BRAND.dark }}>
-                      Ingredients
-                    </h3>
-                    {ingredientsList.length > 0 ? (
-                      <div className="flex flex-wrap gap-2">
-                        {ingredientsList.map((ing, i) => (
-                          <motion.span
-                            key={i}
-                            initial={{ opacity: 0, scale: 0.9 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            transition={{ delay: i * 0.03 }}
-                            className="pointer-events-auto px-3 py-2 rounded-full text-xs font-medium min-h-[32px]"
-                            style={{ backgroundColor: '#edf5ee', color: BRAND.green }}
+                      <div className="space-y-4">
+                        <h3 className="font-heading font-bold text-lg" style={{ color: BRAND.dark }}>
+                          Shelf Life
+                        </h3>
+                        {displayProduct?.shelf_life ? (
+                          <div className="p-4 rounded-xl bg-white border flex items-start gap-3"
+                            style={{ borderColor: BRAND.surface }}
                           >
-                            {ing}
-                          </motion.span>
-                        ))}
-                      </div>
-                    ) : displayProduct?.ingredients ? (
-                      <div className="p-4 rounded-xl bg-white border" style={{ borderColor: BRAND.surface }}>
-                        <p className="text-sm leading-relaxed" style={{ color: BRAND.dark }}>
-                          {displayProduct.ingredients}
-                        </p>
-                      </div>
-                    ) : (
-                      <p className="text-sm" style={{ color: BRAND.muted }}>No ingredients info available</p>
-                    )}
-                  </div>
-
-                  <div className="space-y-4">
-                    <h3 className="font-heading font-bold text-lg" style={{ color: BRAND.dark }}>
-                      Allergen Information
-                    </h3>
-                    {displayProduct?.allergen_info ? (
-                      <div className="p-4 rounded-xl border"
-                        style={{ backgroundColor: '#fef2f2', borderColor: '#fecaca' }}
-                      >
-                        <div className="flex items-start gap-3">
-                          <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: '#dc2626' }} />
-                          <div>
-                            <p className="text-sm font-semibold mb-1" style={{ color: '#991b1b' }}>Allergen Warning</p>
-                            <p className="text-sm" style={{ color: '#b91c1c' }}>{displayProduct.allergen_info}</p>
+                            <Clock className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: BRAND.green }} />
+                            <p className="text-sm leading-relaxed" style={{ color: BRAND.dark }}>
+                              {displayProduct.shelf_life}
+                            </p>
                           </div>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="p-4 rounded-xl bg-white border" style={{ borderColor: BRAND.surface }}>
-                        <div className="flex items-center gap-2">
-                          <CheckCircle className="w-4 h-4" style={{ color: BRAND.green }} />
-                          <p className="text-sm" style={{ color: BRAND.muted }}>
-                            No known allergens — always check the label for the most current information.
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </motion.div>
-              </AnimatePresence>
-            </TabsContent>
-
-            {/* ─── Nutrition Tab ─────────────────────────────── */}
-            <TabsContent value="nutrition" className="mt-6">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key="nutrition"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <h3 className="font-heading font-bold text-lg mb-4" style={{ color: BRAND.dark }}>
-                    Nutrition Information
-                  </h3>
-                  {displayProduct?.nutrition_info ? (
-                    <div className="p-6 rounded-xl bg-white border max-w-2xl" style={{ borderColor: BRAND.surface }}>
-                      <p className="text-sm leading-relaxed" style={{ color: BRAND.dark }}>
-                        {displayProduct.nutrition_info}
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="p-6 rounded-xl bg-white border max-w-2xl" style={{ borderColor: BRAND.surface }}>
-                      <div className="flex items-center gap-3">
-                        <Info className="w-5 h-5" style={{ color: BRAND.muted }} />
-                        <p className="text-sm" style={{ color: BRAND.muted }}>
-                          Nutrition information will be available soon. Check the product label for details.
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                  {displayProduct?.serving_size && (
-                    <div className="mt-4 flex items-center gap-2 text-xs" style={{ color: BRAND.muted }}>
-                      <Leaf className="w-3.5 h-3.5" />
-                      <span>Serving size: {displayProduct.serving_size}</span>
-                    </div>
-                  )}
-                </motion.div>
-              </AnimatePresence>
-            </TabsContent>
-
-            {/* ─── Storage Tab ────────────────────────────────── */}
-            <TabsContent value="storage" className="mt-6">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key="storage"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
-                  className="grid md:grid-cols-2 gap-8"
-                >
-                  <div className="space-y-4">
-                    <h3 className="font-heading font-bold text-lg" style={{ color: BRAND.dark }}>
-                      Storage Instructions
-                    </h3>
-                    {displayProduct?.storage_info ? (
-                      <div className="p-4 rounded-xl bg-white border flex items-start gap-3"
-                        style={{ borderColor: BRAND.surface }}
-                      >
-                        <ShieldCheck className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: BRAND.green }} />
-                        <p className="text-sm leading-relaxed" style={{ color: BRAND.dark }}>
-                          {displayProduct.storage_info}
-                        </p>
-                      </div>
-                    ) : (
-                      <div className="p-4 rounded-xl bg-white border" style={{ borderColor: BRAND.surface }}>
-                        <p className="text-sm" style={{ color: BRAND.muted }}>
-                          Store in a cool, dry place away from direct sunlight.
-                        </p>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="space-y-4">
-                    <h3 className="font-heading font-bold text-lg" style={{ color: BRAND.dark }}>
-                      Shelf Life
-                    </h3>
-                    {displayProduct?.shelf_life ? (
-                      <div className="p-4 rounded-xl bg-white border flex items-start gap-3"
-                        style={{ borderColor: BRAND.surface }}
-                      >
-                        <Clock className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: BRAND.green }} />
-                        <p className="text-sm leading-relaxed" style={{ color: BRAND.dark }}>
-                          {displayProduct.shelf_life}
-                        </p>
-                      </div>
-                    ) : (
-                      <div className="p-4 rounded-xl bg-white border" style={{ borderColor: BRAND.surface }}>
-                        <p className="text-sm" style={{ color: BRAND.muted }}>
-                          Shelf life information will be available on the product label.
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </motion.div>
-              </AnimatePresence>
-            </TabsContent>
-
-            {/* ─── Legal Tab ──────────────────────────────────── */}
-            <TabsContent value="legal" className="mt-6">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key="legal"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <h3 className="font-heading font-bold text-lg mb-4" style={{ color: BRAND.dark }}>
-                    Legal & Compliance
-                  </h3>
-                  <div className="grid sm:grid-cols-2 gap-4 max-w-2xl">
-                    {[
-                      { label: 'FSSAI License', value: displayProduct?.fssai_license, icon: <ShieldCheck className="w-4 h-4" /> },
-                      { label: 'HSN Code', value: displayProduct?.hsn_code, icon: <Package className="w-4 h-4" /> },
-                      { label: 'GST Rate', value: displayProduct?.gst_rate ? `${displayProduct.gst_rate}%` : null, icon: <CreditCard className="w-4 h-4" /> },
-                      { label: 'Country of Origin', value: displayProduct?.country_origin, icon: <Globe className="w-4 h-4" /> },
-                    ]
-                      .map((d, i) => (
-                        <motion.div
-                          key={i}
-                          initial={{ opacity: 0, y: 5 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: i * 0.05 }}
-                          className="p-4 rounded-xl bg-white border"
-                          style={{ borderColor: BRAND.surface }}
-                        >
-                          <div className="flex items-center gap-2 mb-1">
-                            {d.icon}
-                            <p className="text-xs uppercase tracking-wider" style={{ color: BRAND.muted }}>{d.label}</p>
+                        ) : (
+                          <div className="p-4 rounded-xl bg-white border" style={{ borderColor: BRAND.surface }}>
+                            <p className="text-sm" style={{ color: BRAND.muted }}>
+                              Shelf life information will be available on the product label.
+                            </p>
                           </div>
-                          <p className="text-sm font-medium" style={{ color: d.value ? BRAND.dark : BRAND.muted }}>
-                            {d.value || 'Not available'}
-                          </p>
-                        </motion.div>
-                      ))}
-                  </div>
-                </motion.div>
-              </AnimatePresence>
-            </TabsContent>
-          </Tabs>
+                        )}
+                      </div>
+                    </motion.div>
+                  </AnimatePresence>
+                </TabsContent>
+
+                {/* ─── Legal Tab ──────────────────────────────────── */}
+                <TabsContent value="legal" className="mt-6">
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key="legal"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <h3 className="font-heading font-bold text-lg mb-4" style={{ color: BRAND.dark }}>
+                        Legal & Compliance
+                      </h3>
+                      <div className="grid grid-cols-2 gap-4">
+                        {[
+                          { label: 'FSSAI License', value: displayProduct?.fssai_license, icon: <ShieldCheck className="w-4 h-4" /> },
+                          { label: 'HSN Code', value: displayProduct?.hsn_code, icon: <Package className="w-4 h-4" /> },
+                          { label: 'GST Rate', value: displayProduct?.gst_rate ? `${displayProduct.gst_rate}%` : null, icon: <CreditCard className="w-4 h-4" /> },
+                          { label: 'Country of Origin', value: displayProduct?.country_origin, icon: <Globe className="w-4 h-4" /> },
+                        ]
+                          .map((d, i) => (
+                            <motion.div
+                              key={i}
+                              initial={{ opacity: 0, y: 5 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ delay: i * 0.05 }}
+                              className="p-4 rounded-xl bg-white border"
+                              style={{ borderColor: BRAND.surface }}
+                            >
+                              <div className="flex items-center gap-2 mb-1">
+                                {d.icon}
+                                <p className="text-xs uppercase tracking-wider" style={{ color: BRAND.muted }}>{d.label}</p>
+                              </div>
+                              <p className="text-sm font-medium" style={{ color: d.value ? BRAND.dark : BRAND.muted }}>
+                                {d.value || 'Not available'}
+                              </p>
+                            </motion.div>
+                          ))}
+                      </div>
+                    </motion.div>
+                  </AnimatePresence>
+                </TabsContent>
+              </Tabs>
+            </motion.div>
+          </div>
         </motion.div>
 
         {/* ─── Contact Section ──────────────────────────────── */}

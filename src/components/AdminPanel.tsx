@@ -1376,20 +1376,32 @@ function AdminDashboard() {
                             <div>
                               <Label className="text-xs mb-1">Product Type *</Label>
                               <Select value={newProduct.type} onValueChange={v => setNewProduct({ ...newProduct, type: v })}>
-                                <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
+                                <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Select type" /></SelectTrigger>
                                 <SelectContent>
                                   {['FIZZ', 'STILL', 'BERRY', 'HERBAL', 'OTHER'].map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
                                 </SelectContent>
                               </Select>
+                              <Input
+                                placeholder="Or type custom type"
+                                value={!['FIZZ', 'STILL', 'BERRY', 'HERBAL', 'OTHER'].includes(newProduct.type) ? newProduct.type : ''}
+                                onChange={e => setNewProduct({ ...newProduct, type: e.target.value })}
+                                className="text-sm h-9 mt-1.5"
+                              />
                             </div>
                             <div>
                               <Label className="text-xs mb-1">Category</Label>
                               <Select value={newProduct.category} onValueChange={v => setNewProduct({ ...newProduct, category: v })}>
-                                <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
+                                <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Select category" /></SelectTrigger>
                                 <SelectContent>
                                   {['Wellness Shot', 'Health Drink', 'Supplement', 'Functional Beverage', 'Other'].map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                                 </SelectContent>
                               </Select>
+                              <Input
+                                placeholder="Or type custom category"
+                                value={!['Wellness Shot', 'Health Drink', 'Supplement', 'Functional Beverage', 'Other'].includes(newProduct.category) ? newProduct.category : ''}
+                                onChange={e => setNewProduct({ ...newProduct, category: e.target.value })}
+                                className="text-sm h-9 mt-1.5"
+                              />
                             </div>
                           </div>
                         </div>

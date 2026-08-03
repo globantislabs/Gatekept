@@ -459,30 +459,6 @@ export default function ProductDetailPage() {
                 )}
               </div>
 
-              {/* Name & Short Description — below image on left */}
-              <div>
-                <div className="flex items-start justify-between gap-3">
-                  <h1 className="font-heading text-2xl sm:text-3xl lg:text-4xl font-bold mb-2" style={{ color: BRAND.dark }}>
-                    {displayProduct?.name}
-                  </h1>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={handleNativeShare}
-                    className="pointer-events-auto min-h-[40px] min-w-[40px] rounded-lg border flex-shrink-0"
-                    style={{ borderColor: BRAND.surface }}
-                    title="Share"
-                  >
-                    <Share2 className="w-4 h-4" style={{ color: BRAND.muted }} />
-                  </Button>
-                </div>
-                {displayProduct?.short_description && (
-                  <p className="leading-relaxed text-sm sm:text-base" style={{ color: BRAND.muted }}>
-                    {displayProduct.short_description}
-                  </p>
-                )}
-              </div>
-
               {/* Highlights strip below image */}
               {highlights.length > 0 && (
                 <div className="flex flex-wrap gap-2">
@@ -799,6 +775,32 @@ export default function ProductDetailPage() {
 
             {/* Right: Product Info — Price, Badges, CTA, Learning Module, Trust */}
             <motion.div variants={staggerItem} className="space-y-5 lg:sticky lg:top-4 self-start">
+              {/* Name & Short Description */}
+              <div>
+                <div className="flex items-start justify-between gap-3">
+                  <h1 className="font-heading text-2xl sm:text-3xl lg:text-4xl font-bold mb-2" style={{ color: BRAND.dark }}>
+                    {displayProduct?.name}
+                  </h1>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={handleNativeShare}
+                    className="pointer-events-auto min-h-[40px] min-w-[40px] rounded-lg border flex-shrink-0"
+                    style={{ borderColor: BRAND.surface }}
+                    title="Share"
+                  >
+                    <Share2 className="w-4 h-4" style={{ color: BRAND.muted }} />
+                  </Button>
+                </div>
+                {displayProduct?.short_description && (
+                  <p className="leading-relaxed text-sm sm:text-base" style={{ color: BRAND.muted }}>
+                    {displayProduct.short_description}
+                  </p>
+                )}
+              </div>
+
+              <Separator style={{ backgroundColor: BRAND.surface }} />
+
               {/* ─── Price + Discount ──────────────────────────── */}
               <div className="flex items-baseline gap-2">
                 <span className="font-heading text-3xl font-bold" style={{ color: BRAND.green }}>

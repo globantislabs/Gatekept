@@ -459,41 +459,6 @@ export default function ProductDetailPage() {
                 )}
               </div>
 
-              {/* Highlights strip below image */}
-              {highlights.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {highlights.slice(0, 6).map((h, i) => (
-                    <motion.span
-                      key={i}
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: i * 0.06 }}
-                      className="pointer-events-auto px-3 py-1.5 rounded-full text-xs font-medium border"
-                      style={{
-                        backgroundColor: `${BRAND.green}08`,
-                        color: BRAND.green,
-                        borderColor: `${BRAND.green}18`
-                      }}
-                    >
-                      <Sparkles className="w-3 h-3 mr-1 inline" />
-                      {h}
-                    </motion.span>
-                  ))}
-                </div>
-              )}
-
-              {/* About This Product — below image on left */}
-              {displayProduct?.description && (
-                <div className="space-y-2">
-                  <h3 className="font-heading font-semibold text-sm" style={{ color: BRAND.dark }}>
-                    About This Product
-                  </h3>
-                  <p className="leading-relaxed text-sm" style={{ color: BRAND.muted }}>
-                    {displayProduct.description}
-                  </p>
-                </div>
-              )}
-
               {/* ─── Product Details Tabs (below image on left) ──── */}
               <Tabs defaultValue="overview" className="w-full">
 
@@ -798,6 +763,41 @@ export default function ProductDetailPage() {
                   </p>
                 )}
               </div>
+
+              {/* About This Product — right side */}
+              {displayProduct?.description && (
+                <div className="space-y-2">
+                  <h3 className="font-heading font-semibold text-sm" style={{ color: BRAND.dark }}>
+                    About This Product
+                  </h3>
+                  <p className="leading-relaxed text-sm" style={{ color: BRAND.muted }}>
+                    {displayProduct.description}
+                  </p>
+                </div>
+              )}
+
+              {/* Highlights — right side */}
+              {highlights.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {highlights.slice(0, 6).map((h, i) => (
+                    <motion.span
+                      key={i}
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: i * 0.06 }}
+                      className="pointer-events-auto px-3 py-1.5 rounded-full text-xs font-medium border"
+                      style={{
+                        backgroundColor: `${BRAND.green}08`,
+                        color: BRAND.green,
+                        borderColor: `${BRAND.green}18`
+                      }}
+                    >
+                      <Sparkles className="w-3 h-3 mr-1 inline" />
+                      {h}
+                    </motion.span>
+                  ))}
+                </div>
+              )}
 
               <Separator style={{ backgroundColor: BRAND.surface }} />
 

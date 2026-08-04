@@ -53,15 +53,17 @@ export default function ProductImage({
   // Use the original source if it exists and no error, otherwise use fallback
   const imageSrc = src && !imgError ? src : fallbackSrc
 
-  // Check if the source is an uploaded file (starts with /uploads/)
-  const isUploadedFile = src?.startsWith('/uploads/')
+  // Check if the source is an uploaded file (starts with /uploads/ or /api/uploads/)
+  const isUploadedFile = src?.startsWith('/uploads/') || src?.startsWith('/api/uploads/')
 
   // For uploaded files, use a regular img tag to avoid Next.js Image optimization issues
   // (standalone deployments may not have the file at build time)
   if (isUploadedFile && !imgError) {
+    // Convert /uploads/ paths to /api/uploads/ for production compatibility
+    const serveSrc = src!.startsWith('/uploads/') ? `/api${src!}` : src!
     return (
       <img
-        src={src!}
+        src={serveSrc}
         alt={alt}
         className={className}
         onError={() => setImgError(true)}

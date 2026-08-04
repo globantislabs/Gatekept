@@ -211,7 +211,7 @@ function AdminDashboard() {
   const [newVideo, setNewVideo] = useState({ title: '', duration: '', description: '', order: 1, video_url: '', thumbnail_url: '' })
   const [newQuiz, setNewQuiz] = useState({ question: '', options: ['', '', '', ''], answer: 0, category: '', difficulty: 'EASY', order: 1, video_id: '' })
   const [newProduct, setNewProduct] = useState({
-    name: '', description: '', short_description: '', price: 0, mrp: 0, stock: 0,
+    name: '', slug: '', description: '', short_description: '', price: 0, mrp: 0, stock: 0,
     image_url: '', gallery_images: '', type: 'FIZZ', category: 'Wellness Shot',
     sku: '', weight: '', ingredients: '', nutrition_info: '', tags: '',
     active: true, featured: false,
@@ -222,7 +222,7 @@ function AdminDashboard() {
 
   const resetProductForm = () => {
     setNewProduct({
-      name: '', description: '', short_description: '', price: 0, mrp: 0, stock: 0,
+      name: '', slug: '', description: '', short_description: '', price: 0, mrp: 0, stock: 0,
       image_url: '', gallery_images: '', type: 'FIZZ', category: 'Wellness Shot',
       sku: '', weight: '', ingredients: '', nutrition_info: '', tags: '',
       active: true, featured: false,
@@ -361,11 +361,14 @@ function AdminDashboard() {
   const handleSaveProduct = async () => {
     if (!newProduct.name || !newProduct.price) { toast.error('Name and price are required'); return }
     try {
+      // Auto-generate slug from name if not provided
+      const slug = newProduct.slug || newProduct.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+      const productData = { ...newProduct, slug }
       if (editingProduct) {
-        await productService.update(editingProduct.id, newProduct as any, userId)
+        await productService.update(editingProduct.id, productData as any, userId)
         toast.success('Product updated!')
       } else {
-        await productService.create(newProduct as any, userId)
+        await productService.create(productData as any, userId)
         toast.success('Product created!')
       }
       setShowAddProduct(false)
@@ -1285,7 +1288,7 @@ function AdminDashboard() {
                           <div className="flex items-start gap-4">
                             <div className="relative w-36 h-36 rounded-xl border-2 border-dashed overflow-hidden flex items-center justify-center group cursor-pointer shrink-0" style={{ borderColor: newProduct.image_url ? A.green : A.border, background: newProduct.image_url ? 'transparent' : A.bg }}>
                               {newProduct.image_url ? (
-                                <img src={newProduct.image_url} alt="Product" className="w-full h-full object-cover" />
+                                <img src={newProduct.image_url?.startsWith('/uploads/') ? `/api${newProduct.image_url}` : newProduct.image_url} alt="Product" className="w-full h-full object-cover" />
                               ) : (
                                 <div className="text-center">
                                   <p className="text-[9px]" style={{ color: A.textMuted }}>Click to upload</p>
@@ -1311,7 +1314,7 @@ function AdminDashboard() {
                           <div className="flex flex-wrap gap-2">
                             {getGalleryUrls().map((url, idx) => (
                               <div key={idx} className="relative w-20 h-20 rounded-lg border overflow-hidden group" style={{ borderColor: A.border }}>
-                                <img src={url} alt={`Gallery ${idx + 1}`} className="w-full h-full object-cover" />
+                                <img src={url.startsWith('/uploads/') ? `/api${url}` : url} alt={`Gallery ${idx + 1}`} className="w-full h-full object-cover" />
                                 <button onClick={() => removeGalleryImage(idx)} className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-red-500 text-white text-[10px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><X className="w-3 h-3" /></button>
                               </div>
                             ))}
@@ -1345,6 +1348,10 @@ function AdminDashboard() {
                             <div className="sm:col-span-2">
                               <Label className="text-xs mb-1">Product Name *</Label>
                               <Input placeholder="e.g. NOTJUST Watr Berry Blast" value={newProduct.name} onChange={e => setNewProduct({ ...newProduct, name: e.target.value })} className="text-sm h-9" />
+                            </div>
+                            <div className="sm:col-span-2">
+                              <Label className="text-xs mb-1">Slug <span className="font-normal" style={{ color: A.textMuted }}>(auto-generated from name if empty)</span></Label>
+                              <Input placeholder="e.g. notjust-watr-berry-blast" value={newProduct.slug} onChange={e => setNewProduct({ ...newProduct, slug: e.target.value })} className="text-sm h-9" />
                             </div>
                             <div className="sm:col-span-2">
                               <Label className="text-xs mb-1">Short Description</Label>
@@ -1557,7 +1564,7 @@ function AdminDashboard() {
                     {/* Image */}
                     <div className="relative h-48 overflow-hidden" style={{ background: A.bg }}>
                       {product.image_url ? (
-                        <img src={product.image_url} alt={product.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                        <img src={product.image_url?.startsWith('/uploads/') ? `/api${product.image_url}` : product.image_url} alt={product.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                           onError={(e) => { (e.target as HTMLImageElement).src = product.type === 'STILL' ? '/images/product-still.webp' : '/images/product-fizz.webp' }}
                         />
                       ) : (
@@ -1866,7 +1873,7 @@ function AdminDashboard() {
                               <div className="flex items-start gap-3">
                                 <div className="relative w-20 h-14 rounded-lg border-2 border-dashed overflow-hidden flex items-center justify-center shrink-0 cursor-pointer" style={{ borderColor: newVideo.thumbnail_url ? A.green : A.border, background: newVideo.thumbnail_url ? 'transparent' : A.bg }}>
                                   {newVideo.thumbnail_url ? (
-                                    <img src={newVideo.thumbnail_url} alt="Thumbnail" className="w-full h-full object-cover" />
+                                    <img src={newVideo.thumbnail_url?.startsWith('/uploads/') ? `/api${newVideo.thumbnail_url}` : newVideo.thumbnail_url} alt="Thumbnail" className="w-full h-full object-cover" />
                                   ) : (
                                     <p className="text-[8px] text-center" style={{ color: A.textMuted }}>Upload</p>
                                   )}

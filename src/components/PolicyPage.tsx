@@ -973,6 +973,103 @@ Customer Support Email: info@zh-onehealth.com
 Customer Support Number: +91 9288007431
 Working Hours: Monday to Saturday, 10:00 AM to 5:00 PM (IST)`,
   },
+
+  'policy-about': {
+    title: 'About Us',
+    pdf: '/policies/about-us.pdf',
+    text: `About Us
+
+Welcome to NOTJUSTWATR.COM, the official online store of Zum Heilen Healthcare
+Private Limited.
+
+At NOTJUSTWATR, we believe that everyday nutrition should be simple, convenient and
+backed by innovation. Our mission is to develop premium food and beverage products
+that combine quality ingredients with scientific research, helping consumers make better
+lifestyle choices without compromising on taste or convenience.
+
+Our product portfolio includes carefully developed beverages and functional food
+products designed to integrate seamlessly into daily life. Every product is created with a
+strong focus on quality, safety, consistency and consumer satisfaction.
+
+As a food business operating under the applicable regulatory framework in India, we are
+committed to maintaining high standards of manufacturing, quality assurance and
+regulatory compliance. Our products are sourced, manufactured and supplied through
+approved facilities that comply with applicable food safety and quality standards.
+
+At NOTJUSTWATR, customer trust is our highest priority. We strive to provide:
+
+   ${'●'}${ZWS} Premium quality food and beverage products
+   ${'●'}${ZWS} Safe and secure online shopping
+   ${'●'}${ZWS} Transparent pricing
+   ${'●'}${ZWS} Reliable order fulfilment
+   ${'●'}${ZWS} Responsive customer support
+   ${'●'}${ZWS} Timely delivery across India
+
+Innovation is at the heart of everything we do. We continuously invest in research and
+product development to create solutions that meet the evolving needs of modern
+consumers while maintaining the highest standards of quality and integrity.
+
+Our commitment extends beyond delivering products—we aim to build lasting
+relationships with our customers through transparency, reliability and exceptional
+service.
+
+Thank you for choosing NOTJUSTWATR.COM. We appreciate your trust and look
+forward to serving you with products that reflect our commitment to quality, innovation
+and customer satisfaction.
+
+Corporate Information
+
+Legal Name
+Zum Heilen Healthcare Private Limited
+Corporate Identification Number (CIN)
+U85110KA2015PTC078824
+
+GSTIN
+29AAACZ8161A2ZA
+
+FSSAI Licence Number
+11224998000039
+
+Registered Office
+9/36, 203, Vaishnavi Sapphire Centre,${ZWS}
+2nd Floor, Tumkur Road, Yeshwanthpura,${ZWS}
+Bengaluru, Karnataka – 560022, India
+
+Customer Support
+Email: info@zh-onehealth.com
+
+Phone: +91 9288007431
+
+Business Hours
+Monday to Saturday${ZWS}
+10:00 AM – 5:00 PM (IST)`,
+  },
+
+  'policy-contact': {
+    title: 'Contact Us',
+    pdf: '/policies/contact-us.pdf',
+    text: `Contact Us
+
+We're here to help. If you have any questions regarding our products, orders, shipping,
+payments or your shopping experience on NOTJUSTWATR.COM, please get in touch
+with us.
+
+Customer Support
+
+Email: info@zh-onehealth.com
+Phone: +91 9288007431
+Business Hours:
+Monday to Saturday
+10:00 AM – 5:00 PM (IST)
+
+Registered Office
+
+Zum Heilen Healthcare Private Limited
+
+9/36, 203, Vaishnavi Sapphire Centre,${ZWS}
+2nd Floor, Tumkur Road, Yeshwanthpura,${ZWS}
+Bengaluru, Karnataka – 560022, India`,
+  },
 }
 
 // ─── Parsed policy element types ─────────────────────────────

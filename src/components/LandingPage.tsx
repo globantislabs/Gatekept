@@ -1475,6 +1475,8 @@ export default function LandingPage() {
               <button onClick={() => navigateTo('policy-shipping')} className="hover:text-white/60 transition-colors duration-300">Shipping Policy</button>
               <button onClick={() => navigateTo('policy-refund')} className="hover:text-white/60 transition-colors duration-300">Refund Policy</button>
               <button onClick={() => navigateTo('policy-grievance')} className="hover:text-white/60 transition-colors duration-300">Grievance Policy</button>
+              <button onClick={() => navigateTo('policy-about')} className="hover:text-white/60 transition-colors duration-300">About Us</button>
+              <button onClick={() => navigateTo('policy-contact')} className="hover:text-white/60 transition-colors duration-300">Contact Us</button>
             </div>
           </div>
         </div>

@@ -62,6 +62,8 @@ const pathToView = (pathname: string): AppView => {
     case '/shipping': return 'policy-shipping'
     case '/refund': return 'policy-refund'
     case '/grievance': return 'policy-grievance'
+    case '/about': return 'policy-about'
+    case '/contact': return 'policy-contact'
     default: return 'landing'
   }
 }
@@ -186,6 +188,8 @@ function ViewRenderer() {
       case 'policy-shipping':
       case 'policy-refund':
       case 'policy-grievance':
+      case 'policy-about':
+      case 'policy-contact':
         return <PolicyPage />
       default:
         return <LandingPageComponent />

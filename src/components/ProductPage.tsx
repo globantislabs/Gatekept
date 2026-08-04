@@ -522,6 +522,8 @@ export default function ProductPage() {
                 <li><button onClick={() => navigateTo('policy-shipping')} className="hover:text-white transition-colors duration-300 min-h-[36px] flex items-center text-white/50">Shipping Policy</button></li>
                 <li><button onClick={() => navigateTo('policy-refund')} className="hover:text-white transition-colors duration-300 min-h-[36px] flex items-center text-white/50">Refund Policy</button></li>
                 <li><button onClick={() => navigateTo('policy-grievance')} className="hover:text-white transition-colors duration-300 min-h-[36px] flex items-center text-white/50">Grievance Policy</button></li>
+                <li><button onClick={() => navigateTo('policy-about')} className="hover:text-white transition-colors duration-300 min-h-[36px] flex items-center text-white/50">About Us</button></li>
+                <li><button onClick={() => navigateTo('policy-contact')} className="hover:text-white transition-colors duration-300 min-h-[36px] flex items-center text-white/50">Contact Us</button></li>
               </ul>
             </div>
           </div>

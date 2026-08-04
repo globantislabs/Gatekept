@@ -91,3 +91,10 @@ logs/
 
 # Worklog (dev session tracking)
 /worklog.md
+
+# Uploaded files (keep directories, ignore content)
+public/uploads/products/*
+public/uploads/videos/*
+public/uploads/audio/*
+public/uploads/images/*
+!public/uploads/**/.gitkeep

@@ -907,11 +907,8 @@ export default function ProductDetailPage() {
                     </div>
                     <div>
                       <CardTitle className="font-heading text-base font-semibold leading-tight" style={{ color: BRAND.dark }}>
-                        Learning Module
-                      </CardTitle>
-                      <p className="text-xs font-medium mt-0.5" style={{ color: BRAND.green }}>
                         Learn before you Buy
-                      </p>
+                      </CardTitle>
                     </div>
                   </div>
                 </CardHeader>
@@ -991,7 +988,7 @@ export default function ProductDetailPage() {
                         style={{ backgroundColor: BRAND.green, color: '#fff' }}
                       >
                         <Play className="w-5 h-5 mr-2" />
-                        Start Learning
+                        Sign in to access product learning & enable purchase
                       </Button>
                     ) : learningStatus === 'NOT_STARTED' ? (
                       <Button
@@ -1000,7 +997,7 @@ export default function ProductDetailPage() {
                         style={{ backgroundColor: BRAND.green, color: '#fff' }}
                       >
                         <Play className="w-5 h-5 mr-2" />
-                        Start Learning
+                        Sign in to access product learning & enable purchase
                       </Button>
                     ) : isInProgress ? (
                       <Button

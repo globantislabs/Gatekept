@@ -10,6 +10,7 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
+import SiteFooter from '@/components/SiteFooter'
 import { useAppStore } from '@/store/app-store'
 
 // ============================================================
@@ -778,44 +779,6 @@ function CTASection() {
   )
 }
 
-// ============================================================
-// FOOTER
-// ============================================================
-function JourneyFooter() {
-  const { navigateTo } = useAppStore()
-
-  return (
-    <footer
-      className="py-8 text-center"
-      style={{ backgroundColor: '#1a1a18' }}
-    >
-      <div className="max-w-6xl mx-auto px-4 sm:px-6">
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-          <span
-            className="text-sm font-bold tracking-wider"
-            style={{ color: BRAND.green }}
-          >
-            NOTJUST Watr
-          </span>
-          <span
-            className="text-sm"
-            style={{ color: BRAND.muted }}
-          >
-            — Wellness, not compromise.
-          </span>
-          <button
-            onClick={() => navigateTo('landing')}
-            className="text-sm underline-offset-4 hover:underline transition-all min-h-[44px] px-3"
-            style={{ color: BRAND.lime }}
-          >
-            ← Home
-          </button>
-        </div>
-      </div>
-    </footer>
-  )
-}
-
 // MAIN COMPONENT
 // ============================================================
 export function OurJourneyPage() {
@@ -830,7 +793,7 @@ export function OurJourneyPage() {
       <ValuesSection />
       <TeamSection />
       <CTASection />
-      <JourneyFooter />
+      <SiteFooter />
     </div>
   )
 }

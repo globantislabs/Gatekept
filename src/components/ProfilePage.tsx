@@ -10,6 +10,7 @@ import {
   XCircle, ShoppingBag, Repeat, Eye, Store,
   MapPinned, RotateCcw, ChevronDown, KeyRound, EyeOff,
 } from 'lucide-react'
+import SiteFooter from '@/components/SiteFooter'
 import { useAppStore } from '@/store/app-store'
 import { userService, productLearningService, productService, orderService, subscriptionService } from '@/lib/data-service'
 import type { UserProfile, ProductLearningProgress, Product, Order, Subscription, OrderTracking, OtpPurpose } from '@/lib/data-service'
@@ -776,15 +777,7 @@ export function ProfilePage() {
         </div>
       </main>
 
-      {/* ── Footer ── */}
-      <footer className="bg-[#1f1e1c] py-8 mt-auto">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between">
-            <Image src="/images/notjust-logo-clean.png" alt="NotJust" width={100} height={32} className="h-8 w-auto object-contain" />
-            <p className="text-white/30 text-xs">© 2025 NOTJUST HEALTH™</p>
-          </div>
-        </div>
-      </footer>
+      <SiteFooter />
 
       {/* ── OTP Verification Modal ── */}
       {otpAction && user && (

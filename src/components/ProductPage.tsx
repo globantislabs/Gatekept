@@ -499,24 +499,34 @@ export default function ProductPage() {
       {/* ═══════════════════════════════════════════════════════════
           FOOTER
           ═══════════════════════════════════════════════════════════ */}
-      <footer className="bg-[#1f1e1c] py-12 mt-auto">
+      <footer className="bg-[#1f1e1c] py-10 mt-auto">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-wrap gap-8 justify-between">
-            <div>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-8">
+            <div className="col-span-2 md:col-span-1">
               <Image src="/images/notjust-logo-clean.png" alt="NotJust" width={100} height={32} className="h-8 w-auto object-contain mb-3" />
               <p className="text-white/40 text-sm">Pre-Meal Wellness Shot</p>
             </div>
             <div>
               <h4 className="font-heading font-bold text-white text-sm mb-3">Quick Links</h4>
               <ul className="space-y-2">
-                <li><button onClick={() => navigateTo('landing')} className="hover:text-white transition-colors duration-300 min-h-[44px] flex items-center text-white/50">Home</button></li>
-                <li><button onClick={() => navigateTo('products')} className="hover:text-white transition-colors duration-300 min-h-[44px] flex items-center text-white/50">Products</button></li>
-                <li><button onClick={() => navigateTo('our-journey')} className="hover:text-white transition-colors duration-300 min-h-[44px] flex items-center text-white/50">Our Journey</button></li>
+                <li><button onClick={() => navigateTo('landing')} className="hover:text-white transition-colors duration-300 min-h-[36px] flex items-center text-white/50">Home</button></li>
+                <li><button onClick={() => navigateTo('products')} className="hover:text-white transition-colors duration-300 min-h-[36px] flex items-center text-white/50">Products</button></li>
+                <li><button onClick={() => navigateTo('our-journey')} className="hover:text-white transition-colors duration-300 min-h-[36px] flex items-center text-white/50">Our Journey</button></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-heading font-bold text-white text-sm mb-3">Legal</h4>
+              <ul className="space-y-2">
+                <li><button onClick={() => navigateTo('policy-terms')} className="hover:text-white transition-colors duration-300 min-h-[36px] flex items-center text-white/50">Terms & Conditions</button></li>
+                <li><button onClick={() => navigateTo('policy-privacy')} className="hover:text-white transition-colors duration-300 min-h-[36px] flex items-center text-white/50">Privacy Policy</button></li>
+                <li><button onClick={() => navigateTo('policy-shipping')} className="hover:text-white transition-colors duration-300 min-h-[36px] flex items-center text-white/50">Shipping Policy</button></li>
+                <li><button onClick={() => navigateTo('policy-refund')} className="hover:text-white transition-colors duration-300 min-h-[36px] flex items-center text-white/50">Refund Policy</button></li>
+                <li><button onClick={() => navigateTo('policy-grievance')} className="hover:text-white transition-colors duration-300 min-h-[36px] flex items-center text-white/50">Grievance Policy</button></li>
               </ul>
             </div>
           </div>
-          <Separator className="my-8 bg-white/[0.06]" />
-          <p className="text-white/30 text-xs text-center">© 2025 NOTJUST HEALTH™. All rights reserved.</p>
+          <Separator className="my-6 bg-white/[0.06]" />
+          <p className="text-white/30 text-xs text-center">&copy; 2026 Zum Heilen Healthcare Private Limited. All rights reserved.</p>
         </div>
       </footer>
     </div>

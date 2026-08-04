@@ -19,6 +19,7 @@ import { ProductLearningModule } from '@/components/ProductLearningModule'
 import AdminPanel from '@/components/AdminPanel'
 import ProductPage from '@/components/ProductPage'
 import { CartView, CheckoutView, OrderSuccessView } from '@/components/CartCheckout'
+import PolicyPage from '@/components/PolicyPage'
 
 // ─── Views that should NOT show the shared navbar ────────────
 const HIDE_NAVBAR_VIEWS: AppView[] = [
@@ -56,6 +57,11 @@ const pathToView = (pathname: string): AppView => {
     case '/admin/content': return 'admin-content'
     case '/admin/subscriptions': return 'admin-subscriptions'
     case '/admin/learning': return 'admin-learning'
+    case '/terms': return 'policy-terms'
+    case '/privacy': return 'policy-privacy'
+    case '/shipping': return 'policy-shipping'
+    case '/refund': return 'policy-refund'
+    case '/grievance': return 'policy-grievance'
     default: return 'landing'
   }
 }
@@ -175,6 +181,12 @@ function ViewRenderer() {
       case 'admin-subscriptions':
       case 'admin-learning':
         return <AdminPanel />
+      case 'policy-terms':
+      case 'policy-privacy':
+      case 'policy-shipping':
+      case 'policy-refund':
+      case 'policy-grievance':
+        return <PolicyPage />
       default:
         return <LandingPageComponent />
     }

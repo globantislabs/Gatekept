@@ -1,0 +1,223 @@
+                                     PRIVACY POLICY
+
+                                                              Effective Date: 03 August 2026
+
+This Privacy Policy ("Policy") describes how Zum Heilen Healthcare Private Limited
+("Company", "we", "our", or "us"), the owner and operator of NOTJUSTWATR.COM
+("Website"), collects, uses, stores, processes, discloses and protects personal information
+of users, customers and visitors ("User", "you" or "your").
+
+This Policy is published in accordance with the provisions of the Information Technology
+Act, 2000, the Information Technology (Reasonable Security Practices and Procedures
+and Sensitive Personal Data or Information) Rules, 2011, the Digital Personal Data
+Protection Act, 2023, the Consumer Protection (E-Commerce) Rules, 2020 and other
+applicable laws of India.
+
+By accessing, browsing, registering on, or making purchases through the Website, you
+acknowledge that you have read, understood and agreed to the terms of this Privacy
+Policy.
+
+1. ENTITY DETAILS
+
+Legal Name: Zum Heilen Healthcare Private Limited
+Corporate Identification Number (CIN): U85110KA2015PTC078824
+GSTIN: 29AAACZ8161A2ZA
+FSSAI Licence Number: 11224998000039
+Registered Office Address:
+9/36, 203, Vaishnavi Sapphire Centre,​
+2nd Floor, Tumkur Road, Yeshwanthpura,​
+Bengaluru, Karnataka – 560022, India
+Customer Support Email: info@zh-onehealth.com
+Customer Support Number: +91 9288007431
+Working Hours: Monday to Saturday, 10:00 AM to 5:00 PM IST
+
+2. INFORMATION COLLECTED
+
+The Company may collect, receive, store or process the following categories of
+information:
+
+A. Personal Information
+
+   ●​ Full Name
+   ●​ Email Address
+   ●​ Mobile Number
+   ●​ Billing Address
+   ●​ Shipping Address
+   ●​ City, State and PIN Code
+   ●​ Order and Transaction Details
+
+B. Technical Information
+
+   ●​ IP Address
+   ●​ Browser Type
+   ●​ Device Information
+   ●​ Operating System
+   ●​ Website Usage Information
+   ●​ Login Information
+   ●​ Cookie and Session Data
+
+C. Transaction Information
+
+   ●​ Order History
+   ●​ Payment Status
+   ●​ Refund Status
+   ●​ Shipping Information
+
+The Company collects only such information as is reasonably necessary for lawful
+business purposes and provision of services.
+
+3. PURPOSE OF PROCESSING
+
+Personal information may be processed for the following purposes:
+
+   ●​ Registration and management of user accounts.
+   ●​ Processing and fulfilment of orders.
+   ●​ Delivery of products purchased through the Website.
+   ●​ Processing payments, refunds and cancellations.
+   ●​ Customer support and grievance redressal.
+   ●​ Fraud prevention, risk management and security monitoring.
+   ●​ Compliance with statutory, legal, accounting and regulatory obligations.
+   ●​ Improvement of Website functionality, customer experience and business
+      operations.
+   ●​ Communication relating to orders, products, services and regulatory notices.
+
+4. PAYMENT SECURITY
+
+The Website utilizes secure payment gateway service providers authorized to process
+electronic payments in accordance with applicable laws and regulatory requirements.
+
+The Company does not collect, store or retain:
+
+   ●​ Credit Card Numbers
+   ●​ Debit Card Numbers
+   ●​ CVV Numbers
+   ●​ UPI PINs
+   ●​ Net Banking Passwords
+   ●​ Authentication Credentials
+
+All payment transactions are processed through encrypted and secure third-party
+payment infrastructure.
+
+5. COOKIES AND TRACKING TECHNOLOGIES
+
+The Website may use cookies, web beacons and similar technologies for:
+
+   ●​ User authentication
+   ●​ Session management
+   ●​ Shopping cart functionality
+   ●​ Website analytics
+   ●​ Performance monitoring
+   ●​ User experience enhancement
+
+Users may configure their browser settings to refuse cookies; however, certain
+functionalities of the Website may become unavailable.
+
+6. DISCLOSURE OF INFORMATION
+
+The Company may disclose personal information only on a need-to-know basis and
+solely for legitimate business purposes, including to:
+
+   ●​ Payment Gateway Service Providers
+   ●​ Logistics and Delivery Partners
+   ●​ India Post and other authorized courier service providers
+   ●​ Information Technology and Website Service Providers
+   ●​ Professional Advisors, Auditors and Regulatory Authorities
+   ●​ Government Bodies or Law Enforcement Agencies where disclosure is required
+       under applicable law
+
+The Company does not sell, rent, lease or commercially exploit personal information
+belonging to users.
+
+7. DATA SECURITY
+
+The Company maintains reasonable administrative, technical and organizational
+safeguards designed to protect personal information against unauthorized access,
+misuse, alteration, disclosure or destruction.
+
+Security measures may include:
+   ●​ Secure Socket Layer (SSL) encryption
+   ●​ Access control mechanisms
+   ●​ Password protection systems
+   ●​ Firewall and network security measures
+   ●​ Periodic security monitoring and updates
+
+While the Company endeavors to protect all information, no electronic transmission or
+storage system can be guaranteed to be completely secure.
+
+8. DATA RETENTION
+
+Personal information shall be retained only for the period necessary to:
+
+   ●​ Fulfil contractual obligations.
+   ●​ Complete transactions.
+   ●​ Resolve disputes.
+   ●​ Comply with statutory obligations.
+   ●​ Maintain accounting, taxation and regulatory records.
+
+Upon expiry of the applicable retention period, information may be securely deleted,
+anonymized or archived in accordance with legal requirements.
+
+9. USER RIGHTS
+
+Subject to applicable law, users may request:
+
+   ●​ Access to their personal information.
+   ●​ Correction of inaccurate or incomplete information.
+   ●​ Updating of personal information.
+   ●​ Withdrawal of consent where processing is based on consent.
+   ●​ Erasure of personal information where legally permissible.
+
+Requests may be submitted to the Grievance Officer identified below.
+
+10. THIRD-PARTY LINKS
+
+The Website may contain links to third-party websites or services.
+
+The Company shall not be responsible for the privacy practices, content, security or
+policies of any third-party website. Users are advised to review the privacy policies of
+such websites independently.
+
+11. CHILDREN'S PRIVACY
+
+The Website is intended for use by individuals who are legally competent to enter into
+binding contracts under applicable law.
+The Company does not knowingly collect personal information from minors without
+appropriate authorization.
+
+12. CHANGES TO THIS POLICY
+
+The Company reserves the right to amend, modify or update this Privacy Policy at any
+time without prior notice.
+
+Any revisions shall become effective immediately upon publication on the Website.
+Continued use of the Website following publication of revised terms shall constitute
+acceptance of such revisions.
+
+13. GRIEVANCE OFFICER
+
+In accordance with applicable laws, including the Information Technology Act, 2000 and
+rules framed thereunder, the following person has been designated as the Grievance
+Officer:
+
+Name: Fepslin Athishmon S
+Designation: Chief Operating Officer (COO)
+Email: fepslin@zh-onehealth.com
+
+Users may submit complaints, concerns or requests relating to privacy, data processing or
+information security to the Grievance Officer.
+
+14. CONTACT DETAILS
+
+For any questions, concerns or requests regarding this Privacy Policy, users may contact:
+
+Zum Heilen Healthcare Private Limited
+9/36, 203, Vaishnavi Sapphire Centre,​
+2nd Floor, Tumkur Road, Yeshwanthpura,​
+Bengaluru, Karnataka – 560022, India
+Email: info@zh-onehealth.com
+Phone: +91 9288007431
+Working Hours: Monday to Saturday, 10:00 AM to 5:00 PM IST
+
+By using NOTJUSTWATR.COM, you acknowledge that you have read, understood and
+agreed to the terms of this Privacy Policy.
+

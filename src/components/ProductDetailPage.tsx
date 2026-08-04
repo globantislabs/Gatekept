@@ -900,11 +900,20 @@ export default function ProductDetailPage() {
 
               {/* ─── Learning Module Card ───────────────────────── */}
               <Card className="border rounded-2xl overflow-hidden" style={{ borderColor: BRAND.surface }}>
-                <CardHeader className="pb-3">
-                  <CardTitle className="font-heading text-base font-semibold flex items-center gap-2" style={{ color: BRAND.dark }}>
-                    <GraduationCap className="w-5 h-5" style={{ color: BRAND.green }} />
-                    Learning Module
-                  </CardTitle>
+                <CardHeader className="pb-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ backgroundColor: `${BRAND.green}12` }}>
+                      <GraduationCap className="w-5 h-5" style={{ color: BRAND.green }} />
+                    </div>
+                    <div>
+                      <CardTitle className="font-heading text-base font-semibold leading-tight" style={{ color: BRAND.dark }}>
+                        Learning Module
+                      </CardTitle>
+                      <p className="text-xs font-medium mt-0.5" style={{ color: BRAND.green }}>
+                        Learn before you Buy
+                      </p>
+                    </div>
+                  </div>
                 </CardHeader>
                 <CardContent className="space-y-4 p-0">
 
@@ -982,7 +991,7 @@ export default function ProductDetailPage() {
                         style={{ backgroundColor: BRAND.green, color: '#fff' }}
                       >
                         <Play className="w-5 h-5 mr-2" />
-                        Start Learning Module
+                        Start Learning
                       </Button>
                     ) : learningStatus === 'NOT_STARTED' ? (
                       <Button
@@ -991,7 +1000,7 @@ export default function ProductDetailPage() {
                         style={{ backgroundColor: BRAND.green, color: '#fff' }}
                       >
                         <Play className="w-5 h-5 mr-2" />
-                        Start Learning Module
+                        Start Learning
                       </Button>
                     ) : isInProgress ? (
                       <Button

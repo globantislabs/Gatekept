@@ -1355,11 +1355,13 @@ function AdminDashboard() {
                             </div>
                             <div className="sm:col-span-2">
                               <Label className="text-xs mb-1">Short Description</Label>
-                              <Input placeholder="Brief one-liner" value={newProduct.short_description} onChange={e => setNewProduct({ ...newProduct, short_description: e.target.value })} className="text-sm h-9" />
+                              <Input placeholder="Brief one-liner (max 150 chars)" maxLength={150} value={newProduct.short_description} onChange={e => setNewProduct({ ...newProduct, short_description: e.target.value })} className="text-sm h-9" />
+                              <p className="text-[10px] text-right" style={{ color: A.textMuted }}>{(newProduct.short_description || '').length}/150</p>
                             </div>
                             <div className="sm:col-span-2">
                               <Label className="text-xs mb-1">Full Description</Label>
-                              <Textarea placeholder="Detailed description..." rows={3} value={newProduct.description} onChange={e => setNewProduct({ ...newProduct, description: e.target.value })} className="text-sm resize-none" />
+                              <Textarea placeholder="Detailed description (max 2000 chars)..." rows={4} maxLength={2000} value={newProduct.description} onChange={e => setNewProduct({ ...newProduct, description: e.target.value })} className="text-sm resize-none" />
+                              <p className="text-[10px] text-right" style={{ color: A.textMuted }}>{(newProduct.description || '').length}/2000</p>
                             </div>
                             <div>
                               <Label className="text-xs mb-1">Brand</Label>
@@ -1473,10 +1475,30 @@ function AdminDashboard() {
                             </div>
                           </div>
                         </div>
+                        <Separator />
+                        <div className="space-y-3">
+                          <Label className="text-xs font-bold uppercase tracking-wider" style={{ color: A.textSecondary }}>Legal & Compliance</Label>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                              <Label className="text-xs mb-1">FSSAI License</Label>
+                              <Input placeholder="e.g. 12345678901234" value={newProduct.fssai_license} onChange={e => setNewProduct({ ...newProduct, fssai_license: e.target.value })} className="text-sm h-9" />
+                            </div>
+                            <div>
+                              <Label className="text-xs mb-1">HSN Code</Label>
+                              <Input placeholder="e.g. 22029000" value={newProduct.hsn_code} onChange={e => setNewProduct({ ...newProduct, hsn_code: e.target.value })} className="text-sm h-9" />
+                            </div>
+                            <div>
+                              <Label className="text-xs mb-1">GST Rate (%)</Label>
+                              <Input placeholder="e.g. 18" type="number" value={newProduct.gst_rate || ''} onChange={e => setNewProduct({ ...newProduct, gst_rate: Number(e.target.value) })} className="text-sm h-9" />
+                            </div>
+                            <div>
+                              <Label className="text-xs mb-1">Country of Origin</Label>
+                              <Input placeholder="e.g. India" value={newProduct.country_origin} onChange={e => setNewProduct({ ...newProduct, country_origin: e.target.value })} className="text-sm h-9" />
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </TabsContent>
-
-                    {/* ─── TAB 4: Status ─── */}
                     <TabsContent value="status" className="flex-1 min-h-0 mt-0 overflow-y-auto" style={{ maxHeight: 'calc(92vh - 180px)' }}>
                       <div className="space-y-5 p-1 pr-3">
                         <div className="space-y-3">

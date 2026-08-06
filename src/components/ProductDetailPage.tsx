@@ -11,6 +11,7 @@ import {
   Minus, Plus, CreditCard, BookOpen, Star, AlertTriangle, Info,
   Sparkles, Eye, EyeOff, SeparatorHorizontal
 } from 'lucide-react'
+import SiteFooter from '@/components/SiteFooter'
 import { useAppStore, type CartItem } from '@/store/app-store'
 import {
   productService, productLearningService
@@ -107,6 +108,7 @@ export default function ProductDetailPage() {
   const [productProgress, setProductProgress] = useState<ProductLearningProgress | null>(null)
   const [copied, setCopied] = useState(false)
   const [quantity, setQuantity] = useState(1)
+  const [descExpanded, setDescExpanded] = useState(false)
   const [progressFetchKey, setProgressFetchKey] = useState(0)
 
   // Derived: are we currently loading?
@@ -350,7 +352,7 @@ export default function ProductDetailPage() {
 
   // ─── Main Render ──────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-[#f4f3f0] pt-4 pb-12">
+    <div className="min-h-screen flex flex-col bg-[#f4f3f0] pt-4">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
         {/* ─── Navigation ──────────────────────────────────── */}
@@ -463,20 +465,20 @@ export default function ProductDetailPage() {
               <Tabs defaultValue="overview" className="w-full">
 
                 {/* Scrollable Tabs List */}
-                <TabsList className="w-full flex overflow-x-auto gap-0 h-auto p-0 bg-transparent rounded-none border-b"
+                <TabsList className="w-full grid grid-cols-5 h-auto p-0 bg-transparent rounded-none border-b"
                   style={{ borderColor: BRAND.surface }}
                 >
                   {[
-                    { value: 'overview', label: 'Overview', icon: <Info className="w-4 h-4" /> },
-                    { value: 'ingredients', label: 'Ingredients', icon: <Leaf className="w-4 h-4" /> },
-                    { value: 'nutrition', label: 'Nutrition', icon: <Package className="w-4 h-4" /> },
-                    { value: 'storage', label: 'Storage', icon: <ShieldCheck className="w-4 h-4" /> },
-                    { value: 'legal', label: 'Legal', icon: <Globe className="w-4 h-4" /> },
+                    { value: 'overview', label: 'Overview', icon: <Info className="w-3.5 h-3.5" /> },
+                    { value: 'ingredients', label: 'Ingredients', icon: <Leaf className="w-3.5 h-3.5" /> },
+                    { value: 'nutrition', label: 'Nutrition', icon: <Package className="w-3.5 h-3.5" /> },
+                    { value: 'storage', label: 'Storage', icon: <ShieldCheck className="w-3.5 h-3.5" /> },
+                    { value: 'legal', label: 'Legal', icon: <Globe className="w-3.5 h-3.5" /> },
                   ].map(tab => (
                     <TabsTrigger
                       key={tab.value}
                       value={tab.value}
-                      className="pointer-events-auto min-h-[44px] px-4 sm:px-5 py-2.5 text-sm font-heading font-medium transition-all border-b-2 -mb-px rounded-none data-[state=active]:border-b-2 data-[state=active]:shadow-none shrink-0"
+                      className="pointer-events-auto min-h-[44px] py-2.5 text-xs sm:text-sm font-heading font-medium transition-all border-b-2 -mb-px rounded-none data-[state=active]:border-b-2 data-[state=active]:shadow-none"
                       style={{
                         borderColor: 'transparent',
                         color: BRAND.muted,
@@ -770,9 +772,18 @@ export default function ProductDetailPage() {
                   <h3 className="font-heading font-semibold text-sm" style={{ color: BRAND.dark }}>
                     About This Product
                   </h3>
-                  <p className="leading-relaxed text-sm" style={{ color: BRAND.muted }}>
+                  <p className={`leading-relaxed text-sm ${!descExpanded && displayProduct.description.length > 300 ? 'line-clamp-4' : ''}`} style={{ color: BRAND.muted }}>
                     {displayProduct.description}
                   </p>
+                  {displayProduct.description.length > 300 && (
+                    <button
+                      onClick={() => setDescExpanded(!descExpanded)}
+                      className="text-xs font-medium hover:underline"
+                      style={{ color: BRAND.green }}
+                    >
+                      {descExpanded ? 'View Less' : 'View More'}
+                    </button>
+                  )}
                 </div>
               )}
 
@@ -1073,7 +1084,7 @@ export default function ProductDetailPage() {
                 <button
                   className="pointer-events-auto flex items-center gap-3 p-4 rounded-xl transition-all min-h-[44px]"
                   style={{ backgroundColor: '#25D36608', borderColor: '#25D36620', border: '1px solid #25D36620' }}
-                  onClick={() => window.open('https://wa.me/919876543210?text=Hi%2C%20I%20have%20a%20question%20about%20NOTJUST%20Watr', '_blank')}
+                  onClick={() => window.open('https://wa.me/919288007431?text=Hi%2C%20I%20have%20a%20question%20about%20NOTJUST%20Watr', '_blank')}
                 >
                   <div className="w-10 h-10 rounded-lg flex items-center justify-center min-h-[40px]"
                     style={{ backgroundColor: '#25D36615' }}
@@ -1089,7 +1100,7 @@ export default function ProductDetailPage() {
                 <button
                   className="pointer-events-auto flex items-center gap-3 p-4 rounded-xl transition-all min-h-[44px]"
                   style={{ backgroundColor: `${BRAND.blue}08`, borderColor: `${BRAND.blue}20`, border: `1px solid ${BRAND.blue}20` }}
-                  onClick={() => window.open('mailto:hello@notjust.health?subject=Query%20about%20NOTJUST%20Watr', '_blank')}
+                  onClick={() => window.open('mailto:info@zh-onehealth.com?subject=Query%20about%20NOTJUST%20Watr', '_blank')}
                 >
                   <div className="w-10 h-10 rounded-lg flex items-center justify-center min-h-[40px]"
                     style={{ backgroundColor: `${BRAND.blue}15` }}
@@ -1098,14 +1109,14 @@ export default function ProductDetailPage() {
                   </div>
                   <div className="text-left">
                     <p className="text-sm font-semibold" style={{ color: BRAND.dark }}>Email</p>
-                    <p className="text-[11px]" style={{ color: BRAND.muted }}>hello@notjust.health</p>
+                    <p className="text-[11px]" style={{ color: BRAND.muted }}>info@zh-onehealth.com</p>
                   </div>
                 </button>
 
                 <button
                   className="pointer-events-auto flex items-center gap-3 p-4 rounded-xl transition-all min-h-[44px]"
                   style={{ backgroundColor: `${BRAND.green}08`, borderColor: `${BRAND.green}20`, border: `1px solid ${BRAND.green}20` }}
-                  onClick={() => window.open('sms:+919876543210?body=Hi%2C%20I%20have%20a%20question%20about%20NOTJUST%20Watr', '_blank')}
+                  onClick={() => window.open('sms:+919288007431?body=Hi%2C%20I%20have%20a%20question%20about%20NOTJUST%20Watr', '_blank')}
                 >
                   <div className="w-10 h-10 rounded-lg flex items-center justify-center min-h-[40px]"
                     style={{ backgroundColor: `${BRAND.green}15` }}
@@ -1114,7 +1125,7 @@ export default function ProductDetailPage() {
                   </div>
                   <div className="text-left">
                     <p className="text-sm font-semibold" style={{ color: BRAND.dark }}>SMS</p>
-                    <p className="text-[11px]" style={{ color: BRAND.muted }}>+91 98765 43210</p>
+                    <p className="text-[11px]" style={{ color: BRAND.muted }}>+91 92880 07431</p>
                   </div>
                 </button>
               </div>
@@ -1123,6 +1134,7 @@ export default function ProductDetailPage() {
         </motion.div>
 
       </div>
+      <SiteFooter />
     </div>
   )
 }

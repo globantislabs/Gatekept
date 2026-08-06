@@ -6,6 +6,7 @@ import {
   AlertCircle, ChevronRight, Trophy, Video, FileQuestion, RotateCcw,
 } from 'lucide-react'
 import { useAppStore } from '@/store/app-store'
+import SiteFooter from '@/components/SiteFooter'
 import { productVideoService, productQuizService, productLearningService, productService, productServiceCompat, productVideoServiceCompat, productLearningServiceCompat } from '@/lib/data-service'
 import type { ProductVideo, ProductQuiz, ProductLearningProgress, Product } from '@/lib/data-service'
 import { Button } from '@/components/ui/button'
@@ -81,6 +82,8 @@ export function ProductLearningModule() {
   const [playing, setPlaying] = useState(false)
   const [videoProgress, setVideoProgress] = useState(0) // 0-100 for current video
   const progressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const videoRef = useRef<HTMLVideoElement | null>(null)
+  const hasRealVideo = currentVideo?.video_url && currentVideo.video_url.trim() !== ''
 
   // ─── Quiz state ───────────────────────────────────────
   const [quizQuestions, setQuizQuestions] = useState<ProductQuiz[]>([])
@@ -267,8 +270,9 @@ export function ProductLearningModule() {
     return () => { cancelled = true }
   }, [currentStep.type === 'quiz' ? currentStep.videoIndex : -1, videos])
 
-  // ─── Simulated video playback ─────────────────────────
+  // ─── Video playback (simulated fallback) ─────────────
   useEffect(() => {
+    if (hasRealVideo) return // real video handles its own progress
     if (playing && videoProgress < 100) {
       progressIntervalRef.current = setInterval(() => {
         setVideoProgress((prev) => {
@@ -286,7 +290,7 @@ export function ProductLearningModule() {
         progressIntervalRef.current = null
       }
     }
-  }, [playing])
+  }, [playing, hasRealVideo])
 
   // ─── Save video progress to backend ───────────────────
   const saveVideoProgress = useCallback(async (pct: number) => {
@@ -508,7 +512,8 @@ export function ProductLearningModule() {
   // RENDER
   // ═══════════════════════════════════════════════════════
   return (
-    <motion.div {...fadeInUp} transition={{ duration: 0.4 }} className="max-w-4xl mx-auto px-4 py-6">
+    <div className="min-h-screen flex flex-col" style={{ backgroundColor: BRAND.bg }}>
+    <motion.div {...fadeInUp} transition={{ duration: 0.4 }} className="max-w-4xl mx-auto px-4 py-6 flex-1">
       {/* ─── Header ────────────────────────────────────── */}
       <div className="flex items-center gap-3 mb-4">
         <Button
@@ -646,66 +651,107 @@ export function ProductLearningModule() {
             transition={{ duration: 0.3 }}
           >
             <Card className="overflow-hidden" style={{ borderColor: BRAND.surface }}>
-              {/* Simulated video area */}
-              <div
-                className="relative aspect-video bg-gray-900 flex items-center justify-center cursor-pointer"
-                onClick={handlePlayPause}
-              >
-                {/* Gradient background */}
-                <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-900">
-                  <div className="absolute inset-0 flex items-center justify-center opacity-10">
-                    <div
-                      className="text-9xl font-heading font-bold select-none"
-                      style={{ color: BRAND.lime }}
-                    >
-                      {product?.name?.charAt(0) ?? '?'}
-                    </div>
+              {/* Video area */}
+              {hasRealVideo ? (
+                /* ── Real video player ── */
+                <div className="relative bg-black">
+                  <video
+                    ref={videoRef}
+                    src={currentVideo!.video_url}
+                    className="w-full aspect-video"
+                    controls
+                    autoPlay={playing}
+                    onPlay={() => setPlaying(true)}
+                    onPause={() => setPlaying(false)}
+                    onEnded={() => {
+                      setPlaying(false)
+                      setVideoProgress(100)
+                      saveVideoProgress(100)
+                    }}
+                    onTimeUpdate={() => {
+                      const v = videoRef.current
+                      if (v && v.duration > 0) {
+                        const pct = Math.round((v.currentTime / v.duration) * 100)
+                        setVideoProgress(pct)
+                      }
+                    }}
+                    onLoadedMetadata={() => {
+                      // Restore saved progress
+                      if (videoProgress > 0 && videoRef.current && videoRef.current.duration > 0) {
+                        videoRef.current.currentTime = (videoProgress / 100) * videoRef.current.duration
+                      }
+                    }}
+                  />
+                  {/* Video number badge */}
+                  <div className="absolute top-4 left-4 z-10">
+                    <Badge className="text-xs" style={{ backgroundColor: BRAND.green, color: '#fff' }}>
+                      Video {currentStep.videoIndex + 1} of {videos.length}
+                    </Badge>
                   </div>
                 </div>
-
-                {/* Video info overlay */}
-                <div className="absolute top-4 left-4 z-10">
-                  <Badge
-                    className="text-xs"
-                    style={{ backgroundColor: BRAND.green, color: '#fff' }}
-                  >
-                    Video {currentStep.videoIndex + 1} of {videos.length}
-                  </Badge>
-                </div>
-
-                {/* Play/Pause button */}
-                <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }} className="z-10">
-                  {videoProgress >= 100 ? (
-                    <div className="flex flex-col items-center gap-2">
-                      <CheckCircle className="h-16 w-16" style={{ color: BRAND.lime }} />
-                      <span className="text-sm font-medium" style={{ color: BRAND.lime }}>Video Complete</span>
+              ) : (
+                /* ── Simulated video (fallback) ── */
+                <div
+                  className="relative aspect-video bg-gray-900 flex items-center justify-center cursor-pointer"
+                  onClick={handlePlayPause}
+                >
+                  {/* Gradient background */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-900">
+                    <div className="absolute inset-0 flex items-center justify-center opacity-10">
+                      <div
+                        className="text-9xl font-heading font-bold select-none"
+                        style={{ color: BRAND.lime }}
+                      >
+                        {product?.name?.charAt(0) ?? '?'}
+                      </div>
                     </div>
-                  ) : (
-                    <div
-                      className="h-16 w-16 rounded-full flex items-center justify-center backdrop-blur-sm"
-                      style={{ backgroundColor: `${BRAND.green}CC` }}
+                  </div>
+
+                  {/* Video info overlay */}
+                  <div className="absolute top-4 left-4 z-10">
+                    <Badge
+                      className="text-xs"
+                      style={{ backgroundColor: BRAND.green, color: '#fff' }}
                     >
-                      {playing ? (
-                        <div className="flex gap-1.5 items-center">
-                          <div className="w-1.5 h-6 bg-white rounded-sm" />
-                          <div className="w-1.5 h-6 bg-white rounded-sm" />
-                        </div>
-                      ) : (
-                        <Play className="h-7 w-7 text-white ml-1" fill="white" />
-                      )}
-                    </div>
-                  )}
-                </motion.div>
+                      Video {currentStep.videoIndex + 1} of {videos.length}
+                    </Badge>
+                  </div>
 
-                {/* Duration badge */}
-                <div className="absolute bottom-4 right-4 z-10">
-                  <span className="text-xs text-white/70 bg-black/40 px-2 py-1 rounded">
-                    {currentVideo?.duration || '0:00'}
-                  </span>
+                  {/* Play/Pause button */}
+                  <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }} className="z-10">
+                    {videoProgress >= 100 ? (
+                      <div className="flex flex-col items-center gap-2">
+                        <CheckCircle className="h-16 w-16" style={{ color: BRAND.lime }} />
+                        <span className="text-sm font-medium" style={{ color: BRAND.lime }}>Video Complete</span>
+                      </div>
+                    ) : (
+                      <div
+                        className="h-16 w-16 rounded-full flex items-center justify-center backdrop-blur-sm"
+                        style={{ backgroundColor: `${BRAND.green}CC` }}
+                      >
+                        {playing ? (
+                          <div className="flex gap-1.5 items-center">
+                            <div className="w-1.5 h-6 bg-white rounded-sm" />
+                            <div className="w-1.5 h-6 bg-white rounded-sm" />
+                          </div>
+                        ) : (
+                          <Play className="h-7 w-7 text-white ml-1" fill="white" />
+                        )}
+                      </div>
+                    )}
+                  </motion.div>
+
+                  {/* Duration badge */}
+                  <div className="absolute bottom-4 right-4 z-10">
+                    <span className="text-xs text-white/70 bg-black/40 px-2 py-1 rounded">
+                      {currentVideo?.duration || '0:00'}
+                    </span>
+                  </div>
                 </div>
-              </div>
+              )}
 
-              {/* Progress bar (seek bar) */}
+              {/* Progress bar (seek bar) — only for simulated video */}
+              {!hasRealVideo && (
               <div
                 className="h-1.5 cursor-pointer relative"
                 style={{ backgroundColor: BRAND.surface }}
@@ -719,6 +765,7 @@ export function ProductLearningModule() {
                   }}
                 />
               </div>
+              )}
 
               {/* Video title & controls */}
               <CardContent className="p-4">
@@ -1209,5 +1256,7 @@ export function ProductLearningModule() {
         )}
       </AnimatePresence>
     </motion.div>
+    <SiteFooter />
+    </div>
   )
 }

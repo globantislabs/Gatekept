@@ -10,6 +10,7 @@ import {
   ShoppingCart, Sparkles, Leaf, Banknote, Mail
 } from 'lucide-react'
 import { useAppStore, type CartItem } from '@/store/app-store'
+import SiteFooter from '@/components/SiteFooter'
 import { orderService } from '@/lib/data-service'
 import type { Order } from '@/lib/data-service'
 import { Button } from '@/components/ui/button'
@@ -228,6 +229,7 @@ export function CartView() {
           </Button>
         </div>
       </motion.div>
+      <SiteFooter />
     </div>
   )
 }
@@ -1021,6 +1023,7 @@ export function OrderSuccessView() {
           </Button>
         </motion.div>
       </motion.div>
+      <SiteFooter />
     </motion.div>
   )
 }

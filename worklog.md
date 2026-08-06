@@ -90,3 +90,22 @@ Stage Summary:
 - Email OTP is delivered via Zoho SMTP
 - If WhatsApp template fails, falls back to plain text message
 - Root cause of WhatsApp failure: template `index` field was string "0" instead of number 0
+
+---
+Task ID: 5
+Agent: main
+Task: Update "About This Product" section to show only half content initially with View More toggle
+
+Work Log:
+- Modified `src/components/ProductDetailPage.tsx` — Changed "About This Product" section from `line-clamp-4` (4-line limit) to a half-content truncation approach
+- New logic: finds the midpoint of the description text, then searches for a natural sentence/word break within 80 chars of the midpoint
+- Shows first half of content with "..." when collapsed, full content when expanded
+- Added `ChevronRight` icon arrows to "View More" and "View Less" buttons for better UX
+- Lowered the threshold from 300 chars to 200 chars (`isLong = desc.length > 200`) so the toggle appears for shorter descriptions too
+- Lint passes, page compiles successfully (GET / 200)
+
+Stage Summary:
+- "About This Product" now shows only ~half the content initially
+- Smart truncation finds natural sentence/word breaks near the midpoint
+- "View More" / "View Less" toggle with arrow icons
+- Works for any description longer than 200 characters

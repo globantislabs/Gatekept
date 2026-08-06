@@ -767,25 +767,49 @@ export default function ProductDetailPage() {
               </div>
 
               {/* About This Product — right side */}
-              {displayProduct?.description && (
-                <div className="space-y-2">
-                  <h3 className="font-heading font-semibold text-sm" style={{ color: BRAND.dark }}>
-                    About This Product
-                  </h3>
-                  <p className={`leading-relaxed text-sm ${!descExpanded && displayProduct.description.length > 300 ? 'line-clamp-4' : ''}`} style={{ color: BRAND.muted }}>
-                    {displayProduct.description}
-                  </p>
-                  {displayProduct.description.length > 300 && (
-                    <button
-                      onClick={() => setDescExpanded(!descExpanded)}
-                      className="text-xs font-medium hover:underline"
-                      style={{ color: BRAND.green }}
-                    >
-                      {descExpanded ? 'View Less' : 'View More'}
-                    </button>
-                  )}
-                </div>
-              )}
+              {displayProduct?.description && (() => {
+                const desc = displayProduct.description
+                const isLong = desc.length > 200
+                // Find a natural break point near the middle of the text
+                const midPoint = Math.floor(desc.length / 2)
+                let halfEnd = midPoint
+                if (isLong && !descExpanded) {
+                  // Look for sentence end, comma, or space near the midpoint
+                  const searchRange = desc.slice(midPoint, midPoint + 80)
+                  const sentenceEnd = searchRange.search(/[.!?,;]\s/)
+                  if (sentenceEnd !== -1) {
+                    halfEnd = midPoint + sentenceEnd + 1
+                  } else {
+                    const spacePos = searchRange.search(/\s/)
+                    if (spacePos !== -1) halfEnd = midPoint + spacePos
+                    else halfEnd = midPoint
+                  }
+                }
+                const visibleText = (!descExpanded && isLong) ? desc.slice(0, halfEnd) : desc
+                return (
+                  <div className="space-y-2">
+                    <h3 className="font-heading font-semibold text-sm" style={{ color: BRAND.dark }}>
+                      About This Product
+                    </h3>
+                    <p className="leading-relaxed text-sm" style={{ color: BRAND.muted }}>
+                      {visibleText}{!descExpanded && isLong ? '...' : ''}
+                    </p>
+                    {isLong && (
+                      <button
+                        onClick={() => setDescExpanded(!descExpanded)}
+                        className="text-xs font-medium hover:underline inline-flex items-center gap-1"
+                        style={{ color: BRAND.green }}
+                      >
+                        {descExpanded ? (
+                          <>View Less <ChevronRight className="w-3 h-3 rotate-90" /></>
+                        ) : (
+                          <>View More <ChevronRight className="w-3 h-3 -rotate-90" /></>
+                        )}
+                      </button>
+                    )}
+                  </div>
+                )
+              })()}
 
               {/* Highlights — right side */}
               {highlights.length > 0 && (

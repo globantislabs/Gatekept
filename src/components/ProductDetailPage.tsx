@@ -360,9 +360,9 @@ export default function ProductDetailPage() {
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.3 }}
-          className="flex items-center justify-between mb-6"
+          className="flex items-center justify-between mb-4 sm:mb-6 gap-2"
         >
-          <div className="flex items-center gap-2 text-sm" style={{ color: BRAND.muted }}>
+          <div className="flex items-center gap-2 text-xs sm:text-sm min-w-0" style={{ color: BRAND.muted }}>
             <button
               onClick={() => navigateTo('products')}
               className="pointer-events-auto hover:opacity-80 transition-opacity font-medium"
@@ -370,27 +370,27 @@ export default function ProductDetailPage() {
             >
               Products
             </button>
-            <ChevronRight className="w-3.5 h-3.5" />
-            <span className="font-medium" style={{ color: BRAND.dark }}>{displayProduct?.name || 'Product'}</span>
+            <ChevronRight className="w-3 h-3 flex-shrink-0" />
+            <span className="font-medium truncate" style={{ color: BRAND.dark }}>{displayProduct?.name || 'Product'}</span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
             <Button
               variant="outline"
               size="sm"
               onClick={() => navigateTo('products')}
-              className="pointer-events-auto min-h-[44px] rounded-xl border-[#e3dfd8] font-heading text-sm"
+              className="pointer-events-auto min-h-[36px] sm:min-h-[44px] rounded-xl border-[#e3dfd8] font-heading text-xs sm:text-sm px-2.5 sm:px-3"
             >
-              <ArrowLeft className="w-4 h-4 mr-1" />
-              Products
+              <ArrowLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-0.5 sm:mr-1" />
+              <span className="hidden sm:inline">Products</span>
             </Button>
             <Button
               variant="outline"
               size="sm"
               onClick={() => navigateTo('landing')}
-              className="pointer-events-auto min-h-[44px] rounded-xl border-[#e3dfd8] font-heading text-sm"
+              className="pointer-events-auto min-h-[36px] sm:min-h-[44px] rounded-xl border-[#e3dfd8] font-heading text-xs sm:text-sm px-2.5 sm:px-3"
             >
-              <Home className="w-4 h-4 mr-1" />
-              Home
+              <Home className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-0.5 sm:mr-1" />
+              <span className="hidden sm:inline">Home</span>
             </Button>
           </div>
         </motion.div>
@@ -401,11 +401,11 @@ export default function ProductDetailPage() {
           animate="visible"
           variants={fadeInUp}
         >
-          <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
+          <div className="grid lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-12">
 
             {/* Left: Product Image + About/Overview below */}
             <motion.div variants={staggerItem} className="space-y-4">
-              <div className="relative h-[300px] sm:h-[350px] lg:h-[420px] rounded-2xl lg:rounded-3xl overflow-hidden flex items-center justify-center border"
+              <div className="relative h-[240px] sm:h-[300px] lg:h-[420px] rounded-2xl lg:rounded-3xl overflow-hidden flex items-center justify-center border"
                 style={{ borderColor: BRAND.surface, backgroundColor: `${BRAND.surface}30` }}
               >
                 {/* Gradient background */}
@@ -465,20 +465,20 @@ export default function ProductDetailPage() {
               <Tabs defaultValue="overview" className="w-full">
 
                 {/* Scrollable Tabs List */}
-                <TabsList className="w-full grid grid-cols-5 h-auto p-0 bg-transparent rounded-none border-b"
+                <TabsList className="w-full flex overflow-x-auto h-auto p-0 bg-transparent rounded-none border-b -mx-1 px-1 sm:mx-0 sm:px-0"
                   style={{ borderColor: BRAND.surface }}
                 >
                   {[
-                    { value: 'overview', label: 'Overview', icon: <Info className="w-3.5 h-3.5" /> },
-                    { value: 'ingredients', label: 'Ingredients', icon: <Leaf className="w-3.5 h-3.5" /> },
-                    { value: 'nutrition', label: 'Nutrition', icon: <Package className="w-3.5 h-3.5" /> },
-                    { value: 'storage', label: 'Storage', icon: <ShieldCheck className="w-3.5 h-3.5" /> },
-                    { value: 'legal', label: 'Legal', icon: <Globe className="w-3.5 h-3.5" /> },
+                    { value: 'overview', label: 'Overview', icon: <Info className="w-3.5 h-3.5 hidden sm:block" /> },
+                    { value: 'ingredients', label: 'Ingredients', icon: <Leaf className="w-3.5 h-3.5 hidden sm:block" /> },
+                    { value: 'nutrition', label: 'Nutrition', icon: <Package className="w-3.5 h-3.5 hidden sm:block" /> },
+                    { value: 'storage', label: 'Storage', icon: <ShieldCheck className="w-3.5 h-3.5 hidden sm:block" /> },
+                    { value: 'legal', label: 'Legal', icon: <Globe className="w-3.5 h-3.5 hidden sm:block" /> },
                   ].map(tab => (
                     <TabsTrigger
                       key={tab.value}
                       value={tab.value}
-                      className="pointer-events-auto min-h-[44px] py-2.5 text-xs sm:text-sm font-heading font-medium transition-all border-b-2 -mb-px rounded-none data-[state=active]:border-b-2 data-[state=active]:shadow-none"
+                      className="pointer-events-auto min-h-[40px] sm:min-h-[44px] px-3 sm:px-5 py-2 text-xs sm:text-sm font-heading font-medium transition-all border-b-2 -mb-px rounded-none data-[state=active]:border-b-2 data-[state=active]:shadow-none shrink-0 whitespace-nowrap"
                       style={{
                         borderColor: 'transparent',
                         color: BRAND.muted,
@@ -528,7 +528,7 @@ export default function ProductDetailPage() {
                         <h3 className="font-heading font-bold text-lg" style={{ color: BRAND.dark }}>
                           Product Details
                         </h3>
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           {[
                             { label: 'Weight', value: displayProduct?.weight, icon: <Package className="w-3.5 h-3.5" /> },
                             { label: 'Serving Size', value: displayProduct?.serving_size, icon: <Leaf className="w-3.5 h-3.5" /> },
@@ -709,7 +709,7 @@ export default function ProductDetailPage() {
                       transition={{ duration: 0.3 }}
                       className="space-y-4"
                     >
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                         {[
                           { label: 'FSSAI License', value: displayProduct?.fssai_license, icon: <ShieldCheck className="w-4 h-4" /> },
                           { label: 'HSN Code', value: displayProduct?.hsn_code, icon: <Package className="w-4 h-4" /> },
@@ -741,7 +741,7 @@ export default function ProductDetailPage() {
             </motion.div>
 
             {/* Right: Product Info — Price, Badges, CTA, Learning Module, Trust */}
-            <motion.div variants={staggerItem} className="space-y-5 lg:sticky lg:top-4 self-start">
+            <motion.div variants={staggerItem} className="space-y-4 sm:space-y-5 lg:sticky lg:top-20 self-start">
               {/* Name & Short Description */}
               <div>
                 <div className="flex items-start justify-between gap-3">
@@ -813,8 +813,8 @@ export default function ProductDetailPage() {
               <Separator style={{ backgroundColor: BRAND.surface }} />
 
               {/* ─── Price + Discount ──────────────────────────── */}
-              <div className="flex items-baseline gap-2">
-                <span className="font-heading text-3xl font-bold" style={{ color: BRAND.green }}>
+              <div className="flex items-baseline gap-2 flex-wrap">
+                <span className="font-heading text-2xl sm:text-3xl font-bold" style={{ color: BRAND.green }}>
                   ₹{displayProduct?.price.toLocaleString()}
                 </span>
                 {discountInfo && (
@@ -859,7 +859,7 @@ export default function ProductDetailPage() {
               </div>
 
               {/* ─── Buy Now + Unlock Now Buttons ──────────────── */}
-              <div className="flex gap-3">
+              <div className="flex flex-col sm:flex-row gap-3">
                 {/* Buy Now — Locked until learning completed */}
                 <Button
                   onClick={isCompleted ? handleAddToCart : undefined}
@@ -995,37 +995,40 @@ export default function ProductDetailPage() {
                     {!user ? (
                       <Button
                         onClick={handleLoginToSave}
-                        className="pointer-events-auto min-h-[48px] w-full rounded-xl font-heading font-semibold text-sm"
+                        className="pointer-events-auto min-h-[48px] w-full rounded-xl font-heading font-semibold text-xs sm:text-sm"
                         style={{ backgroundColor: BRAND.green, color: '#fff' }}
                       >
-                        <Play className="w-5 h-5 mr-2" />
-                        Sign in to access product learning & enable purchase
+                        <Play className="w-4 h-4 sm:w-5 sm:h-5 mr-2 flex-shrink-0" />
+                        <span className="sm:hidden">Sign in to Learn & Buy</span>
+                        <span className="hidden sm:inline">Sign in to access product learning & enable purchase</span>
                       </Button>
                     ) : learningStatus === 'NOT_STARTED' ? (
                       <Button
                         onClick={handleStartLearning}
-                        className="pointer-events-auto min-h-[48px] w-full rounded-xl font-heading font-semibold text-sm"
+                        className="pointer-events-auto min-h-[48px] w-full rounded-xl font-heading font-semibold text-xs sm:text-sm"
                         style={{ backgroundColor: BRAND.green, color: '#fff' }}
                       >
-                        <Play className="w-5 h-5 mr-2" />
-                        Sign in to access product learning & enable purchase
+                        <Play className="w-4 h-4 sm:w-5 sm:h-5 mr-2 flex-shrink-0" />
+                        <span className="sm:hidden">Start Learning</span>
+                        <span className="hidden sm:inline">Sign in to access product learning & enable purchase</span>
                       </Button>
                     ) : isInProgress ? (
                       <Button
                         onClick={handleContinueLearning}
-                        className="pointer-events-auto min-h-[48px] w-full rounded-xl font-heading font-semibold text-sm"
+                        className="pointer-events-auto min-h-[48px] w-full rounded-xl font-heading font-semibold text-xs sm:text-sm"
                         style={{ backgroundColor: BRAND.green, color: '#fff' }}
                       >
-                        <BookOpen className="w-5 h-5 mr-2" />
-                        Continue Learning to Unlock Purchase
+                        <BookOpen className="w-4 h-4 sm:w-5 sm:h-5 mr-2 flex-shrink-0" />
+                        <span className="sm:hidden">Continue Learning</span>
+                        <span className="hidden sm:inline">Continue Learning to Unlock Purchase</span>
                       </Button>
                     ) : (
                       <Button
                         onClick={handleReview}
                         variant="outline"
-                        className="pointer-events-auto min-h-[48px] w-full rounded-xl font-heading font-semibold text-sm border-[#e3dfd8]"
+                        className="pointer-events-auto min-h-[48px] w-full rounded-xl font-heading font-semibold text-xs sm:text-sm border-[#e3dfd8]"
                       >
-                        <Eye className="w-5 h-5 mr-2" />
+                        <Eye className="w-4 h-4 sm:w-5 sm:h-5 mr-2 flex-shrink-0" />
                         Review Learning Module
                       </Button>
                     )}
@@ -1044,7 +1047,7 @@ export default function ProductDetailPage() {
               </Card>
 
               {/* ─── Trust Badges ─────────────────────────────── */}
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-3 gap-2 sm:gap-3">
                 <div className="flex flex-col items-center text-center p-3 rounded-xl bg-white border" style={{ borderColor: BRAND.surface }}>
                   <ShieldCheck className="w-5 h-5 mb-1" style={{ color: BRAND.green }} />
                   <p className="text-[10px] font-medium" style={{ color: BRAND.dark }}>FSSAI Certified</p>
@@ -1070,7 +1073,7 @@ export default function ProductDetailPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.3 }}
-          className="mt-10 lg:mt-12"
+          className="mt-6 sm:mt-10 lg:mt-12"
         >
           <Card className="border rounded-2xl" style={{ borderColor: BRAND.surface }}>
             <CardHeader>
@@ -1080,7 +1083,7 @@ export default function ProductDetailPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid sm:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                 <button
                   className="pointer-events-auto flex items-center gap-3 p-4 rounded-xl transition-all min-h-[44px]"
                   style={{ backgroundColor: '#25D36608', borderColor: '#25D36620', border: '1px solid #25D36620' }}

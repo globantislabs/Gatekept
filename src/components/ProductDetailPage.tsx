@@ -223,21 +223,16 @@ export default function ProductDetailPage() {
       type: product.type,
       purchaseType: 'one-time',
     })
-    toast.success(`${product.name} added to cart!`, {
-      action: {
-        label: 'Go to Cart →',
-        onClick: () => navigateTo('cart'),
-      },
-      duration: 5000,
-    })
+    toast.success(`${product.name} added to cart!`)
+    navigateTo('cart')
   }, [product, isCompleted, quantity, addToCart, navigateTo])
 
   const handleStartLearning = useCallback(() => {
     if (!product) return
     setSelectedProductId(product.id)
     if (!user) {
-      // Require login before starting learning
-      setRedirectAfterLogin('product-learning')
+      // Require login before starting learning — redirect back to product detail after login
+      setRedirectAfterLogin('product-detail')
       navigateTo('auth-login')
     } else {
       navigateTo('product-learning')
@@ -247,7 +242,7 @@ export default function ProductDetailPage() {
   const handleLoginToSave = useCallback(() => {
     if (!product) return
     setSelectedProductId(product.id)
-    setRedirectAfterLogin('product-learning')
+    setRedirectAfterLogin('product-detail')
     navigateTo('auth-login')
   }, [product, setSelectedProductId, setRedirectAfterLogin, navigateTo])
 
@@ -365,7 +360,7 @@ export default function ProductDetailPage() {
           <div className="flex items-center gap-2 text-xs sm:text-sm min-w-0" style={{ color: BRAND.muted }}>
             <button
               onClick={() => navigateTo('products')}
-              className="pointer-events-auto hover:opacity-80 transition-opacity font-medium"
+              className="pointer-events-auto hover:opacity-80 transition-opacity font-medium cursor-pointer"
               style={{ color: BRAND.green }}
             >
               Products

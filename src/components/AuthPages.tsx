@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Mail, Phone, Lock, User, MapPin, Shield, Eye, EyeOff, AlertCircle, MessageCircle, Leaf, KeyRound, ArrowLeft, CheckCircle2, RefreshCw } from 'lucide-react'
 import { useAppStore } from '@/store/app-store'
@@ -120,10 +120,11 @@ export function AuthLogin() {
   const [keepSignedIn, setKeepSignedIn] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const hasLoggedIn = useRef(false)
 
   // ── Redirect if already logged in ──
   useEffect(() => {
-    if (user) {
+    if (user && hasLoggedIn.current) {
       navigateTo(redirectAfterLogin || 'landing')
     }
   }, [user, redirectAfterLogin, navigateTo])
@@ -143,6 +144,7 @@ export function AuthLogin() {
     try {
       const result = await authService.login(identifier.trim(), password)
       setUser(result.user as UserProfile)
+      hasLoggedIn.current = true
       toast.success(`Welcome back, ${result.user.name}!`)
 
       if (redirectAfterLogin) {

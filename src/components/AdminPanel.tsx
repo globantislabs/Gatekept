@@ -1295,9 +1295,9 @@ function AdminDashboard() {
                                   <p className="text-[9px]" style={{ color: A.textMuted }}>Click to upload</p>
                                 </div>
                               )}
-                              <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer" onChange={async e => {
+                              <input type="file" accept="image/jpeg,image/jpg,image/png" className="absolute inset-0 opacity-0 cursor-pointer" onChange={async e => {
                                 const file = e.target.files?.[0]
-                                if (file) { setUploadingImage(true); const url = await handleImageUploadApi(file); setUploadingImage(false); if (url) setNewProduct({ ...newProduct, image_url: url }) }
+                                if (file) { if (file.size > 2 * 1024 * 1024) { toast.error('Image too large (max 2MB)'); return } setUploadingImage(true); const url = await handleImageUploadApi(file); setUploadingImage(false); if (url) setNewProduct({ ...newProduct, image_url: url }) }
                               }} />
                             </div>
                             <div className="flex-1 space-y-2">
@@ -1324,9 +1324,10 @@ function AdminDashboard() {
                                 <Upload className="w-4 h-4 mx-auto" style={{ color: A.textMuted }} />
                                 <p className="text-[8px] mt-0.5" style={{ color: A.textMuted }}>Add</p>
                               </div>
-                              <input type="file" accept="image/*" className="hidden" onChange={async e => {
+                              <input type="file" accept="image/jpeg,image/jpg,image/png" className="hidden" onChange={async e => {
                                 const file = e.target.files?.[0]
                                 if (!file) return
+                                if (file.size > 2 * 1024 * 1024) { toast.error('Image too large (max 2MB)'); return }
                                 setGalleryUploading(true)
                                 const url = await handleImageUploadApi(file)
                                 setGalleryUploading(false)
@@ -1860,11 +1861,23 @@ function AdminDashboard() {
                             <div className="space-y-2">
                               <label className="flex items-center gap-2 p-2 rounded-lg border border-dashed cursor-pointer hover:bg-gray-50 transition-colors" style={{ borderColor: A.border }}>
                                 <Upload className="w-4 h-4 shrink-0" style={{ color: A.textMuted }} />
-                                <span className="text-xs truncate" style={{ color: A.textMuted }}>{videoUploading ? 'Uploading...' : 'Upload video file (MP4/WebM, max 50MB)'}</span>
-                                <input type="file" accept="video/mp4,video/webm,video/ogg" className="hidden" onChange={async (e) => {
+                                <span className="text-xs truncate" style={{ color: A.textMuted }}>{videoUploading ? 'Uploading...' : 'Upload video file (MP4/MOV/AVI, max 20MB)'}</span>
+                                <input type="file" accept="video/mp4,video/quicktime,video/x-msvideo" className="hidden" onChange={async (e) => {
                                   const f = e.target.files?.[0]
                                   if (!f) return
-                                  if (f.size > 50 * 1024 * 1024) { toast.error('Video too large (max 50MB)'); return }
+                                  if (f.size > 20 * 1024 * 1024) { toast.error('Video too large (max 20MB)'); return }
+                                  // Check video duration
+                                  const durationOk = await new Promise<boolean>((resolve) => {
+                                    const v = document.createElement('video')
+                                    v.preload = 'metadata'
+                                    v.onloadedmetadata = () => {
+                                      URL.revokeObjectURL(v.src)
+                                      resolve(v.duration <= 120)
+                                    }
+                                    v.onerror = () => resolve(true) // allow if can't check
+                                    v.src = URL.createObjectURL(f)
+                                  })
+                                  if (!durationOk) { toast.error('Video too long (max 2 minutes)'); return }
                                   setVideoUploading(true)
                                   const fd = new FormData()
                                   fd.append('file', f)
@@ -1900,9 +1913,10 @@ function AdminDashboard() {
                                   ) : (
                                     <p className="text-[8px] text-center" style={{ color: A.textMuted }}>Upload</p>
                                   )}
-                                  <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer" onChange={async (e) => {
+                                  <input type="file" accept="image/jpeg,image/jpg,image/png" className="absolute inset-0 opacity-0 cursor-pointer" onChange={async (e) => {
                                     const f = e.target.files?.[0]
                                     if (!f) return
+                                    if (f.size > 2 * 1024 * 1024) { toast.error('Image too large (max 2MB)'); return }
                                     setVideoUploading(true)
                                     const url = await handleImageUploadApi(f)
                                     setVideoUploading(false)

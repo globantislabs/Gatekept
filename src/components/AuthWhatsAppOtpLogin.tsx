@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { MessageCircle, Phone, ArrowLeft, RefreshCw, CheckCircle, AlertCircle, User } from 'lucide-react'
 import { useAppStore } from '@/store/app-store'
@@ -44,10 +44,11 @@ const RESEND_COOLDOWN_SECONDS = 30
 // ============================================================
 export function AuthWhatsAppOtpLogin() {
   const { navigateTo, setUser, redirectAfterLogin, setRedirectAfterLogin, user, goBack } = useAppStore()
+  const hasLoggedIn = useRef(false)
 
   // ── Redirect if already logged in ──
   useEffect(() => {
-    if (user) {
+    if (user && hasLoggedIn.current) {
       navigateTo(redirectAfterLogin || 'landing')
     }
   }, [user, redirectAfterLogin, navigateTo])
@@ -247,6 +248,7 @@ export function AuthWhatsAppOtpLogin() {
 
       if (data.success) {
         setUser(data.user as UserProfile)
+        hasLoggedIn.current = true
         setStep('success')
         toast.success(data.is_new
           ? `Welcome, ${data.user.name}! Your account has been created.`

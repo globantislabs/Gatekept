@@ -63,7 +63,7 @@ export function ProductLearningModule() {
   // ─── Login guard: redirect to login if not authenticated ──
   useEffect(() => {
     if (!user) {
-      setRedirectAfterLogin('product-learning')
+      setRedirectAfterLogin('product-detail')
       navigateTo('auth-login')
     }
   }, [user, navigateTo, setRedirectAfterLogin])
@@ -659,7 +659,7 @@ export function ProductLearningModule() {
                 <div className="relative bg-black">
                   <video
                     ref={videoRef}
-                    src={currentVideo!.video_url}
+                    src={currentVideo!.video_url?.startsWith('/uploads/') ? `/api${currentVideo!.video_url}` : currentVideo!.video_url}
                     className="w-full aspect-video"
                     controls
                     autoPlay={playing}

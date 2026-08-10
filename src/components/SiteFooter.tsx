@@ -55,8 +55,13 @@ export default function SiteFooter() {
           <div>
             <h4 className="font-heading font-semibold text-white text-sm mb-3">Follow Us</h4>
             <div className="flex gap-2">
-              {[Instagram, Twitter, Linkedin, Youtube].map((Icon, i) => (
-                <button key={i} className="w-9 h-9 rounded-lg bg-white/[0.05] flex items-center justify-center text-white/40 hover:bg-[#48805b] hover:text-white transition-all duration-300" aria-label={`Follow us on social media`}>
+              {[
+                { Icon: Instagram, label: 'Instagram' },
+                { Icon: Twitter, label: 'Twitter' },
+                { Icon: Linkedin, label: 'LinkedIn' },
+                { Icon: Youtube, label: 'YouTube' },
+              ].map(({ Icon, label }, i) => (
+                <button key={i} className="w-9 h-9 rounded-lg bg-white/[0.05] flex items-center justify-center text-white/40 hover:bg-[#48805b] hover:text-white transition-all duration-300" aria-label={`Follow us on ${label}`}>
                   <Icon className="w-4 h-4" />
                 </button>
               ))}

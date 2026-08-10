@@ -2,16 +2,15 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import Image from 'next/image'
-import { motion, AnimatePresence, useInView } from 'framer-motion'
+import { motion, useInView } from 'framer-motion'
 import ProductImage from '@/components/ProductImage'
 import {
-  ArrowRight, Heart, Zap, Leaf, ChevronRight, Menu, X, Star,
-  CheckCircle, Clock, Users, Globe, TrendingUp, Award, Shield,
-  Package, Utensils, MessageCircle, Mail, Smartphone, MapPin,
-  Instagram, Twitter, Linkedin, Youtube, GraduationCap, Lock,
+  ArrowRight, Heart, Zap, Leaf, ChevronRight, Menu, Star,
+  CheckCircle, Clock, Users, Globe, TrendingUp, Shield,
+  Package, Utensils, Lock,
   Unlock,
-  ChevronDown, ChevronLeft, Sparkles, Home, Store, CreditCard,
-  BarChart3, Send, ShieldCheck, ShoppingBag, ShoppingCart
+  ChevronDown, ChevronLeft, Sparkles, Home, Store,
+  BarChart3, ShoppingBag, ShoppingCart
 } from 'lucide-react'
 import SiteFooter from '@/components/SiteFooter'
 import { useAppStore, type AppView } from '@/store/app-store'

@@ -386,7 +386,7 @@ export function CheckoutView() {
   // ── Derived ──
   const subtotal = cartTotal()
   const taxAmount = Math.round(subtotal * 0.18)
-  const discountAmount = cart.reduce((sum, item) => sum + (item.packDiscount || 0) * item.quantity, 0)
+  const discountAmount = cart.reduce((sum, item) => sum + ((item.packDiscount || 0) / 100) * item.price * item.quantity, 0)
   const totalAmount = subtotal + taxAmount - discountAmount
   const isEmpty = cart.length === 0
 
@@ -395,8 +395,9 @@ export function CheckoutView() {
     if (!user) {
       setRedirectAfterLogin('checkout')
       navigateTo('auth-login')
+      return
     }
-  }, [user])
+  }, [user, navigateTo, setRedirectAfterLogin])
 
   // ── Validate form ──
   const validateForm = (): boolean => {

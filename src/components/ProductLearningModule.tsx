@@ -83,8 +83,6 @@ export function ProductLearningModule() {
   const [videoProgress, setVideoProgress] = useState(0) // 0-100 for current video
   const progressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const videoRef = useRef<HTMLVideoElement | null>(null)
-  const hasRealVideo = currentVideo?.video_url && currentVideo.video_url.trim() !== ''
-
   // ─── Quiz state ───────────────────────────────────────
   const [quizQuestions, setQuizQuestions] = useState<ProductQuiz[]>([])
   const [quizLoading, setQuizLoading] = useState(false)
@@ -97,6 +95,7 @@ export function ProductLearningModule() {
   const currentVideo = currentStep.type === 'video' || currentStep.type === 'quiz'
     ? videos[currentStep.videoIndex] || null
     : null
+  const hasRealVideo = currentVideo?.video_url && currentVideo.video_url.trim() !== ''
 
   // ─── Build the step list for the progress indicator ───
   const stepList: { type: 'video' | 'quiz'; videoIndex: number; label: string }[] = []
@@ -153,8 +152,8 @@ export function ProductLearningModule() {
           const vp = savedProgress.video_progress || {}
           const qa = savedProgress.quiz_answers || {}
 
-          // If the status is already UNLOCKED or COMPLETED, go to completed
-          if (savedProgress.status === 'UNLOCKED' || savedProgress.status === 'COMPLETED') {
+          // If the status is already COMPLETED, go to completed
+          if (savedProgress.status === 'COMPLETED') {
             const allPassed: Record<number, boolean> = {}
             for (let i = 0; i < loadedVideos.length; i++) {
               allPassed[i] = true
@@ -511,6 +510,9 @@ export function ProductLearningModule() {
   // ═══════════════════════════════════════════════════════
   // RENDER
   // ═══════════════════════════════════════════════════════
+  // Don't render content until authenticated (prevents flash)
+  if (!user) return null
+
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: BRAND.bg }}>
     <motion.div {...fadeInUp} transition={{ duration: 0.4 }} className="max-w-4xl mx-auto px-4 py-6 flex-1">

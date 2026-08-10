@@ -1,6 +1,6 @@
 'use client'
 
-import { ArrowLeft, Download, FileText } from 'lucide-react'
+import { ArrowLeft, FileText } from 'lucide-react'
 import { useAppStore } from '@/store/app-store'
 import { Button } from '@/components/ui/button'
 import SiteFooter from '@/components/SiteFooter'

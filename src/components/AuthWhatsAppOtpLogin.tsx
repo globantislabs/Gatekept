@@ -131,7 +131,7 @@ export function AuthWhatsAppOtpLogin() {
 
       const data = await res.json()
 
-      if (!data.success && res.status >= 400) {
+      if (!res.ok || !data.success) {
         setError(data.message || 'Failed to send OTP')
         setSending(false)
         return
@@ -160,7 +160,7 @@ export function AuthWhatsAppOtpLogin() {
     if (resendCooldown > 0) return
     setOtpValue('')
     setOtpError(null)
-    setResendCooldown(RESEND_COOLDOWN_SECONDS)
+    // Set cooldown AFTER the send succeeds (inside handleSendOtp)
     await handleSendOtp()
   }
 

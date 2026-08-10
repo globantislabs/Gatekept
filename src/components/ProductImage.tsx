@@ -44,6 +44,13 @@ export default function ProductImage({
   priority = false,
 }: ProductImageProps) {
   const [imgError, setImgError] = useState(false)
+  const [currentSrc, setCurrentSrc] = useState(src)
+
+  // Reset error state when src changes (e.g., navigating to a different product)
+  if (src !== currentSrc) {
+    setCurrentSrc(src)
+    setImgError(false)
+  }
 
   // Determine the fallback image based on product type
   const fallbackSrc = productType === 'STILL'

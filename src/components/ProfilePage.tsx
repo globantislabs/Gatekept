@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import Image from 'next/image'
 import {
   User, Mail, Phone, MapPin, Shield, Edit, LogOut, ArrowLeft,
   CheckCircle, Award, Globe, RefreshCw, Package, Truck, Clock,

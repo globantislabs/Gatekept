@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import {
   Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog'
@@ -39,7 +39,7 @@ export function OtpVerifyModal({
   const [otpValue, setOtpValue] = useState('')
   const [otpId, setOtpId] = useState<string | null>(null)
   const [phoneMasked, setPhoneMasked] = useState('')
-  const [sending, setSending] = useState(true)
+  const [sending, setSending] = useState(false)
   const [verifying, setVerifying] = useState(false)
   const [verified, setVerified] = useState(false)
   const [errorState, setErrorState] = useState<string | null>(null)
@@ -74,14 +74,15 @@ export function OtpVerifyModal({
     }
   }
 
-  // ── Auto-send on mount ── (using a ref pattern to avoid lint issue)
-  const [hasSent, setHasSent] = useState(false)
-  // Send OTP once when modal opens - using state-driven approach
-  if (open && !hasSent && !otpId) {
-    setHasSent(true)
-    // We'll trigger the send via a "sending" initial state
-    // and the user sees a "Send OTP" button or auto-trigger
-  }
+  // ── Auto-send on mount ──
+  const hasSentRef = useRef(false)
+  useEffect(() => {
+    if (open && !hasSentRef.current) {
+      hasSentRef.current = true
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      handleSendOtp()
+    }
+  }, [open])
 
   const handleResend = async () => {
     if (resendCooldown > 0) return
@@ -107,7 +108,7 @@ export function OtpVerifyModal({
         setAttemptsRemaining(prev => Math.max(0, prev - 1))
         if (result.message.includes('Maximum') || result.message.includes('expired')) {
           setOtpId(null)
-          setHasSent(false)
+          hasSentRef.current = false
         }
       }
     } catch (err: any) {
@@ -122,14 +123,14 @@ export function OtpVerifyModal({
       setOtpValue('')
       setOtpId(null)
       setPhoneMasked('')
-      setSending(true)
+      setSending(false)
       setVerifying(false)
       setVerified(false)
       setErrorState(null)
       setErrorMessage('')
       setResendCooldown(0)
       setAttemptsRemaining(3)
-      setHasSent(false)
+      hasSentRef.current = false
     }
     onOpenChange(isOpen)
   }

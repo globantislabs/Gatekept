@@ -1,7 +1,6 @@
 'use client'
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
-import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
 import ProductImage from '@/components/ProductImage'
 import {
@@ -9,7 +8,7 @@ import {
   ChevronRight, Home, GraduationCap, RefreshCw, ShieldCheck, Truck,
   Leaf, Clock, Globe, Mail, MessageCircle, Smartphone, ShoppingCart,
   Minus, Plus, CreditCard, BookOpen, Star, AlertTriangle, Info,
-  Sparkles, Eye, EyeOff, SeparatorHorizontal
+  Sparkles, Eye, EyeOff
 } from 'lucide-react'
 import SiteFooter from '@/components/SiteFooter'
 import { useAppStore, type CartItem } from '@/store/app-store'
@@ -119,9 +118,10 @@ export default function ProductDetailPage() {
   // Display product — use fetched product, fallback to cached product for immediate display
   const displayProduct = product || (cachedProduct ? { ...cachedProduct, videos: [] as ProductVideo[], quizzes: [] as ProductQuiz[] } : null)
 
-  // Derived: share URL computed from product
+  // Derived: share URL computed from product (safe for SSR)
   const shareUrl = useMemo(() => {
     if (!product) return ''
+    if (typeof window === 'undefined') return ''
     const slug = product.slug || product.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
     return `${window.location.origin}${window.location.pathname}?product=${slug}`
   }, [product])
@@ -844,7 +844,7 @@ export default function ProductDetailPage() {
                 {discountInfo && (
                   <>
                     <span className="text-base line-through" style={{ color: BRAND.muted }}>
-                      ₹{displayProduct?.mrp!.toLocaleString()}
+                      ₹{(displayProduct?.mrp ?? 0).toLocaleString()}
                     </span>
                     <Badge
                       className="text-[11px] min-h-[22px] px-2.5"
@@ -1034,7 +1034,7 @@ export default function ProductDetailPage() {
                       >
                         <Play className="w-4 h-4 sm:w-5 sm:h-5 mr-2 flex-shrink-0" />
                         <span className="sm:hidden">Start Learning</span>
-                        <span className="hidden sm:inline">Sign in to access product learning & enable purchase</span>
+                        <span className="hidden sm:inline">Start the learning module to unlock purchase</span>
                       </Button>
                     ) : isInProgress ? (
                       <Button

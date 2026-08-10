@@ -1,23 +1,23 @@
 'use client'
 
-import React, { useState, useEffect, useCallback, useRef } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import {
   LayoutDashboard, Package, BookOpen, Users, Megaphone,
   Plus, Pencil, Trash2, Copy, Search,
-  ArrowLeft, Eye, Loader2,
+  Eye, Loader2,
   Shield, CheckCircle, XCircle, ChevronLeft, ChevronRight, ChevronUp, ChevronDown,
   RefreshCw, Leaf, Video, Play, Scan, Edit, Save, Star, AlertCircle,
-  HelpCircle, QrCode, ShoppingCart, BarChart3,
-  FileText, CreditCard, Bell, X, Download, ExternalLink,
-  Home, GraduationCap, Menu, LogOut, TrendingUp, TrendingDown,
-  Settings, Info, Tag, Sparkles, Check, Link as LinkIcon, EyeOff, Columns3, ClipboardList, DollarSign, Upload
+  HelpCircle, QrCode, ShoppingCart,
+  FileText, CreditCard, X, Download, ExternalLink,
+  TrendingUp,
+  Info, Tag, Columns3, ClipboardList, DollarSign, Upload
 } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
 import { useAppStore } from '@/store/app-store'
 import {
   productService, productVideoService, productQuizService,
   adminStatsService, userService, campaignService,
-  orderService, subscriptionService, qrScanService, quizService,
+  orderService, subscriptionService, qrScanService,
   type Product, type ProductVideo, type ProductQuiz,
   type Campaign, type QrScan, type UserProfile,
   type Order, type Subscription,
@@ -33,14 +33,10 @@ import {
   DialogHeader, DialogTitle, DialogTrigger
 } from '@/components/ui/dialog'
 import {
-  Sheet, SheetContent, SheetHeader, SheetTitle
-} from '@/components/ui/sheet'
-import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
-import { Progress } from '@/components/ui/progress'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
@@ -433,8 +429,13 @@ function AdminDashboard() {
         setProductVideoCounts(vCounts)
         setProductQuizCounts(qCounts)
 
-        // Scans stub
-        setScans([])
+        // Fetch QR scans
+        try {
+          const scansRes = await qrScanService.list()
+          setScans(scansRes)
+        } catch {
+          setScans([])
+        }
 
         setLoading(false)
       } catch (err) {
@@ -574,7 +575,7 @@ function AdminDashboard() {
     { value: 'campaigns', label: 'Campaigns', icon: Megaphone, badge: campaigns.length },
     { value: 'products', label: 'Products', icon: Package, badge: null },
     { value: 'qr', label: 'QR Codes', icon: QrCode, badge: campaigns.filter(c => c.status === 'ACTIVE').length },
-    { value: 'orders', label: 'Orders', icon: Package, badge: orders.length },
+    { value: 'orders', label: 'Orders', icon: ShoppingCart, badge: orders.length },
     { value: 'subscriptions', label: 'Subscriptions', icon: CreditCard, badge: null },
     { value: 'analytics', label: 'Analytics', icon: TrendingUp, badge: null },
     { value: 'content', label: 'Content', icon: FileText, badge: questions.length },
@@ -1094,7 +1095,7 @@ function AdminDashboard() {
                       <div><span className="text-[11px]" style={{ color: A.textMuted }}>Date</span><p className="text-[11px]" style={{ color: A.text }}>{new Date(selectedOrder.created_at).toLocaleDateString()}</p></div>
                     </div>
                     <Separator style={{ background: A.border }} />
-                    <Select value={selectedOrder.status} onValueChange={async (newStatus) => { await orderService.updateStatus(selectedOrder.id, newStatus, userId); setOrders(prev => prev.map(p => p.id === selectedOrder.id ? { ...p, status: newStatus } : p)); setSelectedOrder({ ...selectedOrder, status: newStatus }); toast.success('Status updated') }}>
+                    <Select value={selectedOrder.status} onValueChange={async (newStatus) => { try { await orderService.updateStatus(selectedOrder.id, newStatus, userId); setOrders(prev => prev.map(p => p.id === selectedOrder.id ? { ...p, status: newStatus } : p)); setSelectedOrder({ ...selectedOrder, status: newStatus }); toast.success('Status updated') } catch (err) { toast.error('Failed to update status'); console.error(err) } }}>
                       <SelectTrigger className="rounded-md" style={{ borderColor: A.border, color: A.text }}><SelectValue /></SelectTrigger>
                       <SelectContent style={{ background: '#fff', borderColor: A.border }}>
                         <SelectItem value="PLACED" style={{ color: A.text }}>Placed</SelectItem>

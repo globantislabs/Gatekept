@@ -1,0 +1,2823 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CodeRabbit QA Bug Report - NOTJUST Watr</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  @page { size: A4; margin: 0; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: #0f0f23;
+    color: #e2e8f0;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 9.5px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Cover Page ── */
+  .cover {
+    width: 210mm; min-height: 297mm;
+    display: flex; flex-direction: column;
+    justify-content: center; align-items: center;
+    text-align: center;
+    padding: 40mm 30mm;
+    background: #0f0f23;
+    page-break-after: always;
+  }
+  .cover-logo { margin-bottom: 20px; }
+  .cover-brand {
+    font-size: 42pt; font-weight: 900; letter-spacing: -1.5px;
+    background: linear-gradient(135deg, #a855f7 0%, #14b8a6 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 4px;
+  }
+  .cover-tagline {
+    font-size: 11pt; font-weight: 400; color: #94a3b8;
+    letter-spacing: 6px; text-transform: uppercase;
+    margin-bottom: 36px;
+  }
+  .cover-project {
+    font-size: 22pt; font-weight: 700; color: #e2e8f0;
+    margin-bottom: 4px;
+  }
+  .cover-subtitle2 {
+    font-size: 10pt; color: #64748b; margin-bottom: 44px;
+  }
+  .cover-grid {
+    display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;
+  }
+  .cover-card {
+    background: #1a1a2e; border: 1px solid #2a2a4a;
+    border-radius: 10px; padding: 14px 22px;
+    min-width: 90px; text-align: center;
+  }
+  .cover-card-num {
+    font-size: 30pt; font-weight: 800; line-height: 1;
+  }
+  .cover-card-label {
+    font-size: 7pt; font-weight: 600; color: #94a3b8;
+    text-transform: uppercase; letter-spacing: 1.2px; margin-top: 5px;
+  }
+  .cover-total {
+    margin-top: 28px;
+    font-size: 9pt; color: #475569; letter-spacing: 2px; text-transform: uppercase;
+  }
+  .cover-footer-line {
+    margin-top: 40px;
+    width: 80px; height: 2px;
+    background: linear-gradient(90deg, #a855f7, #14b8a6);
+    border-radius: 1px;
+  }
+
+  /* ── Content Pages ── */
+  .content-page {
+    width: 210mm; min-height: 297mm;
+    padding: 16mm 16mm 20mm 16mm;
+    background: #0f0f23;
+    page-break-after: always;
+  }
+
+  /* Page header bar */
+  .page-topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 12px; padding-bottom: 6px;
+    border-bottom: 1px solid #1e1e3a;
+  }
+  .page-topbar-left {
+    display: flex; align-items: center; gap: 8px;
+  }
+  .page-topbar-logo { width: 18px; height: 18px; }
+  .page-topbar-title {
+    font-size: 8pt; font-weight: 600; color: #64748b;
+    letter-spacing: 1px; text-transform: uppercase;
+  }
+  .page-topbar-right {
+    font-size: 7.5pt; color: #475569; font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* Section headers */
+  .section-header {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 10px; padding-bottom: 6px;
+    border-bottom: 1px solid #2a2a4a;
+  }
+  .section-dot {
+    width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+  }
+  .section-title {
+    font-size: 13pt; font-weight: 700; color: #e2e8f0;
+  }
+  .section-count {
+    font-size: 8pt; font-weight: 600; color: #94a3b8;
+    background: #1a1a2e; border: 1px solid #2a2a4a;
+    border-radius: 4px; padding: 1px 6px; margin-left: auto;
+  }
+
+  /* Bug cards - compact */
+  .bug {
+    background: #151528; border: 1px solid #252545;
+    border-radius: 6px; margin-bottom: 7px;
+    page-break-inside: avoid;
+    overflow: hidden;
+  }
+  .bug-top {
+    display: flex; align-items: flex-start; gap: 8px;
+    padding: 7px 10px 4px 10px;
+  }
+  .bug-id-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 7.5pt; font-weight: 600;
+    padding: 1px 5px; border-radius: 3px;
+    white-space: nowrap; flex-shrink: 0;
+    letter-spacing: 0.3px;
+  }
+  .bug-info { flex: 1; min-width: 0; }
+  .bug-title {
+    font-size: 9.5pt; font-weight: 600; color: #e2e8f0; line-height: 1.3;
+  }
+  .bug-tags {
+    display: flex; align-items: center; gap: 5px;
+    margin-top: 2px; flex-wrap: wrap;
+  }
+  .bug-tag {
+    font-size: 6.5pt; font-weight: 600;
+    padding: 0.5px 4px; border-radius: 2px;
+    text-transform: uppercase; letter-spacing: 0.4px;
+  }
+  .bug-loc {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 6.5pt; color: #475569;
+  }
+  .bug-details {
+    padding: 0 10px 6px 10px;
+  }
+  .bug-field { margin-bottom: 3px; }
+  .bug-field-label {
+    font-size: 6.5pt; font-weight: 700; color: #475569;
+    text-transform: uppercase; letter-spacing: 0.8px;
+    display: inline; margin-right: 4px;
+  }
+  .bug-field-text {
+    font-size: 8.5pt; color: #cbd5e1; line-height: 1.45;
+    display: inline;
+  }
+  .bug-fix {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 7.5pt; color: #14b8a6; line-height: 1.4;
+    background: #0c2520; padding: 3px 7px;
+    border-radius: 3px; border-left: 2px solid #14b8a6;
+    margin-top: 2px; display: block;
+  }
+
+  /* Summary section */
+  .summary-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 10px; margin-bottom: 12px;
+  }
+  .summary-card {
+    background: #151528; border: 1px solid #252545;
+    border-radius: 6px; padding: 10px 12px;
+  }
+  .summary-card-title {
+    font-size: 7pt; font-weight: 600; color: #94a3b8;
+    text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;
+  }
+  .s-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 2px 0;
+  }
+  .s-label { font-size: 8.5pt; color: #cbd5e1; }
+  .s-value { font-size: 9pt; font-weight: 700; }
+  .bar-track {
+    height: 3px; background: #1e1e3a; border-radius: 1.5px;
+    margin-top: 2px; overflow: hidden;
+  }
+  .bar-fill { height: 100%; border-radius: 1.5px; }
+
+  .key-findings {
+    background: #151528; border: 1px solid #252545;
+    border-radius: 6px; padding: 10px 12px; margin-bottom: 10px;
+  }
+  .kf-title {
+    font-size: 7pt; font-weight: 600; color: #94a3b8;
+    text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;
+  }
+  .kf-text {
+    font-size: 8.5pt; color: #cbd5e1; line-height: 1.6;
+  }
+  .kf-text p { margin-bottom: 5px; }
+
+  /* Footer */
+  .page-footer {
+    margin-top: auto; padding-top: 6px;
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 6.5pt; color: #334155;
+    border-top: 1px solid #1a1a2e;
+  }
+</style>
+</head>
+<body>
+
+
+<div class="cover">
+  <div class="cover-logo">
+<svg viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg" width="64" height="64">
+  <defs>
+    <linearGradient id="cr-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#a855f7" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#14b8a6" stop-opacity="0.12"/>
+    </linearGradient>
+    <linearGradient id="cr-stroke" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#a855f7"/>
+      <stop offset="100%" stop-color="#14b8a6"/>
+    </linearGradient>
+  </defs>
+  <!-- Background circle -->
+  <circle cx="120" cy="120" r="110" fill="url(#cr-bg)"/>
+  <circle cx="120" cy="120" r="100" fill="none" stroke="url(#cr-stroke)" stroke-width="1.5" opacity="0.4"/>
+  <!-- Rabbit body -->
+  <ellipse cx="120" cy="140" rx="40" ry="34" fill="#e2e8f0" opacity="0.95"/>
+  <!-- Left ear -->
+  <ellipse cx="96" cy="80" rx="12" ry="32" fill="#e2e8f0" opacity="0.95" transform="rotate(-15 96 80)"/>
+  <ellipse cx="96" cy="80" rx="6" ry="24" fill="#a855f7" opacity="0.35" transform="rotate(-15 96 80)"/>
+  <!-- Right ear -->
+  <ellipse cx="144" cy="80" rx="12" ry="32" fill="#e2e8f0" opacity="0.95" transform="rotate(15 144 80)"/>
+  <ellipse cx="144" cy="80" rx="6" ry="24" fill="#a855f7" opacity="0.35" transform="rotate(15 144 80)"/>
+  <!-- Eyes -->
+  <circle cx="106" cy="133" r="6" fill="#a855f7"/>
+  <circle cx="134" cy="133" r="6" fill="#a855f7"/>
+  <circle cx="107.5" cy="131.5" r="2.5" fill="#fff"/>
+  <circle cx="135.5" cy="131.5" r="2.5" fill="#fff"/>
+  <!-- Nose -->
+  <ellipse cx="120" cy="147" rx="5" ry="3.5" fill="#14b8a6" opacity="0.8"/>
+  <!-- Mouth -->
+  <path d="M115 151 Q120 156 125 151" fill="none" stroke="#94a3b8" stroke-width="1" opacity="0.5"/>
+  <!-- Code brackets -->
+  <text x="120" y="172" text-anchor="middle" font-family="monospace" font-size="18" fill="#14b8a6" opacity="0.6">&lt;/&gt;</text>
+</svg>
+</div>
+  <div class="cover-brand">CodeRabbit</div>
+  <div class="cover-tagline">QA Bug Hunter Report</div>
+  <div class="cover-project">NOTJUST Watr</div>
+  <div class="cover-subtitle2">E-Commerce Platform &middot; Full-Stack QA Analysis</div>
+  <div class="cover-grid">
+    <div class="cover-card">
+      <div class="cover-card-num" style="color: #ef4444;">16</div>
+      <div class="cover-card-label">Critical</div>
+    </div>
+    <div class="cover-card">
+      <div class="cover-card-num" style="color: #f97316;">27</div>
+      <div class="cover-card-label">High</div>
+    </div>
+    <div class="cover-card">
+      <div class="cover-card-num" style="color: #eab308;">25</div>
+      <div class="cover-card-label">Medium</div>
+    </div>
+    <div class="cover-card">
+      <div class="cover-card-num" style="color: #3b82f6;">12</div>
+      <div class="cover-card-label">Low</div>
+    </div>
+  </div>
+  <div class="cover-total">80 issues identified</div>
+  <div class="cover-footer-line"></div>
+</div>
+
+
+<div class="content-page">
+  <div class="page-topbar">
+    <div class="page-topbar-left">
+      <span class="page-topbar-title">CodeRabbit QA Report</span>
+    </div>
+    <span class="page-topbar-right">NOTJUST Watr</span>
+  </div>
+
+  <div class="section-header">
+    <span class="section-title">Analysis Summary</span>
+  </div>
+
+  <div class="summary-grid">
+    <div class="summary-card">
+      <div class="summary-card-title">By Severity</div>
+      <div class="s-row"><span class="s-label">Critical</span><span class="s-value" style="color:#ef4444;">16</span></div><div class="bar-track"><div class="bar-fill" style="width:20.0%;background:#ef4444;opacity:0.7;"></div></div><div class="s-row"><span class="s-label">High</span><span class="s-value" style="color:#f97316;">27</span></div><div class="bar-track"><div class="bar-fill" style="width:33.75%;background:#f97316;opacity:0.7;"></div></div><div class="s-row"><span class="s-label">Medium</span><span class="s-value" style="color:#eab308;">25</span></div><div class="bar-track"><div class="bar-fill" style="width:31.25%;background:#eab308;opacity:0.7;"></div></div><div class="s-row"><span class="s-label">Low</span><span class="s-value" style="color:#3b82f6;">12</span></div><div class="bar-track"><div class="bar-fill" style="width:15.0%;background:#3b82f6;opacity:0.7;"></div></div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-card-title">By Category</div>
+      <div class="s-row"><span class="s-label">Security</span><span class="s-value" style="color:#a855f7;">16</span></div><div class="bar-track"><div class="bar-fill" style="width:20.0%;background:#a855f7;opacity:0.7;"></div></div><div class="s-row"><span class="s-label">State</span><span class="s-value" style="color:#a855f7;">16</span></div><div class="bar-track"><div class="bar-fill" style="width:20.0%;background:#a855f7;opacity:0.7;"></div></div><div class="s-row"><span class="s-label">Logic</span><span class="s-value" style="color:#a855f7;">16</span></div><div class="bar-track"><div class="bar-fill" style="width:20.0%;background:#a855f7;opacity:0.7;"></div></div><div class="s-row"><span class="s-label">UX</span><span class="s-value" style="color:#a855f7;">11</span></div><div class="bar-track"><div class="bar-fill" style="width:13.750000000000002%;background:#a855f7;opacity:0.7;"></div></div><div class="s-row"><span class="s-label">API</span><span class="s-value" style="color:#a855f7;">5</span></div><div class="bar-track"><div class="bar-fill" style="width:6.25%;background:#a855f7;opacity:0.7;"></div></div><div class="s-row"><span class="s-label">A11y</span><span class="s-value" style="color:#a855f7;">5</span></div><div class="bar-track"><div class="bar-fill" style="width:6.25%;background:#a855f7;opacity:0.7;"></div></div><div class="s-row"><span class="s-label">Form</span><span class="s-value" style="color:#a855f7;">4</span></div><div class="bar-track"><div class="bar-fill" style="width:5.0%;background:#a855f7;opacity:0.7;"></div></div><div class="s-row"><span class="s-label">Navigation</span><span class="s-value" style="color:#a855f7;">3</span></div><div class="bar-track"><div class="bar-fill" style="width:3.75%;background:#a855f7;opacity:0.7;"></div></div><div class="s-row"><span class="s-label">Data</span><span class="s-value" style="color:#a855f7;">2</span></div><div class="bar-track"><div class="bar-fill" style="width:2.5%;background:#a855f7;opacity:0.7;"></div></div><div class="s-row"><span class="s-label">Render</span><span class="s-value" style="color:#a855f7;">2</span></div><div class="bar-track"><div class="bar-fill" style="width:2.5%;background:#a855f7;opacity:0.7;"></div></div>
+    </div>
+  </div>
+
+  <div class="summary-card" style="margin-bottom:10px;">
+    <div class="summary-card-title">Top Affected Components</div>
+    <div class="s-row"><span class="s-label">AdminPanel</span><span class="s-value" style="color:#14b8a6;">21</span></div><div class="bar-track"><div class="bar-fill" style="width:26.25%;background:#14b8a6;opacity:0.7;"></div></div><div class="s-row"><span class="s-label">ProductDetailPage</span><span class="s-value" style="color:#14b8a6;">14</span></div><div class="bar-track"><div class="bar-fill" style="width:17.5%;background:#14b8a6;opacity:0.7;"></div></div><div class="s-row"><span class="s-label">Orders API</span><span class="s-value" style="color:#14b8a6;">5</span></div><div class="bar-track"><div class="bar-fill" style="width:6.25%;background:#14b8a6;opacity:0.7;"></div></div><div class="s-row"><span class="s-label">CheckoutView</span><span class="s-value" style="color:#14b8a6;">5</span></div><div class="bar-track"><div class="bar-fill" style="width:6.25%;background:#14b8a6;opacity:0.7;"></div></div><div class="s-row"><span class="s-label">ProductLearningModule</span><span class="s-value" style="color:#14b8a6;">4</span></div><div class="bar-track"><div class="bar-fill" style="width:5.0%;background:#14b8a6;opacity:0.7;"></div></div><div class="s-row"><span class="s-label">API Utils</span><span class="s-value" style="color:#14b8a6;">3</span></div><div class="bar-track"><div class="bar-fill" style="width:3.75%;background:#14b8a6;opacity:0.7;"></div></div><div class="s-row"><span class="s-label">Auth API</span><span class="s-value" style="color:#14b8a6;">3</span></div><div class="bar-track"><div class="bar-fill" style="width:3.75%;background:#14b8a6;opacity:0.7;"></div></div><div class="s-row"><span class="s-label">AuthRegister</span><span class="s-value" style="color:#14b8a6;">3</span></div><div class="bar-track"><div class="bar-fill" style="width:3.75%;background:#14b8a6;opacity:0.7;"></div></div>
+  </div>
+
+  <div class="key-findings">
+    <div class="kf-title">Key Findings</div>
+    <div class="kf-text">
+      <p><strong style="color:#ef4444;">Critical Security Vulnerabilities:</strong> Unsalted SHA-256 password hashing, forgeable session tokens, client-controlled pricing, and IDOR vulnerabilities expose the platform to complete authentication bypass and financial loss.</p>
+      <p><strong style="color:#f97316;">State Management Issues:</strong> Race conditions, infinite retry loops, and stale closures in product detail and admin panels can cause wrong data display, API DDOS, and blank screens.</p>
+      <p><strong style="color:#eab308;">Logic Errors:</strong> Tax calculated on pre-discount subtotal overcharges customers. Phone numbers sent un-normalized cause login failures. Quiz reorder crosses video boundaries.</p>
+      <p><strong style="color:#3b82f6;">UX Defects:</strong> Double-submit on checkout, missing loading states, inaccessible elements, and layout shifts degrade user experience across all flows.</p>
+    </div>
+  </div>
+
+  <div class="page-footer">
+    <span>CodeRabbit QA Report</span>
+    <span>Page 2</span>
+  </div>
+</div>
+
+
+<div class="content-page">
+  <div class="page-topbar">
+    <div class="page-topbar-left">
+      <span class="page-topbar-title">CodeRabbit QA Report</span>
+    </div>
+    <span class="page-topbar-right">NOTJUST Watr &middot; Critical</span>
+  </div>
+
+  <div class="section-header">
+    <span class="section-dot" style="background:#ef4444;"></span>
+    <span class="section-title" style="color:#fca5a5;">Critical Severity</span>
+    <span class="section-count">16 issues</span>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #ef4444;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#ef444418;color:#ef4444;border:1px solid #ef444433;">ADM-1</span>
+      <div class="bug-info">
+        <div class="bug-title">Stale Closure / Race Condition in Data Loading</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#ef444418;color:#ef4444;">Critical</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">State</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">AdminPanel</span>
+          <span class="bug-loc">Data loading useEffect</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">Async load() inside useEffect has no cleanup/abort mechanism. Sequential for loop fetching quiz questions makes this especially slow and race-prone.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#fca5a5;">Stale data overwrites fresh data if user changes during load.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix">Add AbortController and let cancelled = false flag; guard all setState calls.</div>
+    </div>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #ef4444;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#ef444418;color:#ef4444;border:1px solid #ef444433;">ADM-2</span>
+      <div class="bug-info">
+        <div class="bug-title">refreshData() Doesnt Refresh All State</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#ef444418;color:#ef4444;">Critical</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Data</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">AdminPanel</span>
+          <span class="bug-loc">refreshData()</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">refreshData re-fetches stats, users, campaigns, products, orders, subscriptions but SKIPS questions, productVideoCounts, productQuizCounts, and scans.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#fca5a5;">After creating/deleting a product, quiz counts and scan data are outdated.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix">Extract a shared loadAllData() function used by both initial load and refresh.</div>
+    </div>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #ef4444;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#ef444418;color:#ef4444;border:1px solid #ef444433;">ADM-3</span>
+      <div class="bug-info">
+        <div class="bug-title">Product Edit Doesnt Populate slug Field</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#ef444418;color:#ef4444;">Critical</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Data</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">AdminPanel</span>
+          <span class="bug-loc">Product edit onClick</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">When clicking Edit on a product, setNewProduct is called with all fields EXCEPT slug. On save, auto-generate logic creates a new slug - potentially different from the original.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#fca5a5;">Editing any product and saving OVERWRITES the products URL slug, breaking existing QR codes, bookmarks, and SEO.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix">Add slug: product.slug || &quot;&quot; to the setNewProduct call.</div>
+    </div>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #ef4444;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#ef444418;color:#ef4444;border:1px solid #ef444433;">ADM-4</span>
+      <div class="bug-info">
+        <div class="bug-title">AdminPanel Calls navigateTo During Render</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#ef444418;color:#ef4444;">Critical</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">State</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">AdminPanel</span>
+          <span class="bug-loc">AdminPanel export</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">if (!user?.is_admin) { navigateTo(landing); return null } performs side effect during render. Violates Reacts rules.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#fca5a5;">Potential infinite render loop; React strict mode will double-invoke it.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix">Move the navigation into a useEffect.</div>
+    </div>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #ef4444;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#ef444418;color:#ef4444;border:1px solid #ef444433;">ADM-5</span>
+      <div class="bug-info">
+        <div class="bug-title">XSS via window.open + document.write with Product Name</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#ef444418;color:#ef4444;">Critical</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Security</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">AdminPanel</span>
+          <span class="bug-loc">Product QR button onClick</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">w.document.write(...) interpolates product.name and qrUrl directly into HTML. If product name contains script tags, it executes in new window context.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#fca5a5;">Stored XSS - malicious admin can execute arbitrary JavaScript.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix">Use textContent / DOM APIs instead of document.write, or sanitize with DOMPurify.</div>
+    </div>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #ef4444;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#ef444418;color:#ef4444;border:1px solid #ef444433;">AUTH-1</span>
+      <div class="bug-info">
+        <div class="bug-title">Phone Number Sent to API Un-normalized</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#ef444418;color:#ef4444;">Critical</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Logic</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">AuthWhatsAppOtpLogin</span>
+          <span class="bug-loc">handleSendOtp / handleLogin</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">Phone number is validated and normalized to localDigits but API is called with trimmedPhone (raw input). User enters +919876543210, API receives +919876543210 instead of 9876543210.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#fca5a5;">OTP may be sent to the wrong number format, or API may reject. Login fails for users entering international format.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix">Replace phone: trimmedPhone with phone: localDigits in handleSendOtp and handleLogin.</div>
+    </div>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #ef4444;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#ef444418;color:#ef4444;border:1px solid #ef444433;">AUTH-2</span>
+      <div class="bug-info">
+        <div class="bug-title">Phone Number Sent to API Un-normalized in Register</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#ef444418;color:#ef4444;">Critical</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Logic</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">AuthRegister</span>
+          <span class="bug-loc">handleSendOtp</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">Same bug as AUTH-1. When registering with phone, raw trimmed input is sent instead of normalized number.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#fca5a5;">Registration OTP may fail for users entering phone with country code or leading zero.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix">Use phone: formatPhone(trimmed) when sending the WhatsApp OTP.</div>
+    </div>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #ef4444;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#ef444418;color:#ef4444;border:1px solid #ef444433;">CHECKOUT-1</span>
+      <div class="bug-info">
+        <div class="bug-title">Tax Calculated on Pre-Discount Subtotal (Overcharges Customer)</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#ef444418;color:#ef4444;">Critical</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Logic</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">CheckoutView</span>
+          <span class="bug-loc">Price calculation</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">taxAmount = Math.round(subtotal * 0.18) computes GST on full undiscounted subtotal, then discountAmount is subtracted after tax. Per Indian GST rules, tax should apply to discounted price.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#fca5a5;">Customer is overcharged. Example: Item ₹1000 with 20% discount: current tax=₹180, correct tax=₹144. Overcharge of ₹36.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix">const taxableAmount = subtotal - discountAmount; const taxAmount = Math.round(taxableAmount * 0.18);</div>
+    </div>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #ef4444;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#ef444418;color:#ef4444;border:1px solid #ef444433;">CHECKOUT-2</span>
+      <div class="bug-info">
+        <div class="bug-title">Double-Submit on Rapid Button Clicks (Place Order)</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#ef444418;color:#ef4444;">Critical</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">State</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">CheckoutView</span>
+          <span class="bug-loc">handlePlaceOrder</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">placing state is read from render closure. If user clicks Place Order twice rapidly before React re-renders, both clicks proceed to create duplicate orders.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#fca5a5;">Duplicate orders created, customer double-charged for COD, cart cleared incorrectly.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix">Add a placingRef = useRef(false) guard at the top of handlePlaceOrder.</div>
+    </div>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #ef4444;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#ef444418;color:#ef4444;border:1px solid #ef444433;">PDP-1</span>
+      <div class="bug-info">
+        <div class="bug-title">Race Condition: No AbortController on Product Fetch</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#ef444418;color:#ef4444;">Critical</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">State</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">ProductDetailPage</span>
+          <span class="bug-loc">Product fetch useEffect</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">Product fetch effect has no AbortController or cancelled flag. If selectedProductId changes rapidly, stale fetch can overwrite current product data.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#fca5a5;">User navigates from Product A to Product B. If fetch A resolves after fetch B, page shows wrong product data.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix">Add let cancelled = false flag with cleanup, same pattern as progress fetch.</div>
+    </div>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #ef4444;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#ef444418;color:#ef4444;border:1px solid #ef444433;">PDP-2</span>
+      <div class="bug-info">
+        <div class="bug-title">Infinite Retry Loop on Fetch Failure</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#ef444418;color:#ef4444;">Critical</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">State</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">ProductDetailPage</span>
+          <span class="bug-loc">.catch block of product fetch</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">When product fetch fails, setFetchedId(selectedProductId) is never called. On re-render, fetchedId still != selectedProductId, so effect fires again infinitely.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#fca5a5;">If API is down, component enters infinite fetch-fail-render loop, potentially DDOSing the API and freezing the browser.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix">Call setFetchedId(selectedProductId) inside the .catch() block.</div>
+    </div>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #ef4444;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#ef444418;color:#ef4444;border:1px solid #ef444433;">SEC-1</span>
+      <div class="bug-info">
+        <div class="bug-title">Unsalted SHA-256 Password Hashing</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#ef444418;color:#ef4444;">Critical</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Security</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">API Utils</span>
+          <span class="bug-loc">hashPassword()</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">Passwords are hashed with plain SHA-256 with zero salt. SHA-256 is a fast cryptographic hash, not a password hashing function. Identical passwords produce identical hashes, making rainbow table attacks trivial.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#fca5a5;">Full database compromise reveals all user passwords in minutes. No per-user salt means one cracked password cracks all identical passwords instantly.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix">Replace with bcrypt.hash(password, 12) / bcrypt.compare(password, hash). Bcrypt is slow (key stretching) and includes automatic per-hash salt.</div>
+    </div>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #ef4444;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#ef444418;color:#ef4444;border:1px solid #ef444433;">SEC-2</span>
+      <div class="bug-info">
+        <div class="bug-title">Forgeable Session Tokens</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#ef444418;color:#ef4444;">Critical</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Security</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">Auth API</span>
+          <span class="bug-loc">register/route.ts:92, login/route.ts:60</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">Session token is Buffer.from(&quot;userId:timestamp&quot;).toString(&quot;base64&quot;). Trivially reversible - decode from base64 to get the user ID. No cryptographic signature or HMAC.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#fca5a5;">Complete authentication bypass. Attacker can impersonate any user by constructing a token from their ID + any timestamp.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix">Use jose or jsonwebtoken to sign JWTs with a server-side secret. Or generate crypto.randomBytes(32) tokens stored in a sessions table.</div>
+    </div>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #ef4444;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#ef444418;color:#ef4444;border:1px solid #ef444433;">SEC-3</span>
+      <div class="bug-info">
+        <div class="bug-title">Client-Controlled Order Pricing (Price Manipulation)</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#ef444418;color:#ef4444;">Critical</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Security</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">Orders API</span>
+          <span class="bug-loc">orders/route.ts:70-73</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">item.total_price, item.unit_price, and item.pack_discount are taken directly from client request body. Server never verifies against actual product prices in DB.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#fca5a5;">Customers can purchase products at arbitrary prices. Direct financial loss.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix">Server must fetch real product prices from DB, calculate line totals server-side, and reject any client-provided pricing.</div>
+    </div>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #ef4444;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#ef444418;color:#ef4444;border:1px solid #ef444433;">SEC-4</span>
+      <div class="bug-info">
+        <div class="bug-title">No Authorization on User-Specific Order Listing (IDOR)</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#ef444418;color:#ef4444;">Critical</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Security</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">Orders API</span>
+          <span class="bug-loc">orders/route.ts:38-51</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">Any unauthenticated requester can fetch any users orders by passing ?user_id=victim_id. No session verification.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#fca5a5;">Any user can view all orders, shipping addresses, phone numbers, and payment details of any other user.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix">Verify the session tokens user ID matches the requested user_id.</div>
+    </div>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #ef4444;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#ef444418;color:#ef4444;border:1px solid #ef444433;">SEC-5</span>
+      <div class="bug-info">
+        <div class="bug-title">No Authorization on Order Cancellation</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#ef444418;color:#ef4444;">Critical</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Security</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">Data Service</span>
+          <span class="bug-loc">orderService.cancel()</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">orderService.cancel() sends PATCH with { status: CANCELLED } and no admin or user ownership headers. Any user can cancel any order by ID.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#fca5a5;">Any authenticated user can cancel orders belonging to other users.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix">Include user verification headers. Server must verify the session user owns the order or is an admin.</div>
+    </div>
+  </div>
+
+
+  <div class="page-footer">
+    <span>CodeRabbit QA Report</span>
+    <span>Page 3</span>
+  </div>
+</div>
+
+
+<div class="content-page">
+  <div class="page-topbar">
+    <div class="page-topbar-left">
+      <span class="page-topbar-title">CodeRabbit QA Report</span>
+    </div>
+    <span class="page-topbar-right">NOTJUST Watr &middot; High</span>
+  </div>
+
+  <div class="section-header">
+    <span class="section-dot" style="background:#f97316;"></span>
+    <span class="section-title" style="color:#fdba74;">High Severity</span>
+    <span class="section-count">27 issues</span>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #f97316;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#f9731618;color:#f97316;border:1px solid #f9731633;">ADM-11</span>
+      <div class="bug-info">
+        <div class="bug-title">Number Inputs Show Empty for Zero Values</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#f9731618;color:#f97316;">High</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Form</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">AdminPanel</span>
+          <span class="bug-loc">Product form</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">value={newProduct.price || &quot;&quot;} - when price is 0, || evaluates to &quot;&quot;, showing empty input.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#fdba74;">Admin cannot set price/mrp/stock to 0; input appears empty.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix">Use nullish coalescing: value={newProduct.price ?? &quot;&quot;}.</div>
+    </div>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #f97316;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#f9731618;color:#f97316;border:1px solid #f9731633;">ADM-12</span>
+      <div class="bug-info">
+        <div class="bug-title">Quiz Reorder Swaps Across Video Boundaries</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#f9731618;color:#f97316;">High</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Logic</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">AdminPanel</span>
+          <span class="bug-loc">handleReorderQuiz</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">handleReorderQuiz finds quiz in full array and swaps adjacent item. But UI shows quizzes filtered by video_id. Swap may cross video boundaries.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#fdba74;">Reordering quiz within one video accidentally swaps with quiz from different video.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix">Filter learningQuizzes by same video_id before finding adjacent items.</div>
+    </div>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #f97316;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#f9731618;color:#f97316;border:1px solid #f9731633;">ADM-13</span>
+      <div class="bug-info">
+        <div class="bug-title">x-admin-key: true Is Not Real Authentication</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#f9731618;color:#f97316;">High</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Security</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">AdminPanel</span>
+          <span class="bug-loc">handleEditUser, handleDeleteUser</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">Admin API calls use hardcoded header x-admin-key: true. Any user can spoof by adding this header to requests.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#fdba74;">Any authenticated user could call admin APIs by adding this header.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix">Remove client-side admin key; rely solely on server-side session verification.</div>
+    </div>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #f97316;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#f9731618;color:#f97316;border:1px solid #f9731633;">ADM-6</span>
+      <div class="bug-info">
+        <div class="bug-title">|| vs ?? for learningCompleted Fallback (7 locations)</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#f9731618;color:#f97316;">High</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Logic</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">AdminPanel</span>
+          <span class="bug-loc">Dashboard stats</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">stats.learningCompleted || stats.learningCompletions uses || which treats 0 as falsy. Zero completions shows incorrect data.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#fdba74;">Dashboard shows wrong completion counts when exactly 0 users completed learning.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix">Replace || with ?? (nullish coalescing) operator.</div>
+    </div>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #f97316;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#f9731618;color:#f97316;border:1px solid #f9731633;">ADM-7</span>
+      <div class="bug-info">
+        <div class="bug-title">Kanban Order Status Update Has No Error Handling</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#f9731618;color:#f97316;">High</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">API</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">AdminPanel</span>
+          <span class="bug-loc">Kanban card onValueChange</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">await orderService.updateStatus() has no try/catch. If API call fails, no error toast, no rollback.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#fdba74;">Failed status updates silently fail with no feedback.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix">Wrap in try/catch with toast.error() on failure.</div>
+    </div>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #f97316;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#f9731618;color:#f97316;border:1px solid #f9731633;">ADM-8</span>
+      <div class="bug-info">
+        <div class="bug-title">Blank Page on Error (No Error State)</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#f9731618;color:#f97316;">High</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Render</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">AdminPanel</span>
+          <span class="bug-loc">if (!stats) return null</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">After loading, if API failed and stats is null, component returns null - completely blank admin panel.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#fdba74;">Admin sees blank white page with no indication of what went wrong.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix">Add error state with retry button: if (!stats) return &lt;ErrorState onRetry={refreshData} /&gt;.</div>
+    </div>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #f97316;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#f9731618;color:#f97316;border:1px solid #f9731633;">ADM-9</span>
+      <div class="bug-info">
+        <div class="bug-title">Gender Select Has No Empty/Null Option</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#f9731618;color:#f97316;">High</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Form</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">AdminPanel</span>
+          <span class="bug-loc">Edit user dialog</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">When editUserForm.gender is &quot;&quot;, Select value=&quot;&quot; doesnt match any SelectItem. Radix Select in invalid state.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#fdba74;">Select may show unexpected behavior; cannot unset gender once selected.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix">Add SelectItem value=&quot;&quot; for &quot;Prefer not to say&quot; or use undefined as uncontrolled default.</div>
+    </div>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #f97316;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#f9731618;color:#f97316;border:1px solid #f9731633;">API-2</span>
+      <div class="bug-info">
+        <div class="bug-title">No Authentication on Order Creation</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#f9731618;color:#f97316;">High</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">API</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">Orders API</span>
+          <span class="bug-loc">POST handler</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">Any unauthenticated request can create an order for any user_id. No session or cookie verification.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#fdba74;">Attackers can place fraudulent orders under any users account.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix">Validate session token from cookie. Ensure session user ID matches body.user_id.</div>
+    </div>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #f97316;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#f9731618;color:#f97316;border:1px solid #f9731633;">AUTH-3</span>
+      <div class="bug-info">
+        <div class="bug-title">Registration Doesnt Pass OTP Verification ID to Server</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#f9731618;color:#f97316;">High</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Security</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">AuthRegister</span>
+          <span class="bug-loc">handleRegister</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">authService.register() called without passing otpId. Server has no proof that contact was verified before account creation.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#fdba74;">Security gap - malicious user could register with unverified email/phone.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix">Pass otp_id: otpId in the registration payload.</div>
+    </div>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #f97316;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#f9731618;color:#f97316;border:1px solid #f9731633;">AUTH-4</span>
+      <div class="bug-info">
+        <div class="bug-title">&quot;Keep me signed in&quot; Checkbox Is Non-Functional</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#f9731618;color:#f97316;">High</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">UX</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">AuthLogin/AuthRegister</span>
+          <span class="bug-loc">Keep me signed in checkbox</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">keepSignedIn state toggled but never passed to authService.login() call. Checkbox has zero effect on session persistence.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#fdba74;">Users believe theyre choosing session persistence but always get default behavior.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix">Pass keepSignedIn to the login API, or remove the checkbox.</div>
+    </div>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #f97316;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#f9731618;color:#f97316;border:1px solid #f9731633;">CHECKOUT-3</span>
+      <div class="bug-info">
+        <div class="bug-title">Total Amount Can Go Negative with Excessive Discount</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#f9731618;color:#f97316;">High</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Logic</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">CheckoutView</span>
+          <span class="bug-loc">Price calculation</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">totalAmount = subtotal + taxAmount - discountAmount has no floor guard.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#fdba74;">Negative order total could be submitted to the server.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix">const totalAmount = Math.max(0, subtotal + taxAmount - discountAmount)</div>
+    </div>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #f97316;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#f9731618;color:#f97316;border:1px solid #f9731633;">LP-1</span>
+      <div class="bug-info">
+        <div class="bug-title">Badge Position Overlap (Locked + Discount Label)</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#f9731618;color:#f97316;">High</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">UX</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">LandingPage / ProductPage</span>
+          <span class="bug-loc">Product card badges</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">Locked badge and discount_label badge both render at absolute top-4 left-4. When both conditions true, they stack directly on top of each other.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#fdba74;">Jumbled overlapping text in top-left corner of product cards. Discount promotion hidden behind Locked badge.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix">Offset badges conditionally or stack vertically.</div>
+    </div>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #f97316;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#f9731618;color:#f97316;border:1px solid #f9731633;">PDP-3</span>
+      <div class="bug-info">
+        <div class="bug-title">State Leak: descExpanded Not Reset on Product Change</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#f9731618;color:#f97316;">High</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">State</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">ProductDetailPage</span>
+          <span class="bug-loc">descExpanded state</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">descExpanded stays true when navigating to a different product, so new products description shows fully expanded.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#fdba74;">Product B description shown fully expanded with no View More option.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix">useEffect(() =&gt; { setDescExpanded(false) }, [selectedProductId])</div>
+    </div>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #f97316;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#f9731618;color:#f97316;border:1px solid #f9731633;">PDP-4</span>
+      <div class="bug-info">
+        <div class="bug-title">State Leak: quantity Not Reset on Product Change</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#f9731618;color:#f97316;">High</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">State</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">ProductDetailPage</span>
+          <span class="bug-loc">quantity state</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">quantity persists across product navigation. User sets qty=5 for Product A, navigates to Product B - cart add uses qty=5 for Product B.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#fdba74;">User unknowingly adds wrong quantity to cart for a different product.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix">useEffect(() =&gt; { setQuantity(1) }, [selectedProductId])</div>
+    </div>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #f97316;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#f9731618;color:#f97316;border:1px solid #f9731633;">PDP-5</span>
+      <div class="bug-info">
+        <div class="bug-title">handleAddToCart Uses product Instead of displayProduct</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#f9731618;color:#f97316;">High</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Logic</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">ProductDetailPage</span>
+          <span class="bug-loc">handleAddToCart</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">Handler guards on product (fully fetched data), but UI renders using displayProduct (cached). When product is null but displayProduct exists, Buy Now button does nothing silently.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#fdba74;">User clicks Buy Now on completed product during brief window - nothing happens.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix">Use displayProduct in the handler, or disable button until product is fully loaded.</div>
+    </div>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #f97316;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#f9731618;color:#f97316;border:1px solid #f9731633;">PDP-6</span>
+      <div class="bug-info">
+        <div class="bug-title">Aggressive Cutoff for Barely-Long Text</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#f9731618;color:#f97316;">High</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">UX</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">ProductDetailPage</span>
+          <span class="bug-loc">About This Product truncation</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">isLong triggers at desc.length &gt; 200, but midPoint is desc.length/2. For 201-char description, truncated view shows only ~100 characters - cutting away half the content.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#fdba74;">Users see very little content before needing to click View More.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix">Use fixed truncation target of ~180 chars instead of midpoint.</div>
+    </div>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #f97316;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#f9731618;color:#f97316;border:1px solid #f9731633;">PDP-7</span>
+      <div class="bug-info">
+        <div class="bug-title">Truncation Only Searches Forward for Break Point</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#f9731618;color:#f97316;">High</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Logic</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">ProductDetailPage</span>
+          <span class="bug-loc">About This Product truncation</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">Break-point search only looks forward from midpoint (80 chars ahead). If sentence end exists 20 chars BEFORE midpoint, better break point is missed.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#fdba74;">Text gets cut mid-sentence when natural break exists just before search window.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix">Search backward first, then forward from truncation target.</div>
+    </div>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #f97316;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#f9731618;color:#f97316;border:1px solid #f9731633;">PLM-1</span>
+      <div class="bug-info">
+        <div class="bug-title">Infinite Loading Spinner When selectedProductId Is Null</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#f9731618;color:#f97316;">High</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">State</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">ProductLearningModule</span>
+          <span class="bug-loc">Data fetch useEffect</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">Data fetch returns early when !selectedProductId but never sets loading=false. User navigating to /learn with no product selected sees infinite spinner.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#fdba74;">Users stuck on infinite loading screen with no escape.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix">Add early return: if (!selectedProductId) { setLoading(false); return } or render empty state.</div>
+    </div>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #f97316;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#f9731618;color:#f97316;border:1px solid #f9731633;">PLM-2</span>
+      <div class="bug-info">
+        <div class="bug-title">Stale videoProgress Closure in onLoadedMetadata</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#f9731618;color:#f97316;">High</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">State</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">ProductLearningModule</span>
+          <span class="bug-loc">onLoadedMetadata</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">Video onLoadedMetadata callback reads videoProgress from render closure. If component re-renders between setting progress and metadata event, callback uses stale value.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#fdba74;">Video playback resumes at wrong position when returning to partially-watched video.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix">Use a ref (videoProgressRef) synchronized with state, read from ref in onLoadedMetadata.</div>
+    </div>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #f97316;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#f9731618;color:#f97316;border:1px solid #f9731633;">PLM-3</span>
+      <div class="bug-info">
+        <div class="bug-title">Race Condition in saveVideoProgress (Stale Progress Object)</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#f9731618;color:#f97316;">High</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">State</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">ProductLearningModule</span>
+          <span class="bug-loc">saveVideoProgress</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">saveVideoProgress reads progress from useCallback closure. Two rapid saves: second call uses pre-save progress and overwrites first saves data.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#fdba74;">Quiz answers or video progress silently lost on rapid interaction.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix">Use a ref to track latest progress, or implement queue/debounce for saves.</div>
+    </div>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #f97316;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#f9731618;color:#f97316;border:1px solid #f9731633;">PLM-4</span>
+      <div class="bug-info">
+        <div class="bug-title">handleSeek Doesnt Clamp to 0-100</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#f9731618;color:#f97316;">High</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Logic</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">ProductLearningModule</span>
+          <span class="bug-loc">handleSeek</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">pct = Math.round(((e.clientX - rect.left) / rect.width) * 100) never clamped to [0,100]. Edge clicks can produce negative or &gt;100 values.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#fdba74;">Video progress can show &gt;100% or negative values, causing visual glitches and corrupting saved data.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix">const pct = Math.max(0, Math.min(100, Math.round(...)))</div>
+    </div>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #f97316;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#f9731618;color:#f97316;border:1px solid #f9731633;">PROFILE-1</span>
+      <div class="bug-info">
+        <div class="bug-title">Change Password Allows Empty Current Password</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#f9731618;color:#f97316;">High</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Security</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">ProfilePage</span>
+          <span class="bug-loc">ChangePasswordButton</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">currentPassword field is optional. API called with currentPassword: currentPassword || &quot;&quot;. Anyone with session can change password without knowing existing one.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#fdba74;">If session is hijacked, attacker can set new password and lock out original user.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix">Require OTP verification for password change, or require current password for password-holding accounts.</div>
+    </div>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #f97316;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#f9731618;color:#f97316;border:1px solid #f9731633;">PROFILE-2</span>
+      <div class="bug-info">
+        <div class="bug-title">No AbortController for Data Fetches</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#f9731618;color:#f97316;">High</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">State</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">ProfilePage</span>
+          <span class="bug-loc">Data fetch useEffect</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">fetchData async function doesnt use AbortController. If user navigates away while loading, promises update state on unmounted component.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#fdba74;">React state update on unmounted component warnings; potential memory leaks.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix">Add AbortController with cleanup in the useEffect return.</div>
+    </div>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #f97316;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#f9731618;color:#f97316;border:1px solid #f9731633;">SEC-6</span>
+      <div class="bug-info">
+        <div class="bug-title">Timing-Vulnerable Password Comparison</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#f9731618;color:#f97316;">High</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Security</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">API Utils</span>
+          <span class="bug-loc">verifyPassword()</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">Uses === for hash comparison, vulnerable to timing attacks.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#fdba74;">With enough timing measurements, attacker can recover the password hash offline.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix">Use crypto.timingSafeEqual(Buffer.from(inputHash), Buffer.from(storedHash)).</div>
+    </div>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #f97316;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#f9731618;color:#f97316;border:1px solid #f9731633;">SEC-7</span>
+      <div class="bug-info">
+        <div class="bug-title">user_id Cookie Accessible to JavaScript (XSS Exfiltration)</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#f9731618;color:#f97316;">High</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Security</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">Auth API</span>
+          <span class="bug-loc">register/login cookie set</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">user_id cookie is set with httpOnly: false, readable by any JS. Combined with forgeable token, XSS can steal user ID and construct valid session token.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#fdba74;">Any XSS vulnerability leads to immediate account takeover.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix">Set httpOnly: true. Pass user_id through response body instead.</div>
+    </div>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #f97316;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#f9731618;color:#f97316;border:1px solid #f9731633;">SEC-8</span>
+      <div class="bug-info">
+        <div class="bug-title">Unauthenticated Health Endpoint Leaks Database URL &amp; Secrets</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#f9731618;color:#f97316;">High</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Security</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">Health API</span>
+          <span class="bug-loc">health/route.ts</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">/api/health requires zero auth and returns masked DB URL (hostname/port still visible), Node version, platform, and whether secrets are set.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#fdba74;">Attackers gain reconnaissance data for targeted attacks.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix">Add auth to health endpoint. Strip database.url to just provider type.</div>
+    </div>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #f97316;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#f9731618;color:#f97316;border:1px solid #f9731633;">SEC-9</span>
+      <div class="bug-info">
+        <div class="bug-title">x-admin-key Header Check Is Security Theater</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#f9731618;color:#f97316;">High</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Security</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">API Utils</span>
+          <span class="bug-loc">checkAdmin()</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">The x-admin-key header is checked only for existence (if (!adminKey)), not for a specific secret value. Any value - even &quot;false&quot; - passes.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#fdba74;">Header check provides zero security. False sense of layered security.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix">Validate against server-side secret: if (adminKey !== process.env.ADMIN_SECRET_KEY).</div>
+    </div>
+  </div>
+
+
+  <div class="page-footer">
+    <span>CodeRabbit QA Report</span>
+    <span>Page 4</span>
+  </div>
+</div>
+
+
+<div class="content-page">
+  <div class="page-topbar">
+    <div class="page-topbar-left">
+      <span class="page-topbar-title">CodeRabbit QA Report</span>
+    </div>
+    <span class="page-topbar-right">NOTJUST Watr &middot; Medium</span>
+  </div>
+
+  <div class="section-header">
+    <span class="section-dot" style="background:#eab308;"></span>
+    <span class="section-title" style="color:#fde047;">Medium Severity</span>
+    <span class="section-count">25 issues</span>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #eab308;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#eab30818;color:#eab308;border:1px solid #eab30833;">ADM-15</span>
+      <div class="bug-info">
+        <div class="bug-title">No Loading State During Save</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#eab30818;color:#eab308;">Medium</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">State</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">AdminPanel</span>
+          <span class="bug-loc">handleSaveVideo/handleSaveQuiz</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">No saving boolean set during async save. Save button not disabled during API call.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#fde047;">User can double-click save, creating duplicate videos/quizzes.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix">Add savingVideo/savingQuiz state; disable save buttons while saving.</div>
+    </div>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #eab308;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#eab30818;color:#eab308;border:1px solid #eab30833;">ADM-17</span>
+      <div class="bug-info">
+        <div class="bug-title">Destructive Actions Use Browser confirm() Instead of Dialog</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#eab30818;color:#eab308;">Medium</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">UX</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">AdminPanel</span>
+          <span class="bug-loc">Delete handlers</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">handleDeleteVideo, handleDeleteQuiz, product delete use native window.confirm() while user delete uses proper Dialog.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#fde047;">Inconsistent delete experience; confirm dialogs may be suppressed by popup blockers.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix">Replace with Dialog components like the user delete confirmation.</div>
+    </div>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #eab308;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#eab30818;color:#eab308;border:1px solid #eab30833;">ADM-18</span>
+      <div class="bug-info">
+        <div class="bug-title">Revenue Trend Data Is Fabricated</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#eab30818;color:#eab308;">Medium</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Logic</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">AdminPanel</span>
+          <span class="bug-loc">revenueTrend computation</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">Chart uses hardcoded multipliers (0.1, 0.12, 0.18, 0.22, 0.28, 0.32) applied to totalRevenue. Multipliers sum to 1.22 - chart shows 122% of actual revenue.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#fde047;">Admin sees misleading trend visualization that doesnt reflect reality.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix">Fetch actual monthly revenue data from API, or clearly label as Projected/Estimated.</div>
+    </div>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #eab308;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#eab30818;color:#eab308;border:1px solid #eab30833;">ADM-23</span>
+      <div class="bug-info">
+        <div class="bug-title">CANCELLED Orders Missing from Kanban</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#eab30818;color:#eab308;">Medium</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Logic</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">AdminPanel</span>
+          <span class="bug-loc">orderStatuses</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">orderStatuses = [PLACED, CONFIRMED, SHIPPED, DELIVERED] excludes CANCELLED. Cancelled orders invisible in kanban view.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#fde047;">Admin cannot see cancelled orders in kanban view.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix"></div>
+    </div>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #eab308;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#eab30818;color:#eab308;border:1px solid #eab30833;">ADM-26</span>
+      <div class="bug-info">
+        <div class="bug-title">Campaign Has No Delete Action</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#eab30818;color:#eab308;">Medium</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Logic</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">AdminPanel</span>
+          <span class="bug-loc">CampaignManagerInner</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">Campaigns can be created and toggled but never deleted. No delete button exists.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#fde047;">Mistakenly created campaigns cannot be removed; only archived.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix">Add delete button with confirmation dialog.</div>
+    </div>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #eab308;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#eab30818;color:#eab308;border:1px solid #eab30833;">ADM-27</span>
+      <div class="bug-info">
+        <div class="bug-title">Subscriptions Tab Is Read-Only With No Actions</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#eab30818;color:#eab308;">Medium</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">UX</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">AdminPanel</span>
+          <span class="bug-loc">Subscriptions tab</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">No action buttons - no way to pause, cancel, or modify subscriptions.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#fde047;">Admin cannot manage subscriptions; can only view them.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix">Add status change and detail view actions.</div>
+    </div>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #eab308;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#eab30818;color:#eab308;border:1px solid #eab30833;">ADM-36</span>
+      <div class="bug-info">
+        <div class="bug-title">No Pagination on Any Table</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#eab30818;color:#eab308;">Medium</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">UX</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">AdminPanel</span>
+          <span class="bug-loc">All tables</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">All tables render full dataset with no pagination or virtual scrolling.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#fde047;">Performance degradation and poor UX with large datasets.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix">Add pagination (20 items per page) or virtualized scrolling.</div>
+    </div>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #eab308;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#eab30818;color:#eab308;border:1px solid #eab30833;">API-3</span>
+      <div class="bug-info">
+        <div class="bug-title">Order Creation Missing Item Validation</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#eab30818;color:#eab308;">Medium</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">API</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">Orders API</span>
+          <span class="bug-loc">POST handler</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">Checks !items but doesnt validate individual item structure. Missing product_id, product_name will cause Prisma runtime error.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#fde047;">Malformed orders with null product references corrupt data integrity.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix">Validate each item has product_id, product_name, unit_price, total_price.</div>
+    </div>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #eab308;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#eab30818;color:#eab308;border:1px solid #eab30833;">API-4</span>
+      <div class="bug-info">
+        <div class="bug-title">No Stock Validation or Decrement on Order Placement</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#eab30818;color:#eab308;">Medium</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">API</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">Orders API</span>
+          <span class="bug-loc">POST handler</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">Orders created without checking stock or decrementing quantities.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#fde047;">Customers can order out-of-stock products. Inventory never updated.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix">Add transaction: check stock, decrement, then create order using db.$transaction().</div>
+    </div>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #eab308;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#eab30818;color:#eab308;border:1px solid #eab30833;">AUTH-6</span>
+      <div class="bug-info">
+        <div class="bug-title">Auto-redirect useEffect Missing Dependencies</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#eab30818;color:#eab308;">Medium</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">State</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">AuthRegister/AuthWhatsAppOtpLogin</span>
+          <span class="bug-loc">Auto-redirect useEffect</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">useEffect for auto-redirect has [step] as only dependency but uses redirectAfterLogin, setRedirectAfterLogin, navigateTo.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#fde047;">Stale redirect target - user may be redirected to outdated view.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix">Add all used values to dependency array.</div>
+    </div>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #eab308;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#eab30818;color:#eab308;border:1px solid #eab30833;">CART-2</span>
+      <div class="bug-info">
+        <div class="bug-title">No Maximum Quantity / Stock Validation</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#eab30818;color:#eab308;">Medium</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Logic</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">CartItemCard</span>
+          <span class="bug-loc">Quantity controls</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">Plus button has no upper limit. Users can add unlimited quantity with no client-side stock check.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#fde047;">Users may add more items than available stock; order may fail server-side with poor error messaging.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix">Add maxQuantity prop from product stock data and disable Plus button when reached.</div>
+    </div>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #eab308;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#eab30818;color:#eab308;border:1px solid #eab30833;">CHECKOUT-4</span>
+      <div class="bug-info">
+        <div class="bug-title">Shipping Form Not Pre-Filled from User Profile</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#eab30818;color:#eab308;">Medium</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">UX</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">CheckoutView</span>
+          <span class="bug-loc">Form initialization</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">shippingAddress, shippingCity, shippingPincode initialized as empty strings even though user profile may have address data.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#fde047;">Returning users must re-type their full address every time.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix">Pre-fill from user.address, user.city, user.pincode if available.</div>
+    </div>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #eab308;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#eab30818;color:#eab308;border:1px solid #eab30833;">FORM-1</span>
+      <div class="bug-info">
+        <div class="bug-title">No &lt;form&gt; Elements; Enter Key Doesnt Submit</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#eab30818;color:#eab308;">Medium</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Form</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">All Auth + Checkout</span>
+          <span class="bug-loc">Form wrappers</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">Input fields not wrapped in &lt;form onSubmit&gt;. Users pressing Enter in any input wont trigger form submission.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#fde047;">Poor UX; violates user expectations; accessibility issue for keyboard users.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix">Wrap each form step in &lt;form onSubmit={handleSubmit}&gt; with e.preventDefault().</div>
+    </div>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #eab308;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#eab30818;color:#eab308;border:1px solid #eab30833;">LP-2</span>
+      <div class="bug-info">
+        <div class="bug-title">Auto-Scroll Resumes After User Manual Scroll</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#eab30818;color:#eab308;">Medium</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">UX</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">LandingPage</span>
+          <span class="bug-loc">Auto-scroll interval</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">5-second auto-scroll timer restarts after manual scroll. After 5s, auto-scroll fights with users position.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#fde047;">Carousel auto-advances while user is browsing, pulling view away.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix">Add userInteracted ref that prevents auto-scroll; reset after 15s inactivity.</div>
+    </div>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #eab308;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#eab30818;color:#eab308;border:1px solid #eab30833;">LP-3</span>
+      <div class="bug-info">
+        <div class="bug-title">Mobile Home Nav Button Doesnt Scroll to Hero</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#eab30818;color:#eab308;">Medium</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Navigation</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">LandingPage</span>
+          <span class="bug-loc">Mobile Home button</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">Mobile Home calls navigateTo(landing) but not scrollToSection(hero). If already on landing page, clicking Home does nothing.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#fde047;">Mobile users cant scroll back to top/hero section via Home nav item.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix">Add scrollToSection(hero) to mobile Home action.</div>
+    </div>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #eab308;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#eab30818;color:#eab308;border:1px solid #eab30833;">NAV-1</span>
+      <div class="bug-info">
+        <div class="bug-title">No Sign Out Option in Mobile Navigation Menu</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#eab30818;color:#eab308;">Medium</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Navigation</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">AppNavbar</span>
+          <span class="bug-loc">Mobile Sheet content</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">Mobile hamburger menu shows nav links, Cart, Login/Profile but has no Sign Out button.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#fde047;">Mobile users must navigate to Profile page to log out.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix">Add Sign Out button in mobile menu when user is logged in.</div>
+    </div>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #eab308;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#eab30818;color:#eab308;border:1px solid #eab30833;">PDP-10</span>
+      <div class="bug-info">
+        <div class="bug-title">progressFetchKey Never Incremented (Dead Refresh)</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#eab30818;color:#eab308;">Medium</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">State</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">ProductDetailPage</span>
+          <span class="bug-loc">progressFetchKey</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">progressFetchKey used in dep array of progress fetch effect but setProgressFetchKey never called. Progress cannot be manually refreshed.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#fde047;">After completing learning module, progress display may be stale until full reload.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix">Increment progressFetchKey on window focus or navigation back.</div>
+    </div>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #eab308;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#eab30818;color:#eab308;border:1px solid #eab30833;">PDP-14</span>
+      <div class="bug-info">
+        <div class="bug-title">Flash of Incorrect Learning Button While Progress Loads</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#eab30818;color:#eab308;">Medium</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">UX</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">ProductDetailPage</span>
+          <span class="bug-loc">Learning status rendering</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">productProgress is null until fetch completes. getLearningStatus(null) returns NOT_STARTED, showing Start Learning button briefly for returning users.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#fde047;">Returning users see Start Learning for ~200-500ms before it corrects to Continue Learning.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix">Show loading skeleton while progress is being fetched.</div>
+    </div>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #eab308;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#eab30818;color:#eab308;border:1px solid #eab30833;">PDP-8</span>
+      <div class="bug-info">
+        <div class="bug-title">Native Share Fallback on User Cancel</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#eab30818;color:#eab308;">Medium</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">UX</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">ProductDetailPage</span>
+          <span class="bug-loc">handleNativeShare</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">When navigator.share() is cancelled (AbortError), catch block falls back to clipboard copy. User intentionally dismissed share but gets clipboard write.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#fde047;">Unwanted clipboard modification and confusing toast after user cancelled sharing.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix">Check for AbortError and only fall back for other errors.</div>
+    </div>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #eab308;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#eab30818;color:#eab308;border:1px solid #eab30833;">PDP-9</span>
+      <div class="bug-info">
+        <div class="bug-title">copied State Declared But Never Rendered</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#eab30818;color:#eab308;">Medium</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">State</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">ProductDetailPage</span>
+          <span class="bug-loc">copied state</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">copied state toggled but no rendered element reads it. Feedback relies entirely on toast.success().</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#fde047;">Unnecessary re-renders from dead state.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix">Remove copied state or use it for visual indicator.</div>
+    </div>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #eab308;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#eab30818;color:#eab308;border:1px solid #eab30833;">SEC-10</span>
+      <div class="bug-info">
+        <div class="bug-title">No Rate Limiting on Auth Endpoints</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#eab30818;color:#eab308;">Medium</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Security</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">Auth API</span>
+          <span class="bug-loc">login/register routes</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">No rate limiting on login or registration. Attacker can brute-force passwords at thousands of attempts per second.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#fde047;">Brute-force password attacks, credential stuffing, account enumeration.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix">Add rate limiting middleware. Limit to ~5 login attempts per minute per IP.</div>
+    </div>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #eab308;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#eab30818;color:#eab308;border:1px solid #eab30833;">SF-1</span>
+      <div class="bug-info">
+        <div class="bug-title">Social Media Buttons Are Non-Functional</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#eab30818;color:#eab308;">Medium</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Navigation</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">SiteFooter</span>
+          <span class="bug-loc">Social media buttons</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">Instagram, Twitter, LinkedIn, YouTube buttons have aria-label but no onClick or href. Clicking does nothing.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#fde047;">Users attempting to follow brand on social media get no response - dead buttons.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix">Add real social media URLs to onClick handlers or convert to &lt;a&gt; tags.</div>
+    </div>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #eab308;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#eab30818;color:#eab308;border:1px solid #eab30833;">SF-2</span>
+      <div class="bug-info">
+        <div class="bug-title">window.open() Without noopener,noreferrer</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#eab30818;color:#eab308;">Medium</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Security</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">SiteFooter / PolicyPage</span>
+          <span class="bug-loc">window.open() calls</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">All window.open(url, _blank) calls missing noopener and noreferrer. Allows tab-napping/phishing.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#fde047;">Security vulnerability - opened pages can manipulate opener window.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix"></div>
+    </div>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #eab308;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#eab30818;color:#eab308;border:1px solid #eab30833;">STORE-1</span>
+      <div class="bug-info">
+        <div class="bug-title">Cart Item Key Collision (productId-only matching)</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#eab30818;color:#eab308;">Medium</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Logic</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">App Store</span>
+          <span class="bug-loc">addToCart()</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">cart.find(i =&gt; i.productId === item.productId) matches only on productId. Same product as one-time and subscription incorrectly merged.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#fde047;">Users cannot buy same product in different purchase modes simultaneously.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix">Use composite key: productId:purchaseType:packType.</div>
+    </div>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #eab308;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#eab30818;color:#eab308;border:1px solid #eab30833;">STORE-3</span>
+      <div class="bug-info">
+        <div class="bug-title">resetForLogout Doesnt Reset All State</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#eab30818;color:#eab308;">Medium</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">State</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">App Store</span>
+          <span class="bug-loc">resetForLogout()</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">Doesnt reset currentVideoIndex, currentQuizIndex, or adminTab. After logout, these retain stale values.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#fde047;">Stale UI state from previous session leaks into new session.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix">Add currentVideoIndex: 0, currentQuizIndex: 0, adminTab: dashboard to reset.</div>
+    </div>
+  </div>
+
+
+  <div class="page-footer">
+    <span>CodeRabbit QA Report</span>
+    <span>Page 5</span>
+  </div>
+</div>
+
+
+<div class="content-page">
+  <div class="page-topbar">
+    <div class="page-topbar-left">
+      <span class="page-topbar-title">CodeRabbit QA Report</span>
+    </div>
+    <span class="page-topbar-right">NOTJUST Watr &middot; Low</span>
+  </div>
+
+  <div class="section-header">
+    <span class="section-dot" style="background:#3b82f6;"></span>
+    <span class="section-title" style="color:#93c5fd;">Low Severity</span>
+    <span class="section-count">12 issues</span>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #3b82f6;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#3b82f618;color:#3b82f6;border:1px solid #3b82f633;">A11Y-1</span>
+      <div class="bug-info">
+        <div class="bug-title">Privacy Policy / Terms of Service Are Non-Interactive Plain Text</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#3b82f618;color:#3b82f6;">Low</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">A11y</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">AuthPages</span>
+          <span class="bug-loc">Legal links text</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">Rendered as &lt;p&gt;Privacy Policy · Terms of Service&lt;/p&gt; with no click handlers or &lt;a&gt; tags.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#93c5fd;">Users cannot view privacy policy or terms; legally questionable for registration flow.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix">Make them clickable links navigating to policy pages.</div>
+    </div>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #3b82f6;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#3b82f618;color:#3b82f6;border:1px solid #3b82f633;">ADM-39</span>
+      <div class="bug-info">
+        <div class="bug-title">Missing ARIA Labels on Sidebar Nav</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#3b82f618;color:#3b82f6;">Low</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">A11y</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">AdminPanel</span>
+          <span class="bug-loc">Sidebar nav</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">When sidebar collapsed, only title attribute set. No aria-label for screen readers.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#93c5fd;">Screen reader users cannot identify nav items when sidebar collapsed.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix">Add aria-label={item.label} to all nav buttons.</div>
+    </div>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #3b82f6;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#3b82f618;color:#3b82f6;border:1px solid #3b82f633;">ADM-43</span>
+      <div class="bug-info">
+        <div class="bug-title">Insufficient Product Validation</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#3b82f618;color:#3b82f6;">Low</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Form</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">AdminPanel</span>
+          <span class="bug-loc">handleSaveProduct</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">Only validates name and price. No validation for: price &gt; 0, mrp &gt;= price, stock &gt;= 0, slug format, gst_rate range.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#93c5fd;">Invalid products can be created (negative price, MRP &lt; selling price, etc.).</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix">Add comprehensive validation before API call.</div>
+    </div>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #3b82f6;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#3b82f618;color:#3b82f6;border:1px solid #3b82f633;">API-7</span>
+      <div class="bug-info">
+        <div class="bug-title">Admin Users Search Is Case-Sensitive</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#3b82f618;color:#3b82f6;">Low</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">API</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">Admin Users API</span>
+          <span class="bug-loc">Search filter</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">Prisma contains filter is case-sensitive by default with SQLite. Searching &quot;john&quot; wont find &quot;John&quot;.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#93c5fd;">Admin search less useful - must match exact case.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix"></div>
+    </div>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #3b82f6;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#3b82f618;color:#3b82f6;border:1px solid #3b82f633;">AUTH-8</span>
+      <div class="bug-info">
+        <div class="bug-title">Password Strength Minimum Too Weak (6 chars)</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#3b82f618;color:#3b82f6;">Low</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Logic</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">AuthRegister</span>
+          <span class="bug-loc">getPasswordStrength</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">Password validation requires only 6 characters with no complexity. &quot;aaaaaa&quot; is accepted.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#93c5fd;">Users create easily crackable passwords.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix">Enforce minimum 8 chars and at least 1 number or special character.</div>
+    </div>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #3b82f6;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#3b82f618;color:#3b82f6;border:1px solid #3b82f633;">CHECKOUT-5</span>
+      <div class="bug-info">
+        <div class="bug-title">Online Payment Methods Show &quot;coming soon&quot; But Still Create Orders</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#3b82f618;color:#3b82f6;">Low</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Logic</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">CheckoutView</span>
+          <span class="bug-loc">Payment methods</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">UPI, Card, Net Banking show &quot;coming soon&quot; but Place Order button still enabled. Orders created with PENDING payment indefinitely.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#93c5fd;">Orders with online payment methods have PENDING payment status forever.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix">Disable Place Order for non-COD methods until Razorpay is integrated.</div>
+    </div>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #3b82f6;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#3b82f618;color:#3b82f6;border:1px solid #3b82f633;">LP-7</span>
+      <div class="bug-info">
+        <div class="bug-title">CTA Section Image Has Empty alt Text</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#3b82f618;color:#3b82f6;">Low</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">A11y</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">LandingPage</span>
+          <span class="bug-loc">CTA section image</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">Image with alt=&quot;&quot; for what appears to be a meaningful product shot.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#93c5fd;">Screen readers skip the image entirely, missing visual context.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix">Change to alt=&quot;NOTJUST WATER pre-meal wellness shot product image&quot;.</div>
+    </div>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #3b82f6;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#3b82f618;color:#3b82f6;border:1px solid #3b82f633;">PDP-15</span>
+      <div class="bug-info">
+        <div class="bug-title">No aria-expanded on View More/Less Button</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#3b82f618;color:#3b82f6;">Low</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">A11y</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">ProductDetailPage</span>
+          <span class="bug-loc">View More/Less button</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">Button toggles content expansion but lacks aria-expanded and aria-controls attributes.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#93c5fd;">Screen readers cannot communicate the expand/collapse state.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix">Add aria-expanded={descExpanded} and aria-controls=&quot;product-description&quot;.</div>
+    </div>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #3b82f6;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#3b82f618;color:#3b82f6;border:1px solid #3b82f633;">PDP-18</span>
+      <div class="bug-info">
+        <div class="bug-title">Array Index as key on Highlights and Ingredients</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#3b82f618;color:#3b82f6;">Low</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Render</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">ProductDetailPage</span>
+          <span class="bug-loc">Highlights/Ingredients lists</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">Using array index as React key is fragile. May cause animation glitches if data reorders.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#93c5fd;">Low risk since data is stable, but anti-pattern.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix">Use item text as key: key={h} or key={`highlight-${i}-${h}`}.</div>
+    </div>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #3b82f6;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#3b82f618;color:#3b82f6;border:1px solid #3b82f633;">PDP-21</span>
+      <div class="bug-info">
+        <div class="bug-title">Quantity State with No UI Controls</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#3b82f618;color:#3b82f6;">Low</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">UX</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">ProductDetailPage</span>
+          <span class="bug-loc">quantity state</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">quantity initialized to 1 and passed to addToCart but no UI exists to change it (no +/- buttons). Imported Minus/Plus icons suggest planned but unimplemented feature.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#93c5fd;">Users who want multiple units must add to cart repeatedly.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix">Implement quantity controls using already-imported Minus/Plus icons.</div>
+    </div>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #3b82f6;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#3b82f618;color:#3b82f6;border:1px solid #3b82f633;">SF-3</span>
+      <div class="bug-info">
+        <div class="bug-title">Footer External Links Use &lt;button&gt; + window.open Instead of &lt;a&gt;</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#3b82f618;color:#3b82f6;">Low</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">A11y</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">SiteFooter</span>
+          <span class="bug-loc">External links</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">WhatsApp, email, phone links are &lt;button&gt; with onClick -&gt; window.open(). Wrong semantic role.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#93c5fd;">Screen readers announce as buttons not links; cant right-click to copy URL.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix">Replace with &lt;a href=&quot;https://wa.me/...&quot; target=&quot;_blank&quot; rel=&quot;noopener noreferrer&quot;&gt;.</div>
+    </div>
+  </div>
+
+
+  <div class="bug" style="border-left:3px solid #3b82f6;">
+    <div class="bug-top">
+      <span class="bug-id-tag" style="background:#3b82f618;color:#3b82f6;border:1px solid #3b82f633;">STORE-5</span>
+      <div class="bug-info">
+        <div class="bug-title">User Profile Data Persisted in Plaintext localStorage</div>
+        <div class="bug-tags">
+          <span class="bug-tag" style="background:#3b82f618;color:#3b82f6;">Low</span>
+          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Security</span>
+          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">App Store</span>
+          <span class="bug-loc">Zustand persist</span>
+        </div>
+      </div>
+    </div>
+    <div class="bug-details">
+      <div class="bug-field">
+        <span class="bug-field-label">Desc:</span>
+        <span class="bug-field-text">User object (email, phone, name) persisted to localStorage in plaintext via Zustand persist middleware.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Impact:</span>
+        <span class="bug-field-text" style="color:#93c5fd;">PII exposure if browser/device shared or via XSS.</span>
+      </div>
+      <div class="bug-field">
+        <span class="bug-field-label">Fix:</span>
+      </div>
+      <div class="bug-fix"></div>
+    </div>
+  </div>
+
+
+  <div class="page-footer">
+    <span>CodeRabbit QA Report</span>
+    <span>Page 6</span>
+  </div>
+</div>
+
+</body></html>

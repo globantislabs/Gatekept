@@ -38,6 +38,7 @@ export type AppView =
   | 'policy-grievance'
   | 'policy-about'
   | 'policy-contact'
+  | 'qa-report'
 
 // ─── View → URL path mapping ─────────────────────────────────
 const viewToPath: Record<AppView, string> = {
@@ -76,6 +77,7 @@ const viewToPath: Record<AppView, string> = {
   'policy-grievance': '/grievance',
   'policy-about': '/about',
   'policy-contact': '/contact',
+  'qa-report': '/qa-report',
 }
 
 export function getViewPath(view: AppView, extra?: string): string {

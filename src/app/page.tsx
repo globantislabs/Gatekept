@@ -20,6 +20,7 @@ import AdminPanel from '@/components/AdminPanel'
 import ProductPage from '@/components/ProductPage'
 import { CartView, CheckoutView, OrderSuccessView } from '@/components/CartCheckout'
 import PolicyPage from '@/components/PolicyPage'
+import QATestReport from '@/components/QATestReport'
 
 // ─── Views that should NOT show the shared navbar ────────────
 const HIDE_NAVBAR_VIEWS: AppView[] = [
@@ -27,6 +28,7 @@ const HIDE_NAVBAR_VIEWS: AppView[] = [
   'admin-dashboard', 'admin-products', 'admin-users', 'admin-campaigns',
   'admin-qr', 'admin-orders', 'admin-analytics', 'admin-content',
   'admin-subscriptions', 'admin-learning',
+  'qa-report',
 ]
 
 // ─── URL → View mapping ─────────────────────────────────────
@@ -64,6 +66,7 @@ const pathToView = (pathname: string): AppView => {
     case '/grievance': return 'policy-grievance'
     case '/about': return 'policy-about'
     case '/contact': return 'policy-contact'
+    case '/qa-report': return 'qa-report'
     default: return 'landing'
   }
 }
@@ -191,6 +194,8 @@ function ViewRenderer() {
       case 'policy-about':
       case 'policy-contact':
         return <PolicyPage />
+      case 'qa-report':
+        return <QATestReport />
       default:
         return <LandingPageComponent />
     }

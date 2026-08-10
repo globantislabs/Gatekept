@@ -10,8 +10,8 @@
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html, body {
     margin: 0; padding: 0;
-    background: #0f0f23;
-    color: #e2e8f0;
+    background: #ffffff;
+    color: #1e293b;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     font-size: 9.5px;
     line-height: 1.5;
@@ -25,24 +25,24 @@
     justify-content: center; align-items: center;
     text-align: center;
     padding: 40mm 30mm;
-    background: #0f0f23;
+    background: #ffffff;
     page-break-after: always;
   }
   .cover-logo { margin-bottom: 20px; }
   .cover-brand {
     font-size: 42pt; font-weight: 900; letter-spacing: -1.5px;
-    background: linear-gradient(135deg, #a855f7 0%, #14b8a6 100%);
+    background: linear-gradient(135deg, #7c3aed 0%, #0d9488 100%);
     -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     background-clip: text;
     margin-bottom: 4px;
   }
   .cover-tagline {
-    font-size: 11pt; font-weight: 400; color: #94a3b8;
+    font-size: 11pt; font-weight: 400; color: #64748b;
     letter-spacing: 6px; text-transform: uppercase;
     margin-bottom: 36px;
   }
   .cover-project {
-    font-size: 22pt; font-weight: 700; color: #e2e8f0;
+    font-size: 22pt; font-weight: 700; color: #0f172a;
     margin-bottom: 4px;
   }
   .cover-subtitle2 {
@@ -52,7 +52,7 @@
     display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;
   }
   .cover-card {
-    background: #1a1a2e; border: 1px solid #2a2a4a;
+    background: #f8fafc; border: 1px solid #e2e8f0;
     border-radius: 10px; padding: 14px 22px;
     min-width: 90px; text-align: center;
   }
@@ -60,17 +60,17 @@
     font-size: 30pt; font-weight: 800; line-height: 1;
   }
   .cover-card-label {
-    font-size: 7pt; font-weight: 600; color: #94a3b8;
+    font-size: 7pt; font-weight: 600; color: #64748b;
     text-transform: uppercase; letter-spacing: 1.2px; margin-top: 5px;
   }
   .cover-total {
     margin-top: 28px;
-    font-size: 9pt; color: #475569; letter-spacing: 2px; text-transform: uppercase;
+    font-size: 9pt; color: #94a3b8; letter-spacing: 2px; text-transform: uppercase;
   }
   .cover-footer-line {
     margin-top: 40px;
     width: 80px; height: 2px;
-    background: linear-gradient(90deg, #a855f7, #14b8a6);
+    background: linear-gradient(90deg, #7c3aed, #0d9488);
     border-radius: 1px;
   }
 
@@ -78,7 +78,7 @@
   .content-page {
     width: 210mm; min-height: 297mm;
     padding: 16mm 16mm 20mm 16mm;
-    background: #0f0f23;
+    background: #ffffff;
     page-break-after: always;
   }
 
@@ -86,41 +86,40 @@
   .page-topbar {
     display: flex; align-items: center; justify-content: space-between;
     margin-bottom: 12px; padding-bottom: 6px;
-    border-bottom: 1px solid #1e1e3a;
+    border-bottom: 1px solid #e2e8f0;
   }
   .page-topbar-left {
     display: flex; align-items: center; gap: 8px;
   }
-  .page-topbar-logo { width: 18px; height: 18px; }
   .page-topbar-title {
     font-size: 8pt; font-weight: 600; color: #64748b;
     letter-spacing: 1px; text-transform: uppercase;
   }
   .page-topbar-right {
-    font-size: 7.5pt; color: #475569; font-family: 'JetBrains Mono', monospace;
+    font-size: 7.5pt; color: #94a3b8; font-family: 'JetBrains Mono', monospace;
   }
 
   /* Section headers */
   .section-header {
     display: flex; align-items: center; gap: 8px;
     margin-bottom: 10px; padding-bottom: 6px;
-    border-bottom: 1px solid #2a2a4a;
+    border-bottom: 1px solid #e2e8f0;
   }
   .section-dot {
     width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
   }
   .section-title {
-    font-size: 13pt; font-weight: 700; color: #e2e8f0;
+    font-size: 13pt; font-weight: 700; color: #0f172a;
   }
   .section-count {
-    font-size: 8pt; font-weight: 600; color: #94a3b8;
-    background: #1a1a2e; border: 1px solid #2a2a4a;
+    font-size: 8pt; font-weight: 600; color: #64748b;
+    background: #f1f5f9; border: 1px solid #e2e8f0;
     border-radius: 4px; padding: 1px 6px; margin-left: auto;
   }
 
   /* Bug cards - compact */
   .bug {
-    background: #151528; border: 1px solid #252545;
+    background: #f8fafc; border: 1px solid #e2e8f0;
     border-radius: 6px; margin-bottom: 7px;
     page-break-inside: avoid;
     overflow: hidden;
@@ -138,7 +137,7 @@
   }
   .bug-info { flex: 1; min-width: 0; }
   .bug-title {
-    font-size: 9.5pt; font-weight: 600; color: #e2e8f0; line-height: 1.3;
+    font-size: 9.5pt; font-weight: 600; color: #0f172a; line-height: 1.3;
   }
   .bug-tags {
     display: flex; align-items: center; gap: 5px;
@@ -151,26 +150,26 @@
   }
   .bug-loc {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 6.5pt; color: #475569;
+    font-size: 6.5pt; color: #94a3b8;
   }
   .bug-details {
     padding: 0 10px 6px 10px;
   }
   .bug-field { margin-bottom: 3px; }
   .bug-field-label {
-    font-size: 6.5pt; font-weight: 700; color: #475569;
+    font-size: 6.5pt; font-weight: 700; color: #94a3b8;
     text-transform: uppercase; letter-spacing: 0.8px;
     display: inline; margin-right: 4px;
   }
   .bug-field-text {
-    font-size: 8.5pt; color: #cbd5e1; line-height: 1.45;
+    font-size: 8.5pt; color: #334155; line-height: 1.45;
     display: inline;
   }
   .bug-fix {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 7.5pt; color: #14b8a6; line-height: 1.4;
-    background: #0c2520; padding: 3px 7px;
-    border-radius: 3px; border-left: 2px solid #14b8a6;
+    font-size: 7.5pt; color: #065f46; line-height: 1.4;
+    background: #f0fdf4; padding: 3px 7px;
+    border-radius: 3px; border-left: 2px solid #10b981;
     margin-top: 2px; display: block;
   }
 
@@ -180,35 +179,35 @@
     gap: 10px; margin-bottom: 12px;
   }
   .summary-card {
-    background: #151528; border: 1px solid #252545;
+    background: #f8fafc; border: 1px solid #e2e8f0;
     border-radius: 6px; padding: 10px 12px;
   }
   .summary-card-title {
-    font-size: 7pt; font-weight: 600; color: #94a3b8;
+    font-size: 7pt; font-weight: 600; color: #64748b;
     text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;
   }
   .s-row {
     display: flex; justify-content: space-between; align-items: center;
     padding: 2px 0;
   }
-  .s-label { font-size: 8.5pt; color: #cbd5e1; }
+  .s-label { font-size: 8.5pt; color: #334155; }
   .s-value { font-size: 9pt; font-weight: 700; }
   .bar-track {
-    height: 3px; background: #1e1e3a; border-radius: 1.5px;
+    height: 3px; background: #e2e8f0; border-radius: 1.5px;
     margin-top: 2px; overflow: hidden;
   }
   .bar-fill { height: 100%; border-radius: 1.5px; }
 
   .key-findings {
-    background: #151528; border: 1px solid #252545;
+    background: #f8fafc; border: 1px solid #e2e8f0;
     border-radius: 6px; padding: 10px 12px; margin-bottom: 10px;
   }
   .kf-title {
-    font-size: 7pt; font-weight: 600; color: #94a3b8;
+    font-size: 7pt; font-weight: 600; color: #64748b;
     text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;
   }
   .kf-text {
-    font-size: 8.5pt; color: #cbd5e1; line-height: 1.6;
+    font-size: 8.5pt; color: #334155; line-height: 1.6;
   }
   .kf-text p { margin-bottom: 5px; }
 
@@ -216,8 +215,8 @@
   .page-footer {
     margin-top: auto; padding-top: 6px;
     display: flex; justify-content: space-between; align-items: center;
-    font-size: 6.5pt; color: #334155;
-    border-top: 1px solid #1a1a2e;
+    font-size: 6.5pt; color: #94a3b8;
+    border-top: 1px solid #e2e8f0;
   }
 </style>
 </head>
@@ -229,36 +228,35 @@
 <svg viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg" width="64" height="64">
   <defs>
     <linearGradient id="cr-bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#a855f7" stop-opacity="0.12"/>
-      <stop offset="100%" stop-color="#14b8a6" stop-opacity="0.12"/>
+      <stop offset="0%" stop-color="#a855f7" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#14b8a6" stop-opacity="0.08"/>
     </linearGradient>
     <linearGradient id="cr-stroke" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#a855f7"/>
       <stop offset="100%" stop-color="#14b8a6"/>
     </linearGradient>
   </defs>
-  <!-- Background circle -->
   <circle cx="120" cy="120" r="110" fill="url(#cr-bg)"/>
-  <circle cx="120" cy="120" r="100" fill="none" stroke="url(#cr-stroke)" stroke-width="1.5" opacity="0.4"/>
+  <circle cx="120" cy="120" r="100" fill="none" stroke="url(#cr-stroke)" stroke-width="1.5" opacity="0.3"/>
   <!-- Rabbit body -->
-  <ellipse cx="120" cy="140" rx="40" ry="34" fill="#e2e8f0" opacity="0.95"/>
+  <ellipse cx="120" cy="140" rx="40" ry="34" fill="#334155" opacity="0.9"/>
   <!-- Left ear -->
-  <ellipse cx="96" cy="80" rx="12" ry="32" fill="#e2e8f0" opacity="0.95" transform="rotate(-15 96 80)"/>
-  <ellipse cx="96" cy="80" rx="6" ry="24" fill="#a855f7" opacity="0.35" transform="rotate(-15 96 80)"/>
+  <ellipse cx="96" cy="80" rx="12" ry="32" fill="#334155" opacity="0.9" transform="rotate(-15 96 80)"/>
+  <ellipse cx="96" cy="80" rx="6" ry="24" fill="#a855f7" opacity="0.4" transform="rotate(-15 96 80)"/>
   <!-- Right ear -->
-  <ellipse cx="144" cy="80" rx="12" ry="32" fill="#e2e8f0" opacity="0.95" transform="rotate(15 144 80)"/>
-  <ellipse cx="144" cy="80" rx="6" ry="24" fill="#a855f7" opacity="0.35" transform="rotate(15 144 80)"/>
+  <ellipse cx="144" cy="80" rx="12" ry="32" fill="#334155" opacity="0.9" transform="rotate(15 144 80)"/>
+  <ellipse cx="144" cy="80" rx="6" ry="24" fill="#a855f7" opacity="0.4" transform="rotate(15 144 80)"/>
   <!-- Eyes -->
   <circle cx="106" cy="133" r="6" fill="#a855f7"/>
   <circle cx="134" cy="133" r="6" fill="#a855f7"/>
   <circle cx="107.5" cy="131.5" r="2.5" fill="#fff"/>
   <circle cx="135.5" cy="131.5" r="2.5" fill="#fff"/>
   <!-- Nose -->
-  <ellipse cx="120" cy="147" rx="5" ry="3.5" fill="#14b8a6" opacity="0.8"/>
+  <ellipse cx="120" cy="147" rx="5" ry="3.5" fill="#14b8a6" opacity="0.9"/>
   <!-- Mouth -->
-  <path d="M115 151 Q120 156 125 151" fill="none" stroke="#94a3b8" stroke-width="1" opacity="0.5"/>
+  <path d="M115 151 Q120 156 125 151" fill="none" stroke="#94a3b8" stroke-width="1" opacity="0.6"/>
   <!-- Code brackets -->
-  <text x="120" y="172" text-anchor="middle" font-family="monospace" font-size="18" fill="#14b8a6" opacity="0.6">&lt;/&gt;</text>
+  <text x="120" y="172" text-anchor="middle" font-family="monospace" font-size="18" fill="#14b8a6" opacity="0.7">&lt;/&gt;</text>
 </svg>
 </div>
   <div class="cover-brand">CodeRabbit</div>
@@ -267,19 +265,19 @@
   <div class="cover-subtitle2">E-Commerce Platform &middot; Full-Stack QA Analysis</div>
   <div class="cover-grid">
     <div class="cover-card">
-      <div class="cover-card-num" style="color: #ef4444;">16</div>
+      <div class="cover-card-num" style="color: #dc2626;">16</div>
       <div class="cover-card-label">Critical</div>
     </div>
     <div class="cover-card">
-      <div class="cover-card-num" style="color: #f97316;">27</div>
+      <div class="cover-card-num" style="color: #ea580c;">27</div>
       <div class="cover-card-label">High</div>
     </div>
     <div class="cover-card">
-      <div class="cover-card-num" style="color: #eab308;">25</div>
+      <div class="cover-card-num" style="color: #ca8a04;">25</div>
       <div class="cover-card-label">Medium</div>
     </div>
     <div class="cover-card">
-      <div class="cover-card-num" style="color: #3b82f6;">12</div>
+      <div class="cover-card-num" style="color: #2563eb;">12</div>
       <div class="cover-card-label">Low</div>
     </div>
   </div>
@@ -303,26 +301,26 @@
   <div class="summary-grid">
     <div class="summary-card">
       <div class="summary-card-title">By Severity</div>
-      <div class="s-row"><span class="s-label">Critical</span><span class="s-value" style="color:#ef4444;">16</span></div><div class="bar-track"><div class="bar-fill" style="width:20.0%;background:#ef4444;opacity:0.7;"></div></div><div class="s-row"><span class="s-label">High</span><span class="s-value" style="color:#f97316;">27</span></div><div class="bar-track"><div class="bar-fill" style="width:33.75%;background:#f97316;opacity:0.7;"></div></div><div class="s-row"><span class="s-label">Medium</span><span class="s-value" style="color:#eab308;">25</span></div><div class="bar-track"><div class="bar-fill" style="width:31.25%;background:#eab308;opacity:0.7;"></div></div><div class="s-row"><span class="s-label">Low</span><span class="s-value" style="color:#3b82f6;">12</span></div><div class="bar-track"><div class="bar-fill" style="width:15.0%;background:#3b82f6;opacity:0.7;"></div></div>
+      <div class="s-row"><span class="s-label">Critical</span><span class="s-value" style="color:#dc2626;">16</span></div><div class="bar-track"><div class="bar-fill" style="width:20.0%;background:#dc2626;opacity:0.6;"></div></div><div class="s-row"><span class="s-label">High</span><span class="s-value" style="color:#ea580c;">27</span></div><div class="bar-track"><div class="bar-fill" style="width:33.75%;background:#ea580c;opacity:0.6;"></div></div><div class="s-row"><span class="s-label">Medium</span><span class="s-value" style="color:#ca8a04;">25</span></div><div class="bar-track"><div class="bar-fill" style="width:31.25%;background:#ca8a04;opacity:0.6;"></div></div><div class="s-row"><span class="s-label">Low</span><span class="s-value" style="color:#2563eb;">12</span></div><div class="bar-track"><div class="bar-fill" style="width:15.0%;background:#2563eb;opacity:0.6;"></div></div>
     </div>
     <div class="summary-card">
       <div class="summary-card-title">By Category</div>
-      <div class="s-row"><span class="s-label">Security</span><span class="s-value" style="color:#a855f7;">16</span></div><div class="bar-track"><div class="bar-fill" style="width:20.0%;background:#a855f7;opacity:0.7;"></div></div><div class="s-row"><span class="s-label">State</span><span class="s-value" style="color:#a855f7;">16</span></div><div class="bar-track"><div class="bar-fill" style="width:20.0%;background:#a855f7;opacity:0.7;"></div></div><div class="s-row"><span class="s-label">Logic</span><span class="s-value" style="color:#a855f7;">16</span></div><div class="bar-track"><div class="bar-fill" style="width:20.0%;background:#a855f7;opacity:0.7;"></div></div><div class="s-row"><span class="s-label">UX</span><span class="s-value" style="color:#a855f7;">11</span></div><div class="bar-track"><div class="bar-fill" style="width:13.750000000000002%;background:#a855f7;opacity:0.7;"></div></div><div class="s-row"><span class="s-label">API</span><span class="s-value" style="color:#a855f7;">5</span></div><div class="bar-track"><div class="bar-fill" style="width:6.25%;background:#a855f7;opacity:0.7;"></div></div><div class="s-row"><span class="s-label">A11y</span><span class="s-value" style="color:#a855f7;">5</span></div><div class="bar-track"><div class="bar-fill" style="width:6.25%;background:#a855f7;opacity:0.7;"></div></div><div class="s-row"><span class="s-label">Form</span><span class="s-value" style="color:#a855f7;">4</span></div><div class="bar-track"><div class="bar-fill" style="width:5.0%;background:#a855f7;opacity:0.7;"></div></div><div class="s-row"><span class="s-label">Navigation</span><span class="s-value" style="color:#a855f7;">3</span></div><div class="bar-track"><div class="bar-fill" style="width:3.75%;background:#a855f7;opacity:0.7;"></div></div><div class="s-row"><span class="s-label">Data</span><span class="s-value" style="color:#a855f7;">2</span></div><div class="bar-track"><div class="bar-fill" style="width:2.5%;background:#a855f7;opacity:0.7;"></div></div><div class="s-row"><span class="s-label">Render</span><span class="s-value" style="color:#a855f7;">2</span></div><div class="bar-track"><div class="bar-fill" style="width:2.5%;background:#a855f7;opacity:0.7;"></div></div>
+      <div class="s-row"><span class="s-label">Security</span><span class="s-value" style="color:#7c3aed;">16</span></div><div class="bar-track"><div class="bar-fill" style="width:20.0%;background:#7c3aed;opacity:0.6;"></div></div><div class="s-row"><span class="s-label">State</span><span class="s-value" style="color:#7c3aed;">16</span></div><div class="bar-track"><div class="bar-fill" style="width:20.0%;background:#7c3aed;opacity:0.6;"></div></div><div class="s-row"><span class="s-label">Logic</span><span class="s-value" style="color:#7c3aed;">16</span></div><div class="bar-track"><div class="bar-fill" style="width:20.0%;background:#7c3aed;opacity:0.6;"></div></div><div class="s-row"><span class="s-label">UX</span><span class="s-value" style="color:#7c3aed;">11</span></div><div class="bar-track"><div class="bar-fill" style="width:13.750000000000002%;background:#7c3aed;opacity:0.6;"></div></div><div class="s-row"><span class="s-label">API</span><span class="s-value" style="color:#7c3aed;">5</span></div><div class="bar-track"><div class="bar-fill" style="width:6.25%;background:#7c3aed;opacity:0.6;"></div></div><div class="s-row"><span class="s-label">A11y</span><span class="s-value" style="color:#7c3aed;">5</span></div><div class="bar-track"><div class="bar-fill" style="width:6.25%;background:#7c3aed;opacity:0.6;"></div></div><div class="s-row"><span class="s-label">Form</span><span class="s-value" style="color:#7c3aed;">4</span></div><div class="bar-track"><div class="bar-fill" style="width:5.0%;background:#7c3aed;opacity:0.6;"></div></div><div class="s-row"><span class="s-label">Navigation</span><span class="s-value" style="color:#7c3aed;">3</span></div><div class="bar-track"><div class="bar-fill" style="width:3.75%;background:#7c3aed;opacity:0.6;"></div></div><div class="s-row"><span class="s-label">Data</span><span class="s-value" style="color:#7c3aed;">2</span></div><div class="bar-track"><div class="bar-fill" style="width:2.5%;background:#7c3aed;opacity:0.6;"></div></div><div class="s-row"><span class="s-label">Render</span><span class="s-value" style="color:#7c3aed;">2</span></div><div class="bar-track"><div class="bar-fill" style="width:2.5%;background:#7c3aed;opacity:0.6;"></div></div>
     </div>
   </div>
 
   <div class="summary-card" style="margin-bottom:10px;">
     <div class="summary-card-title">Top Affected Components</div>
-    <div class="s-row"><span class="s-label">AdminPanel</span><span class="s-value" style="color:#14b8a6;">21</span></div><div class="bar-track"><div class="bar-fill" style="width:26.25%;background:#14b8a6;opacity:0.7;"></div></div><div class="s-row"><span class="s-label">ProductDetailPage</span><span class="s-value" style="color:#14b8a6;">14</span></div><div class="bar-track"><div class="bar-fill" style="width:17.5%;background:#14b8a6;opacity:0.7;"></div></div><div class="s-row"><span class="s-label">Orders API</span><span class="s-value" style="color:#14b8a6;">5</span></div><div class="bar-track"><div class="bar-fill" style="width:6.25%;background:#14b8a6;opacity:0.7;"></div></div><div class="s-row"><span class="s-label">CheckoutView</span><span class="s-value" style="color:#14b8a6;">5</span></div><div class="bar-track"><div class="bar-fill" style="width:6.25%;background:#14b8a6;opacity:0.7;"></div></div><div class="s-row"><span class="s-label">ProductLearningModule</span><span class="s-value" style="color:#14b8a6;">4</span></div><div class="bar-track"><div class="bar-fill" style="width:5.0%;background:#14b8a6;opacity:0.7;"></div></div><div class="s-row"><span class="s-label">API Utils</span><span class="s-value" style="color:#14b8a6;">3</span></div><div class="bar-track"><div class="bar-fill" style="width:3.75%;background:#14b8a6;opacity:0.7;"></div></div><div class="s-row"><span class="s-label">Auth API</span><span class="s-value" style="color:#14b8a6;">3</span></div><div class="bar-track"><div class="bar-fill" style="width:3.75%;background:#14b8a6;opacity:0.7;"></div></div><div class="s-row"><span class="s-label">AuthRegister</span><span class="s-value" style="color:#14b8a6;">3</span></div><div class="bar-track"><div class="bar-fill" style="width:3.75%;background:#14b8a6;opacity:0.7;"></div></div>
+    <div class="s-row"><span class="s-label">AdminPanel</span><span class="s-value" style="color:#0d9488;">21</span></div><div class="bar-track"><div class="bar-fill" style="width:26.25%;background:#0d9488;opacity:0.6;"></div></div><div class="s-row"><span class="s-label">ProductDetailPage</span><span class="s-value" style="color:#0d9488;">14</span></div><div class="bar-track"><div class="bar-fill" style="width:17.5%;background:#0d9488;opacity:0.6;"></div></div><div class="s-row"><span class="s-label">Orders API</span><span class="s-value" style="color:#0d9488;">5</span></div><div class="bar-track"><div class="bar-fill" style="width:6.25%;background:#0d9488;opacity:0.6;"></div></div><div class="s-row"><span class="s-label">CheckoutView</span><span class="s-value" style="color:#0d9488;">5</span></div><div class="bar-track"><div class="bar-fill" style="width:6.25%;background:#0d9488;opacity:0.6;"></div></div><div class="s-row"><span class="s-label">ProductLearningModule</span><span class="s-value" style="color:#0d9488;">4</span></div><div class="bar-track"><div class="bar-fill" style="width:5.0%;background:#0d9488;opacity:0.6;"></div></div><div class="s-row"><span class="s-label">API Utils</span><span class="s-value" style="color:#0d9488;">3</span></div><div class="bar-track"><div class="bar-fill" style="width:3.75%;background:#0d9488;opacity:0.6;"></div></div><div class="s-row"><span class="s-label">Auth API</span><span class="s-value" style="color:#0d9488;">3</span></div><div class="bar-track"><div class="bar-fill" style="width:3.75%;background:#0d9488;opacity:0.6;"></div></div><div class="s-row"><span class="s-label">AuthRegister</span><span class="s-value" style="color:#0d9488;">3</span></div><div class="bar-track"><div class="bar-fill" style="width:3.75%;background:#0d9488;opacity:0.6;"></div></div>
   </div>
 
   <div class="key-findings">
     <div class="kf-title">Key Findings</div>
     <div class="kf-text">
-      <p><strong style="color:#ef4444;">Critical Security Vulnerabilities:</strong> Unsalted SHA-256 password hashing, forgeable session tokens, client-controlled pricing, and IDOR vulnerabilities expose the platform to complete authentication bypass and financial loss.</p>
-      <p><strong style="color:#f97316;">State Management Issues:</strong> Race conditions, infinite retry loops, and stale closures in product detail and admin panels can cause wrong data display, API DDOS, and blank screens.</p>
-      <p><strong style="color:#eab308;">Logic Errors:</strong> Tax calculated on pre-discount subtotal overcharges customers. Phone numbers sent un-normalized cause login failures. Quiz reorder crosses video boundaries.</p>
-      <p><strong style="color:#3b82f6;">UX Defects:</strong> Double-submit on checkout, missing loading states, inaccessible elements, and layout shifts degrade user experience across all flows.</p>
+      <p><strong style="color:#dc2626;">Critical Security Vulnerabilities:</strong> Unsalted SHA-256 password hashing, forgeable session tokens, client-controlled pricing, and IDOR vulnerabilities expose the platform to complete authentication bypass and financial loss.</p>
+      <p><strong style="color:#ea580c;">State Management Issues:</strong> Race conditions, infinite retry loops, and stale closures in product detail and admin panels can cause wrong data display, API DDOS, and blank screens.</p>
+      <p><strong style="color:#ca8a04;">Logic Errors:</strong> Tax calculated on pre-discount subtotal overcharges customers. Phone numbers sent un-normalized cause login failures. Quiz reorder crosses video boundaries.</p>
+      <p><strong style="color:#2563eb;">UX Defects:</strong> Double-submit on checkout, missing loading states, inaccessible elements, and layout shifts degrade user experience across all flows.</p>
     </div>
   </div>
 
@@ -343,20 +341,20 @@
 
   <div class="section-header">
     <span class="section-dot" style="background:#ef4444;"></span>
-    <span class="section-title" style="color:#fca5a5;">Critical Severity</span>
+    <span class="section-title" style="color:#991b1b;">Critical Severity</span>
     <span class="section-count">16 issues</span>
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #ef4444;">
+  <div class="bug" style="border-left:3px solid #ef4444;background:#fef2f2;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#ef444418;color:#ef4444;border:1px solid #ef444433;">ADM-1</span>
+      <span class="bug-id-tag" style="background:#dc262612;color:#dc2626;border:1px solid #dc262625;">ADM-1</span>
       <div class="bug-info">
         <div class="bug-title">Stale Closure / Race Condition in Data Loading</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#ef444418;color:#ef4444;">Critical</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">State</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">AdminPanel</span>
+          <span class="bug-tag" style="background:#dc262612;color:#dc2626;">Critical</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">State</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">AdminPanel</span>
           <span class="bug-loc">Data loading useEffect</span>
         </div>
       </div>
@@ -368,7 +366,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#fca5a5;">Stale data overwrites fresh data if user changes during load.</span>
+        <span class="bug-field-text" style="color:#991b1b;">Stale data overwrites fresh data if user changes during load.</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>
@@ -378,15 +376,15 @@
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #ef4444;">
+  <div class="bug" style="border-left:3px solid #ef4444;background:#fef2f2;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#ef444418;color:#ef4444;border:1px solid #ef444433;">ADM-2</span>
+      <span class="bug-id-tag" style="background:#dc262612;color:#dc2626;border:1px solid #dc262625;">ADM-2</span>
       <div class="bug-info">
         <div class="bug-title">refreshData() Doesnt Refresh All State</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#ef444418;color:#ef4444;">Critical</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Data</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">AdminPanel</span>
+          <span class="bug-tag" style="background:#dc262612;color:#dc2626;">Critical</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">Data</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">AdminPanel</span>
           <span class="bug-loc">refreshData()</span>
         </div>
       </div>
@@ -398,7 +396,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#fca5a5;">After creating/deleting a product, quiz counts and scan data are outdated.</span>
+        <span class="bug-field-text" style="color:#991b1b;">After creating/deleting a product, quiz counts and scan data are outdated.</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>
@@ -408,15 +406,15 @@
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #ef4444;">
+  <div class="bug" style="border-left:3px solid #ef4444;background:#fef2f2;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#ef444418;color:#ef4444;border:1px solid #ef444433;">ADM-3</span>
+      <span class="bug-id-tag" style="background:#dc262612;color:#dc2626;border:1px solid #dc262625;">ADM-3</span>
       <div class="bug-info">
         <div class="bug-title">Product Edit Doesnt Populate slug Field</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#ef444418;color:#ef4444;">Critical</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Data</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">AdminPanel</span>
+          <span class="bug-tag" style="background:#dc262612;color:#dc2626;">Critical</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">Data</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">AdminPanel</span>
           <span class="bug-loc">Product edit onClick</span>
         </div>
       </div>
@@ -428,7 +426,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#fca5a5;">Editing any product and saving OVERWRITES the products URL slug, breaking existing QR codes, bookmarks, and SEO.</span>
+        <span class="bug-field-text" style="color:#991b1b;">Editing any product and saving OVERWRITES the products URL slug, breaking existing QR codes, bookmarks, and SEO.</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>
@@ -438,15 +436,15 @@
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #ef4444;">
+  <div class="bug" style="border-left:3px solid #ef4444;background:#fef2f2;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#ef444418;color:#ef4444;border:1px solid #ef444433;">ADM-4</span>
+      <span class="bug-id-tag" style="background:#dc262612;color:#dc2626;border:1px solid #dc262625;">ADM-4</span>
       <div class="bug-info">
         <div class="bug-title">AdminPanel Calls navigateTo During Render</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#ef444418;color:#ef4444;">Critical</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">State</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">AdminPanel</span>
+          <span class="bug-tag" style="background:#dc262612;color:#dc2626;">Critical</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">State</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">AdminPanel</span>
           <span class="bug-loc">AdminPanel export</span>
         </div>
       </div>
@@ -458,7 +456,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#fca5a5;">Potential infinite render loop; React strict mode will double-invoke it.</span>
+        <span class="bug-field-text" style="color:#991b1b;">Potential infinite render loop; React strict mode will double-invoke it.</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>
@@ -468,15 +466,15 @@
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #ef4444;">
+  <div class="bug" style="border-left:3px solid #ef4444;background:#fef2f2;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#ef444418;color:#ef4444;border:1px solid #ef444433;">ADM-5</span>
+      <span class="bug-id-tag" style="background:#dc262612;color:#dc2626;border:1px solid #dc262625;">ADM-5</span>
       <div class="bug-info">
         <div class="bug-title">XSS via window.open + document.write with Product Name</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#ef444418;color:#ef4444;">Critical</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Security</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">AdminPanel</span>
+          <span class="bug-tag" style="background:#dc262612;color:#dc2626;">Critical</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">Security</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">AdminPanel</span>
           <span class="bug-loc">Product QR button onClick</span>
         </div>
       </div>
@@ -488,7 +486,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#fca5a5;">Stored XSS - malicious admin can execute arbitrary JavaScript.</span>
+        <span class="bug-field-text" style="color:#991b1b;">Stored XSS - malicious admin can execute arbitrary JavaScript.</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>
@@ -498,15 +496,15 @@
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #ef4444;">
+  <div class="bug" style="border-left:3px solid #ef4444;background:#fef2f2;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#ef444418;color:#ef4444;border:1px solid #ef444433;">AUTH-1</span>
+      <span class="bug-id-tag" style="background:#dc262612;color:#dc2626;border:1px solid #dc262625;">AUTH-1</span>
       <div class="bug-info">
         <div class="bug-title">Phone Number Sent to API Un-normalized</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#ef444418;color:#ef4444;">Critical</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Logic</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">AuthWhatsAppOtpLogin</span>
+          <span class="bug-tag" style="background:#dc262612;color:#dc2626;">Critical</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">Logic</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">AuthWhatsAppOtpLogin</span>
           <span class="bug-loc">handleSendOtp / handleLogin</span>
         </div>
       </div>
@@ -518,7 +516,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#fca5a5;">OTP may be sent to the wrong number format, or API may reject. Login fails for users entering international format.</span>
+        <span class="bug-field-text" style="color:#991b1b;">OTP may be sent to the wrong number format, or API may reject. Login fails for users entering international format.</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>
@@ -528,15 +526,15 @@
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #ef4444;">
+  <div class="bug" style="border-left:3px solid #ef4444;background:#fef2f2;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#ef444418;color:#ef4444;border:1px solid #ef444433;">AUTH-2</span>
+      <span class="bug-id-tag" style="background:#dc262612;color:#dc2626;border:1px solid #dc262625;">AUTH-2</span>
       <div class="bug-info">
         <div class="bug-title">Phone Number Sent to API Un-normalized in Register</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#ef444418;color:#ef4444;">Critical</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Logic</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">AuthRegister</span>
+          <span class="bug-tag" style="background:#dc262612;color:#dc2626;">Critical</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">Logic</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">AuthRegister</span>
           <span class="bug-loc">handleSendOtp</span>
         </div>
       </div>
@@ -548,7 +546,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#fca5a5;">Registration OTP may fail for users entering phone with country code or leading zero.</span>
+        <span class="bug-field-text" style="color:#991b1b;">Registration OTP may fail for users entering phone with country code or leading zero.</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>
@@ -558,15 +556,15 @@
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #ef4444;">
+  <div class="bug" style="border-left:3px solid #ef4444;background:#fef2f2;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#ef444418;color:#ef4444;border:1px solid #ef444433;">CHECKOUT-1</span>
+      <span class="bug-id-tag" style="background:#dc262612;color:#dc2626;border:1px solid #dc262625;">CHECKOUT-1</span>
       <div class="bug-info">
         <div class="bug-title">Tax Calculated on Pre-Discount Subtotal (Overcharges Customer)</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#ef444418;color:#ef4444;">Critical</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Logic</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">CheckoutView</span>
+          <span class="bug-tag" style="background:#dc262612;color:#dc2626;">Critical</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">Logic</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">CheckoutView</span>
           <span class="bug-loc">Price calculation</span>
         </div>
       </div>
@@ -578,7 +576,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#fca5a5;">Customer is overcharged. Example: Item ₹1000 with 20% discount: current tax=₹180, correct tax=₹144. Overcharge of ₹36.</span>
+        <span class="bug-field-text" style="color:#991b1b;">Customer is overcharged. Example: Item ₹1000 with 20% discount: current tax=₹180, correct tax=₹144. Overcharge of ₹36.</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>
@@ -588,15 +586,15 @@
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #ef4444;">
+  <div class="bug" style="border-left:3px solid #ef4444;background:#fef2f2;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#ef444418;color:#ef4444;border:1px solid #ef444433;">CHECKOUT-2</span>
+      <span class="bug-id-tag" style="background:#dc262612;color:#dc2626;border:1px solid #dc262625;">CHECKOUT-2</span>
       <div class="bug-info">
         <div class="bug-title">Double-Submit on Rapid Button Clicks (Place Order)</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#ef444418;color:#ef4444;">Critical</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">State</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">CheckoutView</span>
+          <span class="bug-tag" style="background:#dc262612;color:#dc2626;">Critical</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">State</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">CheckoutView</span>
           <span class="bug-loc">handlePlaceOrder</span>
         </div>
       </div>
@@ -608,7 +606,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#fca5a5;">Duplicate orders created, customer double-charged for COD, cart cleared incorrectly.</span>
+        <span class="bug-field-text" style="color:#991b1b;">Duplicate orders created, customer double-charged for COD, cart cleared incorrectly.</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>
@@ -618,15 +616,15 @@
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #ef4444;">
+  <div class="bug" style="border-left:3px solid #ef4444;background:#fef2f2;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#ef444418;color:#ef4444;border:1px solid #ef444433;">PDP-1</span>
+      <span class="bug-id-tag" style="background:#dc262612;color:#dc2626;border:1px solid #dc262625;">PDP-1</span>
       <div class="bug-info">
         <div class="bug-title">Race Condition: No AbortController on Product Fetch</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#ef444418;color:#ef4444;">Critical</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">State</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">ProductDetailPage</span>
+          <span class="bug-tag" style="background:#dc262612;color:#dc2626;">Critical</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">State</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">ProductDetailPage</span>
           <span class="bug-loc">Product fetch useEffect</span>
         </div>
       </div>
@@ -638,7 +636,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#fca5a5;">User navigates from Product A to Product B. If fetch A resolves after fetch B, page shows wrong product data.</span>
+        <span class="bug-field-text" style="color:#991b1b;">User navigates from Product A to Product B. If fetch A resolves after fetch B, page shows wrong product data.</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>
@@ -648,15 +646,15 @@
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #ef4444;">
+  <div class="bug" style="border-left:3px solid #ef4444;background:#fef2f2;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#ef444418;color:#ef4444;border:1px solid #ef444433;">PDP-2</span>
+      <span class="bug-id-tag" style="background:#dc262612;color:#dc2626;border:1px solid #dc262625;">PDP-2</span>
       <div class="bug-info">
         <div class="bug-title">Infinite Retry Loop on Fetch Failure</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#ef444418;color:#ef4444;">Critical</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">State</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">ProductDetailPage</span>
+          <span class="bug-tag" style="background:#dc262612;color:#dc2626;">Critical</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">State</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">ProductDetailPage</span>
           <span class="bug-loc">.catch block of product fetch</span>
         </div>
       </div>
@@ -668,7 +666,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#fca5a5;">If API is down, component enters infinite fetch-fail-render loop, potentially DDOSing the API and freezing the browser.</span>
+        <span class="bug-field-text" style="color:#991b1b;">If API is down, component enters infinite fetch-fail-render loop, potentially DDOSing the API and freezing the browser.</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>
@@ -678,15 +676,15 @@
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #ef4444;">
+  <div class="bug" style="border-left:3px solid #ef4444;background:#fef2f2;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#ef444418;color:#ef4444;border:1px solid #ef444433;">SEC-1</span>
+      <span class="bug-id-tag" style="background:#dc262612;color:#dc2626;border:1px solid #dc262625;">SEC-1</span>
       <div class="bug-info">
         <div class="bug-title">Unsalted SHA-256 Password Hashing</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#ef444418;color:#ef4444;">Critical</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Security</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">API Utils</span>
+          <span class="bug-tag" style="background:#dc262612;color:#dc2626;">Critical</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">Security</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">API Utils</span>
           <span class="bug-loc">hashPassword()</span>
         </div>
       </div>
@@ -698,7 +696,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#fca5a5;">Full database compromise reveals all user passwords in minutes. No per-user salt means one cracked password cracks all identical passwords instantly.</span>
+        <span class="bug-field-text" style="color:#991b1b;">Full database compromise reveals all user passwords in minutes. No per-user salt means one cracked password cracks all identical passwords instantly.</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>
@@ -708,15 +706,15 @@
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #ef4444;">
+  <div class="bug" style="border-left:3px solid #ef4444;background:#fef2f2;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#ef444418;color:#ef4444;border:1px solid #ef444433;">SEC-2</span>
+      <span class="bug-id-tag" style="background:#dc262612;color:#dc2626;border:1px solid #dc262625;">SEC-2</span>
       <div class="bug-info">
         <div class="bug-title">Forgeable Session Tokens</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#ef444418;color:#ef4444;">Critical</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Security</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">Auth API</span>
+          <span class="bug-tag" style="background:#dc262612;color:#dc2626;">Critical</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">Security</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">Auth API</span>
           <span class="bug-loc">register/route.ts:92, login/route.ts:60</span>
         </div>
       </div>
@@ -728,7 +726,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#fca5a5;">Complete authentication bypass. Attacker can impersonate any user by constructing a token from their ID + any timestamp.</span>
+        <span class="bug-field-text" style="color:#991b1b;">Complete authentication bypass. Attacker can impersonate any user by constructing a token from their ID + any timestamp.</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>
@@ -738,15 +736,15 @@
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #ef4444;">
+  <div class="bug" style="border-left:3px solid #ef4444;background:#fef2f2;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#ef444418;color:#ef4444;border:1px solid #ef444433;">SEC-3</span>
+      <span class="bug-id-tag" style="background:#dc262612;color:#dc2626;border:1px solid #dc262625;">SEC-3</span>
       <div class="bug-info">
         <div class="bug-title">Client-Controlled Order Pricing (Price Manipulation)</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#ef444418;color:#ef4444;">Critical</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Security</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">Orders API</span>
+          <span class="bug-tag" style="background:#dc262612;color:#dc2626;">Critical</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">Security</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">Orders API</span>
           <span class="bug-loc">orders/route.ts:70-73</span>
         </div>
       </div>
@@ -758,7 +756,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#fca5a5;">Customers can purchase products at arbitrary prices. Direct financial loss.</span>
+        <span class="bug-field-text" style="color:#991b1b;">Customers can purchase products at arbitrary prices. Direct financial loss.</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>
@@ -768,15 +766,15 @@
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #ef4444;">
+  <div class="bug" style="border-left:3px solid #ef4444;background:#fef2f2;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#ef444418;color:#ef4444;border:1px solid #ef444433;">SEC-4</span>
+      <span class="bug-id-tag" style="background:#dc262612;color:#dc2626;border:1px solid #dc262625;">SEC-4</span>
       <div class="bug-info">
         <div class="bug-title">No Authorization on User-Specific Order Listing (IDOR)</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#ef444418;color:#ef4444;">Critical</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Security</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">Orders API</span>
+          <span class="bug-tag" style="background:#dc262612;color:#dc2626;">Critical</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">Security</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">Orders API</span>
           <span class="bug-loc">orders/route.ts:38-51</span>
         </div>
       </div>
@@ -788,7 +786,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#fca5a5;">Any user can view all orders, shipping addresses, phone numbers, and payment details of any other user.</span>
+        <span class="bug-field-text" style="color:#991b1b;">Any user can view all orders, shipping addresses, phone numbers, and payment details of any other user.</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>
@@ -798,15 +796,15 @@
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #ef4444;">
+  <div class="bug" style="border-left:3px solid #ef4444;background:#fef2f2;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#ef444418;color:#ef4444;border:1px solid #ef444433;">SEC-5</span>
+      <span class="bug-id-tag" style="background:#dc262612;color:#dc2626;border:1px solid #dc262625;">SEC-5</span>
       <div class="bug-info">
         <div class="bug-title">No Authorization on Order Cancellation</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#ef444418;color:#ef4444;">Critical</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Security</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">Data Service</span>
+          <span class="bug-tag" style="background:#dc262612;color:#dc2626;">Critical</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">Security</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">Data Service</span>
           <span class="bug-loc">orderService.cancel()</span>
         </div>
       </div>
@@ -818,7 +816,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#fca5a5;">Any authenticated user can cancel orders belonging to other users.</span>
+        <span class="bug-field-text" style="color:#991b1b;">Any authenticated user can cancel orders belonging to other users.</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>
@@ -845,20 +843,20 @@
 
   <div class="section-header">
     <span class="section-dot" style="background:#f97316;"></span>
-    <span class="section-title" style="color:#fdba74;">High Severity</span>
+    <span class="section-title" style="color:#9a3412;">High Severity</span>
     <span class="section-count">27 issues</span>
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #f97316;">
+  <div class="bug" style="border-left:3px solid #f97316;background:#fff7ed;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#f9731618;color:#f97316;border:1px solid #f9731633;">ADM-11</span>
+      <span class="bug-id-tag" style="background:#ea580c12;color:#ea580c;border:1px solid #ea580c25;">ADM-11</span>
       <div class="bug-info">
         <div class="bug-title">Number Inputs Show Empty for Zero Values</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#f9731618;color:#f97316;">High</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Form</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">AdminPanel</span>
+          <span class="bug-tag" style="background:#ea580c12;color:#ea580c;">High</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">Form</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">AdminPanel</span>
           <span class="bug-loc">Product form</span>
         </div>
       </div>
@@ -870,7 +868,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#fdba74;">Admin cannot set price/mrp/stock to 0; input appears empty.</span>
+        <span class="bug-field-text" style="color:#9a3412;">Admin cannot set price/mrp/stock to 0; input appears empty.</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>
@@ -880,15 +878,15 @@
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #f97316;">
+  <div class="bug" style="border-left:3px solid #f97316;background:#fff7ed;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#f9731618;color:#f97316;border:1px solid #f9731633;">ADM-12</span>
+      <span class="bug-id-tag" style="background:#ea580c12;color:#ea580c;border:1px solid #ea580c25;">ADM-12</span>
       <div class="bug-info">
         <div class="bug-title">Quiz Reorder Swaps Across Video Boundaries</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#f9731618;color:#f97316;">High</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Logic</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">AdminPanel</span>
+          <span class="bug-tag" style="background:#ea580c12;color:#ea580c;">High</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">Logic</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">AdminPanel</span>
           <span class="bug-loc">handleReorderQuiz</span>
         </div>
       </div>
@@ -900,7 +898,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#fdba74;">Reordering quiz within one video accidentally swaps with quiz from different video.</span>
+        <span class="bug-field-text" style="color:#9a3412;">Reordering quiz within one video accidentally swaps with quiz from different video.</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>
@@ -910,15 +908,15 @@
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #f97316;">
+  <div class="bug" style="border-left:3px solid #f97316;background:#fff7ed;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#f9731618;color:#f97316;border:1px solid #f9731633;">ADM-13</span>
+      <span class="bug-id-tag" style="background:#ea580c12;color:#ea580c;border:1px solid #ea580c25;">ADM-13</span>
       <div class="bug-info">
         <div class="bug-title">x-admin-key: true Is Not Real Authentication</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#f9731618;color:#f97316;">High</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Security</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">AdminPanel</span>
+          <span class="bug-tag" style="background:#ea580c12;color:#ea580c;">High</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">Security</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">AdminPanel</span>
           <span class="bug-loc">handleEditUser, handleDeleteUser</span>
         </div>
       </div>
@@ -930,7 +928,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#fdba74;">Any authenticated user could call admin APIs by adding this header.</span>
+        <span class="bug-field-text" style="color:#9a3412;">Any authenticated user could call admin APIs by adding this header.</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>
@@ -940,15 +938,15 @@
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #f97316;">
+  <div class="bug" style="border-left:3px solid #f97316;background:#fff7ed;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#f9731618;color:#f97316;border:1px solid #f9731633;">ADM-6</span>
+      <span class="bug-id-tag" style="background:#ea580c12;color:#ea580c;border:1px solid #ea580c25;">ADM-6</span>
       <div class="bug-info">
         <div class="bug-title">|| vs ?? for learningCompleted Fallback (7 locations)</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#f9731618;color:#f97316;">High</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Logic</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">AdminPanel</span>
+          <span class="bug-tag" style="background:#ea580c12;color:#ea580c;">High</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">Logic</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">AdminPanel</span>
           <span class="bug-loc">Dashboard stats</span>
         </div>
       </div>
@@ -960,7 +958,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#fdba74;">Dashboard shows wrong completion counts when exactly 0 users completed learning.</span>
+        <span class="bug-field-text" style="color:#9a3412;">Dashboard shows wrong completion counts when exactly 0 users completed learning.</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>
@@ -970,15 +968,15 @@
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #f97316;">
+  <div class="bug" style="border-left:3px solid #f97316;background:#fff7ed;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#f9731618;color:#f97316;border:1px solid #f9731633;">ADM-7</span>
+      <span class="bug-id-tag" style="background:#ea580c12;color:#ea580c;border:1px solid #ea580c25;">ADM-7</span>
       <div class="bug-info">
         <div class="bug-title">Kanban Order Status Update Has No Error Handling</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#f9731618;color:#f97316;">High</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">API</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">AdminPanel</span>
+          <span class="bug-tag" style="background:#ea580c12;color:#ea580c;">High</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">API</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">AdminPanel</span>
           <span class="bug-loc">Kanban card onValueChange</span>
         </div>
       </div>
@@ -990,7 +988,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#fdba74;">Failed status updates silently fail with no feedback.</span>
+        <span class="bug-field-text" style="color:#9a3412;">Failed status updates silently fail with no feedback.</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>
@@ -1000,15 +998,15 @@
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #f97316;">
+  <div class="bug" style="border-left:3px solid #f97316;background:#fff7ed;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#f9731618;color:#f97316;border:1px solid #f9731633;">ADM-8</span>
+      <span class="bug-id-tag" style="background:#ea580c12;color:#ea580c;border:1px solid #ea580c25;">ADM-8</span>
       <div class="bug-info">
         <div class="bug-title">Blank Page on Error (No Error State)</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#f9731618;color:#f97316;">High</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Render</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">AdminPanel</span>
+          <span class="bug-tag" style="background:#ea580c12;color:#ea580c;">High</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">Render</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">AdminPanel</span>
           <span class="bug-loc">if (!stats) return null</span>
         </div>
       </div>
@@ -1020,7 +1018,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#fdba74;">Admin sees blank white page with no indication of what went wrong.</span>
+        <span class="bug-field-text" style="color:#9a3412;">Admin sees blank white page with no indication of what went wrong.</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>
@@ -1030,15 +1028,15 @@
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #f97316;">
+  <div class="bug" style="border-left:3px solid #f97316;background:#fff7ed;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#f9731618;color:#f97316;border:1px solid #f9731633;">ADM-9</span>
+      <span class="bug-id-tag" style="background:#ea580c12;color:#ea580c;border:1px solid #ea580c25;">ADM-9</span>
       <div class="bug-info">
         <div class="bug-title">Gender Select Has No Empty/Null Option</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#f9731618;color:#f97316;">High</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Form</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">AdminPanel</span>
+          <span class="bug-tag" style="background:#ea580c12;color:#ea580c;">High</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">Form</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">AdminPanel</span>
           <span class="bug-loc">Edit user dialog</span>
         </div>
       </div>
@@ -1050,7 +1048,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#fdba74;">Select may show unexpected behavior; cannot unset gender once selected.</span>
+        <span class="bug-field-text" style="color:#9a3412;">Select may show unexpected behavior; cannot unset gender once selected.</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>
@@ -1060,15 +1058,15 @@
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #f97316;">
+  <div class="bug" style="border-left:3px solid #f97316;background:#fff7ed;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#f9731618;color:#f97316;border:1px solid #f9731633;">API-2</span>
+      <span class="bug-id-tag" style="background:#ea580c12;color:#ea580c;border:1px solid #ea580c25;">API-2</span>
       <div class="bug-info">
         <div class="bug-title">No Authentication on Order Creation</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#f9731618;color:#f97316;">High</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">API</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">Orders API</span>
+          <span class="bug-tag" style="background:#ea580c12;color:#ea580c;">High</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">API</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">Orders API</span>
           <span class="bug-loc">POST handler</span>
         </div>
       </div>
@@ -1080,7 +1078,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#fdba74;">Attackers can place fraudulent orders under any users account.</span>
+        <span class="bug-field-text" style="color:#9a3412;">Attackers can place fraudulent orders under any users account.</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>
@@ -1090,15 +1088,15 @@
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #f97316;">
+  <div class="bug" style="border-left:3px solid #f97316;background:#fff7ed;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#f9731618;color:#f97316;border:1px solid #f9731633;">AUTH-3</span>
+      <span class="bug-id-tag" style="background:#ea580c12;color:#ea580c;border:1px solid #ea580c25;">AUTH-3</span>
       <div class="bug-info">
         <div class="bug-title">Registration Doesnt Pass OTP Verification ID to Server</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#f9731618;color:#f97316;">High</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Security</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">AuthRegister</span>
+          <span class="bug-tag" style="background:#ea580c12;color:#ea580c;">High</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">Security</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">AuthRegister</span>
           <span class="bug-loc">handleRegister</span>
         </div>
       </div>
@@ -1110,7 +1108,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#fdba74;">Security gap - malicious user could register with unverified email/phone.</span>
+        <span class="bug-field-text" style="color:#9a3412;">Security gap - malicious user could register with unverified email/phone.</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>
@@ -1120,15 +1118,15 @@
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #f97316;">
+  <div class="bug" style="border-left:3px solid #f97316;background:#fff7ed;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#f9731618;color:#f97316;border:1px solid #f9731633;">AUTH-4</span>
+      <span class="bug-id-tag" style="background:#ea580c12;color:#ea580c;border:1px solid #ea580c25;">AUTH-4</span>
       <div class="bug-info">
         <div class="bug-title">&quot;Keep me signed in&quot; Checkbox Is Non-Functional</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#f9731618;color:#f97316;">High</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">UX</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">AuthLogin/AuthRegister</span>
+          <span class="bug-tag" style="background:#ea580c12;color:#ea580c;">High</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">UX</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">AuthLogin/AuthRegister</span>
           <span class="bug-loc">Keep me signed in checkbox</span>
         </div>
       </div>
@@ -1140,7 +1138,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#fdba74;">Users believe theyre choosing session persistence but always get default behavior.</span>
+        <span class="bug-field-text" style="color:#9a3412;">Users believe theyre choosing session persistence but always get default behavior.</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>
@@ -1150,15 +1148,15 @@
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #f97316;">
+  <div class="bug" style="border-left:3px solid #f97316;background:#fff7ed;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#f9731618;color:#f97316;border:1px solid #f9731633;">CHECKOUT-3</span>
+      <span class="bug-id-tag" style="background:#ea580c12;color:#ea580c;border:1px solid #ea580c25;">CHECKOUT-3</span>
       <div class="bug-info">
         <div class="bug-title">Total Amount Can Go Negative with Excessive Discount</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#f9731618;color:#f97316;">High</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Logic</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">CheckoutView</span>
+          <span class="bug-tag" style="background:#ea580c12;color:#ea580c;">High</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">Logic</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">CheckoutView</span>
           <span class="bug-loc">Price calculation</span>
         </div>
       </div>
@@ -1170,7 +1168,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#fdba74;">Negative order total could be submitted to the server.</span>
+        <span class="bug-field-text" style="color:#9a3412;">Negative order total could be submitted to the server.</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>
@@ -1180,15 +1178,15 @@
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #f97316;">
+  <div class="bug" style="border-left:3px solid #f97316;background:#fff7ed;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#f9731618;color:#f97316;border:1px solid #f9731633;">LP-1</span>
+      <span class="bug-id-tag" style="background:#ea580c12;color:#ea580c;border:1px solid #ea580c25;">LP-1</span>
       <div class="bug-info">
         <div class="bug-title">Badge Position Overlap (Locked + Discount Label)</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#f9731618;color:#f97316;">High</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">UX</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">LandingPage / ProductPage</span>
+          <span class="bug-tag" style="background:#ea580c12;color:#ea580c;">High</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">UX</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">LandingPage / ProductPage</span>
           <span class="bug-loc">Product card badges</span>
         </div>
       </div>
@@ -1200,7 +1198,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#fdba74;">Jumbled overlapping text in top-left corner of product cards. Discount promotion hidden behind Locked badge.</span>
+        <span class="bug-field-text" style="color:#9a3412;">Jumbled overlapping text in top-left corner of product cards. Discount promotion hidden behind Locked badge.</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>
@@ -1210,15 +1208,15 @@
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #f97316;">
+  <div class="bug" style="border-left:3px solid #f97316;background:#fff7ed;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#f9731618;color:#f97316;border:1px solid #f9731633;">PDP-3</span>
+      <span class="bug-id-tag" style="background:#ea580c12;color:#ea580c;border:1px solid #ea580c25;">PDP-3</span>
       <div class="bug-info">
         <div class="bug-title">State Leak: descExpanded Not Reset on Product Change</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#f9731618;color:#f97316;">High</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">State</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">ProductDetailPage</span>
+          <span class="bug-tag" style="background:#ea580c12;color:#ea580c;">High</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">State</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">ProductDetailPage</span>
           <span class="bug-loc">descExpanded state</span>
         </div>
       </div>
@@ -1230,7 +1228,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#fdba74;">Product B description shown fully expanded with no View More option.</span>
+        <span class="bug-field-text" style="color:#9a3412;">Product B description shown fully expanded with no View More option.</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>
@@ -1240,15 +1238,15 @@
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #f97316;">
+  <div class="bug" style="border-left:3px solid #f97316;background:#fff7ed;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#f9731618;color:#f97316;border:1px solid #f9731633;">PDP-4</span>
+      <span class="bug-id-tag" style="background:#ea580c12;color:#ea580c;border:1px solid #ea580c25;">PDP-4</span>
       <div class="bug-info">
         <div class="bug-title">State Leak: quantity Not Reset on Product Change</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#f9731618;color:#f97316;">High</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">State</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">ProductDetailPage</span>
+          <span class="bug-tag" style="background:#ea580c12;color:#ea580c;">High</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">State</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">ProductDetailPage</span>
           <span class="bug-loc">quantity state</span>
         </div>
       </div>
@@ -1260,7 +1258,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#fdba74;">User unknowingly adds wrong quantity to cart for a different product.</span>
+        <span class="bug-field-text" style="color:#9a3412;">User unknowingly adds wrong quantity to cart for a different product.</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>
@@ -1270,15 +1268,15 @@
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #f97316;">
+  <div class="bug" style="border-left:3px solid #f97316;background:#fff7ed;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#f9731618;color:#f97316;border:1px solid #f9731633;">PDP-5</span>
+      <span class="bug-id-tag" style="background:#ea580c12;color:#ea580c;border:1px solid #ea580c25;">PDP-5</span>
       <div class="bug-info">
         <div class="bug-title">handleAddToCart Uses product Instead of displayProduct</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#f9731618;color:#f97316;">High</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Logic</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">ProductDetailPage</span>
+          <span class="bug-tag" style="background:#ea580c12;color:#ea580c;">High</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">Logic</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">ProductDetailPage</span>
           <span class="bug-loc">handleAddToCart</span>
         </div>
       </div>
@@ -1290,7 +1288,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#fdba74;">User clicks Buy Now on completed product during brief window - nothing happens.</span>
+        <span class="bug-field-text" style="color:#9a3412;">User clicks Buy Now on completed product during brief window - nothing happens.</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>
@@ -1300,15 +1298,15 @@
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #f97316;">
+  <div class="bug" style="border-left:3px solid #f97316;background:#fff7ed;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#f9731618;color:#f97316;border:1px solid #f9731633;">PDP-6</span>
+      <span class="bug-id-tag" style="background:#ea580c12;color:#ea580c;border:1px solid #ea580c25;">PDP-6</span>
       <div class="bug-info">
         <div class="bug-title">Aggressive Cutoff for Barely-Long Text</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#f9731618;color:#f97316;">High</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">UX</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">ProductDetailPage</span>
+          <span class="bug-tag" style="background:#ea580c12;color:#ea580c;">High</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">UX</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">ProductDetailPage</span>
           <span class="bug-loc">About This Product truncation</span>
         </div>
       </div>
@@ -1320,7 +1318,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#fdba74;">Users see very little content before needing to click View More.</span>
+        <span class="bug-field-text" style="color:#9a3412;">Users see very little content before needing to click View More.</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>
@@ -1330,15 +1328,15 @@
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #f97316;">
+  <div class="bug" style="border-left:3px solid #f97316;background:#fff7ed;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#f9731618;color:#f97316;border:1px solid #f9731633;">PDP-7</span>
+      <span class="bug-id-tag" style="background:#ea580c12;color:#ea580c;border:1px solid #ea580c25;">PDP-7</span>
       <div class="bug-info">
         <div class="bug-title">Truncation Only Searches Forward for Break Point</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#f9731618;color:#f97316;">High</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Logic</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">ProductDetailPage</span>
+          <span class="bug-tag" style="background:#ea580c12;color:#ea580c;">High</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">Logic</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">ProductDetailPage</span>
           <span class="bug-loc">About This Product truncation</span>
         </div>
       </div>
@@ -1350,7 +1348,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#fdba74;">Text gets cut mid-sentence when natural break exists just before search window.</span>
+        <span class="bug-field-text" style="color:#9a3412;">Text gets cut mid-sentence when natural break exists just before search window.</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>
@@ -1360,15 +1358,15 @@
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #f97316;">
+  <div class="bug" style="border-left:3px solid #f97316;background:#fff7ed;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#f9731618;color:#f97316;border:1px solid #f9731633;">PLM-1</span>
+      <span class="bug-id-tag" style="background:#ea580c12;color:#ea580c;border:1px solid #ea580c25;">PLM-1</span>
       <div class="bug-info">
         <div class="bug-title">Infinite Loading Spinner When selectedProductId Is Null</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#f9731618;color:#f97316;">High</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">State</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">ProductLearningModule</span>
+          <span class="bug-tag" style="background:#ea580c12;color:#ea580c;">High</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">State</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">ProductLearningModule</span>
           <span class="bug-loc">Data fetch useEffect</span>
         </div>
       </div>
@@ -1380,7 +1378,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#fdba74;">Users stuck on infinite loading screen with no escape.</span>
+        <span class="bug-field-text" style="color:#9a3412;">Users stuck on infinite loading screen with no escape.</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>
@@ -1390,15 +1388,15 @@
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #f97316;">
+  <div class="bug" style="border-left:3px solid #f97316;background:#fff7ed;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#f9731618;color:#f97316;border:1px solid #f9731633;">PLM-2</span>
+      <span class="bug-id-tag" style="background:#ea580c12;color:#ea580c;border:1px solid #ea580c25;">PLM-2</span>
       <div class="bug-info">
         <div class="bug-title">Stale videoProgress Closure in onLoadedMetadata</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#f9731618;color:#f97316;">High</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">State</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">ProductLearningModule</span>
+          <span class="bug-tag" style="background:#ea580c12;color:#ea580c;">High</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">State</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">ProductLearningModule</span>
           <span class="bug-loc">onLoadedMetadata</span>
         </div>
       </div>
@@ -1410,7 +1408,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#fdba74;">Video playback resumes at wrong position when returning to partially-watched video.</span>
+        <span class="bug-field-text" style="color:#9a3412;">Video playback resumes at wrong position when returning to partially-watched video.</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>
@@ -1420,15 +1418,15 @@
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #f97316;">
+  <div class="bug" style="border-left:3px solid #f97316;background:#fff7ed;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#f9731618;color:#f97316;border:1px solid #f9731633;">PLM-3</span>
+      <span class="bug-id-tag" style="background:#ea580c12;color:#ea580c;border:1px solid #ea580c25;">PLM-3</span>
       <div class="bug-info">
         <div class="bug-title">Race Condition in saveVideoProgress (Stale Progress Object)</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#f9731618;color:#f97316;">High</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">State</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">ProductLearningModule</span>
+          <span class="bug-tag" style="background:#ea580c12;color:#ea580c;">High</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">State</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">ProductLearningModule</span>
           <span class="bug-loc">saveVideoProgress</span>
         </div>
       </div>
@@ -1440,7 +1438,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#fdba74;">Quiz answers or video progress silently lost on rapid interaction.</span>
+        <span class="bug-field-text" style="color:#9a3412;">Quiz answers or video progress silently lost on rapid interaction.</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>
@@ -1450,15 +1448,15 @@
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #f97316;">
+  <div class="bug" style="border-left:3px solid #f97316;background:#fff7ed;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#f9731618;color:#f97316;border:1px solid #f9731633;">PLM-4</span>
+      <span class="bug-id-tag" style="background:#ea580c12;color:#ea580c;border:1px solid #ea580c25;">PLM-4</span>
       <div class="bug-info">
         <div class="bug-title">handleSeek Doesnt Clamp to 0-100</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#f9731618;color:#f97316;">High</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Logic</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">ProductLearningModule</span>
+          <span class="bug-tag" style="background:#ea580c12;color:#ea580c;">High</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">Logic</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">ProductLearningModule</span>
           <span class="bug-loc">handleSeek</span>
         </div>
       </div>
@@ -1470,7 +1468,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#fdba74;">Video progress can show &gt;100% or negative values, causing visual glitches and corrupting saved data.</span>
+        <span class="bug-field-text" style="color:#9a3412;">Video progress can show &gt;100% or negative values, causing visual glitches and corrupting saved data.</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>
@@ -1480,15 +1478,15 @@
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #f97316;">
+  <div class="bug" style="border-left:3px solid #f97316;background:#fff7ed;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#f9731618;color:#f97316;border:1px solid #f9731633;">PROFILE-1</span>
+      <span class="bug-id-tag" style="background:#ea580c12;color:#ea580c;border:1px solid #ea580c25;">PROFILE-1</span>
       <div class="bug-info">
         <div class="bug-title">Change Password Allows Empty Current Password</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#f9731618;color:#f97316;">High</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Security</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">ProfilePage</span>
+          <span class="bug-tag" style="background:#ea580c12;color:#ea580c;">High</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">Security</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">ProfilePage</span>
           <span class="bug-loc">ChangePasswordButton</span>
         </div>
       </div>
@@ -1500,7 +1498,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#fdba74;">If session is hijacked, attacker can set new password and lock out original user.</span>
+        <span class="bug-field-text" style="color:#9a3412;">If session is hijacked, attacker can set new password and lock out original user.</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>
@@ -1510,15 +1508,15 @@
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #f97316;">
+  <div class="bug" style="border-left:3px solid #f97316;background:#fff7ed;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#f9731618;color:#f97316;border:1px solid #f9731633;">PROFILE-2</span>
+      <span class="bug-id-tag" style="background:#ea580c12;color:#ea580c;border:1px solid #ea580c25;">PROFILE-2</span>
       <div class="bug-info">
         <div class="bug-title">No AbortController for Data Fetches</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#f9731618;color:#f97316;">High</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">State</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">ProfilePage</span>
+          <span class="bug-tag" style="background:#ea580c12;color:#ea580c;">High</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">State</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">ProfilePage</span>
           <span class="bug-loc">Data fetch useEffect</span>
         </div>
       </div>
@@ -1530,7 +1528,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#fdba74;">React state update on unmounted component warnings; potential memory leaks.</span>
+        <span class="bug-field-text" style="color:#9a3412;">React state update on unmounted component warnings; potential memory leaks.</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>
@@ -1540,15 +1538,15 @@
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #f97316;">
+  <div class="bug" style="border-left:3px solid #f97316;background:#fff7ed;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#f9731618;color:#f97316;border:1px solid #f9731633;">SEC-6</span>
+      <span class="bug-id-tag" style="background:#ea580c12;color:#ea580c;border:1px solid #ea580c25;">SEC-6</span>
       <div class="bug-info">
         <div class="bug-title">Timing-Vulnerable Password Comparison</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#f9731618;color:#f97316;">High</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Security</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">API Utils</span>
+          <span class="bug-tag" style="background:#ea580c12;color:#ea580c;">High</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">Security</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">API Utils</span>
           <span class="bug-loc">verifyPassword()</span>
         </div>
       </div>
@@ -1560,7 +1558,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#fdba74;">With enough timing measurements, attacker can recover the password hash offline.</span>
+        <span class="bug-field-text" style="color:#9a3412;">With enough timing measurements, attacker can recover the password hash offline.</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>
@@ -1570,15 +1568,15 @@
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #f97316;">
+  <div class="bug" style="border-left:3px solid #f97316;background:#fff7ed;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#f9731618;color:#f97316;border:1px solid #f9731633;">SEC-7</span>
+      <span class="bug-id-tag" style="background:#ea580c12;color:#ea580c;border:1px solid #ea580c25;">SEC-7</span>
       <div class="bug-info">
         <div class="bug-title">user_id Cookie Accessible to JavaScript (XSS Exfiltration)</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#f9731618;color:#f97316;">High</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Security</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">Auth API</span>
+          <span class="bug-tag" style="background:#ea580c12;color:#ea580c;">High</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">Security</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">Auth API</span>
           <span class="bug-loc">register/login cookie set</span>
         </div>
       </div>
@@ -1590,7 +1588,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#fdba74;">Any XSS vulnerability leads to immediate account takeover.</span>
+        <span class="bug-field-text" style="color:#9a3412;">Any XSS vulnerability leads to immediate account takeover.</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>
@@ -1600,15 +1598,15 @@
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #f97316;">
+  <div class="bug" style="border-left:3px solid #f97316;background:#fff7ed;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#f9731618;color:#f97316;border:1px solid #f9731633;">SEC-8</span>
+      <span class="bug-id-tag" style="background:#ea580c12;color:#ea580c;border:1px solid #ea580c25;">SEC-8</span>
       <div class="bug-info">
         <div class="bug-title">Unauthenticated Health Endpoint Leaks Database URL &amp; Secrets</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#f9731618;color:#f97316;">High</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Security</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">Health API</span>
+          <span class="bug-tag" style="background:#ea580c12;color:#ea580c;">High</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">Security</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">Health API</span>
           <span class="bug-loc">health/route.ts</span>
         </div>
       </div>
@@ -1620,7 +1618,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#fdba74;">Attackers gain reconnaissance data for targeted attacks.</span>
+        <span class="bug-field-text" style="color:#9a3412;">Attackers gain reconnaissance data for targeted attacks.</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>
@@ -1630,15 +1628,15 @@
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #f97316;">
+  <div class="bug" style="border-left:3px solid #f97316;background:#fff7ed;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#f9731618;color:#f97316;border:1px solid #f9731633;">SEC-9</span>
+      <span class="bug-id-tag" style="background:#ea580c12;color:#ea580c;border:1px solid #ea580c25;">SEC-9</span>
       <div class="bug-info">
         <div class="bug-title">x-admin-key Header Check Is Security Theater</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#f9731618;color:#f97316;">High</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Security</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">API Utils</span>
+          <span class="bug-tag" style="background:#ea580c12;color:#ea580c;">High</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">Security</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">API Utils</span>
           <span class="bug-loc">checkAdmin()</span>
         </div>
       </div>
@@ -1650,7 +1648,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#fdba74;">Header check provides zero security. False sense of layered security.</span>
+        <span class="bug-field-text" style="color:#9a3412;">Header check provides zero security. False sense of layered security.</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>
@@ -1677,20 +1675,20 @@
 
   <div class="section-header">
     <span class="section-dot" style="background:#eab308;"></span>
-    <span class="section-title" style="color:#fde047;">Medium Severity</span>
+    <span class="section-title" style="color:#854d0e;">Medium Severity</span>
     <span class="section-count">25 issues</span>
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #eab308;">
+  <div class="bug" style="border-left:3px solid #eab308;background:#fefce8;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#eab30818;color:#eab308;border:1px solid #eab30833;">ADM-15</span>
+      <span class="bug-id-tag" style="background:#ca8a0412;color:#ca8a04;border:1px solid #ca8a0425;">ADM-15</span>
       <div class="bug-info">
         <div class="bug-title">No Loading State During Save</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#eab30818;color:#eab308;">Medium</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">State</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">AdminPanel</span>
+          <span class="bug-tag" style="background:#ca8a0412;color:#ca8a04;">Medium</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">State</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">AdminPanel</span>
           <span class="bug-loc">handleSaveVideo/handleSaveQuiz</span>
         </div>
       </div>
@@ -1702,7 +1700,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#fde047;">User can double-click save, creating duplicate videos/quizzes.</span>
+        <span class="bug-field-text" style="color:#854d0e;">User can double-click save, creating duplicate videos/quizzes.</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>
@@ -1712,15 +1710,15 @@
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #eab308;">
+  <div class="bug" style="border-left:3px solid #eab308;background:#fefce8;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#eab30818;color:#eab308;border:1px solid #eab30833;">ADM-17</span>
+      <span class="bug-id-tag" style="background:#ca8a0412;color:#ca8a04;border:1px solid #ca8a0425;">ADM-17</span>
       <div class="bug-info">
         <div class="bug-title">Destructive Actions Use Browser confirm() Instead of Dialog</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#eab30818;color:#eab308;">Medium</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">UX</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">AdminPanel</span>
+          <span class="bug-tag" style="background:#ca8a0412;color:#ca8a04;">Medium</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">UX</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">AdminPanel</span>
           <span class="bug-loc">Delete handlers</span>
         </div>
       </div>
@@ -1732,7 +1730,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#fde047;">Inconsistent delete experience; confirm dialogs may be suppressed by popup blockers.</span>
+        <span class="bug-field-text" style="color:#854d0e;">Inconsistent delete experience; confirm dialogs may be suppressed by popup blockers.</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>
@@ -1742,15 +1740,15 @@
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #eab308;">
+  <div class="bug" style="border-left:3px solid #eab308;background:#fefce8;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#eab30818;color:#eab308;border:1px solid #eab30833;">ADM-18</span>
+      <span class="bug-id-tag" style="background:#ca8a0412;color:#ca8a04;border:1px solid #ca8a0425;">ADM-18</span>
       <div class="bug-info">
         <div class="bug-title">Revenue Trend Data Is Fabricated</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#eab30818;color:#eab308;">Medium</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Logic</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">AdminPanel</span>
+          <span class="bug-tag" style="background:#ca8a0412;color:#ca8a04;">Medium</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">Logic</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">AdminPanel</span>
           <span class="bug-loc">revenueTrend computation</span>
         </div>
       </div>
@@ -1762,7 +1760,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#fde047;">Admin sees misleading trend visualization that doesnt reflect reality.</span>
+        <span class="bug-field-text" style="color:#854d0e;">Admin sees misleading trend visualization that doesnt reflect reality.</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>
@@ -1772,15 +1770,15 @@
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #eab308;">
+  <div class="bug" style="border-left:3px solid #eab308;background:#fefce8;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#eab30818;color:#eab308;border:1px solid #eab30833;">ADM-23</span>
+      <span class="bug-id-tag" style="background:#ca8a0412;color:#ca8a04;border:1px solid #ca8a0425;">ADM-23</span>
       <div class="bug-info">
         <div class="bug-title">CANCELLED Orders Missing from Kanban</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#eab30818;color:#eab308;">Medium</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Logic</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">AdminPanel</span>
+          <span class="bug-tag" style="background:#ca8a0412;color:#ca8a04;">Medium</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">Logic</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">AdminPanel</span>
           <span class="bug-loc">orderStatuses</span>
         </div>
       </div>
@@ -1792,7 +1790,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#fde047;">Admin cannot see cancelled orders in kanban view.</span>
+        <span class="bug-field-text" style="color:#854d0e;">Admin cannot see cancelled orders in kanban view.</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>
@@ -1802,15 +1800,15 @@
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #eab308;">
+  <div class="bug" style="border-left:3px solid #eab308;background:#fefce8;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#eab30818;color:#eab308;border:1px solid #eab30833;">ADM-26</span>
+      <span class="bug-id-tag" style="background:#ca8a0412;color:#ca8a04;border:1px solid #ca8a0425;">ADM-26</span>
       <div class="bug-info">
         <div class="bug-title">Campaign Has No Delete Action</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#eab30818;color:#eab308;">Medium</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Logic</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">AdminPanel</span>
+          <span class="bug-tag" style="background:#ca8a0412;color:#ca8a04;">Medium</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">Logic</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">AdminPanel</span>
           <span class="bug-loc">CampaignManagerInner</span>
         </div>
       </div>
@@ -1822,7 +1820,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#fde047;">Mistakenly created campaigns cannot be removed; only archived.</span>
+        <span class="bug-field-text" style="color:#854d0e;">Mistakenly created campaigns cannot be removed; only archived.</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>
@@ -1832,15 +1830,15 @@
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #eab308;">
+  <div class="bug" style="border-left:3px solid #eab308;background:#fefce8;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#eab30818;color:#eab308;border:1px solid #eab30833;">ADM-27</span>
+      <span class="bug-id-tag" style="background:#ca8a0412;color:#ca8a04;border:1px solid #ca8a0425;">ADM-27</span>
       <div class="bug-info">
         <div class="bug-title">Subscriptions Tab Is Read-Only With No Actions</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#eab30818;color:#eab308;">Medium</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">UX</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">AdminPanel</span>
+          <span class="bug-tag" style="background:#ca8a0412;color:#ca8a04;">Medium</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">UX</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">AdminPanel</span>
           <span class="bug-loc">Subscriptions tab</span>
         </div>
       </div>
@@ -1852,7 +1850,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#fde047;">Admin cannot manage subscriptions; can only view them.</span>
+        <span class="bug-field-text" style="color:#854d0e;">Admin cannot manage subscriptions; can only view them.</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>
@@ -1862,15 +1860,15 @@
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #eab308;">
+  <div class="bug" style="border-left:3px solid #eab308;background:#fefce8;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#eab30818;color:#eab308;border:1px solid #eab30833;">ADM-36</span>
+      <span class="bug-id-tag" style="background:#ca8a0412;color:#ca8a04;border:1px solid #ca8a0425;">ADM-36</span>
       <div class="bug-info">
         <div class="bug-title">No Pagination on Any Table</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#eab30818;color:#eab308;">Medium</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">UX</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">AdminPanel</span>
+          <span class="bug-tag" style="background:#ca8a0412;color:#ca8a04;">Medium</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">UX</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">AdminPanel</span>
           <span class="bug-loc">All tables</span>
         </div>
       </div>
@@ -1882,7 +1880,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#fde047;">Performance degradation and poor UX with large datasets.</span>
+        <span class="bug-field-text" style="color:#854d0e;">Performance degradation and poor UX with large datasets.</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>
@@ -1892,15 +1890,15 @@
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #eab308;">
+  <div class="bug" style="border-left:3px solid #eab308;background:#fefce8;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#eab30818;color:#eab308;border:1px solid #eab30833;">API-3</span>
+      <span class="bug-id-tag" style="background:#ca8a0412;color:#ca8a04;border:1px solid #ca8a0425;">API-3</span>
       <div class="bug-info">
         <div class="bug-title">Order Creation Missing Item Validation</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#eab30818;color:#eab308;">Medium</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">API</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">Orders API</span>
+          <span class="bug-tag" style="background:#ca8a0412;color:#ca8a04;">Medium</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">API</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">Orders API</span>
           <span class="bug-loc">POST handler</span>
         </div>
       </div>
@@ -1912,7 +1910,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#fde047;">Malformed orders with null product references corrupt data integrity.</span>
+        <span class="bug-field-text" style="color:#854d0e;">Malformed orders with null product references corrupt data integrity.</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>
@@ -1922,15 +1920,15 @@
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #eab308;">
+  <div class="bug" style="border-left:3px solid #eab308;background:#fefce8;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#eab30818;color:#eab308;border:1px solid #eab30833;">API-4</span>
+      <span class="bug-id-tag" style="background:#ca8a0412;color:#ca8a04;border:1px solid #ca8a0425;">API-4</span>
       <div class="bug-info">
         <div class="bug-title">No Stock Validation or Decrement on Order Placement</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#eab30818;color:#eab308;">Medium</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">API</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">Orders API</span>
+          <span class="bug-tag" style="background:#ca8a0412;color:#ca8a04;">Medium</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">API</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">Orders API</span>
           <span class="bug-loc">POST handler</span>
         </div>
       </div>
@@ -1942,7 +1940,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#fde047;">Customers can order out-of-stock products. Inventory never updated.</span>
+        <span class="bug-field-text" style="color:#854d0e;">Customers can order out-of-stock products. Inventory never updated.</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>
@@ -1952,15 +1950,15 @@
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #eab308;">
+  <div class="bug" style="border-left:3px solid #eab308;background:#fefce8;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#eab30818;color:#eab308;border:1px solid #eab30833;">AUTH-6</span>
+      <span class="bug-id-tag" style="background:#ca8a0412;color:#ca8a04;border:1px solid #ca8a0425;">AUTH-6</span>
       <div class="bug-info">
         <div class="bug-title">Auto-redirect useEffect Missing Dependencies</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#eab30818;color:#eab308;">Medium</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">State</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">AuthRegister/AuthWhatsAppOtpLogin</span>
+          <span class="bug-tag" style="background:#ca8a0412;color:#ca8a04;">Medium</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">State</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">AuthRegister/AuthWhatsAppOtpLogin</span>
           <span class="bug-loc">Auto-redirect useEffect</span>
         </div>
       </div>
@@ -1972,7 +1970,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#fde047;">Stale redirect target - user may be redirected to outdated view.</span>
+        <span class="bug-field-text" style="color:#854d0e;">Stale redirect target - user may be redirected to outdated view.</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>
@@ -1982,15 +1980,15 @@
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #eab308;">
+  <div class="bug" style="border-left:3px solid #eab308;background:#fefce8;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#eab30818;color:#eab308;border:1px solid #eab30833;">CART-2</span>
+      <span class="bug-id-tag" style="background:#ca8a0412;color:#ca8a04;border:1px solid #ca8a0425;">CART-2</span>
       <div class="bug-info">
         <div class="bug-title">No Maximum Quantity / Stock Validation</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#eab30818;color:#eab308;">Medium</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Logic</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">CartItemCard</span>
+          <span class="bug-tag" style="background:#ca8a0412;color:#ca8a04;">Medium</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">Logic</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">CartItemCard</span>
           <span class="bug-loc">Quantity controls</span>
         </div>
       </div>
@@ -2002,7 +2000,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#fde047;">Users may add more items than available stock; order may fail server-side with poor error messaging.</span>
+        <span class="bug-field-text" style="color:#854d0e;">Users may add more items than available stock; order may fail server-side with poor error messaging.</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>
@@ -2012,15 +2010,15 @@
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #eab308;">
+  <div class="bug" style="border-left:3px solid #eab308;background:#fefce8;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#eab30818;color:#eab308;border:1px solid #eab30833;">CHECKOUT-4</span>
+      <span class="bug-id-tag" style="background:#ca8a0412;color:#ca8a04;border:1px solid #ca8a0425;">CHECKOUT-4</span>
       <div class="bug-info">
         <div class="bug-title">Shipping Form Not Pre-Filled from User Profile</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#eab30818;color:#eab308;">Medium</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">UX</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">CheckoutView</span>
+          <span class="bug-tag" style="background:#ca8a0412;color:#ca8a04;">Medium</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">UX</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">CheckoutView</span>
           <span class="bug-loc">Form initialization</span>
         </div>
       </div>
@@ -2032,7 +2030,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#fde047;">Returning users must re-type their full address every time.</span>
+        <span class="bug-field-text" style="color:#854d0e;">Returning users must re-type their full address every time.</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>
@@ -2042,15 +2040,15 @@
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #eab308;">
+  <div class="bug" style="border-left:3px solid #eab308;background:#fefce8;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#eab30818;color:#eab308;border:1px solid #eab30833;">FORM-1</span>
+      <span class="bug-id-tag" style="background:#ca8a0412;color:#ca8a04;border:1px solid #ca8a0425;">FORM-1</span>
       <div class="bug-info">
         <div class="bug-title">No &lt;form&gt; Elements; Enter Key Doesnt Submit</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#eab30818;color:#eab308;">Medium</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Form</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">All Auth + Checkout</span>
+          <span class="bug-tag" style="background:#ca8a0412;color:#ca8a04;">Medium</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">Form</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">All Auth + Checkout</span>
           <span class="bug-loc">Form wrappers</span>
         </div>
       </div>
@@ -2062,7 +2060,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#fde047;">Poor UX; violates user expectations; accessibility issue for keyboard users.</span>
+        <span class="bug-field-text" style="color:#854d0e;">Poor UX; violates user expectations; accessibility issue for keyboard users.</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>
@@ -2072,15 +2070,15 @@
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #eab308;">
+  <div class="bug" style="border-left:3px solid #eab308;background:#fefce8;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#eab30818;color:#eab308;border:1px solid #eab30833;">LP-2</span>
+      <span class="bug-id-tag" style="background:#ca8a0412;color:#ca8a04;border:1px solid #ca8a0425;">LP-2</span>
       <div class="bug-info">
         <div class="bug-title">Auto-Scroll Resumes After User Manual Scroll</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#eab30818;color:#eab308;">Medium</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">UX</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">LandingPage</span>
+          <span class="bug-tag" style="background:#ca8a0412;color:#ca8a04;">Medium</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">UX</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">LandingPage</span>
           <span class="bug-loc">Auto-scroll interval</span>
         </div>
       </div>
@@ -2092,7 +2090,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#fde047;">Carousel auto-advances while user is browsing, pulling view away.</span>
+        <span class="bug-field-text" style="color:#854d0e;">Carousel auto-advances while user is browsing, pulling view away.</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>
@@ -2102,15 +2100,15 @@
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #eab308;">
+  <div class="bug" style="border-left:3px solid #eab308;background:#fefce8;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#eab30818;color:#eab308;border:1px solid #eab30833;">LP-3</span>
+      <span class="bug-id-tag" style="background:#ca8a0412;color:#ca8a04;border:1px solid #ca8a0425;">LP-3</span>
       <div class="bug-info">
         <div class="bug-title">Mobile Home Nav Button Doesnt Scroll to Hero</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#eab30818;color:#eab308;">Medium</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Navigation</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">LandingPage</span>
+          <span class="bug-tag" style="background:#ca8a0412;color:#ca8a04;">Medium</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">Navigation</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">LandingPage</span>
           <span class="bug-loc">Mobile Home button</span>
         </div>
       </div>
@@ -2122,7 +2120,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#fde047;">Mobile users cant scroll back to top/hero section via Home nav item.</span>
+        <span class="bug-field-text" style="color:#854d0e;">Mobile users cant scroll back to top/hero section via Home nav item.</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>
@@ -2132,15 +2130,15 @@
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #eab308;">
+  <div class="bug" style="border-left:3px solid #eab308;background:#fefce8;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#eab30818;color:#eab308;border:1px solid #eab30833;">NAV-1</span>
+      <span class="bug-id-tag" style="background:#ca8a0412;color:#ca8a04;border:1px solid #ca8a0425;">NAV-1</span>
       <div class="bug-info">
         <div class="bug-title">No Sign Out Option in Mobile Navigation Menu</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#eab30818;color:#eab308;">Medium</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Navigation</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">AppNavbar</span>
+          <span class="bug-tag" style="background:#ca8a0412;color:#ca8a04;">Medium</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">Navigation</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">AppNavbar</span>
           <span class="bug-loc">Mobile Sheet content</span>
         </div>
       </div>
@@ -2152,7 +2150,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#fde047;">Mobile users must navigate to Profile page to log out.</span>
+        <span class="bug-field-text" style="color:#854d0e;">Mobile users must navigate to Profile page to log out.</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>
@@ -2162,15 +2160,15 @@
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #eab308;">
+  <div class="bug" style="border-left:3px solid #eab308;background:#fefce8;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#eab30818;color:#eab308;border:1px solid #eab30833;">PDP-10</span>
+      <span class="bug-id-tag" style="background:#ca8a0412;color:#ca8a04;border:1px solid #ca8a0425;">PDP-10</span>
       <div class="bug-info">
         <div class="bug-title">progressFetchKey Never Incremented (Dead Refresh)</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#eab30818;color:#eab308;">Medium</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">State</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">ProductDetailPage</span>
+          <span class="bug-tag" style="background:#ca8a0412;color:#ca8a04;">Medium</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">State</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">ProductDetailPage</span>
           <span class="bug-loc">progressFetchKey</span>
         </div>
       </div>
@@ -2182,7 +2180,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#fde047;">After completing learning module, progress display may be stale until full reload.</span>
+        <span class="bug-field-text" style="color:#854d0e;">After completing learning module, progress display may be stale until full reload.</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>
@@ -2192,15 +2190,15 @@
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #eab308;">
+  <div class="bug" style="border-left:3px solid #eab308;background:#fefce8;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#eab30818;color:#eab308;border:1px solid #eab30833;">PDP-14</span>
+      <span class="bug-id-tag" style="background:#ca8a0412;color:#ca8a04;border:1px solid #ca8a0425;">PDP-14</span>
       <div class="bug-info">
         <div class="bug-title">Flash of Incorrect Learning Button While Progress Loads</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#eab30818;color:#eab308;">Medium</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">UX</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">ProductDetailPage</span>
+          <span class="bug-tag" style="background:#ca8a0412;color:#ca8a04;">Medium</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">UX</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">ProductDetailPage</span>
           <span class="bug-loc">Learning status rendering</span>
         </div>
       </div>
@@ -2212,7 +2210,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#fde047;">Returning users see Start Learning for ~200-500ms before it corrects to Continue Learning.</span>
+        <span class="bug-field-text" style="color:#854d0e;">Returning users see Start Learning for ~200-500ms before it corrects to Continue Learning.</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>
@@ -2222,15 +2220,15 @@
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #eab308;">
+  <div class="bug" style="border-left:3px solid #eab308;background:#fefce8;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#eab30818;color:#eab308;border:1px solid #eab30833;">PDP-8</span>
+      <span class="bug-id-tag" style="background:#ca8a0412;color:#ca8a04;border:1px solid #ca8a0425;">PDP-8</span>
       <div class="bug-info">
         <div class="bug-title">Native Share Fallback on User Cancel</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#eab30818;color:#eab308;">Medium</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">UX</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">ProductDetailPage</span>
+          <span class="bug-tag" style="background:#ca8a0412;color:#ca8a04;">Medium</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">UX</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">ProductDetailPage</span>
           <span class="bug-loc">handleNativeShare</span>
         </div>
       </div>
@@ -2242,7 +2240,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#fde047;">Unwanted clipboard modification and confusing toast after user cancelled sharing.</span>
+        <span class="bug-field-text" style="color:#854d0e;">Unwanted clipboard modification and confusing toast after user cancelled sharing.</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>
@@ -2252,15 +2250,15 @@
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #eab308;">
+  <div class="bug" style="border-left:3px solid #eab308;background:#fefce8;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#eab30818;color:#eab308;border:1px solid #eab30833;">PDP-9</span>
+      <span class="bug-id-tag" style="background:#ca8a0412;color:#ca8a04;border:1px solid #ca8a0425;">PDP-9</span>
       <div class="bug-info">
         <div class="bug-title">copied State Declared But Never Rendered</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#eab30818;color:#eab308;">Medium</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">State</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">ProductDetailPage</span>
+          <span class="bug-tag" style="background:#ca8a0412;color:#ca8a04;">Medium</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">State</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">ProductDetailPage</span>
           <span class="bug-loc">copied state</span>
         </div>
       </div>
@@ -2272,7 +2270,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#fde047;">Unnecessary re-renders from dead state.</span>
+        <span class="bug-field-text" style="color:#854d0e;">Unnecessary re-renders from dead state.</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>
@@ -2282,15 +2280,15 @@
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #eab308;">
+  <div class="bug" style="border-left:3px solid #eab308;background:#fefce8;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#eab30818;color:#eab308;border:1px solid #eab30833;">SEC-10</span>
+      <span class="bug-id-tag" style="background:#ca8a0412;color:#ca8a04;border:1px solid #ca8a0425;">SEC-10</span>
       <div class="bug-info">
         <div class="bug-title">No Rate Limiting on Auth Endpoints</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#eab30818;color:#eab308;">Medium</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Security</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">Auth API</span>
+          <span class="bug-tag" style="background:#ca8a0412;color:#ca8a04;">Medium</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">Security</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">Auth API</span>
           <span class="bug-loc">login/register routes</span>
         </div>
       </div>
@@ -2302,7 +2300,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#fde047;">Brute-force password attacks, credential stuffing, account enumeration.</span>
+        <span class="bug-field-text" style="color:#854d0e;">Brute-force password attacks, credential stuffing, account enumeration.</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>
@@ -2312,15 +2310,15 @@
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #eab308;">
+  <div class="bug" style="border-left:3px solid #eab308;background:#fefce8;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#eab30818;color:#eab308;border:1px solid #eab30833;">SF-1</span>
+      <span class="bug-id-tag" style="background:#ca8a0412;color:#ca8a04;border:1px solid #ca8a0425;">SF-1</span>
       <div class="bug-info">
         <div class="bug-title">Social Media Buttons Are Non-Functional</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#eab30818;color:#eab308;">Medium</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Navigation</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">SiteFooter</span>
+          <span class="bug-tag" style="background:#ca8a0412;color:#ca8a04;">Medium</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">Navigation</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">SiteFooter</span>
           <span class="bug-loc">Social media buttons</span>
         </div>
       </div>
@@ -2332,7 +2330,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#fde047;">Users attempting to follow brand on social media get no response - dead buttons.</span>
+        <span class="bug-field-text" style="color:#854d0e;">Users attempting to follow brand on social media get no response - dead buttons.</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>
@@ -2342,15 +2340,15 @@
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #eab308;">
+  <div class="bug" style="border-left:3px solid #eab308;background:#fefce8;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#eab30818;color:#eab308;border:1px solid #eab30833;">SF-2</span>
+      <span class="bug-id-tag" style="background:#ca8a0412;color:#ca8a04;border:1px solid #ca8a0425;">SF-2</span>
       <div class="bug-info">
         <div class="bug-title">window.open() Without noopener,noreferrer</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#eab30818;color:#eab308;">Medium</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Security</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">SiteFooter / PolicyPage</span>
+          <span class="bug-tag" style="background:#ca8a0412;color:#ca8a04;">Medium</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">Security</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">SiteFooter / PolicyPage</span>
           <span class="bug-loc">window.open() calls</span>
         </div>
       </div>
@@ -2362,7 +2360,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#fde047;">Security vulnerability - opened pages can manipulate opener window.</span>
+        <span class="bug-field-text" style="color:#854d0e;">Security vulnerability - opened pages can manipulate opener window.</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>
@@ -2372,15 +2370,15 @@
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #eab308;">
+  <div class="bug" style="border-left:3px solid #eab308;background:#fefce8;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#eab30818;color:#eab308;border:1px solid #eab30833;">STORE-1</span>
+      <span class="bug-id-tag" style="background:#ca8a0412;color:#ca8a04;border:1px solid #ca8a0425;">STORE-1</span>
       <div class="bug-info">
         <div class="bug-title">Cart Item Key Collision (productId-only matching)</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#eab30818;color:#eab308;">Medium</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Logic</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">App Store</span>
+          <span class="bug-tag" style="background:#ca8a0412;color:#ca8a04;">Medium</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">Logic</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">App Store</span>
           <span class="bug-loc">addToCart()</span>
         </div>
       </div>
@@ -2392,7 +2390,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#fde047;">Users cannot buy same product in different purchase modes simultaneously.</span>
+        <span class="bug-field-text" style="color:#854d0e;">Users cannot buy same product in different purchase modes simultaneously.</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>
@@ -2402,15 +2400,15 @@
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #eab308;">
+  <div class="bug" style="border-left:3px solid #eab308;background:#fefce8;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#eab30818;color:#eab308;border:1px solid #eab30833;">STORE-3</span>
+      <span class="bug-id-tag" style="background:#ca8a0412;color:#ca8a04;border:1px solid #ca8a0425;">STORE-3</span>
       <div class="bug-info">
         <div class="bug-title">resetForLogout Doesnt Reset All State</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#eab30818;color:#eab308;">Medium</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">State</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">App Store</span>
+          <span class="bug-tag" style="background:#ca8a0412;color:#ca8a04;">Medium</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">State</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">App Store</span>
           <span class="bug-loc">resetForLogout()</span>
         </div>
       </div>
@@ -2422,7 +2420,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#fde047;">Stale UI state from previous session leaks into new session.</span>
+        <span class="bug-field-text" style="color:#854d0e;">Stale UI state from previous session leaks into new session.</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>
@@ -2449,20 +2447,20 @@
 
   <div class="section-header">
     <span class="section-dot" style="background:#3b82f6;"></span>
-    <span class="section-title" style="color:#93c5fd;">Low Severity</span>
+    <span class="section-title" style="color:#1e40af;">Low Severity</span>
     <span class="section-count">12 issues</span>
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #3b82f6;">
+  <div class="bug" style="border-left:3px solid #3b82f6;background:#eff6ff;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#3b82f618;color:#3b82f6;border:1px solid #3b82f633;">A11Y-1</span>
+      <span class="bug-id-tag" style="background:#2563eb12;color:#2563eb;border:1px solid #2563eb25;">A11Y-1</span>
       <div class="bug-info">
         <div class="bug-title">Privacy Policy / Terms of Service Are Non-Interactive Plain Text</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#3b82f618;color:#3b82f6;">Low</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">A11y</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">AuthPages</span>
+          <span class="bug-tag" style="background:#2563eb12;color:#2563eb;">Low</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">A11y</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">AuthPages</span>
           <span class="bug-loc">Legal links text</span>
         </div>
       </div>
@@ -2474,7 +2472,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#93c5fd;">Users cannot view privacy policy or terms; legally questionable for registration flow.</span>
+        <span class="bug-field-text" style="color:#1e40af;">Users cannot view privacy policy or terms; legally questionable for registration flow.</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>
@@ -2484,15 +2482,15 @@
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #3b82f6;">
+  <div class="bug" style="border-left:3px solid #3b82f6;background:#eff6ff;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#3b82f618;color:#3b82f6;border:1px solid #3b82f633;">ADM-39</span>
+      <span class="bug-id-tag" style="background:#2563eb12;color:#2563eb;border:1px solid #2563eb25;">ADM-39</span>
       <div class="bug-info">
         <div class="bug-title">Missing ARIA Labels on Sidebar Nav</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#3b82f618;color:#3b82f6;">Low</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">A11y</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">AdminPanel</span>
+          <span class="bug-tag" style="background:#2563eb12;color:#2563eb;">Low</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">A11y</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">AdminPanel</span>
           <span class="bug-loc">Sidebar nav</span>
         </div>
       </div>
@@ -2504,7 +2502,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#93c5fd;">Screen reader users cannot identify nav items when sidebar collapsed.</span>
+        <span class="bug-field-text" style="color:#1e40af;">Screen reader users cannot identify nav items when sidebar collapsed.</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>
@@ -2514,15 +2512,15 @@
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #3b82f6;">
+  <div class="bug" style="border-left:3px solid #3b82f6;background:#eff6ff;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#3b82f618;color:#3b82f6;border:1px solid #3b82f633;">ADM-43</span>
+      <span class="bug-id-tag" style="background:#2563eb12;color:#2563eb;border:1px solid #2563eb25;">ADM-43</span>
       <div class="bug-info">
         <div class="bug-title">Insufficient Product Validation</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#3b82f618;color:#3b82f6;">Low</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Form</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">AdminPanel</span>
+          <span class="bug-tag" style="background:#2563eb12;color:#2563eb;">Low</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">Form</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">AdminPanel</span>
           <span class="bug-loc">handleSaveProduct</span>
         </div>
       </div>
@@ -2534,7 +2532,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#93c5fd;">Invalid products can be created (negative price, MRP &lt; selling price, etc.).</span>
+        <span class="bug-field-text" style="color:#1e40af;">Invalid products can be created (negative price, MRP &lt; selling price, etc.).</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>
@@ -2544,15 +2542,15 @@
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #3b82f6;">
+  <div class="bug" style="border-left:3px solid #3b82f6;background:#eff6ff;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#3b82f618;color:#3b82f6;border:1px solid #3b82f633;">API-7</span>
+      <span class="bug-id-tag" style="background:#2563eb12;color:#2563eb;border:1px solid #2563eb25;">API-7</span>
       <div class="bug-info">
         <div class="bug-title">Admin Users Search Is Case-Sensitive</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#3b82f618;color:#3b82f6;">Low</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">API</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">Admin Users API</span>
+          <span class="bug-tag" style="background:#2563eb12;color:#2563eb;">Low</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">API</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">Admin Users API</span>
           <span class="bug-loc">Search filter</span>
         </div>
       </div>
@@ -2564,7 +2562,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#93c5fd;">Admin search less useful - must match exact case.</span>
+        <span class="bug-field-text" style="color:#1e40af;">Admin search less useful - must match exact case.</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>
@@ -2574,15 +2572,15 @@
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #3b82f6;">
+  <div class="bug" style="border-left:3px solid #3b82f6;background:#eff6ff;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#3b82f618;color:#3b82f6;border:1px solid #3b82f633;">AUTH-8</span>
+      <span class="bug-id-tag" style="background:#2563eb12;color:#2563eb;border:1px solid #2563eb25;">AUTH-8</span>
       <div class="bug-info">
         <div class="bug-title">Password Strength Minimum Too Weak (6 chars)</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#3b82f618;color:#3b82f6;">Low</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Logic</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">AuthRegister</span>
+          <span class="bug-tag" style="background:#2563eb12;color:#2563eb;">Low</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">Logic</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">AuthRegister</span>
           <span class="bug-loc">getPasswordStrength</span>
         </div>
       </div>
@@ -2594,7 +2592,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#93c5fd;">Users create easily crackable passwords.</span>
+        <span class="bug-field-text" style="color:#1e40af;">Users create easily crackable passwords.</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>
@@ -2604,15 +2602,15 @@
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #3b82f6;">
+  <div class="bug" style="border-left:3px solid #3b82f6;background:#eff6ff;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#3b82f618;color:#3b82f6;border:1px solid #3b82f633;">CHECKOUT-5</span>
+      <span class="bug-id-tag" style="background:#2563eb12;color:#2563eb;border:1px solid #2563eb25;">CHECKOUT-5</span>
       <div class="bug-info">
         <div class="bug-title">Online Payment Methods Show &quot;coming soon&quot; But Still Create Orders</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#3b82f618;color:#3b82f6;">Low</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Logic</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">CheckoutView</span>
+          <span class="bug-tag" style="background:#2563eb12;color:#2563eb;">Low</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">Logic</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">CheckoutView</span>
           <span class="bug-loc">Payment methods</span>
         </div>
       </div>
@@ -2624,7 +2622,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#93c5fd;">Orders with online payment methods have PENDING payment status forever.</span>
+        <span class="bug-field-text" style="color:#1e40af;">Orders with online payment methods have PENDING payment status forever.</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>
@@ -2634,15 +2632,15 @@
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #3b82f6;">
+  <div class="bug" style="border-left:3px solid #3b82f6;background:#eff6ff;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#3b82f618;color:#3b82f6;border:1px solid #3b82f633;">LP-7</span>
+      <span class="bug-id-tag" style="background:#2563eb12;color:#2563eb;border:1px solid #2563eb25;">LP-7</span>
       <div class="bug-info">
         <div class="bug-title">CTA Section Image Has Empty alt Text</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#3b82f618;color:#3b82f6;">Low</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">A11y</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">LandingPage</span>
+          <span class="bug-tag" style="background:#2563eb12;color:#2563eb;">Low</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">A11y</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">LandingPage</span>
           <span class="bug-loc">CTA section image</span>
         </div>
       </div>
@@ -2654,7 +2652,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#93c5fd;">Screen readers skip the image entirely, missing visual context.</span>
+        <span class="bug-field-text" style="color:#1e40af;">Screen readers skip the image entirely, missing visual context.</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>
@@ -2664,15 +2662,15 @@
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #3b82f6;">
+  <div class="bug" style="border-left:3px solid #3b82f6;background:#eff6ff;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#3b82f618;color:#3b82f6;border:1px solid #3b82f633;">PDP-15</span>
+      <span class="bug-id-tag" style="background:#2563eb12;color:#2563eb;border:1px solid #2563eb25;">PDP-15</span>
       <div class="bug-info">
         <div class="bug-title">No aria-expanded on View More/Less Button</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#3b82f618;color:#3b82f6;">Low</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">A11y</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">ProductDetailPage</span>
+          <span class="bug-tag" style="background:#2563eb12;color:#2563eb;">Low</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">A11y</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">ProductDetailPage</span>
           <span class="bug-loc">View More/Less button</span>
         </div>
       </div>
@@ -2684,7 +2682,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#93c5fd;">Screen readers cannot communicate the expand/collapse state.</span>
+        <span class="bug-field-text" style="color:#1e40af;">Screen readers cannot communicate the expand/collapse state.</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>
@@ -2694,15 +2692,15 @@
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #3b82f6;">
+  <div class="bug" style="border-left:3px solid #3b82f6;background:#eff6ff;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#3b82f618;color:#3b82f6;border:1px solid #3b82f633;">PDP-18</span>
+      <span class="bug-id-tag" style="background:#2563eb12;color:#2563eb;border:1px solid #2563eb25;">PDP-18</span>
       <div class="bug-info">
         <div class="bug-title">Array Index as key on Highlights and Ingredients</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#3b82f618;color:#3b82f6;">Low</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Render</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">ProductDetailPage</span>
+          <span class="bug-tag" style="background:#2563eb12;color:#2563eb;">Low</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">Render</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">ProductDetailPage</span>
           <span class="bug-loc">Highlights/Ingredients lists</span>
         </div>
       </div>
@@ -2714,7 +2712,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#93c5fd;">Low risk since data is stable, but anti-pattern.</span>
+        <span class="bug-field-text" style="color:#1e40af;">Low risk since data is stable, but anti-pattern.</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>
@@ -2724,15 +2722,15 @@
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #3b82f6;">
+  <div class="bug" style="border-left:3px solid #3b82f6;background:#eff6ff;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#3b82f618;color:#3b82f6;border:1px solid #3b82f633;">PDP-21</span>
+      <span class="bug-id-tag" style="background:#2563eb12;color:#2563eb;border:1px solid #2563eb25;">PDP-21</span>
       <div class="bug-info">
         <div class="bug-title">Quantity State with No UI Controls</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#3b82f618;color:#3b82f6;">Low</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">UX</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">ProductDetailPage</span>
+          <span class="bug-tag" style="background:#2563eb12;color:#2563eb;">Low</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">UX</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">ProductDetailPage</span>
           <span class="bug-loc">quantity state</span>
         </div>
       </div>
@@ -2744,7 +2742,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#93c5fd;">Users who want multiple units must add to cart repeatedly.</span>
+        <span class="bug-field-text" style="color:#1e40af;">Users who want multiple units must add to cart repeatedly.</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>
@@ -2754,15 +2752,15 @@
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #3b82f6;">
+  <div class="bug" style="border-left:3px solid #3b82f6;background:#eff6ff;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#3b82f618;color:#3b82f6;border:1px solid #3b82f633;">SF-3</span>
+      <span class="bug-id-tag" style="background:#2563eb12;color:#2563eb;border:1px solid #2563eb25;">SF-3</span>
       <div class="bug-info">
         <div class="bug-title">Footer External Links Use &lt;button&gt; + window.open Instead of &lt;a&gt;</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#3b82f618;color:#3b82f6;">Low</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">A11y</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">SiteFooter</span>
+          <span class="bug-tag" style="background:#2563eb12;color:#2563eb;">Low</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">A11y</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">SiteFooter</span>
           <span class="bug-loc">External links</span>
         </div>
       </div>
@@ -2774,7 +2772,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#93c5fd;">Screen readers announce as buttons not links; cant right-click to copy URL.</span>
+        <span class="bug-field-text" style="color:#1e40af;">Screen readers announce as buttons not links; cant right-click to copy URL.</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>
@@ -2784,15 +2782,15 @@
   </div>
 
 
-  <div class="bug" style="border-left:3px solid #3b82f6;">
+  <div class="bug" style="border-left:3px solid #3b82f6;background:#eff6ff;">
     <div class="bug-top">
-      <span class="bug-id-tag" style="background:#3b82f618;color:#3b82f6;border:1px solid #3b82f633;">STORE-5</span>
+      <span class="bug-id-tag" style="background:#2563eb12;color:#2563eb;border:1px solid #2563eb25;">STORE-5</span>
       <div class="bug-info">
         <div class="bug-title">User Profile Data Persisted in Plaintext localStorage</div>
         <div class="bug-tags">
-          <span class="bug-tag" style="background:#3b82f618;color:#3b82f6;">Low</span>
-          <span class="bug-tag" style="background:#a855f718;color:#a855f7;">Security</span>
-          <span class="bug-tag" style="background:#14b8a618;color:#14b8a6;">App Store</span>
+          <span class="bug-tag" style="background:#2563eb12;color:#2563eb;">Low</span>
+          <span class="bug-tag" style="background:#7c3aed12;color:#7c3aed;">Security</span>
+          <span class="bug-tag" style="background:#0d948812;color:#0d9488;">App Store</span>
           <span class="bug-loc">Zustand persist</span>
         </div>
       </div>
@@ -2804,7 +2802,7 @@
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Impact:</span>
-        <span class="bug-field-text" style="color:#93c5fd;">PII exposure if browser/device shared or via XSS.</span>
+        <span class="bug-field-text" style="color:#1e40af;">PII exposure if browser/device shared or via XSS.</span>
       </div>
       <div class="bug-field">
         <span class="bug-field-label">Fix:</span>

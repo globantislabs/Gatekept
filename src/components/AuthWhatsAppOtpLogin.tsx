@@ -46,12 +46,9 @@ export function AuthWhatsAppOtpLogin() {
   const { navigateTo, setUser, redirectAfterLogin, setRedirectAfterLogin, user, goBack } = useAppStore()
   const hasLoggedIn = useRef(false)
 
-  // ── Redirect if already logged in ──
-  useEffect(() => {
-    if (user && hasLoggedIn.current) {
-      navigateTo(redirectAfterLogin || 'landing')
-    }
-  }, [user, redirectAfterLogin, navigateTo])
+  // Note: No auto-redirect useEffect here. The handleLogin/success-step handles
+  // redirect after login. An useEffect would create a race condition because
+  // setRedirectAfterLogin(null) fires before the effect re-runs.
 
   // Step management
   const [step, setStep] = useState<'phone' | 'otp' | 'name' | 'success'>('phone')

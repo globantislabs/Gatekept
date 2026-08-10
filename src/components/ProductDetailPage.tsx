@@ -883,7 +883,7 @@ export default function ProductDetailPage() {
                 <Button
                   onClick={isCompleted ? handleAddToCart : undefined}
                   disabled={!isCompleted}
-                  className="pointer-events-auto min-h-[48px] flex-1 rounded-xl font-heading font-semibold text-base transition-all"
+                  className="pointer-events-auto min-h-[48px] flex-1 rounded-xl font-heading font-semibold text-base transition-all cursor-pointer disabled:cursor-not-allowed"
                   style={{
                     backgroundColor: isCompleted ? BRAND.green : `${BRAND.muted}30`,
                     color: isCompleted ? '#fff' : BRAND.muted,
@@ -907,11 +907,12 @@ export default function ProductDetailPage() {
                 {/* Unlock Now — Starts learning module */}
                 <Button
                   onClick={isCompleted ? handleReview : (user ? handleStartLearning : handleLoginToSave)}
-                  className="pointer-events-auto min-h-[48px] flex-1 rounded-xl font-heading font-semibold text-base transition-all"
+                  className="pointer-events-auto min-h-[48px] flex-1 rounded-xl font-heading font-semibold text-base transition-all cursor-pointer"
                   style={{
                     backgroundColor: isCompleted ? `${BRAND.lime}20` : BRAND.lime,
                     color: isCompleted ? BRAND.green : BRAND.dark,
                     borderColor: isCompleted ? `${BRAND.lime}30` : 'transparent',
+                    cursor: 'pointer',
                   }}
                 >
                   {isCompleted ? (

@@ -122,12 +122,9 @@ export function AuthLogin() {
   const [error, setError] = useState<string | null>(null)
   const hasLoggedIn = useRef(false)
 
-  // ── Redirect if already logged in ──
-  useEffect(() => {
-    if (user && hasLoggedIn.current) {
-      navigateTo(redirectAfterLogin || 'landing')
-    }
-  }, [user, redirectAfterLogin, navigateTo])
+  // Note: No auto-redirect useEffect here. The handleLogin function handles
+  // redirect after login. An useEffect would create a race condition because
+  // setRedirectAfterLogin(null) fires before the effect re-runs,;
 
   const handleLogin = async () => {
     setError(null)

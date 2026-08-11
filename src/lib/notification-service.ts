@@ -71,55 +71,16 @@ function formatItemsForDisplay(items?: { product_name: string; quantity: number;
   return items.map(item => `${item.product_name} (x${item.quantity}) — ₹${item.total_price}`).join('<br>')
 }
 
-// ─── WhatsApp Text Message Sender ─────────────────────────────
-async function sendWhatsAppTextMessage(phone: string, text: string): Promise<boolean> {
-  const token = getWhatsappToken()
-  const phoneId = getWhatsappPhoneNumberId()
-  if (!token || !phoneId) {
-    console.log('[WhatsApp] Credentials not configured — message not sent to:', phone, 'Text:', text.substring(0, 100))
-    return false
-  }
-
-  try {
-    const whatsappPhone = formatPhoneForWhatsApp(phone)
-    const baseUrl = getWhatsappBaseUrl()
-    const response = await fetch(baseUrl, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        messaging_product: 'whatsapp',
-        to: whatsappPhone,
-        type: 'text',
-        text: { body: text },
-      }),
-    })
-
-    const data = await response.json()
-
-    if (data.error) {
-      console.error('WhatsApp text message error:', data.error.message)
-      return false
-    }
-
-    return Boolean(data.message_id || response.ok)
-  } catch (error: any) {
-    console.error('WhatsApp text message error:', error.message)
-    return false
-  }
-}
-
 // ─── WhatsApp Template Message Sender ──────────────────────────
-// Supports both header and body components.
-// headerParameters: sent as HEADER component variables
-// bodyParameters: sent as BODY component variables
+// IMPORTANT: Template messages work OUTSIDE the 24-hour customer window.
+// Free-form text messages only work INSIDE the 24-hour window.
+// So we ALWAYS try template first, then fall back to text.
 async function sendWhatsAppTemplateMessage(
   phone: string,
   templateName: string,
   bodyParameters: string[],
-  headerParameters?: string[]
+  headerParameters?: string[],
+  languageCode: string = 'en_US'
 ): Promise<boolean> {
   const token = getWhatsappToken()
   const phoneId = getWhatsappPhoneNumberId()
@@ -161,7 +122,7 @@ async function sendWhatsAppTemplateMessage(
         type: 'template',
         template: {
           name: templateName,
-          language: { code: 'en' },
+          language: { code: languageCode },
           components,
         },
       }),
@@ -170,16 +131,79 @@ async function sendWhatsAppTemplateMessage(
     const data = await response.json()
 
     if (data.error) {
-      console.error(`WhatsApp template "${templateName}" error:`, JSON.stringify(data.error))
-      // Fallback to plain text
+      console.error(`[WhatsApp] Template "${templateName}" error:`, JSON.stringify(data.error))
       return false
     }
 
-    return Boolean(data.message_id || response.ok)
+    console.log(`[WhatsApp] Template "${templateName}" sent to ${whatsappPhone}`)
+    return true
   } catch (error: any) {
-    console.error(`WhatsApp template "${templateName}" error:`, error.message)
+    console.error(`[WhatsApp] Template "${templateName}" error:`, error.message)
     return false
   }
+}
+
+// ─── WhatsApp Text Message Sender (fallback only) ────────────
+// NOTE: This only works within 24 hours of user's last message to the business.
+// For messages outside that window, template messages MUST be used.
+async function sendWhatsAppTextMessage(phone: string, text: string): Promise<boolean> {
+  const token = getWhatsappToken()
+  const phoneId = getWhatsappPhoneNumberId()
+  if (!token || !phoneId) {
+    console.log('[WhatsApp] Credentials not configured — message not sent to:', phone)
+    return false
+  }
+
+  try {
+    const whatsappPhone = formatPhoneForWhatsApp(phone)
+    const baseUrl = getWhatsappBaseUrl()
+    const response = await fetch(baseUrl, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        messaging_product: 'whatsapp',
+        to: whatsappPhone,
+        type: 'text',
+        text: { body: text },
+      }),
+    })
+
+    const data = await response.json()
+
+    if (data.error) {
+      console.error('[WhatsApp] Text message error:', data.error.message)
+      return false
+    }
+
+    console.log(`[WhatsApp] Text message sent to ${whatsappPhone}`)
+    return true
+  } catch (error: any) {
+    console.error('[WhatsApp] Text message error:', error.message)
+    return false
+  }
+}
+
+// ─── Unified WhatsApp sender: template first, text fallback ───
+// Tries the template message first (works outside 24hr window).
+// If template fails, falls back to plain text (works inside 24hr window only).
+async function sendWhatsApp(
+  phone: string,
+  templateName: string,
+  bodyParameters: string[],
+  fallbackText: string,
+  headerParameters?: string[],
+  languageCode: string = 'en_US'
+): Promise<boolean> {
+  // Try template first (works outside 24hr window)
+  const templateSuccess = await sendWhatsAppTemplateMessage(phone, templateName, bodyParameters, headerParameters, languageCode)
+  if (templateSuccess) return true
+
+  // Fallback: plain text (only works inside 24hr window)
+  console.log(`[WhatsApp] Template "${templateName}" failed — falling back to plain text (may not deliver outside 24hr window)`)
+  return sendWhatsAppTextMessage(phone, fallbackText)
 }
 
 // ─── Log notification to database ──────────────────────────────
@@ -237,50 +261,28 @@ export const notificationService = {
           totalAmount: order.total_amount,
           items: itemsDisplay,
         })
-        await logNotification(
-          user.id,
-          order.id,
-          'ORDER_PLACED',
-          'EMAIL',
-          result.success ? 'SENT' : 'FAILED',
-          user.email,
-          `Order Placed — ${order.order_number}`,
-          `Order #${order.order_number} placed, Total: ₹${order.total_amount}`,
-          result.success ? undefined : result.message
-        )
+        await logNotification(user.id, order.id, 'ORDER_PLACED', 'EMAIL', result.success ? 'SENT' : 'FAILED', user.email, `Order Placed — ${order.order_number}`, `Order #${order.order_number} placed, Total: ₹${order.total_amount}`, result.success ? undefined : result.message)
       } catch (err: any) {
         console.error('Failed to send order placed email:', err.message)
         await logNotification(user.id, order.id, 'ORDER_PLACED', 'EMAIL', 'FAILED', user.email, undefined, undefined, err.message)
       }
     }
 
-    // WhatsApp — use template `order_confirmation`
+    // WhatsApp — template first, text fallback
     if (user.phone) {
       try {
         // Template: order_confirmation
         // Header: "Status: {{1}}" → order status
         // Body: "Your order {{1}} has been confirmed successfully." → order number
-        let success = await sendWhatsAppTemplateMessage(
+        const success = await sendWhatsApp(
           user.phone,
           'order_confirmation',
-          [order.order_number],       // body params: order number
-          [order.status || 'Placed']  // header params: status
+          [order.order_number],              // body: order number
+          whatsappText,                      // fallback plain text
+          [order.status || 'Placed'],        // header: status
+          'en'                               // language: en (as configured in Meta)
         )
-        // Fallback to plain text if template fails
-        if (!success) {
-          success = await sendWhatsAppTextMessage(user.phone, whatsappText)
-        }
-        await logNotification(
-          user.id,
-          order.id,
-          'ORDER_PLACED',
-          'WHATSAPP',
-          success ? 'SENT' : 'FAILED',
-          user.phone || '',
-          undefined,
-          whatsappText,
-          success ? undefined : 'WhatsApp delivery failed or not configured'
-        )
+        await logNotification(user.id, order.id, 'ORDER_PLACED', 'WHATSAPP', success ? 'SENT' : 'FAILED', user.phone || '', undefined, whatsappText, success ? undefined : 'WhatsApp delivery failed or not configured')
       } catch (err: any) {
         console.error('Failed to send order placed WhatsApp:', err.message)
         await logNotification(user.id, order.id, 'ORDER_PLACED', 'WHATSAPP', 'FAILED', user.phone || '', undefined, undefined, err.message)
@@ -291,17 +293,7 @@ export const notificationService = {
     if (user.phone && getSmsAlertActive() === 'true') {
       try {
         const result = await smsAlertService.sendSms(user.phone, smsText)
-        await logNotification(
-          user.id,
-          order.id,
-          'ORDER_PLACED',
-          'SMS',
-          result.success ? 'SENT' : 'FAILED',
-          user.phone || '',
-          undefined,
-          smsText,
-          result.success ? undefined : result.message
-        )
+        await logNotification(user.id, order.id, 'ORDER_PLACED', 'SMS', result.success ? 'SENT' : 'FAILED', user.phone || '', undefined, smsText, result.success ? undefined : result.message)
       } catch (err: any) {
         console.error('Failed to send order placed SMS:', err.message)
         await logNotification(user.id, order.id, 'ORDER_PLACED', 'SMS', 'FAILED', user.phone || '', undefined, undefined, err.message)
@@ -319,9 +311,7 @@ export const notificationService = {
     // Email
     if (user.email) {
       try {
-        const result = await emailService.sendOrderConfirmedEmail(user.email, {
-          orderNumber: order.order_number,
-        })
+        const result = await emailService.sendOrderConfirmedEmail(user.email, { orderNumber: order.order_number })
         await logNotification(user.id, order.id, 'ORDER_CONFIRMED', 'EMAIL', result.success ? 'SENT' : 'FAILED', user.email, `Order Confirmed — ${order.order_number}`, undefined, result.success ? undefined : result.message)
       } catch (err: any) {
         console.error('Failed to send order confirmed email:', err.message)
@@ -329,10 +319,17 @@ export const notificationService = {
       }
     }
 
-    // WhatsApp
+    // WhatsApp — template first, text fallback
     if (user.phone) {
       try {
-        const success = await sendWhatsAppTextMessage(user.phone, whatsappText)
+        const success = await sendWhatsApp(
+          user.phone,
+          'order_confirmation',
+          [order.order_number],              // body: order number
+          whatsappText,                      // fallback plain text
+          ['Confirmed'],                     // header: status
+          'en'
+        )
         await logNotification(user.id, order.id, 'ORDER_CONFIRMED', 'WHATSAPP', success ? 'SENT' : 'FAILED', user.phone || '', undefined, whatsappText, success ? undefined : 'WhatsApp delivery failed or not configured')
       } catch (err: any) {
         console.error('Failed to send order confirmed WhatsApp:', err.message)
@@ -362,10 +359,7 @@ export const notificationService = {
     // Email
     if (user.email) {
       try {
-        const result = await emailService.sendPaymentReceivedEmail(user.email, {
-          orderNumber: order.order_number,
-          totalAmount: order.total_amount,
-        })
+        const result = await emailService.sendPaymentReceivedEmail(user.email, { orderNumber: order.order_number, totalAmount: order.total_amount })
         await logNotification(user.id, order.id, 'PAYMENT_RECEIVED', 'EMAIL', result.success ? 'SENT' : 'FAILED', user.email, `Payment Received — ${order.order_number}`, undefined, result.success ? undefined : result.message)
       } catch (err: any) {
         console.error('Failed to send payment received email:', err.message)
@@ -373,21 +367,19 @@ export const notificationService = {
       }
     }
 
-    // WhatsApp — use template `payment_confirmation`
+    // WhatsApp — template first, text fallback
     if (user.phone) {
       try {
         // Template: payment_confirmation
         // Body: "We have received your payment of ₹{{1}} for Order ID {{2}} - Notjust WATR"
-        // Parameters: {{1}} = amount, {{2}} = order ID
-        let success = await sendWhatsAppTemplateMessage(
+        const success = await sendWhatsApp(
           user.phone,
           'payment_confirmation',
-          [`${order.total_amount}`, order.order_number]  // body params: amount, order ID
+          [`${order.total_amount}`, order.order_number],  // body: amount, order ID
+          whatsappText,                                    // fallback plain text
+          undefined,                                       // no header
+          'en'
         )
-        // Fallback to plain text if template fails
-        if (!success) {
-          success = await sendWhatsAppTextMessage(user.phone, whatsappText)
-        }
         await logNotification(user.id, order.id, 'PAYMENT_RECEIVED', 'WHATSAPP', success ? 'SENT' : 'FAILED', user.phone || '', undefined, whatsappText, success ? undefined : 'WhatsApp delivery failed or not configured')
       } catch (err: any) {
         console.error('Failed to send payment received WhatsApp:', err.message)
@@ -417,9 +409,7 @@ export const notificationService = {
     // Email
     if (user.email) {
       try {
-        const result = await emailService.sendOrderShippedEmail(user.email, {
-          orderNumber: order.order_number,
-        })
+        const result = await emailService.sendOrderShippedEmail(user.email, { orderNumber: order.order_number })
         await logNotification(user.id, order.id, 'ORDER_SHIPPED', 'EMAIL', result.success ? 'SENT' : 'FAILED', user.email, `Order Shipped — ${order.order_number}`, undefined, result.success ? undefined : result.message)
       } catch (err: any) {
         console.error('Failed to send order shipped email:', err.message)
@@ -427,10 +417,17 @@ export const notificationService = {
       }
     }
 
-    // WhatsApp
+    // WhatsApp — template first, text fallback
     if (user.phone) {
       try {
-        const success = await sendWhatsAppTextMessage(user.phone, whatsappText)
+        const success = await sendWhatsApp(
+          user.phone,
+          'order_confirmation',
+          [order.order_number],              // body: order number
+          whatsappText,                      // fallback plain text
+          ['Shipped'],                       // header: status
+          'en'
+        )
         await logNotification(user.id, order.id, 'ORDER_SHIPPED', 'WHATSAPP', success ? 'SENT' : 'FAILED', user.phone || '', undefined, whatsappText, success ? undefined : 'WhatsApp delivery failed or not configured')
       } catch (err: any) {
         console.error('Failed to send order shipped WhatsApp:', err.message)
@@ -460,9 +457,7 @@ export const notificationService = {
     // Email
     if (user.email) {
       try {
-        const result = await emailService.sendOrderDeliveredEmail(user.email, {
-          orderNumber: order.order_number,
-        })
+        const result = await emailService.sendOrderDeliveredEmail(user.email, { orderNumber: order.order_number })
         await logNotification(user.id, order.id, 'ORDER_DELIVERED', 'EMAIL', result.success ? 'SENT' : 'FAILED', user.email, `Order Delivered — ${order.order_number}`, undefined, result.success ? undefined : result.message)
       } catch (err: any) {
         console.error('Failed to send order delivered email:', err.message)
@@ -470,10 +465,17 @@ export const notificationService = {
       }
     }
 
-    // WhatsApp
+    // WhatsApp — template first, text fallback
     if (user.phone) {
       try {
-        const success = await sendWhatsAppTextMessage(user.phone, whatsappText)
+        const success = await sendWhatsApp(
+          user.phone,
+          'order_confirmation',
+          [order.order_number],              // body: order number
+          whatsappText,                      // fallback plain text
+          ['Delivered'],                     // header: status
+          'en'
+        )
         await logNotification(user.id, order.id, 'ORDER_DELIVERED', 'WHATSAPP', success ? 'SENT' : 'FAILED', user.phone || '', undefined, whatsappText, success ? undefined : 'WhatsApp delivery failed or not configured')
       } catch (err: any) {
         console.error('Failed to send order delivered WhatsApp:', err.message)
@@ -503,9 +505,7 @@ export const notificationService = {
     // Email
     if (user.email) {
       try {
-        const result = await emailService.sendOrderCancelledEmail(user.email, {
-          orderNumber: order.order_number,
-        })
+        const result = await emailService.sendOrderCancelledEmail(user.email, { orderNumber: order.order_number })
         await logNotification(user.id, order.id, 'ORDER_CANCELLED', 'EMAIL', result.success ? 'SENT' : 'FAILED', user.email, `Order Cancelled — ${order.order_number}`, undefined, result.success ? undefined : result.message)
       } catch (err: any) {
         console.error('Failed to send order cancelled email:', err.message)
@@ -513,10 +513,17 @@ export const notificationService = {
       }
     }
 
-    // WhatsApp
+    // WhatsApp — template first, text fallback
     if (user.phone) {
       try {
-        const success = await sendWhatsAppTextMessage(user.phone, whatsappText)
+        const success = await sendWhatsApp(
+          user.phone,
+          'order_confirmation',
+          [order.order_number],              // body: order number
+          whatsappText,                      // fallback plain text
+          ['Cancelled'],                     // header: status
+          'en'
+        )
         await logNotification(user.id, order.id, 'ORDER_CANCELLED', 'WHATSAPP', success ? 'SENT' : 'FAILED', user.phone || '', undefined, whatsappText, success ? undefined : 'WhatsApp delivery failed or not configured')
       } catch (err: any) {
         console.error('Failed to send order cancelled WhatsApp:', err.message)
@@ -558,10 +565,19 @@ export const notificationService = {
       }
     }
 
-    // WhatsApp
+    // WhatsApp — template first, text fallback
     if (user.phone) {
       try {
-        const success = await sendWhatsAppTextMessage(user.phone, whatsappText)
+        // Use otp_verification template as a workaround for login alerts
+        // (it's the only approved template that works outside 24hr window)
+        const success = await sendWhatsApp(
+          user.phone,
+          'otp_verification',
+          ['Login Alert'],                   // body: alert type
+          whatsappText,                      // fallback plain text
+          undefined,                         // no header
+          'en_US'                            // language: en_US (as configured in Meta)
+        )
         await logNotification(user.id, null, 'LOGIN', 'WHATSAPP', success ? 'SENT' : 'FAILED', user.phone, undefined, whatsappText, success ? undefined : 'WhatsApp delivery failed or not configured')
       } catch (err: any) {
         console.error('Failed to send login notification WhatsApp:', err.message)

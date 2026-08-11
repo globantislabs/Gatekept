@@ -756,10 +756,10 @@ export function CheckoutView() {
 
                 {/* Online Payment Note */}
                 {paymentMethod !== 'COD' && (
-                  <div className="mt-4 p-3 bg-[#afb75d]/10 border border-[#afb75d]/20 rounded-lg">
-                    <p className="text-xs text-[#88837b] flex items-center gap-1.5">
+                  <div className="mt-4 p-3 bg-[#48805b]/10 border border-[#48805b]/20 rounded-lg">
+                    <p className="text-xs text-[#48805b] flex items-center gap-1.5">
                       <ShieldCheck className="w-3.5 h-3.5 text-[#48805b]" />
-                      Razorpay payment gateway integration coming soon. Your order will be created with &quot;PENDING&quot; payment status.
+                      Secure payment powered by PhonePe. You&apos;ll be redirected to complete payment after placing your order.
                     </p>
                   </div>
                 )}

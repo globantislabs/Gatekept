@@ -49,7 +49,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <script src="https://checkout.razorpay.com/v1/checkout.js" async></script>
+        {/* PhonePe checkout is handled server-side via API routes */}
       </head>
       <body className={`${plusJakarta.variable} ${inter.variable} ${instrumentSerif.variable} ${spaceGrotesk.variable} antialiased bg-background text-foreground font-[family-name:var(--font-body)]`}>
         {children}

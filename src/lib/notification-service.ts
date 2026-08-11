@@ -111,6 +111,60 @@ async function sendWhatsAppTextMessage(phone: string, text: string): Promise<boo
   }
 }
 
+// ─── WhatsApp Template Message Sender ──────────────────────────
+async function sendWhatsAppTemplateMessage(
+  phone: string,
+  templateName: string,
+  parameters: string[]
+): Promise<boolean> {
+  const token = getWhatsappToken()
+  const phoneId = getWhatsappPhoneNumberId()
+  if (!token || !phoneId) {
+    console.log(`[WhatsApp] Credentials not configured — template "${templateName}" not sent to:`, phone)
+    return false
+  }
+
+  try {
+    const whatsappPhone = formatPhoneForWhatsApp(phone)
+    const baseUrl = getWhatsappBaseUrl()
+    const response = await fetch(baseUrl, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        messaging_product: 'whatsapp',
+        to: whatsappPhone,
+        type: 'template',
+        template: {
+          name: templateName,
+          language: { code: 'en' },
+          components: [
+            {
+              type: 'body',
+              parameters: parameters.map(p => ({ type: 'text', text: p })),
+            },
+          ],
+        },
+      }),
+    })
+
+    const data = await response.json()
+
+    if (data.error) {
+      console.error(`WhatsApp template "${templateName}" error:`, data.error.message)
+      // Fallback to plain text
+      return false
+    }
+
+    return Boolean(data.message_id || response.ok)
+  } catch (error: any) {
+    console.error(`WhatsApp template "${templateName}" error:`, error.message)
+    return false
+  }
+}
+
 // ─── Log notification to database ──────────────────────────────
 async function logNotification(
   userId: string | null,
@@ -183,10 +237,20 @@ export const notificationService = {
       }
     }
 
-    // WhatsApp
+    // WhatsApp — use template `order_confirmation`
     if (user.phone) {
       try {
-        const success = await sendWhatsAppTextMessage(user.phone, whatsappText)
+        // Template: order_confirmation
+        // Parameters: {{1}} = Order Status, {{2}} = order number
+        let success = await sendWhatsAppTemplateMessage(
+          user.phone,
+          'order_confirmation',
+          [order.status || 'Placed', order.order_number]
+        )
+        // Fallback to plain text if template fails
+        if (!success) {
+          success = await sendWhatsAppTextMessage(user.phone, whatsappText)
+        }
         await logNotification(
           user.id,
           order.id,
@@ -290,10 +354,20 @@ export const notificationService = {
       }
     }
 
-    // WhatsApp
+    // WhatsApp — use template `payment_confirmation`
     if (user.phone) {
       try {
-        const success = await sendWhatsAppTextMessage(user.phone, whatsappText)
+        // Template: payment_confirmation
+        // Parameters: {{1}} = Order Status, {{2}} = amount, {{3}} = order ID
+        let success = await sendWhatsAppTemplateMessage(
+          user.phone,
+          'payment_confirmation',
+          [order.status || 'Confirmed', `₹${order.total_amount}`, order.order_number]
+        )
+        // Fallback to plain text if template fails
+        if (!success) {
+          success = await sendWhatsAppTextMessage(user.phone, whatsappText)
+        }
         await logNotification(user.id, order.id, 'PAYMENT_RECEIVED', 'WHATSAPP', success ? 'SENT' : 'FAILED', user.phone || '', undefined, whatsappText, success ? undefined : 'WhatsApp delivery failed or not configured')
       } catch (err: any) {
         console.error('Failed to send payment received WhatsApp:', err.message)

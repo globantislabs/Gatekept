@@ -187,12 +187,11 @@ export function CartView() {
         {/* Continue Shopping */}
         <motion.div variants={fadeInUp} className="pt-2">
           <Button
-            variant="outline"
             onClick={() => navigateTo('products')}
-            className="w-full border-[#e3dfd8] text-[#88837b] hover:text-[#48805b] hover:border-[#48805b]/30 rounded-lg py-2.5"
+            className="w-full bg-[#48805b] hover:bg-[#3a6a4a] text-white rounded-lg py-2.5 font-semibold shadow-md transition-all hover:shadow-lg"
           >
-            <Leaf className="w-4 h-4 mr-2" />
-            Continue Shopping
+            <ShoppingBag className="w-4 h-4 mr-2" />
+            Keep Shopping
           </Button>
         </motion.div>
       </motion.div>
@@ -1015,12 +1014,11 @@ export function OrderSuccessView() {
             View My Orders
           </Button>
           <Button
-            variant="outline"
             onClick={() => navigateTo('products')}
-            className="w-full border-[#e3dfd8] text-[#88837b] hover:text-[#48805b] hover:border-[#48805b]/30 rounded-lg py-3 font-semibold"
+            className="w-full bg-[#48805b] hover:bg-[#3a6a4a] text-white rounded-lg py-3 font-semibold shadow-md transition-all hover:shadow-lg"
           >
-            <Leaf className="w-4 h-4 mr-2" />
-            Continue Shopping
+            <ShoppingBag className="w-4 h-4 mr-2" />
+            Keep Shopping
           </Button>
         </motion.div>
       </motion.div>

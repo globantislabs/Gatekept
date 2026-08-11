@@ -8,7 +8,7 @@ import {
   ChevronRight, Home, GraduationCap, RefreshCw, ShieldCheck, Truck,
   Leaf, Clock, Globe, Mail, MessageCircle, Smartphone, ShoppingCart,
   Minus, Plus, CreditCard, BookOpen, Star, AlertTriangle, Info,
-  Sparkles, Eye, EyeOff
+  Sparkles, Eye, EyeOff, Repeat
 } from 'lucide-react'
 import SiteFooter from '@/components/SiteFooter'
 import { useAppStore, type CartItem } from '@/store/app-store'
@@ -224,6 +224,21 @@ export default function ProductDetailPage() {
       purchaseType: 'one-time',
     })
     toast.success(`${product.name} added to cart!`)
+    navigateTo('cart')
+  }, [product, isCompleted, quantity, addToCart, navigateTo])
+
+  const handleSubscribe = useCallback(() => {
+    if (!product || !isCompleted) return
+    addToCart({
+      productId: product.id,
+      name: product.name,
+      price: product.price,
+      quantity,
+      imageUrl: product.image_url,
+      type: product.type,
+      purchaseType: 'subscription',
+    })
+    toast.success(`${product.name} subscription added to cart!`)
     navigateTo('cart')
   }, [product, isCompleted, quantity, addToCart, navigateTo])
 
@@ -877,7 +892,7 @@ export default function ProductDetailPage() {
                 )}
               </div>
 
-              {/* ─── Buy Now + Unlock Now Buttons ──────────────── */}
+              {/* ─── Buy Now + Subscribe + Unlock Now Buttons ──────────────── */}
               <div className="flex flex-col sm:flex-row gap-3">
                 {/* Buy Now — Locked until learning completed */}
                 <Button
@@ -904,10 +919,35 @@ export default function ProductDetailPage() {
                   )}
                 </Button>
 
+                {/* Subscribe & Save */}
+                <Button
+                  onClick={isCompleted ? handleSubscribe : undefined}
+                  disabled={!isCompleted}
+                  className="pointer-events-auto min-h-[48px] flex-1 rounded-xl font-heading font-semibold text-base transition-all cursor-pointer disabled:cursor-not-allowed"
+                  style={{
+                    backgroundColor: isCompleted ? BRAND.lime : `${BRAND.muted}30`,
+                    color: isCompleted ? BRAND.dark : BRAND.muted,
+                    borderColor: 'transparent',
+                    cursor: isCompleted ? 'pointer' : 'not-allowed',
+                  }}
+                >
+                  {isCompleted ? (
+                    <>
+                      <Repeat className="w-5 h-5 mr-2" />
+                      Subscribe & Save
+                    </>
+                  ) : (
+                    <>
+                      <Lock className="w-5 h-5 mr-2" />
+                      Subscribe
+                    </>
+                  )}
+                </Button>
+
                 {/* Unlock Now — Starts learning module */}
                 <Button
                   onClick={isCompleted ? handleReview : (user ? handleStartLearning : handleLoginToSave)}
-                  className="pointer-events-auto min-h-[48px] flex-1 rounded-xl font-heading font-semibold text-base transition-all cursor-pointer"
+                  className="pointer-events-auto min-h-[48px] rounded-xl font-heading font-semibold text-base transition-all cursor-pointer"
                   style={{
                     backgroundColor: isCompleted ? `${BRAND.lime}20` : BRAND.lime,
                     color: isCompleted ? BRAND.green : BRAND.dark,

@@ -466,7 +466,7 @@ export function ProfilePage() {
                       <CardContent>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           {[
-                            { label: 'User ID', value: user.user_id, icon: <User className="w-4 h-4" /> },
+                            { label: 'User ID', value: user.user_id ? `#${Math.abs(user.user_id.split('').reduce((a, c) => ((a << 5) - a + c.charCodeAt(0)) | 0, 0) % 90000 + 10000)}` : '—', icon: <User className="w-4 h-4" /> },
                             { label: 'Email', value: user.email || 'Not provided', icon: <Mail className="w-4 h-4" /> },
                             { label: 'Phone', value: user.phone || 'Not provided', icon: <Phone className="w-4 h-4" /> },
                             { label: 'Joined', value: formatDate(user.created_at), icon: <Calendar className="w-4 h-4" /> },
@@ -614,8 +614,8 @@ export function ProfilePage() {
 
                                   {/* ── Actions ── */}
                                   <div className="mt-4 flex flex-wrap gap-2">
-                                    {/* Cancel order for PLACED/CONFIRMED/PENDING */}
-                                    {(order.status === 'PLACED' || order.status === 'CONFIRMED') && (
+                                    {/* Cancel order for PLACED/CONFIRMED/PROCESSING */}
+                                    {(order.status === 'PLACED' || order.status === 'CONFIRMED' || order.status === 'PROCESSING') && (
                                       <Button
                                         onClick={() => triggerOtp({ type: 'CANCEL_ORDER', orderId: order.id })}
                                         variant="outline"

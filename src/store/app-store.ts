@@ -172,8 +172,6 @@ export const useAppStore = create<AppState>()(
       previousView: null,
       navigateTo: (view, extra) => {
         const prev = get().currentView
-        // Prevent navigating to the same view
-        if (prev === view) return
         set({ previousView: prev, currentView: view })
         // Sync browser URL with the view
         if (typeof window !== 'undefined') {
@@ -182,6 +180,8 @@ export const useAppStore = create<AppState>()(
           if (window.location.pathname + window.location.search !== path) {
             window.history.pushState({ view, extra }, '', path)
           }
+          // Scroll to top on navigation
+          window.scrollTo({ top: 0, behavior: 'instant' })
         }
       },
       goBack: () => {

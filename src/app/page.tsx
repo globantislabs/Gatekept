@@ -175,6 +175,8 @@ function ViewRenderer() {
         return <OrderSuccessView />
       case 'profile':
         return <ProfilePage />
+      case 'subscriptions':
+        return <ProfilePage />
       case 'admin-dashboard':
       case 'admin-products':
       case 'admin-users':

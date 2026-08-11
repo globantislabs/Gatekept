@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
         if (!order || order.user_id !== user_id) {
           return errorResponse('Order not found or does not belong to you', 403)
         }
-        if (order.status !== 'PLACED' && order.status !== 'CONFIRMED') {
+        if (order.status !== 'PLACED' && order.status !== 'CONFIRMED' && order.status !== 'PROCESSING') {
           return errorResponse('Order cannot be cancelled at this stage', 400)
         }
       } else if (['CANCEL_SUB', 'PAUSE_SUB', 'RESUME_SUB'].includes(purpose)) {

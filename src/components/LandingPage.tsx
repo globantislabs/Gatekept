@@ -8,7 +8,6 @@ import {
   ArrowRight, Heart, Zap, Leaf, ChevronRight, Menu, Star,
   CheckCircle, Clock, Users, Globe, TrendingUp, Shield,
   Package, Utensils, Lock,
-  Unlock,
   ChevronDown, ChevronLeft, Sparkles, Home, Store,
   BarChart3, ShoppingBag, ShoppingCart
 } from 'lucide-react'
@@ -973,35 +972,11 @@ export default function LandingPage() {
                             <span className="rounded-full bg-white/15 backdrop-blur-md px-3 py-1.5 text-[11px] font-bold uppercase tracking-widest text-white">
                               {isStill ? 'Still Variant' : 'Fizz Variant'}
                             </span>
-                          </div>
-
-                          {/* Bottom-right price card — compact floating card */}
-                          <div className="absolute bottom-3 right-3 w-auto max-w-[180px] bg-black/50 backdrop-blur-md rounded-xl border border-white/10 p-3 flex flex-col items-end gap-2">
-                            <div className="flex items-baseline gap-1.5">
-                              <span className="font-heading text-lg font-bold text-white leading-none">₹{product.price.toLocaleString()}</span>
-                              {product.mrp && product.mrp > product.price && (
-                                <span className="text-[11px] line-through text-white/40 leading-none">₹{product.mrp.toLocaleString()}</span>
-                              )}
-                            </div>
                             {discount > 0 && (
-                              <span className="rounded-full bg-[#48805b] px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-widest text-white">
+                              <span className="rounded-full bg-[#48805b] px-3 py-1.5 text-[11px] font-bold uppercase tracking-widest text-white">
                                 {discount}% OFF
                               </span>
                             )}
-                            <div className="flex items-center gap-1.5 w-full">
-                              <button
-                                onClick={(e) => { e.stopPropagation(); handleLearnMore(product); }}
-                                className="flex-1 rounded-full bg-[#48805b] hover:bg-[#3a6a4a] text-white font-heading font-semibold text-[10px] px-3 py-1.5 shadow-lg shadow-[#48805b]/25 transition-all duration-300 flex items-center justify-center gap-1"
-                              >
-                                Buy Now <ShoppingBag className="w-3 h-3" />
-                              </button>
-                              <button
-                                onClick={(e) => { e.stopPropagation(); handleLearnMore(product); }}
-                                className="flex-1 rounded-full bg-white/15 hover:bg-white/25 text-white font-heading font-semibold text-[10px] px-3 py-1.5 transition-all duration-300 flex items-center justify-center gap-1 border border-white/10"
-                              >
-                                <Unlock className="w-3 h-3" /> Unlock
-                              </button>
-                            </div>
                           </div>
 
                           {/* Featured badge */}

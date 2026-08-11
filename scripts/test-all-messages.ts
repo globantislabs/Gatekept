@@ -188,6 +188,8 @@ async function testWhatsAppTemplates() {
   const orderNumber = 'NJW-TEST-001'
 
   // Test: order_confirmation template
+  // Header: "Status: {{1}}" → order status
+  // Body: "Your order {{1}} has been confirmed successfully." → order number
   await runTest('WhatsApp Template: order_confirmation', 'WHATSAPP', async () => {
     const r = await sendWhatsApp({
       messaging_product: 'whatsapp',
@@ -197,7 +199,8 @@ async function testWhatsAppTemplates() {
         name: 'order_confirmation',
         language: { code: 'en' },
         components: [
-          { type: 'body', parameters: [{ type: 'text', text: 'Placed' }, { type: 'text', text: orderNumber }] },
+          { type: 'header', parameters: [{ type: 'text', text: 'Placed' }] },
+          { type: 'body', parameters: [{ type: 'text', text: orderNumber }] },
         ],
       },
     })
@@ -205,6 +208,8 @@ async function testWhatsAppTemplates() {
   })
 
   // Test: payment_confirmation template
+  // Body: "We have received your payment of ₹{{1}} for Order ID {{2}} - Notjust WATR"
+  // Parameters: {{1}} = amount, {{2}} = order ID
   await runTest('WhatsApp Template: payment_confirmation', 'WHATSAPP', async () => {
     const r = await sendWhatsApp({
       messaging_product: 'whatsapp',
@@ -215,8 +220,7 @@ async function testWhatsAppTemplates() {
         language: { code: 'en' },
         components: [
           { type: 'body', parameters: [
-            { type: 'text', text: 'Confirmed' },
-            { type: 'text', text: '₹499' },
+            { type: 'text', text: '499' },
             { type: 'text', text: orderNumber },
           ] },
         ],

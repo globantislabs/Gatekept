@@ -112,10 +112,14 @@ async function sendWhatsAppTextMessage(phone: string, text: string): Promise<boo
 }
 
 // ─── WhatsApp Template Message Sender ──────────────────────────
+// Supports both header and body components.
+// headerParameters: sent as HEADER component variables
+// bodyParameters: sent as BODY component variables
 async function sendWhatsAppTemplateMessage(
   phone: string,
   templateName: string,
-  parameters: string[]
+  bodyParameters: string[],
+  headerParameters?: string[]
 ): Promise<boolean> {
   const token = getWhatsappToken()
   const phoneId = getWhatsappPhoneNumberId()
@@ -127,6 +131,24 @@ async function sendWhatsAppTemplateMessage(
   try {
     const whatsappPhone = formatPhoneForWhatsApp(phone)
     const baseUrl = getWhatsappBaseUrl()
+
+    // Build components array
+    const components: { type: string; parameters: { type: string; text: string }[] }[] = []
+
+    // Header component (if template has header variables)
+    if (headerParameters && headerParameters.length > 0) {
+      components.push({
+        type: 'header',
+        parameters: headerParameters.map(p => ({ type: 'text', text: p })),
+      })
+    }
+
+    // Body component
+    components.push({
+      type: 'body',
+      parameters: bodyParameters.map(p => ({ type: 'text', text: p })),
+    })
+
     const response = await fetch(baseUrl, {
       method: 'POST',
       headers: {
@@ -140,12 +162,7 @@ async function sendWhatsAppTemplateMessage(
         template: {
           name: templateName,
           language: { code: 'en' },
-          components: [
-            {
-              type: 'body',
-              parameters: parameters.map(p => ({ type: 'text', text: p })),
-            },
-          ],
+          components,
         },
       }),
     })
@@ -153,7 +170,7 @@ async function sendWhatsAppTemplateMessage(
     const data = await response.json()
 
     if (data.error) {
-      console.error(`WhatsApp template "${templateName}" error:`, data.error.message)
+      console.error(`WhatsApp template "${templateName}" error:`, JSON.stringify(data.error))
       // Fallback to plain text
       return false
     }
@@ -241,11 +258,13 @@ export const notificationService = {
     if (user.phone) {
       try {
         // Template: order_confirmation
-        // Parameters: {{1}} = Order Status, {{2}} = order number
+        // Header: "Status: {{1}}" → order status
+        // Body: "Your order {{1}} has been confirmed successfully." → order number
         let success = await sendWhatsAppTemplateMessage(
           user.phone,
           'order_confirmation',
-          [order.status || 'Placed', order.order_number]
+          [order.order_number],       // body params: order number
+          [order.status || 'Placed']  // header params: status
         )
         // Fallback to plain text if template fails
         if (!success) {
@@ -358,11 +377,12 @@ export const notificationService = {
     if (user.phone) {
       try {
         // Template: payment_confirmation
-        // Parameters: {{1}} = Order Status, {{2}} = amount, {{3}} = order ID
+        // Body: "We have received your payment of ₹{{1}} for Order ID {{2}} - Notjust WATR"
+        // Parameters: {{1}} = amount, {{2}} = order ID
         let success = await sendWhatsAppTemplateMessage(
           user.phone,
           'payment_confirmation',
-          [order.status || 'Confirmed', `₹${order.total_amount}`, order.order_number]
+          [`${order.total_amount}`, order.order_number]  // body params: amount, order ID
         )
         // Fallback to plain text if template fails
         if (!success) {

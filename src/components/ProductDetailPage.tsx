@@ -212,11 +212,10 @@ export default function ProductDetailPage() {
   const ingredientsList = displayProduct ? parseIngredients(displayProduct.ingredients) : []
 
   // ─── Handlers ─────────────────────────────────────────────
-  // Buy Now — only redirects to the cart page; locked until learning is completed
+  // Buy Now — simply redirects to the cart page (single click)
   const handleAddToCart = useCallback(() => {
-    if (!isCompleted) return
     navigateTo('cart')
-  }, [isCompleted, navigateTo])
+  }, [navigateTo])
 
   const handleSubscribe = useCallback(() => {
     const activeProduct = displayProduct || product
@@ -878,18 +877,16 @@ export default function ProductDetailPage() {
 
               {/* ─── Buy Now + Unlock Now Buttons ──────────────── */}
               <div className="flex flex-col sm:flex-row gap-3">
-                {/* Buy Now — redirects to cart page; locked until learning is completed */}
+                {/* Buy Now — redirects to cart page (always active, single click) */}
                 <Button
                   onClick={handleAddToCart}
-                  disabled={!isCompleted}
-                  className="pointer-events-auto min-h-[48px] flex-1 rounded-xl font-heading font-semibold text-base transition-all cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+                  className="pointer-events-auto min-h-[48px] flex-1 rounded-xl font-heading font-semibold text-base transition-all cursor-pointer"
                   style={{
                     backgroundColor: BRAND.green,
                     color: '#fff',
                     borderColor: 'transparent',
-                    cursor: isCompleted ? 'pointer' : 'not-allowed',
+                    cursor: 'pointer',
                   }}
-                  title={!isCompleted ? 'Complete the learning module to unlock Buy Now' : undefined}
                 >
                   <ShoppingCart className="w-5 h-5 mr-2" />
                   Buy Now

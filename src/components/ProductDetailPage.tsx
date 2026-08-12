@@ -213,34 +213,36 @@ export default function ProductDetailPage() {
 
   // ─── Handlers ─────────────────────────────────────────────
   const handleAddToCart = useCallback(() => {
-    if (!product || !isCompleted) return
+    const activeProduct = displayProduct || product
+    if (!activeProduct || !isCompleted) return
     addToCart({
-      productId: product.id,
-      name: product.name,
-      price: product.price,
+      productId: activeProduct.id,
+      name: activeProduct.name,
+      price: activeProduct.price,
       quantity,
-      imageUrl: product.image_url,
-      type: product.type,
+      imageUrl: activeProduct.image_url,
+      type: activeProduct.type,
       purchaseType: 'one-time',
     })
-    toast.success(`${product.name} added to cart!`)
+    toast.success(`${activeProduct.name} added to cart!`)
     navigateTo('cart')
-  }, [product, isCompleted, quantity, addToCart, navigateTo])
+  }, [displayProduct, product, isCompleted, quantity, addToCart, navigateTo])
 
   const handleSubscribe = useCallback(() => {
-    if (!product || !isCompleted) return
+    const activeProduct = displayProduct || product
+    if (!activeProduct || !isCompleted) return
     addToCart({
-      productId: product.id,
-      name: product.name,
-      price: product.price,
+      productId: activeProduct.id,
+      name: activeProduct.name,
+      price: activeProduct.price,
       quantity,
-      imageUrl: product.image_url,
-      type: product.type,
+      imageUrl: activeProduct.image_url,
+      type: activeProduct.type,
       purchaseType: 'subscription',
     })
-    toast.success(`${product.name} subscription added to cart!`)
+    toast.success(`${activeProduct.name} subscription added to cart!`)
     navigateTo('cart')
-  }, [product, isCompleted, quantity, addToCart, navigateTo])
+  }, [displayProduct, product, isCompleted, quantity, addToCart, navigateTo])
 
   const handleStartLearning = useCallback(() => {
     if (!product) return
@@ -479,20 +481,21 @@ export default function ProductDetailPage() {
               <Tabs defaultValue="overview" className="w-full">
 
                 {/* Scrollable Tabs List */}
-                <TabsList className="w-full grid grid-cols-5 h-auto p-0 bg-transparent rounded-none border-b"
+                <TabsList
+                  className="w-full h-auto p-0 bg-transparent rounded-none border-b flex items-stretch gap-1 overflow-x-auto scrollbar-hide"
                   style={{ borderColor: BRAND.surface }}
                 >
                   {[
-                    { value: 'overview', label: 'Overview', mobileLabel: 'Info', icon: <Info className="w-3.5 h-3.5 hidden sm:block" /> },
-                    { value: 'ingredients', label: 'Ingredients', mobileLabel: 'Ingr.', icon: <Leaf className="w-3.5 h-3.5 hidden sm:block" /> },
-                    { value: 'nutrition', label: 'Nutrition', mobileLabel: 'Nutri.', icon: <Package className="w-3.5 h-3.5 hidden sm:block" /> },
-                    { value: 'storage', label: 'Storage', mobileLabel: 'Store', icon: <ShieldCheck className="w-3.5 h-3.5 hidden sm:block" /> },
-                    { value: 'legal', label: 'Legal', mobileLabel: 'Legal', icon: <Globe className="w-3.5 h-3.5 hidden sm:block" /> },
+                    { value: 'overview', label: 'Overview', icon: <Info className="w-3.5 h-3.5 hidden sm:block" /> },
+                    { value: 'ingredients', label: 'Ingredients', icon: <Leaf className="w-3.5 h-3.5 hidden sm:block" /> },
+                    { value: 'nutrition', label: 'Nutrition', icon: <Package className="w-3.5 h-3.5 hidden sm:block" /> },
+                    { value: 'storage', label: 'Storage', icon: <ShieldCheck className="w-3.5 h-3.5 hidden sm:block" /> },
+                    { value: 'legal', label: 'Legal', icon: <Globe className="w-3.5 h-3.5 hidden sm:block" /> },
                   ].map(tab => (
                     <TabsTrigger
                       key={tab.value}
                       value={tab.value}
-                      className="pointer-events-auto min-h-[40px] px-1 sm:px-3 py-1.5 text-[10px] sm:text-xs font-heading font-medium transition-all border-b-2 -mb-px rounded-none data-[state=active]:border-b-2 data-[state=active]:shadow-none"
+                      className="pointer-events-auto min-h-[40px] px-3 py-1.5 text-[11px] sm:text-xs font-heading font-medium transition-all border-b-2 -mb-px rounded-none data-[state=active]:border-b-2 data-[state=active]:shadow-none whitespace-nowrap flex-shrink-0"
                       style={{
                         borderColor: 'transparent',
                         color: BRAND.muted,
@@ -500,8 +503,7 @@ export default function ProductDetailPage() {
                     >
                       <span className="flex items-center gap-1.5">
                         {tab.icon}
-                        <span className="hidden sm:inline">{tab.label}</span>
-                        <span className="sm:hidden">{tab.mobileLabel}</span>
+                        <span>{tab.label}</span>
                       </span>
                     </TabsTrigger>
                   ))}

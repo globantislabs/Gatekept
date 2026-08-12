@@ -119,11 +119,12 @@ export async function POST(req: NextRequest) {
       },
     })
 
-    // Fire order placed notification asynchronously (don't block the response)
+    // Fire order placed notification only for COD orders.
+    // Online payments should only notify after payment is confirmed.
     try {
       const user = await db.userProfile.findUnique({ where: { id: user_id } })
       if (user) {
-        // If user provided an email at checkout and their profile doesn't have one, save it
+        // If user provided an email at checkout and their profile doesn't have one, save it.
         const emailToUse = shipping_email?.trim()?.toLowerCase() || user.email
         if (emailToUse && !user.email) {
           try {
@@ -136,7 +137,10 @@ export async function POST(req: NextRequest) {
             console.error('Could not save email to profile:', emailErr.message)
           }
         }
+      }
 
+      if (user && payment_method === 'COD') {
+        const emailToUse = shipping_email?.trim()?.toLowerCase() || user.email
         notificationService.sendOrderPlacedNotification(
           {
             id: order.id,

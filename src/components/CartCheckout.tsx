@@ -1,7 +1,6 @@
 'use client'
 
 import React, { useState, useEffect, useMemo, useRef } from 'react'
-import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   ShoppingBag, Trash2, Plus, Minus, ArrowLeft, ArrowRight,
@@ -10,6 +9,7 @@ import {
   ShoppingCart, Sparkles, Leaf, Banknote, Mail, Repeat, Calendar
 } from 'lucide-react'
 import { useAppStore, type CartItem } from '@/store/app-store'
+import ProductImage from '@/components/ProductImage'
 import SiteFooter from '@/components/SiteFooter'
 import { orderService } from '@/lib/data-service'
 import type { Order } from '@/lib/data-service'
@@ -272,7 +272,7 @@ function CartItemCard({
             {/* Product Image */}
             <div className="w-full h-44 min-[430px]:w-24 min-[430px]:h-28 sm:w-28 sm:h-28 flex-shrink-0 bg-[#e3dfd8] min-[430px]:rounded-l-lg overflow-hidden relative">
               {item.imageUrl ? (
-                <Image
+                <ProductImage
                   src={item.imageUrl}
                   alt={item.name}
                   fill
@@ -959,7 +959,7 @@ export function CheckoutView() {
                     <div key={item.productId} className="flex items-center gap-3">
                       <div className="w-12 h-12 rounded-lg bg-[#e3dfd8] overflow-hidden flex-shrink-0 relative">
                         {item.imageUrl ? (
-                          <Image src={item.imageUrl} alt={item.name} fill className="object-cover" sizes="48px" />
+                          <ProductImage src={item.imageUrl} alt={item.name} fill className="object-cover" sizes="48px" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
                             <Package className="w-4 h-4 text-[#88837b]" />
@@ -1247,101 +1247,100 @@ export function OrderSuccessView() {
     >
       <motion.div variants={fadeInUp} className="flex-1 w-full max-w-3xl mx-auto px-4 py-8 sm:py-12 flex items-center">
         <div className="w-full text-center bg-white border border-[#e3dfd8] rounded-2xl shadow-sm p-5 sm:p-8">
-        {/* Success Icon */}
-        <div className="w-20 h-20 sm:w-24 sm:h-24 mx-auto mb-5 sm:mb-6 rounded-full bg-[#48805b]/10 flex items-center justify-center">
-          {paymentStatus === 'failed' ? (
-            <X className="w-12 h-12 sm:w-14 sm:h-14 text-red-500" />
-          ) : (
-            <CheckCircle className="w-12 h-12 sm:w-14 sm:h-14 text-[#48805b]" />
-          )}
-        </div>
+          <div className="w-20 h-20 sm:w-24 sm:h-24 mx-auto mb-5 sm:mb-6 rounded-full bg-[#48805b]/10 flex items-center justify-center">
+            {paymentStatus === 'failed' ? (
+              <X className="w-12 h-12 sm:w-14 sm:h-14 text-red-500" />
+            ) : (
+              <CheckCircle className="w-12 h-12 sm:w-14 sm:h-14 text-[#48805b]" />
+            )}
+          </div>
 
-        <motion.h2
-          variants={fadeInUp}
-          className="font-heading text-2xl sm:text-3xl font-bold text-[#1f1e1c] mb-2 leading-tight"
-        >
-          {paymentStatus === 'failed' ? 'Payment Failed' : 'Order Placed Successfully!'}
-        </motion.h2>
-
-        <motion.p
-          variants={fadeInUp}
-          className="text-[#88837b] mb-2 text-sm sm:text-base max-w-xl mx-auto"
-        >
-          {paymentStatus === 'failed'
-            ? 'Your payment could not be processed. Please try again.'
-            : isOnlinePayment || isPaymentReturn
-              ? 'Your order has been placed. We\'ll notify you once payment is confirmed.'
-              : 'Your wellness shots are on their way. We\'ll notify you when they ship.'
-          }
-        </motion.p>
-
-        {/* Payment status content (for PhonePe return) */}
-        {getPaymentStatusContent()}
-
-        {/* Email confirmation notice */}
-        {user?.email && (
-          <motion.div
+          <motion.h2
             variants={fadeInUp}
-            className="mt-3 p-3 bg-[#2e91b2]/5 border border-[#2e91b2]/15 rounded-lg"
+            className="font-heading text-2xl sm:text-3xl font-bold text-[#1f1e1c] mb-2 leading-tight"
           >
-            <p className="text-sm text-[#2e91b2] flex flex-wrap items-center justify-center gap-1.5 font-medium break-words">
-              <Mail className="w-4 h-4" />
-              Order confirmation sent to {user.email}
-            </p>
-          </motion.div>
-        )}
+            {paymentStatus === 'failed'
+              ? 'Payment not completed'
+              : isOnlinePayment || isPaymentReturn
+                ? 'Order placed, payment pending confirmation'
+                : 'Order placed successfully'}
+          </motion.h2>
 
-        {/* Payment method info */}
-        {(!isOnlinePayment && !isPaymentReturn) && (
-          <motion.div
-            variants={fadeInUp}
-            className="mt-3 p-3 bg-[#48805b]/5 border border-[#48805b]/15 rounded-lg"
-          >
-            <p className="text-sm text-[#48805b] flex items-center justify-center gap-1.5 font-medium">
-              <Banknote className="w-4 h-4" />
-              Pay on Delivery — Keep the exact amount ready when your order arrives.
-            </p>
-          </motion.div>
-        )}
-
-        {/* Online payment info (when not returning from PhonePe) */}
-        {(isOnlinePayment && !isPaymentReturn && !paymentStatus) && (
-          <motion.div
-            variants={fadeInUp}
-            className="mt-3 p-3 bg-[#48805b]/5 border border-[#48805b]/15 rounded-lg"
-          >
-            <p className="text-sm text-[#48805b] flex items-center justify-center gap-1.5 font-medium">
-              <ShieldCheck className="w-4 h-4" />
-              Secure payment powered by PhonePe
-            </p>
-          </motion.div>
-        )}
-
-        {displayOrderNumber && (
           <motion.p
             variants={fadeInUp}
-            className="text-sm text-[#88837b] mb-8 mt-3 break-words"
+            className="text-[#88837b] mb-2 text-sm sm:text-base max-w-xl mx-auto"
           >
-            Order ID: <span className="font-semibold text-[#1f1e1c]">{displayOrderNumber}</span>
+            {paymentStatus === 'failed'
+              ? 'Your payment could not be processed. Please retry from My Orders.'
+              : isOnlinePayment || isPaymentReturn
+                ? 'We will send the WhatsApp and email confirmation only after payment is confirmed.'
+                : 'Your order is confirmed. We will keep you updated as it moves ahead.'
+            }
           </motion.p>
-        )}
 
-        <motion.div variants={fadeInUp} className="grid gap-3 sm:grid-cols-2">
-          <Button
-            onClick={() => navigateTo('profile')}
-            className="bg-[#48805b] hover:bg-[#48805b]/90 text-white px-6 py-3 rounded-lg font-semibold text-sm sm:text-base shadow-md transition-all hover:shadow-lg w-full min-h-[48px]"
-          >
-            <Package className="w-4 h-4 mr-2" />
-            View My Orders
-          </Button>
-          <Button
-            onClick={() => navigateTo('products')}
-            className="w-full bg-[#48805b] hover:bg-[#3a6a4a] text-white rounded-lg py-3 font-semibold text-sm sm:text-base shadow-md transition-all hover:shadow-lg min-h-[48px]"
-          >
-            <ShoppingBag className="w-4 h-4 mr-2" />
-            Keep Shopping
-          </Button>
-        </motion.div>
+          {getPaymentStatusContent()}
+
+          {user?.email && (
+            <motion.div
+              variants={fadeInUp}
+              className="mt-3 p-3 bg-[#2e91b2]/5 border border-[#2e91b2]/15 rounded-lg"
+            >
+              <p className="text-sm text-[#2e91b2] flex flex-wrap items-center justify-center gap-1.5 font-medium break-words">
+                <Mail className="w-4 h-4" />
+                Confirmation sent to {user.email}
+              </p>
+            </motion.div>
+          )}
+
+          {(!isOnlinePayment && !isPaymentReturn) && (
+            <motion.div
+              variants={fadeInUp}
+              className="mt-3 p-3 bg-[#48805b]/5 border border-[#48805b]/15 rounded-lg"
+            >
+              <p className="text-sm text-[#48805b] flex items-center justify-center gap-1.5 font-medium">
+                <Banknote className="w-4 h-4" />
+                Pay on Delivery - Keep the exact amount ready when your order arrives.
+              </p>
+            </motion.div>
+          )}
+
+          {(isOnlinePayment && !isPaymentReturn && !paymentStatus) && (
+            <motion.div
+              variants={fadeInUp}
+              className="mt-3 p-3 bg-[#48805b]/5 border border-[#48805b]/15 rounded-lg"
+            >
+              <p className="text-sm text-[#48805b] flex items-center justify-center gap-1.5 font-medium">
+                <ShieldCheck className="w-4 h-4" />
+                Secure payment powered by PhonePe
+              </p>
+            </motion.div>
+          )}
+
+          {displayOrderNumber && (
+            <motion.p
+              variants={fadeInUp}
+              className="text-sm text-[#88837b] mb-8 mt-3 break-words"
+            >
+              Order ID: <span className="font-semibold text-[#1f1e1c]">{displayOrderNumber}</span>
+            </motion.p>
+          )}
+
+          <motion.div variants={fadeInUp} className="grid gap-3 sm:grid-cols-2">
+            <Button
+              onClick={() => navigateTo('profile')}
+              className="bg-[#48805b] hover:bg-[#48805b]/90 text-white px-6 py-3 rounded-lg font-semibold text-sm sm:text-base shadow-md transition-all hover:shadow-lg w-full min-h-[48px]"
+            >
+              <Package className="w-4 h-4 mr-2" />
+              View My Orders
+            </Button>
+            <Button
+              onClick={() => navigateTo('products')}
+              className="w-full bg-[#48805b] hover:bg-[#3a6a4a] text-white rounded-lg py-3 font-semibold text-sm sm:text-base shadow-md transition-all hover:shadow-lg min-h-[48px]"
+            >
+              <ShoppingBag className="w-4 h-4 mr-2" />
+              Keep Shopping
+            </Button>
+          </motion.div>
         </div>
       </motion.div>
       <SiteFooter />

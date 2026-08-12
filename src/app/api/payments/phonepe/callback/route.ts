@@ -28,6 +28,10 @@ export async function POST(req: NextRequest) {
         })
 
         if (order) {
+          if (order.payment_status === 'COMPLETED') {
+            return jsonResponse({ success: true, status: 'COMPLETED', message: 'Payment already confirmed' })
+          }
+
           const updated = await db.order.update({
             where: { id: order.id },
             data: {

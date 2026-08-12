@@ -19,8 +19,8 @@ export default function SiteFooter() {
             <div className="mb-3">
               <Image src="/images/notjust-logo-clean.png" alt="NotJust" width={140} height={48} className="h-10 w-auto object-contain" />
             </div>
-            <p className="text-white/40 text-sm leading-relaxed">
-              NOTJUST WATER™ is a 50 ml pre-meal wellness shot designed to help lower the glycemic impact of your meal.
+            <p className="text-white/50 text-sm leading-relaxed">
+              NOTJUST Watr is a 50 ml pre-meal wellness shot designed to help lower the glycemic impact of your meal.
             </p>
           </div>
           <div>
@@ -69,7 +69,7 @@ export default function SiteFooter() {
           </div>
         </div>
         <Separator className="my-6 bg-white/[0.06]" />
-        <div className="flex flex-col sm:flex-row justify-between items-center gap-3 text-xs text-white/30">
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-3 text-xs text-white/35">
           <p>&copy; 2026 Zum Heilen Healthcare Private Limited. All rights reserved.</p>
           <div className="flex flex-wrap justify-center gap-x-4 gap-y-1">
             <button onClick={() => navigateTo('policy-terms')} className="hover:text-white/60 transition-colors duration-300">Terms & Conditions</button>

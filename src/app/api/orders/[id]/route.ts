@@ -128,7 +128,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
         // Also send payment notification if payment_status changed to COMPLETED
         const newPaymentStatus = body.payment_status
-        if (newPaymentStatus === 'COMPLETED') {
+        if (newPaymentStatus === 'COMPLETED' && orderWithUser.payment_status !== 'COMPLETED') {
           notificationService.sendPaymentReceivedNotification(orderInfo, userInfo).catch(err => console.error('Failed to send payment received notification:', err))
         }
       }

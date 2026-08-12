@@ -354,7 +354,7 @@ export const notificationService = {
   async sendPaymentReceivedNotification(order: OrderInfo, user: UserInfo): Promise<void> {
     // Strip any ₹ symbol from amount to avoid double ₹₹ when template already has ₹
     const rawAmount = String(order.total_amount).replace(/₹/g, '').trim()
-    const whatsappText = `💳 Payment of ₹${rawAmount} received for NOTJUST Watr order #${order.order_number}. Thank you!`
+    const whatsappText = `Payment of ₹${rawAmount} received for NOTJUST Watr order #${order.order_number}. Thank you!`
     const smsText = `NOTJUST Watr: Payment ₹${rawAmount} received for order #${order.order_number}. Thank you! -NJWATR`
 
     // Email
@@ -372,14 +372,14 @@ export const notificationService = {
     if (user.phone) {
       try {
         // Template: payment_confirmation
-        // Body: "We have received your payment of ₹{{1}} for Order ID {{2}} - Notjust WATR"
+        // Body: We have received your payment of ₹{{1}} for Order ID {{2}}. - *Notjust WATR*
         const success = await sendWhatsApp(
           user.phone,
           'payment_confirmation',
           [rawAmount, order.order_number],  // body: amount (no ₹), order ID
           whatsappText,                                    // fallback plain text
           undefined,                                       // no header
-          'en_US'
+          'en'
         )
         await logNotification(user.id, order.id, 'PAYMENT_RECEIVED', 'WHATSAPP', success ? 'SENT' : 'FAILED', user.phone || '', undefined, whatsappText, success ? undefined : 'WhatsApp delivery failed or not configured')
       } catch (err: any) {

@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useEffect, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useAppStore, type AppView } from '@/store/app-store'
 
@@ -71,9 +72,8 @@ const pathToView = (pathname: string): AppView => {
 }
 
 // ─── URL Sync: reads ?product=slug and navigates ────────────
-// Reads directly from window.location to avoid stale useSearchParams
-// (which doesn't update on manual history.pushState calls).
 function UrlSyncHandler() {
+  const searchParams = useSearchParams()
   const navigateTo = useAppStore(s => s.navigateTo)
   const setSelectedProductId = useAppStore(s => s.setSelectedProductId)
   const products = useAppStore(s => s.products)
@@ -81,13 +81,8 @@ function UrlSyncHandler() {
   const currentView = useAppStore(s => s.currentView)
 
   useEffect(() => {
-    if (typeof window === 'undefined') return
-
-    // Read directly from window.location — always current, never stale
-    const url = new URL(window.location.href)
-
     // Handle PhonePe payment return redirect
-    const paymentReturn = url.searchParams.get('payment')
+    const paymentReturn = searchParams.get('payment')
     if (paymentReturn === 'return') {
       if (currentView !== 'order-success') {
         navigateTo('order-success')
@@ -95,12 +90,7 @@ function UrlSyncHandler() {
       return
     }
 
-    // Only attempt product sync when actually on /product path.
-    // This prevents the handler from overriding navigations to /cart,
-    // /checkout, etc. back to product-detail.
-    if (url.pathname !== '/product') return
-
-    const slug = url.searchParams.get('product')
+    const slug = searchParams.get('product')
     if (!slug) return
 
     const findAndNavigate = async () => {
@@ -128,7 +118,7 @@ function UrlSyncHandler() {
       }
     }
     findAndNavigate()
-  }, [products, setProducts, setSelectedProductId, navigateTo, currentView])
+  }, [searchParams, products, setProducts, setSelectedProductId, navigateTo, currentView])
 
   return null
 }

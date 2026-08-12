@@ -385,8 +385,8 @@ export default function ProductDetailPage() {
 
   // ─── Main Render ──────────────────────────────────────────
   return (
-    <div className="min-h-screen flex flex-col bg-[#f4f3f0] pt-4">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex flex-col bg-[#f4f3f0] pt-4 pb-8 sm:pb-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
 
         {/* ─── Navigation ──────────────────────────────────── */}
         <motion.div
@@ -437,8 +437,8 @@ export default function ProductDetailPage() {
           <div className="grid lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-12">
 
             {/* Left: Product Image + About/Overview below */}
-            <motion.div variants={staggerItem} className="space-y-4">
-              <div className="relative h-[240px] sm:h-[300px] lg:h-[420px] rounded-2xl lg:rounded-3xl overflow-hidden flex items-center justify-center border"
+            <motion.div variants={staggerItem} className="space-y-4 sm:space-y-5">
+              <div className="relative h-[260px] sm:h-[340px] lg:h-[440px] rounded-2xl lg:rounded-3xl overflow-hidden flex items-center justify-center border"
                 style={{ borderColor: BRAND.surface, backgroundColor: `${BRAND.surface}30` }}
               >
                 {/* Gradient background */}
@@ -774,7 +774,7 @@ export default function ProductDetailPage() {
             </motion.div>
 
             {/* Right: Product Info — Price, Badges, CTA, Learning Module, Trust */}
-            <motion.div variants={staggerItem} className="space-y-4 sm:space-y-5 lg:sticky lg:top-20 self-start">
+            <motion.div variants={staggerItem} className="space-y-5 sm:space-y-6 lg:sticky lg:top-20 self-start">
               {/* Name & Short Description */}
               <div>
                 <div className="flex items-start justify-between gap-3">
@@ -1110,7 +1110,7 @@ export default function ProductDetailPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.3 }}
-          className="mt-6 sm:mt-10 lg:mt-12"
+          className="mt-8 sm:mt-12 lg:mt-16"
         >
           <Card className="border rounded-2xl" style={{ borderColor: BRAND.surface }}>
             <CardHeader>
@@ -1122,8 +1122,8 @@ export default function ProductDetailPage() {
             <CardContent>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                 <button
-                  className="pointer-events-auto flex items-center gap-3 p-4 rounded-xl transition-all min-h-[44px]"
-                  style={{ backgroundColor: '#25D36608', borderColor: '#25D36620', border: '1px solid #25D36620' }}
+                  className="pointer-events-auto flex items-center gap-3 p-4 rounded-xl transition-colors min-h-[44px] touch-manipulation select-none cursor-pointer"
+                  style={{ backgroundColor: '#25D36608', borderColor: '#25D36620', border: '1px solid #25D36620', WebkitTapHighlightColor: 'transparent' }}
                   onClick={() => window.open('https://wa.me/919288007431?text=Hi%2C%20I%20have%20a%20question%20about%20NOTJUST%20Watr', '_blank')}
                 >
                   <div className="w-10 h-10 rounded-lg flex items-center justify-center min-h-[40px]"
@@ -1138,8 +1138,8 @@ export default function ProductDetailPage() {
                 </button>
 
                 <button
-                  className="pointer-events-auto flex items-center gap-3 p-4 rounded-xl transition-all min-h-[44px]"
-                  style={{ backgroundColor: `${BRAND.blue}08`, borderColor: `${BRAND.blue}20`, border: `1px solid ${BRAND.blue}20` }}
+                  className="pointer-events-auto flex items-center gap-3 p-4 rounded-xl transition-colors min-h-[44px] touch-manipulation select-none cursor-pointer"
+                  style={{ backgroundColor: `${BRAND.blue}08`, borderColor: `${BRAND.blue}20`, border: `1px solid ${BRAND.blue}20`, WebkitTapHighlightColor: 'transparent' }}
                   onClick={() => window.open('mailto:info@zh-onehealth.com?subject=Query%20about%20NOTJUST%20Watr', '_blank')}
                 >
                   <div className="w-10 h-10 rounded-lg flex items-center justify-center min-h-[40px]"
@@ -1154,8 +1154,8 @@ export default function ProductDetailPage() {
                 </button>
 
                 <button
-                  className="pointer-events-auto flex items-center gap-3 p-4 rounded-xl transition-all min-h-[44px]"
-                  style={{ backgroundColor: `${BRAND.green}08`, borderColor: `${BRAND.green}20`, border: `1px solid ${BRAND.green}20` }}
+                  className="pointer-events-auto flex items-center gap-3 p-4 rounded-xl transition-colors min-h-[44px] touch-manipulation select-none cursor-pointer"
+                  style={{ backgroundColor: `${BRAND.green}08`, borderColor: `${BRAND.green}20`, border: `1px solid ${BRAND.green}20`, WebkitTapHighlightColor: 'transparent' }}
                   onClick={() => window.open('sms:+919288007431?body=Hi%2C%20I%20have%20a%20question%20about%20NOTJUST%20Watr', '_blank')}
                 >
                   <div className="w-10 h-10 rounded-lg flex items-center justify-center min-h-[40px]"
@@ -1174,6 +1174,8 @@ export default function ProductDetailPage() {
         </motion.div>
 
       </div>
+      {/* Spacer so the footer never sits flush against the content */}
+      <div className="h-10 sm:h-16" aria-hidden="true" />
       <SiteFooter />
     </div>
   )

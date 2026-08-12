@@ -1799,13 +1799,25 @@ function AdminDashboard() {
                                 <button onClick={() => handleReorderVideo(video.id, 'up')} disabled={idx === 0} className="p-0.5 rounded hover:bg-gray-100 disabled:opacity-30"><ChevronUp className="w-3 h-3" style={{ color: A.textMuted }} /></button>
                                 <button onClick={() => handleReorderVideo(video.id, 'down')} disabled={idx === learningVideos.length - 1} className="p-0.5 rounded hover:bg-gray-100 disabled:opacity-30"><ChevronDown className="w-3 h-3" style={{ color: A.textMuted }} /></button>
                               </div>
-                              <div className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-[10px] font-bold" style={{ background: A.greenLight, color: A.green }}>{video.order}</div>
+                              <div className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-[10px] font-bold" style={{ background: A.greenLight, color: A.green }}>{idx + 1}</div>
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2">
                                   <p className="text-sm font-semibold truncate" style={{ color: A.text }}>{video.title}</p>
-                                  <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 shrink-0" style={{ borderColor: A.border, color: A.textMuted }}>{video.duration}</Badge>
+                                  <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 shrink-0" style={{ borderColor: A.border, color: A.textMuted }}>{video.duration || '—'}</Badge>
+                                  {video.video_url && <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 shrink-0" style={{ borderColor: A.green, color: A.green }}>Video ✓</Badge>}
                                 </div>
                                 <p className="text-[11px] mt-0.5 line-clamp-1" style={{ color: A.textMuted }}>{video.description}</p>
+                                {/* Video preview thumbnail */}
+                                {video.video_url && (
+                                  <div className="mt-2 w-32 h-20 rounded-md overflow-hidden bg-black flex items-center justify-center">
+                                    <video
+                                      src={video.video_url.startsWith('/uploads/') ? `/api${video.video_url}` : video.video_url}
+                                      className="w-full h-full object-cover"
+                                      muted
+                                      preload="metadata"
+                                    />
+                                  </div>
+                                )}
                                 {/* Quizzes for this video */}
                                 {learningQuizzes.filter(q => q.video_id === video.id).length > 0 && (
                                   <div className="mt-2 space-y-1.5">
@@ -1861,23 +1873,23 @@ function AdminDashboard() {
                             <div className="space-y-2">
                               <label className="flex items-center gap-2 p-2 rounded-lg border border-dashed cursor-pointer hover:bg-gray-50 transition-colors" style={{ borderColor: A.border }}>
                                 <Upload className="w-4 h-4 shrink-0" style={{ color: A.textMuted }} />
-                                <span className="text-xs truncate" style={{ color: A.textMuted }}>{videoUploading ? 'Uploading...' : 'Upload video file (MP4/MOV/AVI, max 20MB)'}</span>
-                                <input type="file" accept="video/mp4,video/quicktime,video/x-msvideo" className="hidden" onChange={async (e) => {
+                                <span className="text-xs truncate" style={{ color: A.textMuted }}>{videoUploading ? 'Uploading...' : 'Upload video file (MP4/MOV/WebM, max 100MB)'}</span>
+                                <input type="file" accept="video/mp4,video/webm,video/quicktime,.mp4,.mov,.webm,.avi" className="hidden" onChange={async (e) => {
                                   const f = e.target.files?.[0]
                                   if (!f) return
-                                  if (f.size > 20 * 1024 * 1024) { toast.error('Video too large (max 20MB)'); return }
-                                  // Check video duration
+                                  if (f.size > 100 * 1024 * 1024) { toast.error('Video too large (max 100MB)'); return }
+                                  // Check video duration (max 10 minutes for learning content)
                                   const durationOk = await new Promise<boolean>((resolve) => {
                                     const v = document.createElement('video')
                                     v.preload = 'metadata'
                                     v.onloadedmetadata = () => {
                                       URL.revokeObjectURL(v.src)
-                                      resolve(v.duration <= 120)
+                                      resolve(v.duration <= 600) // 10 min
                                     }
                                     v.onerror = () => resolve(true) // allow if can't check
                                     v.src = URL.createObjectURL(f)
                                   })
-                                  if (!durationOk) { toast.error('Video too long (max 2 minutes)'); return }
+                                  if (!durationOk) { toast.error('Video too long (max 10 minutes)'); return }
                                   setVideoUploading(true)
                                   const fd = new FormData()
                                   fd.append('file', f)
@@ -1891,10 +1903,22 @@ function AdminDashboard() {
                                 }} disabled={videoUploading} />
                               </label>
                               {newVideo.video_url && (
-                                <div className="flex items-center gap-2 p-2 rounded-lg" style={{ background: A.bg }}>
-                                  <Play className="w-3 h-3" style={{ color: A.green }} />
-                                  <span className="text-xs truncate flex-1" style={{ color: A.text }}>{newVideo.video_url}</span>
-                                  <button onClick={() => setNewVideo({ ...newVideo, video_url: '' })} className="text-xs text-red-500 hover:underline">Remove</button>
+                                <div className="space-y-2">
+                                  <div className="flex items-center gap-2 p-2 rounded-lg" style={{ background: A.bg }}>
+                                    <Play className="w-3 h-3" style={{ color: A.green }} />
+                                    <span className="text-xs truncate flex-1" style={{ color: A.text }}>{newVideo.video_url}</span>
+                                    <button onClick={() => setNewVideo({ ...newVideo, video_url: '' })} className="text-xs text-red-500 hover:underline">Remove</button>
+                                  </div>
+                                  {/* Video preview */}
+                                  <div className="w-full max-w-sm rounded-lg overflow-hidden bg-black">
+                                    <video
+                                      src={newVideo.video_url.startsWith('/uploads/') ? `/api${newVideo.video_url}` : newVideo.video_url}
+                                      className="w-full aspect-video"
+                                      controls
+                                      playsInline
+                                      preload="metadata"
+                                    />
+                                  </div>
                                 </div>
                               )}
                               <div className="flex items-center gap-2 pt-1">

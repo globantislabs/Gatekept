@@ -98,3 +98,6 @@ public/uploads/videos/*
 public/uploads/audio/*
 public/uploads/images/*
 !public/uploads/**/.gitkeep
+
+# Uploaded files (persistent)
+data/uploads/

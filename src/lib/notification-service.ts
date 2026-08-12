@@ -272,15 +272,14 @@ export const notificationService = {
     if (user.phone) {
       try {
         // Template: order_confirmation
-        // Header: "Status: {{1}}" → order status
-        // Body: "Your order {{1}} has been confirmed successfully." → order number
+        // Body: "{{1}}" = order_number, "{{2}}" = status (2 body params)
         const success = await sendWhatsApp(
           user.phone,
           'order_confirmation',
-          [order.order_number],              // body: order number
+          [order.order_number, order.status || 'Placed'],  // body: [order_number, status]
           whatsappText,                      // fallback plain text
-          [order.status || 'Placed'],        // header: status
-          'en'                               // language: en (as configured in Meta)
+          undefined,                         // no header component
+          'en_US'                             // language: en_US (as configured in Meta)
         )
         await logNotification(user.id, order.id, 'ORDER_PLACED', 'WHATSAPP', success ? 'SENT' : 'FAILED', user.phone || '', undefined, whatsappText, success ? undefined : 'WhatsApp delivery failed or not configured')
       } catch (err: any) {
@@ -325,10 +324,10 @@ export const notificationService = {
         const success = await sendWhatsApp(
           user.phone,
           'order_confirmation',
-          [order.order_number],              // body: order number
+          [order.order_number, 'Confirmed'],    // body: [order_number, status]
           whatsappText,                      // fallback plain text
-          ['Confirmed'],                     // header: status
-          'en'
+          undefined,                         // no header component
+          'en_US'
         )
         await logNotification(user.id, order.id, 'ORDER_CONFIRMED', 'WHATSAPP', success ? 'SENT' : 'FAILED', user.phone || '', undefined, whatsappText, success ? undefined : 'WhatsApp delivery failed or not configured')
       } catch (err: any) {
@@ -378,7 +377,7 @@ export const notificationService = {
           [`${order.total_amount}`, order.order_number],  // body: amount, order ID
           whatsappText,                                    // fallback plain text
           undefined,                                       // no header
-          'en'
+          'en_US'
         )
         await logNotification(user.id, order.id, 'PAYMENT_RECEIVED', 'WHATSAPP', success ? 'SENT' : 'FAILED', user.phone || '', undefined, whatsappText, success ? undefined : 'WhatsApp delivery failed or not configured')
       } catch (err: any) {
@@ -423,10 +422,10 @@ export const notificationService = {
         const success = await sendWhatsApp(
           user.phone,
           'order_confirmation',
-          [order.order_number],              // body: order number
+          [order.order_number, 'Shipped'],       // body: [order_number, status]
           whatsappText,                      // fallback plain text
-          ['Shipped'],                       // header: status
-          'en'
+          undefined,                         // no header component
+          'en_US'
         )
         await logNotification(user.id, order.id, 'ORDER_SHIPPED', 'WHATSAPP', success ? 'SENT' : 'FAILED', user.phone || '', undefined, whatsappText, success ? undefined : 'WhatsApp delivery failed or not configured')
       } catch (err: any) {
@@ -471,10 +470,10 @@ export const notificationService = {
         const success = await sendWhatsApp(
           user.phone,
           'order_confirmation',
-          [order.order_number],              // body: order number
+          [order.order_number, 'Delivered'],     // body: [order_number, status]
           whatsappText,                      // fallback plain text
-          ['Delivered'],                     // header: status
-          'en'
+          undefined,                         // no header component
+          'en_US'
         )
         await logNotification(user.id, order.id, 'ORDER_DELIVERED', 'WHATSAPP', success ? 'SENT' : 'FAILED', user.phone || '', undefined, whatsappText, success ? undefined : 'WhatsApp delivery failed or not configured')
       } catch (err: any) {
@@ -519,10 +518,10 @@ export const notificationService = {
         const success = await sendWhatsApp(
           user.phone,
           'order_confirmation',
-          [order.order_number],              // body: order number
+          [order.order_number, 'Cancelled'],     // body: [order_number, status]
           whatsappText,                      // fallback plain text
-          ['Cancelled'],                     // header: status
-          'en'
+          undefined,                         // no header component
+          'en_US'
         )
         await logNotification(user.id, order.id, 'ORDER_CANCELLED', 'WHATSAPP', success ? 'SENT' : 'FAILED', user.phone || '', undefined, whatsappText, success ? undefined : 'WhatsApp delivery failed or not configured')
       } catch (err: any) {

@@ -212,10 +212,22 @@ export default function ProductDetailPage() {
   const ingredientsList = displayProduct ? parseIngredients(displayProduct.ingredients) : []
 
   // ─── Handlers ─────────────────────────────────────────────
-  // Buy Now — simply redirects to the cart page (single click)
+  // Buy Now — adds product to cart and redirects to cart page
   const handleAddToCart = useCallback(() => {
+    const activeProduct = displayProduct || product
+    if (!activeProduct) return
+    addToCart({
+      productId: activeProduct.id,
+      name: activeProduct.name,
+      price: activeProduct.price,
+      quantity,
+      imageUrl: activeProduct.image_url,
+      type: activeProduct.type,
+      purchaseType: 'one-time',
+    })
+    toast.success(`${activeProduct.name} added to cart!`)
     navigateTo('cart')
-  }, [navigateTo])
+  }, [displayProduct, product, quantity, addToCart, navigateTo])
 
   const handleSubscribe = useCallback(() => {
     const activeProduct = displayProduct || product

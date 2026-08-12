@@ -90,6 +90,19 @@ function UrlSyncHandler() {
       return
     }
 
+    // Don't override user-initiated navigations to cart/checkout/etc.
+    // (searchParams can be stale after pushState, which previously caused
+    //  the handler to snap the view back to product-detail)
+    if (
+      currentView === 'cart' ||
+      currentView === 'checkout' ||
+      currentView === 'order-success' ||
+      currentView === 'profile' ||
+      currentView === 'subscriptions'
+    ) {
+      return
+    }
+
     const slug = searchParams.get('product')
     if (!slug) return
 

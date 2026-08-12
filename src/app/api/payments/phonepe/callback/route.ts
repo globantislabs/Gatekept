@@ -33,6 +33,9 @@ export async function POST(req: NextRequest) {
             data: {
               payment_status: 'COMPLETED',
               payment_method: 'PHONEPE',
+              payment_ref: verification.paymentDetails
+                ? `PHONEPE_${merchantOrderId}`
+                : null,
             },
           })
 

@@ -71,6 +71,7 @@ async function getAccessToken(): Promise<string | null> {
 
   try {
     const baseUrl = getBaseUrl()
+    console.log(`[PhonePe] Requesting token from ${baseUrl}/v2/auth/token (env: ${getPhonePeEnv()})`)
     const response = await fetch(`${baseUrl}/v2/auth/token`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -82,10 +83,16 @@ async function getAccessToken(): Promise<string | null> {
     if (data.accessToken) {
       cachedToken = data.accessToken
       tokenExpiry = Date.now() + (data.expiresIn || 3600) * 1000
+      console.log(`[PhonePe] Token acquired, expires in ${data.expiresIn || 3600}s`)
       return cachedToken
     }
 
-    console.error('[PhonePe] Token error:', data.message || data.error || 'Unknown error')
+    // Handle common PhonePe errors
+    const errMsg = data.message || data.error || 'Unknown error'
+    console.error('[PhonePe] Token error:', errMsg)
+    if (errMsg.includes('Api Mapping Not Found')) {
+      console.error('[PhonePe] API endpoint not found — ensure the PhonePe integration is activated and your server IP is whitelisted on the PhonePe dashboard')
+    }
     return null
   } catch (error: any) {
     console.error('[PhonePe] Token fetch error:', error.message)

@@ -158,7 +158,11 @@ interface AppState {
 
   // Orders
   lastOrderId: string | null
+  lastOrderNumber: string | null
+  lastPaymentMethod: string | null
   setLastOrderId: (id: string | null) => void
+  setLastOrderNumber: (num: string | null) => void
+  setLastPaymentMethod: (method: string | null) => void
 
   // Full logout reset
   resetForLogout: () => void
@@ -276,7 +280,11 @@ export const useAppStore = create<AppState>()(
 
       // Orders
       lastOrderId: null,
+      lastOrderNumber: null,
+      lastPaymentMethod: null,
       setLastOrderId: (id) => set({ lastOrderId: id }),
+      setLastOrderNumber: (num) => set({ lastOrderNumber: num }),
+      setLastPaymentMethod: (method) => set({ lastPaymentMethod: method }),
 
       // Full reset for logout
       resetForLogout: () => {
@@ -285,6 +293,8 @@ export const useAppStore = create<AppState>()(
           user: null,
           cart: [],
           lastOrderId: null,
+          lastOrderNumber: null,
+          lastPaymentMethod: null,
           selectedProductId: null,
           pendingOtpContact: null,
           pendingOtpType: null,
@@ -312,6 +322,8 @@ export const useAppStore = create<AppState>()(
           selectedProductId: state.selectedProductId,
           cart: state.cart,
           lastOrderId: state.lastOrderId,
+          lastOrderNumber: state.lastOrderNumber,
+          lastPaymentMethod: state.lastPaymentMethod,
           pendingOtpContact: state.pendingOtpContact,
           pendingOtpType: state.pendingOtpType,
           scannedCampaignId: state.scannedCampaignId,

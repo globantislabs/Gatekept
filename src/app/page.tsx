@@ -81,6 +81,15 @@ function UrlSyncHandler() {
   const currentView = useAppStore(s => s.currentView)
 
   useEffect(() => {
+    // Handle PhonePe payment return redirect
+    const paymentReturn = searchParams.get('payment')
+    if (paymentReturn === 'return') {
+      if (currentView !== 'order-success') {
+        navigateTo('order-success')
+      }
+      return
+    }
+
     const slug = searchParams.get('product')
     if (!slug) return
 

@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo, useRef } from 'react'
 import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
@@ -378,7 +378,7 @@ function CartItemCard({
 export function CheckoutView() {
   const {
     user, cart, cartTotal, clearCart, navigateTo, goBack,
-    setLastOrderId, setRedirectAfterLogin, setUser
+    setLastOrderId, setLastOrderNumber, setLastPaymentMethod, setRedirectAfterLogin, setUser
   } = useAppStore()
 
   // ── Form State ──
@@ -452,6 +452,8 @@ export function CheckoutView() {
     setPlacing(true)
 
     try {
+      const totalAmount = cartTotal() * (purchaseMode === 'subscription' && subPack ? (1 - subPack.discount / 100) : 1)
+
       const orderData = {
         user_id: user.id,
         items: cart.map(item => ({
@@ -484,12 +486,61 @@ export function CheckoutView() {
       }
 
       setLastOrderId(order.id)
-      clearCart()
-      toast.success('Order placed successfully! 🎉', {
-        description: `Order #${order.order_number || order.id}`,
-        duration: 5000,
-      })
-      navigateTo('order-success')
+      setLastOrderNumber(order.order_number || order.id)
+      setLastPaymentMethod(paymentMethod)
+
+      // ── COD: Go directly to success ──
+      if (paymentMethod === 'COD') {
+        clearCart()
+        toast.success('Order placed successfully! 🎉', {
+          description: `Order #${order.order_number || order.id}`,
+          duration: 5000,
+        })
+        navigateTo('order-success')
+        return
+      }
+
+      // ── Online Payment (UPI/CARD/NET_BANKING): Initiate PhonePe ──
+      try {
+        const redirectUrl = `${window.location.origin}?payment=return&orderNumber=${order.order_number || order.id}`
+
+        const paymentRes = await fetch('/api/payments/phonepe/initiate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            merchantOrderId: order.order_number || order.id,
+            amount: totalAmount,
+            redirectUrl,
+          }),
+        })
+
+        const paymentData = await paymentRes.json()
+
+        if (paymentData.success && paymentData.paymentUrl) {
+          // Clear cart before redirect (user will return to success page)
+          clearCart()
+          toast.success('Redirecting to payment...', { duration: 3000 })
+          // Redirect to PhonePe payment page
+          window.location.href = paymentData.paymentUrl
+        } else {
+          // Payment initiation failed — still keep order as PENDING
+          toast.error('Payment initiation failed', {
+            description: paymentData.error || 'Could not connect to payment gateway. Your order is saved — retry payment from My Orders.',
+            duration: 6000,
+          })
+          clearCart()
+          navigateTo('order-success')
+        }
+      } catch (paymentErr: any) {
+        // Payment initiation network error — order is saved as PENDING
+        console.error('[Checkout] PhonePe initiation error:', paymentErr)
+        toast.error('Payment gateway error', {
+          description: 'Your order is saved. Please retry payment from My Orders.',
+          duration: 6000,
+        })
+        clearCart()
+        navigateTo('order-success')
+      }
     } catch (err: any) {
       toast.error('Failed to place order', {
         description: err.message || 'Something went wrong. Please try again.',
@@ -1072,9 +1123,122 @@ function LockStep({ active, total, current }: { active: number; total: number; c
 
 // ═══════════════════════════════════════════════════════════
 // OrderSuccessView — Success page after order is placed
+// Handles COD, online payment return, and payment status polling
 // ═══════════════════════════════════════════════════════════
 export function OrderSuccessView() {
-  const { lastOrderId, navigateTo, cart, user } = useAppStore()
+  const { lastOrderId, lastOrderNumber, lastPaymentMethod, navigateTo, user } = useAppStore()
+
+  // ── Payment return handling (PhonePe redirect back) ──
+  // Read order number from URL on first render
+  const [orderNumberFromUrl] = useState<string | null>(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search)
+      if (params.get('payment') === 'return') {
+        return params.get('orderNumber')
+      }
+    }
+    return null
+  })
+  // Start as 'checking' if we have an orderNumber from URL (returning from PhonePe)
+  const [paymentStatus, setPaymentStatus] = useState<'checking' | 'completed' | 'failed' | 'pending' | null>(
+    () => orderNumberFromUrl ? 'checking' : null
+  )
+  // Track whether polling is active
+  const pollingActiveRef = useRef(false)
+
+  useEffect(() => {
+    if (!orderNumberFromUrl || pollingActiveRef.current) return
+    pollingActiveRef.current = true
+
+    // Poll payment status
+    const pollStatus = async () => {
+      try {
+        const res = await fetch(`/api/payments/phonepe/status?merchantOrderId=${orderNumberFromUrl}`)
+        const data = await res.json()
+
+        if (data.success && data.status === 'COMPLETED') {
+          setPaymentStatus('completed')
+          pollingActiveRef.current = false
+          // Also confirm with callback to update order in DB
+          fetch('/api/payments/phonepe/callback', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ merchantOrderId: orderNumberFromUrl, status: 'COMPLETED' }),
+          }).catch(() => {})
+        } else if (data.status === 'FAILED') {
+          setPaymentStatus('failed')
+          pollingActiveRef.current = false
+        } else {
+          setPaymentStatus('pending')
+        }
+      } catch {
+        setPaymentStatus('pending')
+      }
+    }
+
+    // Poll immediately, then every 3 seconds for up to 30 seconds
+    pollStatus()
+    const interval = setInterval(pollStatus, 3000)
+    const timeout = setTimeout(() => {
+      clearInterval(interval)
+      pollingActiveRef.current = false
+      setPaymentStatus(prev => prev === 'checking' ? 'pending' : prev)
+    }, 30000)
+
+    return () => {
+      clearInterval(interval)
+      clearTimeout(timeout)
+    }
+  }, [orderNumberFromUrl])
+
+  const isOnlinePayment = lastPaymentMethod && lastPaymentMethod !== 'COD'
+  const displayOrderNumber = orderNumberFromUrl || lastOrderNumber
+  const isPaymentReturn = !!orderNumberFromUrl
+
+  // Payment status messages
+  const getPaymentStatusContent = () => {
+    if (paymentStatus === 'checking') {
+      return (
+        <div className="mt-3 p-3 bg-[#2e91b2]/5 border border-[#2e91b2]/15 rounded-lg">
+          <p className="text-sm text-[#2e91b2] flex items-center justify-center gap-2 font-medium">
+            <Loader2 className="w-4 h-4 animate-spin" />
+            Verifying payment status...
+          </p>
+        </div>
+      )
+    }
+    if (paymentStatus === 'completed') {
+      return (
+        <div className="mt-3 p-3 bg-[#48805b]/5 border border-[#48805b]/15 rounded-lg">
+          <p className="text-sm text-[#48805b] flex items-center justify-center gap-1.5 font-medium">
+            <CheckCircle className="w-4 h-4" />
+            Payment confirmed! Your order is being processed.
+          </p>
+        </div>
+      )
+    }
+    if (paymentStatus === 'failed') {
+      return (
+        <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+          <p className="text-sm text-red-600 flex items-center justify-center gap-1.5 font-medium">
+            <X className="w-4 h-4" />
+            Payment failed. Please retry from My Orders.
+          </p>
+        </div>
+      )
+    }
+    if (paymentStatus === 'pending') {
+      return (
+        <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+          <p className="text-sm text-amber-700 flex items-center justify-center gap-1.5 font-medium">
+            <ShieldCheck className="w-4 h-4" />
+            Payment is being processed. We&apos;ll confirm shortly.
+          </p>
+        </div>
+      )
+    }
+    return null
+  }
 
   return (
     <motion.div
@@ -1086,22 +1250,34 @@ export function OrderSuccessView() {
       <motion.div variants={fadeInUp} className="text-center max-w-md">
         {/* Success Icon */}
         <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-[#48805b]/10 flex items-center justify-center">
-          <CheckCircle className="w-14 h-14 text-[#48805b]" />
+          {paymentStatus === 'failed' ? (
+            <X className="w-14 h-14 text-red-500" />
+          ) : (
+            <CheckCircle className="w-14 h-14 text-[#48805b]" />
+          )}
         </div>
 
         <motion.h2
           variants={fadeInUp}
           className="font-heading text-2xl sm:text-3xl font-bold text-[#1f1e1c] mb-2"
         >
-          Order Placed Successfully!
+          {paymentStatus === 'failed' ? 'Payment Failed' : 'Order Placed Successfully!'}
         </motion.h2>
 
         <motion.p
           variants={fadeInUp}
           className="text-[#88837b] mb-2 text-base"
         >
-          Your wellness shots are on their way. We&apos;ll notify you when they ship.
+          {paymentStatus === 'failed'
+            ? 'Your payment could not be processed. Please try again.'
+            : isOnlinePayment || isPaymentReturn
+              ? 'Your order has been placed. We\'ll notify you once payment is confirmed.'
+              : 'Your wellness shots are on their way. We\'ll notify you when they ship.'
+          }
         </motion.p>
+
+        {/* Payment status content (for PhonePe return) */}
+        {getPaymentStatusContent()}
 
         {/* Email confirmation notice */}
         {user?.email && (
@@ -1116,22 +1292,38 @@ export function OrderSuccessView() {
           </motion.div>
         )}
 
-        <motion.div
-          variants={fadeInUp}
-          className="mt-3 p-3 bg-[#48805b]/5 border border-[#48805b]/15 rounded-lg"
-        >
-          <p className="text-sm text-[#48805b] flex items-center justify-center gap-1.5 font-medium">
-            <Banknote className="w-4 h-4" />
-            Pay on Delivery — Keep the exact amount ready when your order arrives.
-          </p>
-        </motion.div>
+        {/* Payment method info */}
+        {(!isOnlinePayment && !isPaymentReturn) && (
+          <motion.div
+            variants={fadeInUp}
+            className="mt-3 p-3 bg-[#48805b]/5 border border-[#48805b]/15 rounded-lg"
+          >
+            <p className="text-sm text-[#48805b] flex items-center justify-center gap-1.5 font-medium">
+              <Banknote className="w-4 h-4" />
+              Pay on Delivery — Keep the exact amount ready when your order arrives.
+            </p>
+          </motion.div>
+        )}
 
-        {lastOrderId && (
+        {/* Online payment info (when not returning from PhonePe) */}
+        {(isOnlinePayment && !isPaymentReturn && !paymentStatus) && (
+          <motion.div
+            variants={fadeInUp}
+            className="mt-3 p-3 bg-[#48805b]/5 border border-[#48805b]/15 rounded-lg"
+          >
+            <p className="text-sm text-[#48805b] flex items-center justify-center gap-1.5 font-medium">
+              <ShieldCheck className="w-4 h-4" />
+              Secure payment powered by PhonePe
+            </p>
+          </motion.div>
+        )}
+
+        {displayOrderNumber && (
           <motion.p
             variants={fadeInUp}
-            className="text-sm text-[#88837b] mb-8"
+            className="text-sm text-[#88837b] mb-8 mt-2"
           >
-            Order ID: <span className="font-semibold text-[#1f1e1c]">{lastOrderId}</span>
+            Order ID: <span className="font-semibold text-[#1f1e1c]">{displayOrderNumber}</span>
           </motion.p>
         )}
 

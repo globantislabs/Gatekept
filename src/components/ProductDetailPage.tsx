@@ -96,7 +96,7 @@ export default function ProductDetailPage() {
   const {
     user, selectedProductId, navigateTo, goBack,
     setSelectedProductId, setRedirectAfterLogin,
-    addToCart, setShareSlug, shareSlug,
+    addToCart, setShareSlug, shareSlug, completedProductIds,
     products: cachedProducts, setProducts
   } = useAppStore()
 
@@ -200,7 +200,7 @@ export default function ProductDetailPage() {
 
   // Learning status
   const learningStatus = getLearningStatus(productProgress)
-  const isCompleted = learningStatus === 'COMPLETED'
+  const isCompleted = learningStatus === 'COMPLETED' || (selectedProductId ? completedProductIds.includes(selectedProductId) : false)
   const isInProgress = learningStatus === 'IN_PROGRESS'
   const videoProgressPct = getVideoProgressPercent(productProgress)
 

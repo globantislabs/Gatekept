@@ -58,7 +58,7 @@ interface QuizResult {
 // Video 1 → Quiz 1 → Video 2 → Quiz 2 → Video 3 → Quiz 3 → Unlocked
 // ═══════════════════════════════════════════════════════════
 export function ProductLearningModule() {
-  const { selectedProductId, user, navigateTo, setRedirectAfterLogin, setSelectedProductId } = useAppStore()
+  const { selectedProductId, user, navigateTo, setRedirectAfterLogin, setSelectedProductId, markProductCompleted } = useAppStore()
 
   // ─── Login guard: redirect to login if not authenticated ──
   useEffect(() => {
@@ -1275,7 +1275,10 @@ export function ProductLearningModule() {
                   size="lg"
                   className="font-heading font-semibold"
                   style={{ backgroundColor: BRAND.lime, color: BRAND.dark }}
-                  onClick={() => navigateTo('product-detail')}
+                  onClick={() => {
+                    if (selectedProductId) markProductCompleted(selectedProductId)
+                    navigateTo('product-detail')
+                  }}
                 >
                   Continue to Product <ChevronRight className="h-5 w-5 ml-1" />
                 </Button>

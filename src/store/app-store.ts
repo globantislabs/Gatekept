@@ -136,6 +136,10 @@ interface AppState {
   redirectAfterLogin: AppView | null
   setRedirectAfterLogin: (view: AppView | null) => void
 
+  // Learning completion cache
+  completedProductIds: string[]
+  markProductCompleted: (productId: string) => void
+
   // URL share slug
   shareSlug: string | null
   setShareSlug: (slug: string | null) => void
@@ -231,6 +235,15 @@ export const useAppStore = create<AppState>()(
       redirectAfterLogin: null,
       setRedirectAfterLogin: (view) => set({ redirectAfterLogin: view }),
 
+      // Learning completion cache
+      completedProductIds: [],
+      markProductCompleted: (productId) => {
+        const completedProductIds = get().completedProductIds
+        if (!completedProductIds.includes(productId)) {
+          set({ completedProductIds: [...completedProductIds, productId] })
+        }
+      },
+
       // URL share slug
       shareSlug: null,
       setShareSlug: (slug) => set({ shareSlug: slug }),
@@ -314,6 +327,7 @@ export const useAppStore = create<AppState>()(
           shareSlug: null,
           currentView: 'landing',
           previousView: null,
+          completedProductIds: [],
         })
       },
 
@@ -337,6 +351,7 @@ export const useAppStore = create<AppState>()(
           pendingOtpContact: state.pendingOtpContact,
           pendingOtpType: state.pendingOtpType,
           scannedCampaignId: state.scannedCampaignId,
+          completedProductIds: state.completedProductIds,
         }
       },
     }

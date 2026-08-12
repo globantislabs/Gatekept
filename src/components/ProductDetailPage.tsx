@@ -877,15 +877,16 @@ export default function ProductDetailPage() {
 
               {/* ─── Buy Now + Unlock Now Buttons ──────────────── */}
               <div className="flex flex-col sm:flex-row gap-3">
-                {/* Buy Now — redirects to cart page (always active, single click) */}
+                {/* Buy Now — redirects to cart page (always active, single tap) */}
                 <Button
                   onClick={handleAddToCart}
-                  className="pointer-events-auto min-h-[48px] flex-1 rounded-xl font-heading font-semibold text-base transition-all cursor-pointer"
+                  className="pointer-events-auto min-h-[48px] flex-1 rounded-xl font-heading font-semibold text-base transition-colors cursor-pointer touch-manipulation select-none"
                   style={{
                     backgroundColor: BRAND.green,
                     color: '#fff',
                     borderColor: 'transparent',
                     cursor: 'pointer',
+                    WebkitTapHighlightColor: 'transparent',
                   }}
                 >
                   <ShoppingCart className="w-5 h-5 mr-2" />

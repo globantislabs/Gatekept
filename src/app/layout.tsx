@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans, Inter, Instrument_Serif, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
@@ -39,6 +39,15 @@ export const metadata: Metadata = {
   icons: {
     icon: "/images/notjust-logo.png",
   },
+};
+
+// Proper mobile viewport — eliminates the legacy 300ms tap delay and
+// prevents the "tap once does nothing, tap again works" symptom.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
 };
 
 export default function RootLayout({

@@ -259,9 +259,6 @@ export default function ProductDetailPage() {
     })
     toast.success(`${activeProduct.name} subscription added to cart!`)
     navigateTo('cart')
-    if (typeof window !== 'undefined') {
-      window.location.assign('/cart')
-    }
   }, [displayProduct, product, isCompleted, quantity, addToCart, navigateTo])
 
   const handleStartLearning = useCallback(() => {
@@ -926,12 +923,13 @@ export default function ProductDetailPage() {
                 {/* Unlock Now — Starts learning module */}
                 <Button
                   onClick={isCompleted ? handleReview : (user ? handleStartLearning : handleLoginToSave)}
-                  className="pointer-events-auto min-h-[48px] rounded-xl font-heading font-semibold text-base transition-all cursor-pointer"
+                  className="pointer-events-auto min-h-[48px] rounded-xl font-heading font-semibold text-base transition-colors cursor-pointer touch-manipulation select-none"
                   style={{
                     backgroundColor: isCompleted ? `${BRAND.lime}20` : BRAND.lime,
                     color: isCompleted ? BRAND.green : BRAND.dark,
                     borderColor: isCompleted ? `${BRAND.lime}30` : 'transparent',
                     cursor: 'pointer',
+                    WebkitTapHighlightColor: 'transparent',
                   }}
                 >
                   {isCompleted ? (
@@ -1034,8 +1032,8 @@ export default function ProductDetailPage() {
                     {!user ? (
                       <Button
                         onClick={handleLoginToSave}
-                        className="pointer-events-auto min-h-[48px] w-full rounded-xl font-heading font-semibold text-xs sm:text-sm"
-                        style={{ backgroundColor: BRAND.green, color: '#fff' }}
+                        className="pointer-events-auto min-h-[48px] w-full rounded-xl font-heading font-semibold text-xs sm:text-sm transition-colors cursor-pointer touch-manipulation select-none"
+                        style={{ backgroundColor: BRAND.green, color: '#fff', borderColor: 'transparent', WebkitTapHighlightColor: 'transparent' }}
                       >
                         <Play className="w-4 h-4 sm:w-5 sm:h-5 mr-2 flex-shrink-0" />
                         <span className="sm:hidden">Sign in to Learn & Buy</span>
@@ -1044,8 +1042,8 @@ export default function ProductDetailPage() {
                     ) : learningStatus === 'NOT_STARTED' ? (
                       <Button
                         onClick={handleStartLearning}
-                        className="pointer-events-auto min-h-[48px] w-full rounded-xl font-heading font-semibold text-xs sm:text-sm"
-                        style={{ backgroundColor: BRAND.green, color: '#fff' }}
+                        className="pointer-events-auto min-h-[48px] w-full rounded-xl font-heading font-semibold text-xs sm:text-sm transition-colors cursor-pointer touch-manipulation select-none"
+                        style={{ backgroundColor: BRAND.green, color: '#fff', borderColor: 'transparent', WebkitTapHighlightColor: 'transparent' }}
                       >
                         <Play className="w-4 h-4 sm:w-5 sm:h-5 mr-2 flex-shrink-0" />
                         <span className="sm:hidden">Start Learning</span>
@@ -1054,8 +1052,8 @@ export default function ProductDetailPage() {
                     ) : isInProgress ? (
                       <Button
                         onClick={handleContinueLearning}
-                        className="pointer-events-auto min-h-[48px] w-full rounded-xl font-heading font-semibold text-xs sm:text-sm"
-                        style={{ backgroundColor: BRAND.green, color: '#fff' }}
+                        className="pointer-events-auto min-h-[48px] w-full rounded-xl font-heading font-semibold text-xs sm:text-sm transition-colors cursor-pointer touch-manipulation select-none"
+                        style={{ backgroundColor: BRAND.green, color: '#fff', borderColor: 'transparent', WebkitTapHighlightColor: 'transparent' }}
                       >
                         <BookOpen className="w-4 h-4 sm:w-5 sm:h-5 mr-2 flex-shrink-0" />
                         <span className="sm:hidden">Continue Learning</span>
@@ -1065,7 +1063,7 @@ export default function ProductDetailPage() {
                       <Button
                         onClick={handleReview}
                         variant="outline"
-                        className="pointer-events-auto min-h-[48px] w-full rounded-xl font-heading font-semibold text-xs sm:text-sm border-[#e3dfd8]"
+                        className="pointer-events-auto min-h-[48px] w-full rounded-xl font-heading font-semibold text-xs sm:text-sm border-[#e3dfd8] transition-colors cursor-pointer touch-manipulation select-none"
                       >
                         <Eye className="w-4 h-4 sm:w-5 sm:h-5 mr-2 flex-shrink-0" />
                         Review Learning Module

@@ -90,15 +90,19 @@ function UrlSyncHandler() {
       return
     }
 
-    // Don't override user-initiated navigations to cart/checkout/etc.
-    // (searchParams can be stale after pushState, which previously caused
-    //  the handler to snap the view back to product-detail)
+    // Don't override user-initiated navigations to other views.
+    // searchParams can be stale after pushState (useSearchParams doesn't
+    // update on manual history.pushState calls). This previously caused
+    // the handler to snap the view back to product-detail, requiring
+    // multiple clicks to actually leave the product page.
+    //
+    // The only views where product-sync should be ACTIVE are:
+    //   'product-detail' (current product display) and
+    //   'product-learning' (learning module for the product).
+    // For ALL other views, exit early so user navigations are respected.
     if (
-      currentView === 'cart' ||
-      currentView === 'checkout' ||
-      currentView === 'order-success' ||
-      currentView === 'profile' ||
-      currentView === 'subscriptions'
+      currentView !== 'product-detail' &&
+      currentView !== 'product-learning'
     ) {
       return
     }

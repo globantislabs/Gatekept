@@ -273,6 +273,10 @@ export default function ProductDetailPage() {
     navigateTo('product-learning')
   }, [product, setSelectedProductId, navigateTo])
 
+  const goToProductsPage = useCallback(() => {
+    window.location.href = 'https://notjustwatr.com/products'
+  }, [])
+
   const handleCopyShareLink = useCallback(async () => {
     if (!shareUrl) return
     try {
@@ -339,7 +343,7 @@ export default function ProductDetailPage() {
           </p>
           <div className="flex gap-3">
             <Button
-              onClick={() => { setSelectedProductId(null); navigateTo('products') }}
+              onClick={goToProductsPage}
               className="min-h-[44px] rounded-xl font-heading font-semibold"
               style={{ backgroundColor: BRAND.green, color: '#fff' }}
             >
@@ -374,7 +378,7 @@ export default function ProductDetailPage() {
         >
           <div className="flex items-center gap-2 text-xs sm:text-sm min-w-0" style={{ color: BRAND.muted }}>
             <button
-              onClick={() => { setSelectedProductId(null); navigateTo('products') }}
+              onClick={goToProductsPage}
               className="pointer-events-auto hover:opacity-80 transition-opacity font-medium cursor-pointer"
               style={{ color: BRAND.green }}
             >
@@ -387,7 +391,7 @@ export default function ProductDetailPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => { setSelectedProductId(null); navigateTo('products') }}
+              onClick={goToProductsPage}
               className="pointer-events-auto min-h-[36px] sm:min-h-[44px] rounded-xl border-[#e3dfd8] font-heading text-xs sm:text-sm px-2.5 sm:px-3"
             >
               <ArrowLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-0.5 sm:mr-1" />

@@ -46,8 +46,27 @@ export async function POST(req: NextRequest) {
           // Send payment confirmation notifications
           const user = await db.userProfile.findUnique({ where: { id: order.user_id } })
           if (user) {
+            notificationService.sendOrderPlacedNotification(
+              {
+                id: updated.id,
+                order_number: updated.order_number,
+                status: updated.status,
+                total_amount: updated.total_amount,
+                items: order.items.map(i => ({
+                  product_name: i.product_name,
+                  quantity: i.quantity,
+                  total_price: i.total_price,
+                })),
+              },
+              { id: user.id, name: user.name, email: user.email, phone: user.phone }
+            ).catch(err => console.error('Failed to send order placed notification:', err))
+
             notificationService.sendPaymentReceivedNotification(
-              { id: updated.id, order_number: updated.order_number, status: updated.status, total_amount: updated.total_amount, items: updated.items || undefined },
+              { id: updated.id, order_number: updated.order_number, status: updated.status, total_amount: updated.total_amount, items: order.items.map(i => ({
+                product_name: i.product_name,
+                quantity: i.quantity,
+                total_price: i.total_price,
+              })) },
               { id: user.id, name: user.name, email: user.email, phone: user.phone }
             ).catch(err => console.error('Failed to send payment notification:', err))
           }

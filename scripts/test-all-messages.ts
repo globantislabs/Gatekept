@@ -197,10 +197,12 @@ async function testWhatsAppTemplates() {
       type: 'template',
       template: {
         name: 'order_confirmation',
-        language: { code: 'en' },
+        language: { code: 'en_US' },
         components: [
-          { type: 'header', parameters: [{ type: 'text', text: 'Placed' }] },
-          { type: 'body', parameters: [{ type: 'text', text: orderNumber }] },
+          { type: 'body', parameters: [
+            { type: 'text', text: orderNumber },
+            { type: 'text', text: 'Placed' },
+          ] },
         ],
       },
     })
@@ -217,7 +219,7 @@ async function testWhatsAppTemplates() {
       type: 'template',
       template: {
         name: 'payment_confirmation',
-        language: { code: 'en' },
+        language: { code: 'en_US' },
         components: [
           { type: 'body', parameters: [
             { type: 'text', text: '499' },

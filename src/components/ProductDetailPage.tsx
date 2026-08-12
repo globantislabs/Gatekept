@@ -482,8 +482,8 @@ export default function ProductDetailPage() {
 
                 {/* Scrollable Tabs List */}
                 <TabsList
-                  className="w-full h-auto p-0 bg-transparent rounded-none border-b flex items-stretch gap-1 overflow-x-auto scrollbar-hide"
-                  style={{ borderColor: BRAND.surface }}
+                  className="w-full h-auto p-0 bg-transparent rounded-none border-b flex items-stretch gap-1 overflow-x-auto scrollbar-hide [&::-webkit-scrollbar]:hidden"
+                  style={{ borderColor: BRAND.surface, scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                 >
                   {[
                     { value: 'overview', label: 'Overview', icon: <Info className="w-3.5 h-3.5 hidden sm:block" /> },

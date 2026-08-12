@@ -279,7 +279,7 @@ export const notificationService = {
           [order.order_number, order.status || 'Placed'],  // body: [order_number, status]
           whatsappText,                      // fallback plain text
           undefined,                         // no header component
-          'en_US'                             // language: en_US (as configured in Meta)
+          'en_US'                             // approved template language
         )
         await logNotification(user.id, order.id, 'ORDER_PLACED', 'WHATSAPP', success ? 'SENT' : 'FAILED', user.phone || '', undefined, whatsappText, success ? undefined : 'WhatsApp delivery failed or not configured')
       } catch (err: any) {
@@ -324,7 +324,7 @@ export const notificationService = {
         const success = await sendWhatsApp(
           user.phone,
           'order_confirmation',
-          [order.order_number, 'Confirmed'],    // body: [order_number, status]
+          [order.order_number, 'Confirmed'], // body: [order_number, status]
           whatsappText,                      // fallback plain text
           undefined,                         // no header component
           'en_US'
@@ -379,7 +379,7 @@ export const notificationService = {
           [rawAmount, order.order_number],  // body: amount (no ₹), order ID
           whatsappText,                                    // fallback plain text
           undefined,                                       // no header
-          'en'
+          'en_US'
         )
         await logNotification(user.id, order.id, 'PAYMENT_RECEIVED', 'WHATSAPP', success ? 'SENT' : 'FAILED', user.phone || '', undefined, whatsappText, success ? undefined : 'WhatsApp delivery failed or not configured')
       } catch (err: any) {
@@ -424,7 +424,7 @@ export const notificationService = {
         const success = await sendWhatsApp(
           user.phone,
           'order_confirmation',
-          [order.order_number, 'Shipped'],       // body: [order_number, status]
+          [order.order_number, 'Shipped'],   // body: [order_number, status]
           whatsappText,                      // fallback plain text
           undefined,                         // no header component
           'en_US'
@@ -472,7 +472,7 @@ export const notificationService = {
         const success = await sendWhatsApp(
           user.phone,
           'order_confirmation',
-          [order.order_number, 'Delivered'],     // body: [order_number, status]
+          [order.order_number, 'Delivered'], // body: [order_number, status]
           whatsappText,                      // fallback plain text
           undefined,                         // no header component
           'en_US'
@@ -520,7 +520,7 @@ export const notificationService = {
         const success = await sendWhatsApp(
           user.phone,
           'order_confirmation',
-          [order.order_number, 'Cancelled'],     // body: [order_number, status]
+          [order.order_number, 'Cancelled'], // body: [order_number, status]
           whatsappText,                      // fallback plain text
           undefined,                         // no header component
           'en_US'

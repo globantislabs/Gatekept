@@ -885,29 +885,19 @@ export default function ProductDetailPage() {
 
               {/* ─── Buy Now + Unlock Now Buttons ──────────────── */}
               <div className="flex flex-col sm:flex-row gap-3">
-                {/* Buy Now — Locked until learning completed */}
+                {/* Buy Now — direct add to cart */}
                 <Button
-                  onClick={isCompleted ? handleAddToCart : undefined}
-                  disabled={!isCompleted}
+                  onClick={handleAddToCart}
                   className="pointer-events-auto min-h-[48px] flex-1 rounded-xl font-heading font-semibold text-base transition-all cursor-pointer disabled:cursor-not-allowed"
                   style={{
-                    backgroundColor: isCompleted ? BRAND.green : `${BRAND.muted}30`,
-                    color: isCompleted ? '#fff' : BRAND.muted,
+                    backgroundColor: BRAND.green,
+                    color: '#fff',
                     borderColor: 'transparent',
-                    cursor: isCompleted ? 'pointer' : 'not-allowed',
+                    cursor: 'pointer',
                   }}
                 >
-                  {isCompleted ? (
-                    <>
-                      <ShoppingCart className="w-5 h-5 mr-2" />
-                      Buy Now
-                    </>
-                  ) : (
-                    <>
-                      <Lock className="w-5 h-5 mr-2" />
-                      Buy Now
-                    </>
-                  )}
+                  <ShoppingCart className="w-5 h-5 mr-2" />
+                  Buy Now
                 </Button>
 
                 {/* Unlock Now — Starts learning module */}

@@ -503,11 +503,11 @@ export default function ProductDetailPage() {
                   style={{ borderColor: BRAND.surface, scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                 >
                   {[
-                    { value: 'overview', label: 'Overview', icon: <Info className="w-3.5 h-3.5 hidden sm:block" /> },
-                    { value: 'ingredients', label: 'Ingredients', icon: <Leaf className="w-3.5 h-3.5 hidden sm:block" /> },
-                    { value: 'nutrition', label: 'Nutrition', icon: <Package className="w-3.5 h-3.5 hidden sm:block" /> },
-                    { value: 'storage', label: 'Storage', icon: <ShieldCheck className="w-3.5 h-3.5 hidden sm:block" /> },
-                    { value: 'legal', label: 'Legal', icon: <Globe className="w-3.5 h-3.5 hidden sm:block" /> },
+                    { value: 'overview', label: 'Overview', mobileLabel: 'Info', icon: <Info className="w-3.5 h-3.5 hidden sm:block" /> },
+                    { value: 'ingredients', label: 'Ingredients', mobileLabel: 'Ingr.', icon: <Leaf className="w-3.5 h-3.5 hidden sm:block" /> },
+                    { value: 'nutrition', label: 'Nutrition', mobileLabel: 'Nutri.', icon: <Package className="w-3.5 h-3.5 hidden sm:block" /> },
+                    { value: 'storage', label: 'Storage', mobileLabel: 'Store', icon: <ShieldCheck className="w-3.5 h-3.5 hidden sm:block" /> },
+                    { value: 'legal', label: 'Legal', mobileLabel: 'Legal', icon: <Globe className="w-3.5 h-3.5 hidden sm:block" /> },
                   ].map(tab => (
                     <TabsTrigger
                       key={tab.value}

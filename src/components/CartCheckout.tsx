@@ -157,7 +157,7 @@ export function CartView() {
         variants={fadeInUp}
         className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-[#e3dfd8]"
       >
-        <div className="max-w-3xl mx-auto px-4 py-3 flex items-center gap-3">
+        <div className="max-w-5xl mx-auto px-3 sm:px-4 py-3 flex items-center gap-2 sm:gap-3">
           <Button
             variant="ghost"
             size="icon"
@@ -166,9 +166,9 @@ export function CartView() {
           >
             <ArrowLeft className="w-5 h-5" />
           </Button>
-          <h1 className="font-heading text-xl font-bold text-[#1f1e1c] flex items-center gap-2">
+          <h1 className="font-heading text-lg sm:text-xl font-bold text-[#1f1e1c] flex items-center gap-2 min-w-0">
             <ShoppingBag className="w-5 h-5 text-[#48805b]" />
-            Shopping Cart
+            <span className="truncate">Shopping Cart</span>
           </h1>
           <Badge className="ml-auto bg-[#48805b] text-white text-xs font-semibold">
             {cart.length} item{cart.length !== 1 ? 's' : ''}
@@ -181,7 +181,7 @@ export function CartView() {
         initial="hidden"
         animate="visible"
         variants={staggerContainer}
-        className="flex-1 max-w-3xl mx-auto w-full px-4 py-4 space-y-3"
+        className="flex-1 max-w-5xl mx-auto w-full px-3 sm:px-4 py-4 pb-40 space-y-3"
       >
         <AnimatePresence mode="popLayout">
           {cart.map((item) => (
@@ -213,7 +213,7 @@ export function CartView() {
         animate={{ opacity: 1, y: 0, transition: { duration: 0.4, delay: 0.2 } }}
         className="sticky bottom-0 z-30 bg-white border-t border-[#e3dfd8] shadow-lg shadow-[#e3dfd8]/30"
       >
-        <div className="max-w-3xl mx-auto px-4 py-4">
+        <div className="max-w-5xl mx-auto px-3 sm:px-4 py-3 sm:py-4">
           {/* Price breakdown */}
           <div className="space-y-1.5 mb-3">
             <div className="flex justify-between text-sm text-[#88837b]">
@@ -226,9 +226,9 @@ export function CartView() {
             </div>
           </div>
           <Separator className="mb-3 bg-[#e3dfd8]" />
-          <div className="flex justify-between items-center mb-4">
+          <div className="flex justify-between items-center gap-4 mb-4">
             <span className="font-heading text-lg font-bold text-[#1f1e1c]">Estimated Total</span>
-            <span className="font-heading text-xl font-bold text-[#48805b]">&#8377;{total.toLocaleString('en-IN')}</span>
+            <span className="font-heading text-xl sm:text-2xl font-bold text-[#48805b] whitespace-nowrap">&#8377;{total.toLocaleString('en-IN')}</span>
           </div>
           <Button
             onClick={() => navigateTo('checkout')}
@@ -268,9 +268,9 @@ function CartItemCard({
     >
       <Card className="bg-white border-[#e3dfd8] shadow-sm hover:shadow-md transition-shadow rounded-lg overflow-hidden">
         <CardContent className="p-0">
-          <div className="flex gap-3 sm:gap-4">
+          <div className="flex flex-col min-[430px]:flex-row gap-0 min-[430px]:gap-3 sm:gap-4">
             {/* Product Image */}
-            <div className="w-20 h-20 sm:w-28 sm:h-28 flex-shrink-0 bg-[#e3dfd8] rounded-l-lg overflow-hidden relative">
+            <div className="w-full h-44 min-[430px]:w-24 min-[430px]:h-28 sm:w-28 sm:h-28 flex-shrink-0 bg-[#e3dfd8] min-[430px]:rounded-l-lg overflow-hidden relative">
               {item.imageUrl ? (
                 <Image
                   src={item.imageUrl}
@@ -287,13 +287,13 @@ function CartItemCard({
             </div>
 
             {/* Product Details */}
-            <div className="flex-1 min-w-0 py-3 pr-2 sm:py-4 sm:pr-3">
+            <div className="flex-1 min-w-0 p-3 min-[430px]:py-3 min-[430px]:pl-0 min-[430px]:pr-2 sm:py-4 sm:pr-3">
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
                   <h3 className="font-heading font-semibold text-[#1f1e1c] text-sm sm:text-base truncate">
                     {item.name}
                   </h3>
-                  <div className="flex items-center gap-2 mt-1">
+                  <div className="flex items-center gap-2 mt-1 flex-wrap">
                     {item.type && (
                       <Badge variant="secondary" className="bg-[#e3dfd8] text-[#88837b] text-xs px-2 py-0.5">
                         {item.type}
@@ -323,7 +323,7 @@ function CartItemCard({
               </div>
 
               {/* Price & Quantity Row */}
-              <div className="flex items-center justify-between mt-2 sm:mt-3">
+              <div className="flex flex-col min-[430px]:flex-row min-[430px]:items-center min-[430px]:justify-between gap-3 mt-3">
                 <div className="text-sm sm:text-base">
                   <span className="font-semibold text-[#1f1e1c]">&#8377;{item.price.toLocaleString('en-IN')}</span>
                   {item.packDiscount && (
@@ -359,7 +359,7 @@ function CartItemCard({
               </div>
 
               {/* Item Total */}
-              <div className="text-right mt-1">
+              <div className="text-left min-[430px]:text-right mt-1">
                 <span className="font-heading font-bold text-[#48805b] text-sm sm:text-base">
                   &#8377;{itemTotal.toLocaleString('en-IN')}
                 </span>
@@ -452,8 +452,6 @@ export function CheckoutView() {
     setPlacing(true)
 
     try {
-      const totalAmount = cartTotal() * (purchaseMode === 'subscription' && subPack ? (1 - subPack.discount / 100) : 1)
-
       const orderData = {
         user_id: user.id,
         items: cart.map(item => ({
@@ -509,7 +507,7 @@ export function CheckoutView() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             merchantOrderId: order.order_number || order.id,
-            amount: totalAmount,
+            amount: order.total_amount,
             redirectUrl,
           }),
         })
@@ -781,7 +779,7 @@ export function CheckoutView() {
                   <button
                     type="button"
                     onClick={() => setPurchaseMode('one-time')}
-                    className={`p-3 rounded-xl border-2 text-left transition-all ${
+                    className={`relative p-3 rounded-xl border-2 text-left transition-all ${
                       purchaseMode === 'one-time'
                         ? 'border-[#48805b] bg-[#48805b]/5 shadow-sm'
                         : 'border-[#e3dfd8] bg-[#f4f3f0] hover:border-[#48805b]/30'
@@ -896,7 +894,7 @@ export function CheckoutView() {
                         value={option.value}
                         className="border-[#48805b] text-[#48805b]"
                       />
-                      <div className="flex items-center gap-2.5">
+                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
                         <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
                           paymentMethod === option.value
                             ? 'bg-[#48805b]/10 text-[#48805b]'
@@ -904,13 +902,13 @@ export function CheckoutView() {
                         }`}>
                           {option.icon}
                         </div>
-                        <div>
+                        <div className="min-w-0">
                           <p className="font-semibold text-sm text-[#1f1e1c]">{option.label}</p>
                           <p className="text-xs text-[#88837b]">{option.description}</p>
                         </div>
                       </div>
                       {paymentMethod === option.value && (
-                        <CheckCircle className="w-5 h-5 text-[#48805b] ml-auto" />
+                        <CheckCircle className="w-5 h-5 text-[#48805b] ml-auto flex-shrink-0" />
                       )}
                     </label>
                   ))}
@@ -1245,28 +1243,29 @@ export function OrderSuccessView() {
       initial="hidden"
       animate="visible"
       variants={staggerContainer}
-      className="min-h-screen flex flex-col items-center justify-center px-4 bg-[#f4f3f0]"
+      className="min-h-screen flex flex-col bg-[#f4f3f0]"
     >
-      <motion.div variants={fadeInUp} className="text-center max-w-md">
+      <motion.div variants={fadeInUp} className="flex-1 w-full max-w-3xl mx-auto px-4 py-8 sm:py-12 flex items-center">
+        <div className="w-full text-center bg-white border border-[#e3dfd8] rounded-2xl shadow-sm p-5 sm:p-8">
         {/* Success Icon */}
-        <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-[#48805b]/10 flex items-center justify-center">
+        <div className="w-20 h-20 sm:w-24 sm:h-24 mx-auto mb-5 sm:mb-6 rounded-full bg-[#48805b]/10 flex items-center justify-center">
           {paymentStatus === 'failed' ? (
-            <X className="w-14 h-14 text-red-500" />
+            <X className="w-12 h-12 sm:w-14 sm:h-14 text-red-500" />
           ) : (
-            <CheckCircle className="w-14 h-14 text-[#48805b]" />
+            <CheckCircle className="w-12 h-12 sm:w-14 sm:h-14 text-[#48805b]" />
           )}
         </div>
 
         <motion.h2
           variants={fadeInUp}
-          className="font-heading text-2xl sm:text-3xl font-bold text-[#1f1e1c] mb-2"
+          className="font-heading text-2xl sm:text-3xl font-bold text-[#1f1e1c] mb-2 leading-tight"
         >
           {paymentStatus === 'failed' ? 'Payment Failed' : 'Order Placed Successfully!'}
         </motion.h2>
 
         <motion.p
           variants={fadeInUp}
-          className="text-[#88837b] mb-2 text-base"
+          className="text-[#88837b] mb-2 text-sm sm:text-base max-w-xl mx-auto"
         >
           {paymentStatus === 'failed'
             ? 'Your payment could not be processed. Please try again.'
@@ -1285,7 +1284,7 @@ export function OrderSuccessView() {
             variants={fadeInUp}
             className="mt-3 p-3 bg-[#2e91b2]/5 border border-[#2e91b2]/15 rounded-lg"
           >
-            <p className="text-sm text-[#2e91b2] flex items-center justify-center gap-1.5 font-medium">
+            <p className="text-sm text-[#2e91b2] flex flex-wrap items-center justify-center gap-1.5 font-medium break-words">
               <Mail className="w-4 h-4" />
               Order confirmation sent to {user.email}
             </p>
@@ -1321,28 +1320,29 @@ export function OrderSuccessView() {
         {displayOrderNumber && (
           <motion.p
             variants={fadeInUp}
-            className="text-sm text-[#88837b] mb-8 mt-2"
+            className="text-sm text-[#88837b] mb-8 mt-3 break-words"
           >
             Order ID: <span className="font-semibold text-[#1f1e1c]">{displayOrderNumber}</span>
           </motion.p>
         )}
 
-        <motion.div variants={fadeInUp} className="space-y-3">
+        <motion.div variants={fadeInUp} className="grid gap-3 sm:grid-cols-2">
           <Button
             onClick={() => navigateTo('profile')}
-            className="bg-[#48805b] hover:bg-[#48805b]/90 text-white px-8 py-3 rounded-lg font-semibold text-base shadow-md transition-all hover:shadow-lg w-full"
+            className="bg-[#48805b] hover:bg-[#48805b]/90 text-white px-6 py-3 rounded-lg font-semibold text-sm sm:text-base shadow-md transition-all hover:shadow-lg w-full min-h-[48px]"
           >
             <Package className="w-4 h-4 mr-2" />
             View My Orders
           </Button>
           <Button
             onClick={() => navigateTo('products')}
-            className="w-full bg-[#48805b] hover:bg-[#3a6a4a] text-white rounded-lg py-3 font-semibold shadow-md transition-all hover:shadow-lg"
+            className="w-full bg-[#48805b] hover:bg-[#3a6a4a] text-white rounded-lg py-3 font-semibold text-sm sm:text-base shadow-md transition-all hover:shadow-lg min-h-[48px]"
           >
             <ShoppingBag className="w-4 h-4 mr-2" />
             Keep Shopping
           </Button>
         </motion.div>
+        </div>
       </motion.div>
       <SiteFooter />
     </motion.div>

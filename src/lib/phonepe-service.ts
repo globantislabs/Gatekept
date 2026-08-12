@@ -3,8 +3,9 @@
 // NEVER import this in client-side code
 
 // ─── Config ──────────────────────────────────────────────────
-function getClientId() { return process.env.PHONEPE_CLIENT_ID || '' }
+function getRawClientId() { return process.env.PHONEPE_CLIENT_ID || '' }
 function getClientSecret() { return process.env.PHONEPE_CLIENT_SECRET || '' }
+function getClientVersion() { return process.env.PHONEPE_CLIENT_VERSION || '' }
 function getPhonePeEnv() { return process.env.PHONEPE_ENV || 'sandbox' }
 
 const SANDBOX_BASE_URL = 'https://api-preprod.phonepe.com/apis/pg-sandbox'
@@ -19,9 +20,7 @@ export interface PhonePePaymentRequest {
   merchantOrderId: string
   amount: number // in INR (will be converted to paise)
   redirectUrl: string
-  meta?: {
-    paymentMethods?: string[] // e.g., ['UPI', 'CARD', 'NETBANKING']
-  }
+  meta?: Record<string, string>
 }
 
 export interface PhonePePaymentResponse {
@@ -56,11 +55,17 @@ let cachedToken: string | null = null
 let tokenExpiry = 0
 
 async function getAccessToken(): Promise<string | null> {
-  const clientId = getClientId()
+  const rawClientId = getRawClientId()
   const clientSecret = getClientSecret()
+  const configuredVersion = getClientVersion()
+  const inferredVersion = !configuredVersion && rawClientId.includes('_')
+    ? rawClientId.split('_').pop() || ''
+    : ''
+  const clientVersion = configuredVersion || inferredVersion
+  const clientId = rawClientId
 
-  if (!clientId || !clientSecret) {
-    console.error('[PhonePe] Client ID or Secret not configured')
+  if (!clientId || !clientSecret || !clientVersion) {
+    console.error('[PhonePe] Client ID, Secret, or Version not configured')
     return null
   }
 
@@ -71,19 +76,28 @@ async function getAccessToken(): Promise<string | null> {
 
   try {
     const baseUrl = getBaseUrl()
-    console.log(`[PhonePe] Requesting token from ${baseUrl}/v2/auth/token (env: ${getPhonePeEnv()})`)
-    const response = await fetch(`${baseUrl}/v2/auth/token`, {
+    console.log(`[PhonePe] Requesting token from ${baseUrl}/v1/oauth/token (env: ${getPhonePeEnv()})`)
+    const body = new URLSearchParams({
+      client_id: clientId,
+      client_version: clientVersion,
+      client_secret: clientSecret,
+      grant_type: 'client_credentials',
+    })
+    const response = await fetch(`${baseUrl}/v1/oauth/token`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ clientId, clientSecret }),
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body,
     })
 
     const data = await response.json()
+    const accessToken = data.access_token || data.accessToken
+    const expiresIn = data.expires_in || data.expiresIn
+    const expiresAt = data.expires_at || data.expiresAt
 
-    if (data.accessToken) {
-      cachedToken = data.accessToken
-      tokenExpiry = Date.now() + (data.expiresIn || 3600) * 1000
-      console.log(`[PhonePe] Token acquired, expires in ${data.expiresIn || 3600}s`)
+    if (accessToken) {
+      cachedToken = accessToken
+      tokenExpiry = expiresAt ? Number(expiresAt) * 1000 : Date.now() + (expiresIn || 3600) * 1000
+      console.log(`[PhonePe] Token acquired, expires in ${expiresIn || 'configured'}s`)
       return cachedToken
     }
 
@@ -107,7 +121,8 @@ export const phonePeService = {
    * Check if PhonePe is configured
    */
   isConfigured(): boolean {
-    return Boolean(getClientId() && getClientSecret())
+    const rawClientId = getRawClientId()
+    return Boolean(rawClientId && getClientSecret() && (getClientVersion() || rawClientId.includes('_')))
   },
 
   /**
@@ -125,25 +140,37 @@ export const phonePeService = {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `O-Bearer ${token}`,
         },
         body: JSON.stringify({
           merchantOrderId: request.merchantOrderId,
           amount: Math.round(request.amount * 100), // Convert to paise
-          redirectUrl: request.redirectUrl,
-          meta: request.meta || {
-            paymentMethods: ['UPI', 'CARD', 'NETBANKING', 'WALLET'],
+          expireAfter: 1200,
+          metaInfo: request.meta || {},
+          paymentFlow: {
+            type: 'PG_CHECKOUT',
+            message: 'Complete your NOTJUST Watr payment',
+            merchantUrls: {
+              redirectUrl: request.redirectUrl,
+            },
           },
         }),
       })
 
       const data = await response.json()
 
-      if (data.success && data.redirectUrl) {
+      const redirectUrl =
+        data.redirectUrl ||
+        data.tokenUrl ||
+        data.data?.redirectUrl ||
+        data.data?.tokenUrl ||
+        data.data?.instrumentResponse?.redirectInfo?.url
+
+      if ((data.success || redirectUrl) && redirectUrl) {
         return {
           success: true,
           orderId: request.merchantOrderId,
-          paymentUrl: data.redirectUrl,
+          paymentUrl: redirectUrl,
           message: 'Payment initiated successfully',
         }
       }
@@ -177,13 +204,14 @@ export const phonePeService = {
       const response = await fetch(`${baseUrl}/checkout/v2/order/${merchantOrderId}/status`, {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'Authorization': `O-Bearer ${token}`,
         },
       })
 
       const data = await response.json()
 
-      if (data.success) {
+      if (data.success || data.state || data.status) {
         return {
           success: true,
           status: data.state || data.status || 'PENDING',
@@ -213,18 +241,20 @@ export const phonePeService = {
 
     try {
       const baseUrl = getBaseUrl()
-      const uniqueRefundId = `refund_${merchantOrderId}_${Date.now()}`
-      const response = await fetch(`${baseUrl}/checkout/v2/refund`, {
+      const merchantRefundId = `refund_${merchantOrderId}_${Date.now()}`
+      const response = await fetch(`${baseUrl}/payments/v2/refund`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `O-Bearer ${token}`,
         },
         body: JSON.stringify({
-          merchantOrderId,
-          uniqueRefundId,
+          merchantRefundId,
+          originalMerchantOrderId: merchantOrderId,
           amount: Math.round(amount * 100), // Convert to paise
-          reason: reason || 'Order cancelled by customer',
+          metaInfo: {
+            udf1: reason || 'Order cancelled by customer',
+          },
         }),
       })
 
@@ -233,7 +263,7 @@ export const phonePeService = {
       if (data.success) {
         return {
           success: true,
-          refundId: uniqueRefundId,
+          refundId: merchantRefundId,
           message: 'Refund initiated successfully',
         }
       }

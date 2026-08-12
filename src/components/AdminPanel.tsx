@@ -1815,6 +1815,7 @@ function AdminDashboard() {
                                       className="w-full h-full object-cover"
                                       muted
                                       preload="metadata"
+                                      onError={(e) => { (e.target as HTMLVideoElement).style.display = 'none'; const parent = (e.target as HTMLVideoElement).parentElement; if (parent) parent.innerHTML = '<span class="text-[9px] text-red-400 p-1 text-center">Video unavailable</span>'; }}
                                     />
                                   </div>
                                 )}
@@ -1917,6 +1918,7 @@ function AdminDashboard() {
                                       controls
                                       playsInline
                                       preload="metadata"
+                                      onError={(e) => { const el = e.target as HTMLVideoElement; el.style.display = 'none'; const next = el.nextElementSibling; if (next) return; const msg = document.createElement('div'); msg.className = 'p-3 text-center text-xs text-red-400'; msg.textContent = 'Video file could not be loaded — it may be corrupt or missing'; el.parentElement?.appendChild(msg); }}
                                     />
                                   </div>
                                 </div>

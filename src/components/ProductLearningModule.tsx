@@ -81,6 +81,7 @@ export function ProductLearningModule() {
   // ─── Video player state ───────────────────────────────
   const [playing, setPlaying] = useState(false)
   const [videoProgress, setVideoProgress] = useState(0) // 0-100 for current video
+  const [videoError, setVideoError] = useState(false) // true when video fails to load
   const progressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const videoRef = useRef<HTMLVideoElement | null>(null)
   // ─── Quiz state ───────────────────────────────────────
@@ -117,6 +118,7 @@ export function ProductLearningModule() {
       // Reset per-product state to avoid cross-product contamination
       setPassedQuizzes({})
       setCurrentStep({ type: 'video', videoIndex: 0 })
+      setVideoError(false)
       setProgress(null)
       try {
         const [prodRes, vidRes, progRes] = await Promise.all([
@@ -226,6 +228,7 @@ export function ProductLearningModule() {
   // ─── Reset video player when step changes ─────────────
   useEffect(() => {
     setPlaying(false)
+    setVideoError(false)
     setQuizResult(null)
     setAnswers({})
     setCurrentQuestionIdx(0)
@@ -541,7 +544,7 @@ export function ProductLearningModule() {
           }}
           className="text-xs font-medium"
         >
-          {currentStep.type === 'completed' ? 'Unlocked' : `${overallPct}% Progress`}
+          {currentStep.type === 'completed' ? 'Unlocked' : overallPct > 0 ? `${overallPct}% Progress` : 'Getting started'}
         </Badge>
       </div>
 
@@ -654,7 +657,7 @@ export function ProductLearningModule() {
           >
             <Card className="overflow-hidden" style={{ borderColor: BRAND.surface }}>
               {/* Video area */}
-              {hasRealVideo ? (
+              {hasRealVideo && !videoError ? (
                 /* ── Real video player ── */
                 <div className="relative bg-black">
                   <video
@@ -688,6 +691,8 @@ export function ProductLearningModule() {
                     }}
                     onError={(e) => {
                       console.error('[Video Player] Error loading video:', currentVideo!.video_url, e)
+                      setVideoError(true)
+                      setPlaying(false)
                     }}
                   />
                   {/* Video number badge */}
@@ -698,11 +703,27 @@ export function ProductLearningModule() {
                   </div>
                 </div>
               ) : (
-                /* ── Simulated video (fallback) ── */
+                /* ── Simulated video (fallback) or video error ── */
                 <div
                   className="relative aspect-video bg-gray-900 flex items-center justify-center cursor-pointer"
-                  onClick={handlePlayPause}
+                  onClick={videoError ? undefined : handlePlayPause}
                 >
+                  {/* Video error overlay */}
+                  {videoError && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center z-20 bg-black/80">
+                      <AlertCircle className="h-12 w-12 mb-3" style={{ color: '#ef4444' }} />
+                      <p className="text-white font-medium text-sm mb-1">Video unavailable</p>
+                      <p className="text-white/60 text-xs mb-3">The video file could not be loaded</p>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-xs"
+                        onClick={() => { setVideoError(false); setVideoProgress(100); saveVideoProgress(100); }}
+                      >
+                        Skip video & continue
+                      </Button>
+                    </div>
+                  )}
                   {/* Gradient background */}
                   <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-900">
                     <div className="absolute inset-0 flex items-center justify-center opacity-10">
@@ -787,10 +808,10 @@ export function ProductLearningModule() {
                 <div className="flex items-center justify-between mt-4">
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-medium" style={{ color: BRAND.green }}>
-                      {videoProgress}%
+                      {videoProgress > 0 ? `${videoProgress}%` : 'Not started'}
                     </span>
                     <span className="text-sm" style={{ color: BRAND.muted }}>
-                      watched
+                      {videoProgress > 0 ? 'watched' : ''}
                     </span>
                   </div>
 

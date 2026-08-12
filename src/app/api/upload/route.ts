@@ -1,11 +1,14 @@
-// POST /api/upload — Upload files (images & videos) to data/uploads/
-// Files are stored OUTSIDE public/ so they survive code deploys/restarts
+// POST /api/upload — Upload files (images & videos)
+// Files are saved to BOTH data/uploads/ (persistent) AND public/uploads/ (static serving)
+// This ensures videos work in dev (API route) AND production (static files + API route)
 import { NextRequest, NextResponse } from 'next/server'
-import { writeFile, mkdir } from 'fs/promises'
+import { writeFile, mkdir, stat, unlink } from 'fs/promises'
 import path from 'path'
 
-// Persistent upload directory (outside public/)
-const UPLOAD_ROOT = path.join(process.cwd(), 'data', 'uploads')
+// Primary: persistent upload directory (outside public/)
+const DATA_UPLOAD_ROOT = path.join(process.cwd(), 'data', 'uploads')
+// Secondary: public directory for static serving (works with Next.js build output)
+const PUBLIC_UPLOAD_ROOT = path.join(process.cwd(), 'public', 'uploads')
 
 // Allowed MIME types
 const ALLOWED_TYPES: Record<string, string[]> = {
@@ -59,23 +62,53 @@ export async function POST(request: NextRequest) {
     // Determine subdirectory
     const subdir = type === 'video' ? 'videos' : 'products'
 
-    // Ensure directory exists
-    const uploadDir = path.join(UPLOAD_ROOT, subdir)
-    await mkdir(uploadDir, { recursive: true })
+    // Read file data
+    const arrayBuffer = await file.arrayBuffer()
+    const buffer = Buffer.from(arrayBuffer)
 
-    // Write file
-    const filePath = path.join(uploadDir, filename)
-    const buffer = Buffer.from(await file.arrayBuffer())
-    await writeFile(filePath, buffer)
+    // Validate: ensure we actually got data
+    if (buffer.length === 0) {
+      return NextResponse.json({ error: 'Uploaded file is empty (0 bytes)' }, { status: 400 })
+    }
+    if (buffer.length < 100 && type === 'video') {
+      return NextResponse.json({ error: 'Video file too small — likely corrupt or empty upload' }, { status: 400 })
+    }
 
-    // Return the URL path — served via /api/uploads/[...path]
+    // Ensure directories exist
+    const dataDir = path.join(DATA_UPLOAD_ROOT, subdir)
+    const publicDir = path.join(PUBLIC_UPLOAD_ROOT, subdir)
+    await mkdir(dataDir, { recursive: true })
+    await mkdir(publicDir, { recursive: true })
+
+    // Write to BOTH data/ (persistent across builds) and public/ (static serving in production)
+    const dataFilePath = path.join(dataDir, filename)
+    const publicFilePath = path.join(publicDir, filename)
+
+    await writeFile(dataFilePath, buffer)
+    try { await writeFile(publicFilePath, buffer) } catch (e) { console.warn('[Upload] Could not write to public/, non-fatal:', e) }
+
+    // Verify the file was written correctly
+    try {
+      const writtenStat = await stat(dataFilePath)
+      if (writtenStat.size !== buffer.length) {
+        console.error(`[Upload] File size mismatch! Expected ${buffer.length}, got ${writtenStat.size}`)
+        await unlink(dataFilePath).catch(() => {})
+        try { await unlink(publicFilePath).catch(() => {}) } catch {}
+        return NextResponse.json({ error: 'File write verification failed' }, { status: 500 })
+      }
+    } catch (verifyErr) {
+      console.error('[Upload] File verification error:', verifyErr)
+      return NextResponse.json({ error: 'File write verification failed' }, { status: 500 })
+    }
+
+    // Return the URL path — served via /api/uploads/[...path] or /uploads/ directly
     const url = `/uploads/${subdir}/${filename}`
 
-    console.log(`[Upload] Saved ${type}: ${url} (${(file.size / 1024).toFixed(1)}KB)`)
+    console.log(`[Upload] Saved ${type}: ${url} (${(buffer.length / 1024).toFixed(1)}KB) → data/ + public/`)
 
     return NextResponse.json({
       url,
-      size: file.size,
+      size: buffer.length,
       type: file.type || 'video/mp4',
       filename,
     })

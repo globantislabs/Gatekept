@@ -352,7 +352,7 @@ export default function LandingPage() {
                     {/* Nav links */}
                     {[
                       { label: 'Home', icon: Home, action: () => { navigateTo('landing'); setMobileNavOpen(false) } },
-                      { label: 'Product', icon: Store, action: () => { navigateTo('products'); setMobileNavOpen(false) } },
+                      { label: 'Product', icon: Store, action: () => { setSelectedProductId(null); navigateTo('products'); setMobileNavOpen(false) } },
                       { label: 'Our Journey', icon: Globe, action: () => { navigateTo('our-journey'); setMobileNavOpen(false) } },
                     ].map(item => (
                       <button

@@ -9,7 +9,7 @@ import { useAppStore } from '@/store/app-store'
 import { Separator } from '@/components/ui/separator'
 
 export default function SiteFooter() {
-  const { navigateTo } = useAppStore()
+  const { navigateTo, setSelectedProductId } = useAppStore()
 
   return (
     <footer className="mt-auto bg-[#1f1e1c] border-t border-white/[0.06]">
@@ -27,7 +27,7 @@ export default function SiteFooter() {
             <h4 className="font-heading font-semibold text-white text-sm mb-3">Quick Links</h4>
             <ul className="space-y-2 text-sm text-white/40">
               <li><button onClick={() => navigateTo('landing')} className="hover:text-white transition-colors duration-300 min-h-[36px] flex items-center">Home</button></li>
-              <li><button onClick={() => navigateTo('products')} className="hover:text-white transition-colors duration-300 min-h-[36px] flex items-center">Products</button></li>
+              <li><button onClick={() => { setSelectedProductId(null); navigateTo('products') }} className="hover:text-white transition-colors duration-300 min-h-[36px] flex items-center">Products</button></li>
               <li><button onClick={() => navigateTo('our-journey')} className="hover:text-white transition-colors duration-300 min-h-[36px] flex items-center">Our Journey</button></li>
             </ul>
           </div>

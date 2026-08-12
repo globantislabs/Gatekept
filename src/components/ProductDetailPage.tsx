@@ -339,7 +339,7 @@ export default function ProductDetailPage() {
           </p>
           <div className="flex gap-3">
             <Button
-              onClick={() => navigateTo('products')}
+              onClick={() => { setSelectedProductId(null); navigateTo('products') }}
               className="min-h-[44px] rounded-xl font-heading font-semibold"
               style={{ backgroundColor: BRAND.green, color: '#fff' }}
             >
@@ -374,7 +374,7 @@ export default function ProductDetailPage() {
         >
           <div className="flex items-center gap-2 text-xs sm:text-sm min-w-0" style={{ color: BRAND.muted }}>
             <button
-              onClick={() => navigateTo('products')}
+              onClick={() => { setSelectedProductId(null); navigateTo('products') }}
               className="pointer-events-auto hover:opacity-80 transition-opacity font-medium cursor-pointer"
               style={{ color: BRAND.green }}
             >
@@ -387,11 +387,11 @@ export default function ProductDetailPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => navigateTo('products')}
+              onClick={() => { setSelectedProductId(null); navigateTo('products') }}
               className="pointer-events-auto min-h-[36px] sm:min-h-[44px] rounded-xl border-[#e3dfd8] font-heading text-xs sm:text-sm px-2.5 sm:px-3"
             >
               <ArrowLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-0.5 sm:mr-1" />
-              <span className="hidden sm:inline">Products</span>
+              <span className="sm:inline">Products</span>
             </Button>
             <Button
               variant="outline"
@@ -400,7 +400,7 @@ export default function ProductDetailPage() {
               className="pointer-events-auto min-h-[36px] sm:min-h-[44px] rounded-xl border-[#e3dfd8] font-heading text-xs sm:text-sm px-2.5 sm:px-3"
             >
               <Home className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-0.5 sm:mr-1" />
-              <span className="hidden sm:inline">Home</span>
+              <span className="sm:inline">Home</span>
             </Button>
           </div>
         </motion.div>
@@ -475,20 +475,20 @@ export default function ProductDetailPage() {
               <Tabs defaultValue="overview" className="w-full">
 
                 {/* Scrollable Tabs List */}
-                <TabsList className="w-full grid grid-cols-5 h-auto p-0 bg-transparent rounded-none border-b -mx-1 px-1 sm:mx-0 sm:px-0"
+                <TabsList className="w-full grid grid-cols-5 h-auto p-0 bg-transparent rounded-none border-b"
                   style={{ borderColor: BRAND.surface }}
                 >
                   {[
-                    { value: 'overview', label: 'Overview', icon: <Info className="w-3.5 h-3.5 hidden sm:block" /> },
-                    { value: 'ingredients', label: 'Ingredients', icon: <Leaf className="w-3.5 h-3.5 hidden sm:block" /> },
-                    { value: 'nutrition', label: 'Nutrition', icon: <Package className="w-3.5 h-3.5 hidden sm:block" /> },
-                    { value: 'storage', label: 'Storage', icon: <ShieldCheck className="w-3.5 h-3.5 hidden sm:block" /> },
-                    { value: 'legal', label: 'Legal', icon: <Globe className="w-3.5 h-3.5 hidden sm:block" /> },
+                    { value: 'overview', label: 'Overview', mobileLabel: 'Info', icon: <Info className="w-3.5 h-3.5 hidden sm:block" /> },
+                    { value: 'ingredients', label: 'Ingredients', mobileLabel: 'Ingr.', icon: <Leaf className="w-3.5 h-3.5 hidden sm:block" /> },
+                    { value: 'nutrition', label: 'Nutrition', mobileLabel: 'Nutri.', icon: <Package className="w-3.5 h-3.5 hidden sm:block" /> },
+                    { value: 'storage', label: 'Storage', mobileLabel: 'Store', icon: <ShieldCheck className="w-3.5 h-3.5 hidden sm:block" /> },
+                    { value: 'legal', label: 'Legal', mobileLabel: 'Legal', icon: <Globe className="w-3.5 h-3.5 hidden sm:block" /> },
                   ].map(tab => (
                     <TabsTrigger
                       key={tab.value}
                       value={tab.value}
-                      className="pointer-events-auto min-h-[36px] sm:min-h-[40px] px-2 sm:px-3 py-1.5 text-[11px] sm:text-xs font-heading font-medium transition-all border-b-2 -mb-px rounded-none data-[state=active]:border-b-2 data-[state=active]:shadow-none"
+                      className="pointer-events-auto min-h-[40px] px-1 sm:px-3 py-1.5 text-[10px] sm:text-xs font-heading font-medium transition-all border-b-2 -mb-px rounded-none data-[state=active]:border-b-2 data-[state=active]:shadow-none"
                       style={{
                         borderColor: 'transparent',
                         color: BRAND.muted,
@@ -496,7 +496,8 @@ export default function ProductDetailPage() {
                     >
                       <span className="flex items-center gap-1.5">
                         {tab.icon}
-                        {tab.label}
+                        <span className="hidden sm:inline">{tab.label}</span>
+                        <span className="sm:hidden">{tab.mobileLabel}</span>
                       </span>
                     </TabsTrigger>
                   ))}
@@ -537,7 +538,7 @@ export default function ProductDetailPage() {
                         <h3 className="font-heading font-bold text-sm" style={{ color: BRAND.dark }}>
                           Product Details
                         </h3>
-                        <div className="grid grid-cols-2 gap-2">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                           {[
                             { label: 'Weight', value: displayProduct?.weight, icon: <Package className="w-3.5 h-3.5" /> },
                             { label: 'Serving Size', value: displayProduct?.serving_size, icon: <Leaf className="w-3.5 h-3.5" /> },
@@ -1066,21 +1067,21 @@ export default function ProductDetailPage() {
               </Card>
 
               {/* ─── Trust Badges ─────────────────────────────── */}
-              <div className="grid grid-cols-3 gap-2 sm:gap-3">
-                <div className="flex flex-col items-center text-center p-3 rounded-xl bg-white border" style={{ borderColor: BRAND.surface }}>
-                  <ShieldCheck className="w-5 h-5 mb-1" style={{ color: BRAND.green }} />
-                  <p className="text-[10px] font-medium" style={{ color: BRAND.dark }}>FSSAI Certified</p>
-                  <p className="text-[9px]" style={{ color: BRAND.muted }}>{displayProduct?.fssai_license || 'Licensed'}</p>
+              <div className="grid grid-cols-3 gap-1.5 sm:gap-3">
+                <div className="flex flex-col items-center text-center p-2 sm:p-3 rounded-xl bg-white border" style={{ borderColor: BRAND.surface }}>
+                  <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 mb-1" style={{ color: BRAND.green }} />
+                  <p className="text-[9px] sm:text-[10px] font-medium" style={{ color: BRAND.dark }}>FSSAI Certified</p>
+                  <p className="text-[8px] sm:text-[9px]" style={{ color: BRAND.muted }}>{displayProduct?.fssai_license || 'Licensed'}</p>
                 </div>
-                <div className="flex flex-col items-center text-center p-3 rounded-xl bg-white border" style={{ borderColor: BRAND.surface }}>
-                  <Truck className="w-5 h-5 mb-1" style={{ color: BRAND.green }} />
-                  <p className="text-[10px] font-medium" style={{ color: BRAND.dark }}>Free Shipping</p>
-                  <p className="text-[9px]" style={{ color: BRAND.muted }}>Pan India</p>
+                <div className="flex flex-col items-center text-center p-2 sm:p-3 rounded-xl bg-white border" style={{ borderColor: BRAND.surface }}>
+                  <Truck className="w-4 h-4 sm:w-5 sm:h-5 mb-1" style={{ color: BRAND.green }} />
+                  <p className="text-[9px] sm:text-[10px] font-medium" style={{ color: BRAND.dark }}>Free Shipping</p>
+                  <p className="text-[8px] sm:text-[9px]" style={{ color: BRAND.muted }}>Pan India</p>
                 </div>
-                <div className="flex flex-col items-center text-center p-3 rounded-xl bg-white border" style={{ borderColor: BRAND.surface }}>
-                  <Leaf className="w-5 h-5 mb-1" style={{ color: BRAND.green }} />
-                  <p className="text-[10px] font-medium" style={{ color: BRAND.dark }}>100% Natural</p>
-                  <p className="text-[9px]" style={{ color: BRAND.muted }}>{displayProduct?.country_origin || 'Made in India'}</p>
+                <div className="flex flex-col items-center text-center p-2 sm:p-3 rounded-xl bg-white border" style={{ borderColor: BRAND.surface }}>
+                  <Leaf className="w-4 h-4 sm:w-5 sm:h-5 mb-1" style={{ color: BRAND.green }} />
+                  <p className="text-[9px] sm:text-[10px] font-medium" style={{ color: BRAND.dark }}>100% Natural</p>
+                  <p className="text-[8px] sm:text-[9px]" style={{ color: BRAND.muted }}>{displayProduct?.country_origin || 'Made in India'}</p>
                 </div>
               </div>
             </motion.div>

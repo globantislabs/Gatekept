@@ -500,7 +500,7 @@ export function ProductLearningModule() {
             <Button
               className="mt-4"
               style={{ backgroundColor: BRAND.green, color: '#fff' }}
-              onClick={() => navigateTo('products')}
+              onClick={() => { setSelectedProductId(null); navigateTo('products') }}
             >
               <ArrowLeft className="h-4 w-4 mr-2" /> Back to Products
             </Button>
@@ -524,7 +524,7 @@ export function ProductLearningModule() {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => navigateTo('products')}
+          onClick={() => { setSelectedProductId(null); navigateTo('products') }}
           className="p-2"
         >
           <ArrowLeft className="h-5 w-5" style={{ color: BRAND.dark }} />

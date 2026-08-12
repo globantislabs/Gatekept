@@ -153,9 +153,9 @@ export default function AppNavbar() {
                   {navLinks.map(link => (
                     <button
                       key={link.label}
-                      onClick={() => { navigateTo(link.view); setMobileNavOpen(false) }}
+                      onClick={() => { handleNavClick(link.view); setMobileNavOpen(false) }}
                       className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 text-sm font-medium min-h-[44px] ${
-                        currentView === link.view
+                        isNavActive(link.view)
                           ? 'text-white bg-white/[0.08]'
                           : 'text-white/70 hover:text-white hover:bg-white/[0.06]'
                       }`}

@@ -214,7 +214,7 @@ export default function ProductDetailPage() {
   // ─── Handlers ─────────────────────────────────────────────
   const handleAddToCart = useCallback(() => {
     const activeProduct = displayProduct || product
-    if (!activeProduct || !isCompleted) return
+    if (!activeProduct) return
     addToCart({
       productId: activeProduct.id,
       name: activeProduct.name,
@@ -225,11 +225,9 @@ export default function ProductDetailPage() {
       purchaseType: 'one-time',
     })
     toast.success(`${activeProduct.name} added to cart!`)
+    // Clean SPA navigation to the cart view (no full page reload)
     navigateTo('cart')
-    if (typeof window !== 'undefined') {
-      window.location.assign('/cart')
-    }
-  }, [displayProduct, product, isCompleted, quantity, addToCart, navigateTo])
+  }, [displayProduct, product, quantity, addToCart, navigateTo])
 
   const handleSubscribe = useCallback(() => {
     const activeProduct = displayProduct || product
@@ -891,18 +889,16 @@ export default function ProductDetailPage() {
 
               {/* ─── Buy Now + Unlock Now Buttons ──────────────── */}
               <div className="flex flex-col sm:flex-row gap-3">
-                {/* Buy Now — direct add to cart */}
+                {/* Buy Now — adds to cart and redirects to cart page */}
                 <Button
                   onClick={handleAddToCart}
-                  disabled={!isCompleted}
-                  className="pointer-events-auto min-h-[48px] flex-1 rounded-xl font-heading font-semibold text-base transition-all cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+                  className="pointer-events-auto min-h-[48px] flex-1 rounded-xl font-heading font-semibold text-base transition-all cursor-pointer"
                   style={{
                     backgroundColor: BRAND.green,
                     color: '#fff',
                     borderColor: 'transparent',
-                    cursor: isCompleted ? 'pointer' : 'not-allowed',
+                    cursor: 'pointer',
                   }}
-                  title={!isCompleted ? 'Complete learning to unlock purchase' : undefined}
                 >
                   <ShoppingCart className="w-5 h-5 mr-2" />
                   Buy Now

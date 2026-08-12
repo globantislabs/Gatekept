@@ -212,8 +212,24 @@ export default function ProductDetailPage() {
   const ingredientsList = displayProduct ? parseIngredients(displayProduct.ingredients) : []
 
   // ─── Handlers ─────────────────────────────────────────────
-  // Buy Now — adds product to cart and redirects to cart page
+  // Buy Now — adds product to cart and redirects to cart page.
+  // LOCKED until the user is logged in AND has completed the learning module.
   const handleAddToCart = useCallback(() => {
+    if (!user) {
+      // Not logged in — send to login, return here after
+      if (!product) return
+      setSelectedProductId(product.id)
+      setRedirectAfterLogin('product-detail')
+      navigateTo('auth-login')
+      return
+    }
+    if (!isCompleted) {
+      // Logged in but learning not completed — start learning
+      if (!product) return
+      setSelectedProductId(product.id)
+      navigateTo('product-learning')
+      return
+    }
     const activeProduct = displayProduct || product
     if (!activeProduct) return
     addToCart({
@@ -227,7 +243,7 @@ export default function ProductDetailPage() {
     })
     toast.success(`${activeProduct.name} added to cart!`)
     navigateTo('cart')
-  }, [displayProduct, product, quantity, addToCart, navigateTo])
+  }, [user, isCompleted, product, displayProduct, quantity, addToCart, navigateTo, setSelectedProductId, setRedirectAfterLogin])
 
   const handleSubscribe = useCallback(() => {
     const activeProduct = displayProduct || product
@@ -889,17 +905,19 @@ export default function ProductDetailPage() {
 
               {/* ─── Buy Now + Unlock Now Buttons ──────────────── */}
               <div className="flex flex-col sm:flex-row gap-3">
-                {/* Buy Now — redirects to cart page (always active, single tap) */}
+                {/* Buy Now — locked until logged in + learning completed */}
                 <Button
                   onClick={handleAddToCart}
-                  className="pointer-events-auto min-h-[48px] flex-1 rounded-xl font-heading font-semibold text-base transition-colors cursor-pointer touch-manipulation select-none"
+                  disabled={!user || !isCompleted}
+                  className="pointer-events-auto min-h-[48px] flex-1 rounded-xl font-heading font-semibold text-base transition-colors cursor-pointer touch-manipulation select-none disabled:cursor-not-allowed disabled:opacity-50"
                   style={{
                     backgroundColor: BRAND.green,
                     color: '#fff',
                     borderColor: 'transparent',
-                    cursor: 'pointer',
+                    cursor: (!user || !isCompleted) ? 'not-allowed' : 'pointer',
                     WebkitTapHighlightColor: 'transparent',
                   }}
+                  title={!user ? 'Please log in to unlock Buy Now' : (!isCompleted ? 'Complete the learning module to unlock Buy Now' : undefined)}
                 >
                   <ShoppingCart className="w-5 h-5 mr-2" />
                   Buy Now

@@ -1362,8 +1362,8 @@ function AdminDashboard() {
                             </div>
                             <div className="sm:col-span-2">
                               <Label className="text-xs mb-1">Full Description</Label>
-                              <Textarea placeholder="Detailed description (max 2000 chars)..." rows={4} maxLength={2000} value={newProduct.description} onChange={e => setNewProduct({ ...newProduct, description: e.target.value })} className="text-sm resize-none" />
-                              <p className="text-[10px] text-right" style={{ color: A.textMuted }}>{(newProduct.description || '').length}/2000</p>
+                              <Textarea placeholder="Detailed description (max 5000 chars)..." rows={6} maxLength={5000} value={newProduct.description} onChange={e => setNewProduct({ ...newProduct, description: e.target.value })} className="text-sm resize-y" />
+                              <p className="text-[10px] text-right" style={{ color: A.textMuted }}>{(newProduct.description || '').length}/5000</p>
                             </div>
                             <div>
                               <Label className="text-xs mb-1">Brand</Label>

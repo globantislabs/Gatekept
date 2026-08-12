@@ -7,7 +7,7 @@ import {
   ShoppingBag, Trash2, Plus, Minus, ArrowLeft, ArrowRight,
   MapPin, Phone, CreditCard, Landmark, Smartphone, CheckCircle,
   Package, Truck, ShieldCheck, ChevronRight, X, Loader2,
-  ShoppingCart, Sparkles, Leaf, Banknote, Mail
+  ShoppingCart, Sparkles, Leaf, Banknote, Mail, Repeat, Calendar
 } from 'lucide-react'
 import { useAppStore, type CartItem } from '@/store/app-store'
 import SiteFooter from '@/components/SiteFooter'
@@ -74,6 +74,17 @@ const PAYMENT_OPTIONS: { value: PaymentMethod; label: string; icon: React.ReactN
   { value: 'UPI', label: 'UPI', icon: <Smartphone className="w-5 h-5" />, description: 'Pay via Google Pay, PhonePe, Paytm' },
   { value: 'CARD', label: 'Credit / Debit Card', icon: <CreditCard className="w-5 h-5" />, description: 'Visa, Mastercard, RuPay' },
   { value: 'NET_BANKING', label: 'Net Banking', icon: <Landmark className="w-5 h-5" />, description: 'All major banks supported' },
+]
+
+// ─── Subscription Pack Options ──────────────────────────────
+type PurchaseMode = 'one-time' | 'subscription'
+type SubscriptionPack = '30_DAY' | '60_DAY' | '90_DAY' | '180_DAY'
+
+const SUBSCRIPTION_PACKS: { value: SubscriptionPack; label: string; days: number; discount: number; frequency: string }[] = [
+  { value: '30_DAY', label: '30 Day Pack', days: 30, discount: 5, frequency: 'Monthly' },
+  { value: '60_DAY', label: '60 Day Pack', days: 60, discount: 10, frequency: 'Bi-monthly' },
+  { value: '90_DAY', label: '90 Day Pack', days: 90, discount: 15, frequency: 'Quarterly' },
+  { value: '180_DAY', label: '180 Day Pack', days: 180, discount: 20, frequency: 'Half-yearly' },
 ]
 
 // ═══════════════════════════════════════════════════════════
@@ -382,10 +393,18 @@ export function CheckoutView() {
   const [placing, setPlacing] = useState(false)
   const [formErrors, setFormErrors] = useState<Record<string, string>>({})
 
+  // ── Subscription State ──
+  const [purchaseMode, setPurchaseMode] = useState<PurchaseMode>('one-time')
+  const [selectedPack, setSelectedPack] = useState<SubscriptionPack>('30_DAY')
+
   // ── Derived ──
   const subtotal = cartTotal()
   const taxAmount = Math.round(subtotal * 0.18)
-  const discountAmount = cart.reduce((sum, item) => sum + ((item.packDiscount || 0) / 100) * item.price * item.quantity, 0)
+  const subPack = SUBSCRIPTION_PACKS.find(p => p.value === selectedPack)
+  const subscriptionDiscount = purchaseMode === 'subscription' && subPack
+    ? Math.round(subtotal * (subPack.discount / 100))
+    : 0
+  const discountAmount = cart.reduce((sum, item) => sum + ((item.packDiscount || 0) / 100) * item.price * item.quantity, 0) + subscriptionDiscount
   const totalAmount = subtotal + taxAmount - discountAmount
   const isEmpty = cart.length === 0
 
@@ -442,9 +461,9 @@ export function CheckoutView() {
           quantity: item.quantity,
           unit_price: item.price,
           total_price: item.price * item.quantity,
-          pack_type: item.packType || null,
-          pack_days: item.packDays || null,
-          pack_discount: item.packDiscount || null,
+          pack_type: purchaseMode === 'subscription' ? selectedPack : (item.packType || null),
+          pack_days: purchaseMode === 'subscription' ? subPack?.days : (item.packDays || null),
+          pack_discount: purchaseMode === 'subscription' ? subPack?.discount : (item.packDiscount || null),
         })),
         shipping_name: shippingName.trim(),
         shipping_phone: shippingPhone.trim(),
@@ -454,6 +473,7 @@ export function CheckoutView() {
         shipping_state: shippingState,
         shipping_pincode: shippingPincode.trim(),
         payment_method: paymentMethod,
+        purchase_mode: purchaseMode,
       }
 
       const order = await orderService.create(orderData)
@@ -692,6 +712,108 @@ export function CheckoutView() {
             </Card>
           </motion.div>
 
+          {/* Purchase Mode — One-time vs Subscription */}
+          <motion.div variants={fadeInUp}>
+            <Card className="bg-white border-[#e3dfd8] shadow-sm rounded-xl">
+              <CardHeader className="pb-2">
+                <CardTitle className="font-heading text-lg text-[#1f1e1c] flex items-center gap-2">
+                  <Repeat className="w-5 h-5 text-[#48805b]" />
+                  Purchase Option
+                </CardTitle>
+                <CardDescription className="text-[#88837b] text-sm">
+                  Choose one-time purchase or subscribe & save
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="pt-2 space-y-4">
+                <div className="grid grid-cols-2 gap-3">
+                  {/* One-time */}
+                  <button
+                    type="button"
+                    onClick={() => setPurchaseMode('one-time')}
+                    className={`p-3 rounded-xl border-2 text-left transition-all ${
+                      purchaseMode === 'one-time'
+                        ? 'border-[#48805b] bg-[#48805b]/5 shadow-sm'
+                        : 'border-[#e3dfd8] bg-[#f4f3f0] hover:border-[#48805b]/30'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <ShoppingCart className={`w-4 h-4 ${purchaseMode === 'one-time' ? 'text-[#48805b]' : 'text-[#88837b]'}`} />
+                      <span className="font-semibold text-sm text-[#1f1e1c]">One-time</span>
+                    </div>
+                    <p className="text-xs text-[#88837b]">Single purchase, no commitment</p>
+                    {purchaseMode === 'one-time' && (
+                      <CheckCircle className="w-4 h-4 text-[#48805b] absolute top-2 right-2" />
+                    )}
+                  </button>
+
+                  {/* Subscription */}
+                  <button
+                    type="button"
+                    onClick={() => setPurchaseMode('subscription')}
+                    className={`p-3 rounded-xl border-2 text-left transition-all relative ${
+                      purchaseMode === 'subscription'
+                        ? 'border-[#48805b] bg-[#48805b]/5 shadow-sm'
+                        : 'border-[#e3dfd8] bg-[#f4f3f0] hover:border-[#48805b]/30'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <Repeat className={`w-4 h-4 ${purchaseMode === 'subscription' ? 'text-[#48805b]' : 'text-[#88837b]'}`} />
+                      <span className="font-semibold text-sm text-[#1f1e1c]">Subscribe</span>
+                      <Badge className="bg-[#afb75d]/20 text-[#48805b] text-[10px] px-1.5 py-0 border-[#afb75d]/30">
+                        Save up to 20%
+                      </Badge>
+                    </div>
+                    <p className="text-xs text-[#88837b]">Auto-delivery, cancel anytime</p>
+                    {purchaseMode === 'subscription' && (
+                      <CheckCircle className="w-4 h-4 text-[#48805b] absolute top-2 right-2" />
+                    )}
+                  </button>
+                </div>
+
+                {/* Subscription Pack Selector */}
+                {purchaseMode === 'subscription' && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="space-y-2"
+                  >
+                    <p className="text-xs font-medium text-[#88837b] uppercase tracking-wider">Select Pack Duration</p>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                      {SUBSCRIPTION_PACKS.map(pack => (
+                        <button
+                          key={pack.value}
+                          type="button"
+                          onClick={() => setSelectedPack(pack.value)}
+                          className={`p-2.5 rounded-lg border-2 text-center transition-all ${
+                            selectedPack === pack.value
+                              ? 'border-[#48805b] bg-[#48805b]/8'
+                              : 'border-[#e3dfd8] bg-[#f4f3f0] hover:border-[#48805b]/30'
+                          }`}
+                        >
+                          <p className="font-semibold text-sm text-[#1f1e1c]">{pack.label}</p>
+                          <p className="text-xs text-[#48805b] font-medium mt-0.5">{pack.discount}% off</p>
+                          <div className="flex items-center justify-center gap-1 mt-1">
+                            <Calendar className="w-3 h-3 text-[#88837b]" />
+                            <p className="text-[10px] text-[#88837b]">{pack.frequency}</p>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                    {subPack && (
+                      <div className="p-2.5 bg-[#48805b]/10 border border-[#48805b]/20 rounded-lg flex items-center gap-2">
+                        <Sparkles className="w-4 h-4 text-[#48805b] flex-shrink-0" />
+                        <p className="text-xs text-[#48805b]">
+                          You save <strong>₹{subscriptionDiscount.toLocaleString('en-IN')}</strong> with the {subPack.label}! Delivered every {subPack.frequency.toLowerCase()}.
+                        </p>
+                      </div>
+                    )}
+                  </motion.div>
+                )}
+              </CardContent>
+            </Card>
+          </motion.div>
+
           {/* Payment Method */}
           <motion.div variants={fadeInUp}>
             <Card className="bg-white border-[#e3dfd8] shadow-sm rounded-xl">
@@ -823,8 +945,16 @@ export function CheckoutView() {
                   </div>
                   {discountAmount > 0 && (
                     <div className="flex justify-between text-sm">
-                      <span className="text-[#48805b]">Pack Discount</span>
+                      <span className="text-[#48805b]">
+                        {purchaseMode === 'subscription' ? 'Subscription Discount' : 'Pack Discount'}
+                      </span>
                       <span className="text-[#48805b]">-&#8377;{discountAmount.toLocaleString('en-IN')}</span>
+                    </div>
+                  )}
+                  {purchaseMode === 'subscription' && subPack && (
+                    <div className="flex items-center gap-1.5 text-xs text-[#48805b] pt-1">
+                      <Repeat className="w-3 h-3" />
+                      <span>{subPack.label} · {subPack.frequency} delivery</span>
                     </div>
                   )}
                   <div className="flex justify-between text-sm">

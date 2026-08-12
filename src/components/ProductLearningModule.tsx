@@ -662,6 +662,9 @@ export function ProductLearningModule() {
                     src={currentVideo!.video_url?.startsWith('/uploads/') ? `/api${currentVideo!.video_url}` : currentVideo!.video_url}
                     className="w-full aspect-video"
                     controls
+                    controlsList="nodownload"
+                    playsInline
+                    preload="metadata"
                     autoPlay={playing}
                     onPlay={() => setPlaying(true)}
                     onPause={() => setPlaying(false)}
@@ -682,6 +685,9 @@ export function ProductLearningModule() {
                       if (videoProgress > 0 && videoRef.current && videoRef.current.duration > 0) {
                         videoRef.current.currentTime = (videoProgress / 100) * videoRef.current.duration
                       }
+                    }}
+                    onError={(e) => {
+                      console.error('[Video Player] Error loading video:', currentVideo!.video_url, e)
                     }}
                   />
                   {/* Video number badge */}

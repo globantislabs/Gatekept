@@ -475,7 +475,7 @@ export default function ProductDetailPage() {
               <Tabs defaultValue="overview" className="w-full">
 
                 {/* Scrollable Tabs List */}
-                <TabsList className="w-full flex overflow-x-auto h-auto p-0 bg-transparent rounded-none border-b -mx-1 px-1 sm:mx-0 sm:px-0"
+                <TabsList className="w-full grid grid-cols-5 h-auto p-0 bg-transparent rounded-none border-b -mx-1 px-1 sm:mx-0 sm:px-0"
                   style={{ borderColor: BRAND.surface }}
                 >
                   {[
@@ -488,7 +488,7 @@ export default function ProductDetailPage() {
                     <TabsTrigger
                       key={tab.value}
                       value={tab.value}
-                      className="pointer-events-auto min-h-[40px] sm:min-h-[44px] px-3 sm:px-5 py-2 text-xs sm:text-sm font-heading font-medium transition-all border-b-2 -mb-px rounded-none data-[state=active]:border-b-2 data-[state=active]:shadow-none shrink-0 whitespace-nowrap"
+                      className="pointer-events-auto min-h-[36px] sm:min-h-[40px] px-2 sm:px-3 py-1.5 text-[11px] sm:text-xs font-heading font-medium transition-all border-b-2 -mb-px rounded-none data-[state=active]:border-b-2 data-[state=active]:shadow-none"
                       style={{
                         borderColor: 'transparent',
                         color: BRAND.muted,
@@ -503,19 +503,18 @@ export default function ProductDetailPage() {
                 </TabsList>
 
                 {/* ─── Overview Tab ──────────────────────────────── */}
-                <TabsContent value="overview" className="mt-6">
+                <TabsContent value="overview" className="mt-4">
                   <AnimatePresence mode="wait">
                     <motion.div
                       key="overview"
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.3 }}
-                      className="space-y-4"
+                      className="space-y-3"
                     >
-                      {/* Key Highlights */}
                       {highlights.length > 0 && (
-                        <div className="space-y-2 pt-2">
-                          <h4 className="font-heading font-semibold text-sm" style={{ color: BRAND.dark }}>
+                        <div className="space-y-1.5 pt-1">
+                          <h4 className="font-heading font-semibold text-xs" style={{ color: BRAND.dark }}>
                             Key Highlights
                           </h4>
                           {highlights.map((h, i) => (
@@ -526,19 +525,19 @@ export default function ProductDetailPage() {
                               transition={{ delay: i * 0.05 }}
                               className="flex items-center gap-2"
                             >
-                              <CheckCircle className="w-4 h-4 flex-shrink-0" style={{ color: BRAND.green }} />
-                              <span className="text-sm" style={{ color: BRAND.dark }}>{h}</span>
+                              <CheckCircle className="w-3.5 h-3.5 flex-shrink-0" style={{ color: BRAND.green }} />
+                              <span className="text-xs" style={{ color: BRAND.dark }}>{h}</span>
                             </motion.div>
                           ))}
                         </div>
                       )}
 
                       {/* Product Details Grid */}
-                      <div className="space-y-3">
-                        <h3 className="font-heading font-bold text-lg" style={{ color: BRAND.dark }}>
+                      <div className="space-y-2">
+                        <h3 className="font-heading font-bold text-sm" style={{ color: BRAND.dark }}>
                           Product Details
                         </h3>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="grid grid-cols-2 gap-2">
                           {[
                             { label: 'Weight', value: displayProduct?.weight, icon: <Package className="w-3.5 h-3.5" /> },
                             { label: 'Serving Size', value: displayProduct?.serving_size, icon: <Leaf className="w-3.5 h-3.5" /> },
@@ -552,14 +551,14 @@ export default function ProductDetailPage() {
                               initial={{ opacity: 0, y: 10 }}
                               animate={{ opacity: 1, y: 0 }}
                               transition={{ delay: i * 0.05 }}
-                              className="p-3 rounded-xl bg-white border"
+                              className="p-2 rounded-lg bg-white border"
                               style={{ borderColor: BRAND.surface }}
                             >
-                              <div className="flex items-center gap-1.5 mb-1">
+                              <div className="flex items-center gap-1 mb-0.5">
                                 {d.icon}
-                                <p className="text-xs uppercase tracking-wider" style={{ color: BRAND.muted }}>{d.label}</p>
+                                <p className="text-[10px] uppercase tracking-wider" style={{ color: BRAND.muted }}>{d.label}</p>
                               </div>
-                              <p className="text-sm font-medium" style={{ color: d.value ? BRAND.dark : BRAND.muted }}>
+                              <p className="text-xs font-medium" style={{ color: d.value ? BRAND.dark : BRAND.muted }}>
                                 {d.value || 'Not available'}
                               </p>
                             </motion.div>
@@ -779,29 +778,14 @@ export default function ProductDetailPage() {
               {/* About This Product — right side */}
               {displayProduct?.description && (() => {
                 const desc = displayProduct.description
-                const isLong = desc.length > 200
-                // Find a natural break point near the middle of the text
-                const midPoint = Math.floor(desc.length / 2)
-                let halfEnd = midPoint
-                if (isLong && !descExpanded) {
-                  // Look for sentence end, comma, or space near the midpoint
-                  const searchRange = desc.slice(midPoint, midPoint + 80)
-                  const sentenceEnd = searchRange.search(/[.!?,;]\s/)
-                  if (sentenceEnd !== -1) {
-                    halfEnd = midPoint + sentenceEnd + 1
-                  } else {
-                    const spacePos = searchRange.search(/\s/)
-                    if (spacePos !== -1) halfEnd = midPoint + spacePos
-                    else halfEnd = midPoint
-                  }
-                }
-                const visibleText = (!descExpanded && isLong) ? desc.slice(0, halfEnd) : desc
+                const isLong = desc.length > 300
+                const visibleText = (!descExpanded && isLong) ? desc.slice(0, 300) : desc
                 return (
                   <div className="space-y-2">
                     <h3 className="font-heading font-semibold text-sm" style={{ color: BRAND.dark }}>
                       About This Product
                     </h3>
-                    <p className="leading-relaxed text-sm" style={{ color: BRAND.muted }}>
+                    <p className="leading-relaxed text-sm whitespace-pre-line" style={{ color: BRAND.muted }}>
                       {visibleText}{!descExpanded && isLong ? '...' : ''}
                     </p>
                     {isLong && (
@@ -892,7 +876,7 @@ export default function ProductDetailPage() {
                 )}
               </div>
 
-              {/* ─── Buy Now + Subscribe + Unlock Now Buttons ──────────────── */}
+              {/* ─── Buy Now + Unlock Now Buttons ──────────────── */}
               <div className="flex flex-col sm:flex-row gap-3">
                 {/* Buy Now — Locked until learning completed */}
                 <Button
@@ -915,31 +899,6 @@ export default function ProductDetailPage() {
                     <>
                       <Lock className="w-5 h-5 mr-2" />
                       Buy Now
-                    </>
-                  )}
-                </Button>
-
-                {/* Subscribe & Save */}
-                <Button
-                  onClick={isCompleted ? handleSubscribe : undefined}
-                  disabled={!isCompleted}
-                  className="pointer-events-auto min-h-[48px] flex-1 rounded-xl font-heading font-semibold text-base transition-all cursor-pointer disabled:cursor-not-allowed"
-                  style={{
-                    backgroundColor: isCompleted ? BRAND.lime : `${BRAND.muted}30`,
-                    color: isCompleted ? BRAND.dark : BRAND.muted,
-                    borderColor: 'transparent',
-                    cursor: isCompleted ? 'pointer' : 'not-allowed',
-                  }}
-                >
-                  {isCompleted ? (
-                    <>
-                      <Repeat className="w-5 h-5 mr-2" />
-                      Subscribe & Save
-                    </>
-                  ) : (
-                    <>
-                      <Lock className="w-5 h-5 mr-2" />
-                      Subscribe
                     </>
                   )}
                 </Button>

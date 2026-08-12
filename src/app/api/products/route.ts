@@ -180,8 +180,10 @@ export async function POST(request: NextRequest) {
       return errorResponse(numericError, 400)
     }
 
-    // Sanitize string fields
-    const sanitized = sanitizeStringFields(body, ['name', 'slug', 'description', 'short_description', 'sku', 'type', 'category', 'brand', 'flavor'])
+    // Sanitize string fields — short fields at 255, long text fields at 5000
+    const sanitizedShort = sanitizeStringFields(body, ['name', 'slug', 'sku', 'type', 'category', 'brand', 'flavor'], 255)
+    const sanitizedLong = sanitizeStringFields(body, ['description', 'short_description', 'ingredients', 'nutrition_info', 'allergen_info', 'storage_info', 'highlights'], 5000)
+    const sanitized = { ...sanitizedShort, ...sanitizedLong }
 
     const {
       name,

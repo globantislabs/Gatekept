@@ -1143,12 +1143,16 @@ export function OrderSuccessView() {
   )
   // Track whether polling is active
   const pollingActiveRef = useRef(false)
+  const paymentCallbackSentRef = useRef(false)
 
   useEffect(() => {
     if (!orderNumberFromUrl || pollingActiveRef.current) return
     pollingActiveRef.current = true
+    paymentCallbackSentRef.current = false
 
     // Poll payment status
+    let interval: ReturnType<typeof setInterval> | null = null
+    let timeout: ReturnType<typeof setTimeout> | null = null
     const pollStatus = async () => {
       try {
         const res = await fetch(`/api/payments/phonepe/status?merchantOrderId=${orderNumberFromUrl}`)
@@ -1157,15 +1161,22 @@ export function OrderSuccessView() {
         if (data.success && data.status === 'COMPLETED') {
           setPaymentStatus('completed')
           pollingActiveRef.current = false
-          // Also confirm with callback to update order in DB
-          fetch('/api/payments/phonepe/callback', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ merchantOrderId: orderNumberFromUrl, status: 'COMPLETED' }),
-          }).catch(() => {})
+          if (!paymentCallbackSentRef.current) {
+            paymentCallbackSentRef.current = true
+            if (interval) clearInterval(interval)
+            if (timeout) clearTimeout(timeout)
+            // Also confirm with callback to update order in DB
+            fetch('/api/payments/phonepe/callback', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ merchantOrderId: orderNumberFromUrl, status: 'COMPLETED' }),
+            }).catch(() => {})
+          }
         } else if (data.status === 'FAILED') {
           setPaymentStatus('failed')
           pollingActiveRef.current = false
+          if (interval) clearInterval(interval)
+          if (timeout) clearTimeout(timeout)
         } else {
           setPaymentStatus('pending')
         }
@@ -1176,16 +1187,16 @@ export function OrderSuccessView() {
 
     // Poll immediately, then every 3 seconds for up to 30 seconds
     pollStatus()
-    const interval = setInterval(pollStatus, 3000)
-    const timeout = setTimeout(() => {
-      clearInterval(interval)
+    interval = setInterval(pollStatus, 3000)
+    timeout = setTimeout(() => {
+      if (interval) clearInterval(interval)
       pollingActiveRef.current = false
       setPaymentStatus(prev => prev === 'checking' ? 'pending' : prev)
     }, 30000)
 
     return () => {
-      clearInterval(interval)
-      clearTimeout(timeout)
+      if (interval) clearInterval(interval)
+      if (timeout) clearTimeout(timeout)
     }
   }, [orderNumberFromUrl])
 

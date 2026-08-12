@@ -226,6 +226,9 @@ export default function ProductDetailPage() {
     })
     toast.success(`${activeProduct.name} added to cart!`)
     navigateTo('cart')
+    if (typeof window !== 'undefined') {
+      window.location.assign('/cart')
+    }
   }, [displayProduct, product, isCompleted, quantity, addToCart, navigateTo])
 
   const handleSubscribe = useCallback(() => {
@@ -242,6 +245,9 @@ export default function ProductDetailPage() {
     })
     toast.success(`${activeProduct.name} subscription added to cart!`)
     navigateTo('cart')
+    if (typeof window !== 'undefined') {
+      window.location.assign('/cart')
+    }
   }, [displayProduct, product, isCompleted, quantity, addToCart, navigateTo])
 
   const handleStartLearning = useCallback(() => {

@@ -52,8 +52,10 @@ export async function POST(
       return errorResponse(validationError, 400)
     }
 
-    // Sanitize string fields
-    const sanitized = sanitizeStringFields(body, ['title', 'description', 'duration', 'video_url', 'thumbnail_url'])
+    // Sanitize string fields — short fields at 255, URLs at 500
+    const sanitizedShort = sanitizeStringFields(body, ['title', 'duration'], 255)
+    const sanitizedLong = sanitizeStringFields(body, ['description', 'video_url', 'thumbnail_url'], 500)
+    const sanitized = { ...sanitizedShort, ...sanitizedLong }
 
     // Verify product exists
     const product = await db.product.findUnique({ where: { id } })

@@ -29,8 +29,10 @@ export async function PUT(
       return errorResponse('Video not found', 404)
     }
 
-    // Sanitize string fields
-    const sanitized = sanitizeStringFields(body, ['title', 'duration', 'description', 'video_url', 'thumbnail_url'])
+    // Sanitize string fields — short fields at 255, URLs/descriptions at 500
+    const sanitizedShort = sanitizeStringFields(body, ['title', 'duration'], 255)
+    const sanitizedLong = sanitizeStringFields(body, ['description', 'video_url', 'thumbnail_url'], 500)
+    const sanitized = { ...sanitizedShort, ...sanitizedLong }
 
     const allowedFields = [
       'title', 'duration', 'description', 'order', 'video_url', 'thumbnail_url', 'active',

@@ -28,10 +28,25 @@ const navLinks: { label: string; view: AppView; icon: React.ElementType }[] = [
 ]
 
 export default function AppNavbar() {
-  const { navigateTo, user, cart, currentView } = useAppStore()
+  const { navigateTo, user, cart, currentView, setSelectedProductId } = useAppStore()
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
 
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0)
+
+  // Helper: consider 'product-detail' and 'product-learning' as active under 'products' nav
+  const isNavActive = (linkView: AppView) => {
+    if (currentView === linkView) return true
+    if (linkView === 'products' && (currentView === 'product-detail' || currentView === 'product-learning')) return true
+    return false
+  }
+
+  // Handle nav click — always clear selectedProductId when going to products listing
+  const handleNavClick = (view: AppView) => {
+    if (view === 'products') {
+      setSelectedProductId(null)
+    }
+    navigateTo(view)
+  }
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-xl shadow-[0_1px_0_0_rgba(0,0,0,0.06)]">
@@ -58,9 +73,9 @@ export default function AppNavbar() {
             {navLinks.map(link => (
               <button
                 key={link.label}
-                onClick={() => navigateTo(link.view)}
+                onClick={() => handleNavClick(link.view)}
                 className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 min-h-[44px] ${
-                  currentView === link.view
+                  isNavActive(link.view)
                     ? 'text-[#48805b] bg-[#48805b]/10'
                     : 'text-[#88837b] hover:text-[#48805b] hover:bg-[#48805b]/5'
                 }`}

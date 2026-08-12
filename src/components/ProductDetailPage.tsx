@@ -888,13 +888,15 @@ export default function ProductDetailPage() {
                 {/* Buy Now — direct add to cart */}
                 <Button
                   onClick={handleAddToCart}
-                  className="pointer-events-auto min-h-[48px] flex-1 rounded-xl font-heading font-semibold text-base transition-all cursor-pointer disabled:cursor-not-allowed"
+                  disabled={!isCompleted}
+                  className="pointer-events-auto min-h-[48px] flex-1 rounded-xl font-heading font-semibold text-base transition-all cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
                   style={{
                     backgroundColor: BRAND.green,
                     color: '#fff',
                     borderColor: 'transparent',
-                    cursor: 'pointer',
+                    cursor: isCompleted ? 'pointer' : 'not-allowed',
                   }}
+                  title={!isCompleted ? 'Complete learning to unlock purchase' : undefined}
                 >
                   <ShoppingCart className="w-5 h-5 mr-2" />
                   Buy Now

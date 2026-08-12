@@ -8,7 +8,7 @@ import {
   Package, Truck, ShieldCheck, ChevronRight, X, Loader2,
   ShoppingCart, Sparkles, Leaf, Banknote, Mail, Repeat, Calendar
 } from 'lucide-react'
-import { useAppStore, type CartItem } from '@/store/app-store'
+import { useAppStore, type CartItem, getCartItemKey } from '@/store/app-store'
 import ProductImage from '@/components/ProductImage'
 import SiteFooter from '@/components/SiteFooter'
 import { orderService } from '@/lib/data-service'
@@ -186,11 +186,11 @@ export function CartView() {
         <AnimatePresence mode="popLayout">
           {cart.map((item) => (
             <CartItemCard
-              key={item.productId}
+              key={item.cartKey || getCartItemKey(item)}
               item={item}
-              isRemoving={removingIds.has(item.productId)}
-              onQuantityChange={(qty) => updateCartQuantity(item.productId, qty)}
-              onRemove={() => handleRemove(item.productId)}
+              isRemoving={removingIds.has(item.cartKey || getCartItemKey(item))}
+              onQuantityChange={(qty) => updateCartQuantity(item.cartKey || getCartItemKey(item), qty)}
+              onRemove={() => handleRemove(item.cartKey || getCartItemKey(item))}
             />
           ))}
         </AnimatePresence>
@@ -956,7 +956,7 @@ export function CheckoutView() {
                 {/* Items List */}
                 <div className="space-y-3 max-h-48 overflow-y-auto pr-1 custom-scrollbar">
                   {cart.map(item => (
-                    <div key={item.productId} className="flex items-center gap-3">
+                    <div key={item.cartKey || getCartItemKey(item)} className="flex items-center gap-3">
                       <div className="w-12 h-12 rounded-lg bg-[#e3dfd8] overflow-hidden flex-shrink-0 relative">
                         {item.imageUrl ? (
                           <ProductImage src={item.imageUrl} alt={item.name} fill className="object-cover" sizes="48px" />

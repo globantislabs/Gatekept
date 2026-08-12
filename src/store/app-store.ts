@@ -90,12 +90,17 @@ export interface CartItem {
   name: string
   price: number
   quantity: number
+  cartKey?: string
   imageUrl?: string
   type?: string
   purchaseType: 'one-time' | 'subscription'
   packType?: string
   packDays?: number
   packDiscount?: number
+}
+
+export function getCartItemKey(item: Pick<CartItem, 'productId' | 'purchaseType' | 'packType'>): string {
+  return [item.productId, item.purchaseType, item.packType || 'standard'].join(':')
 }
 
 interface AppState {
@@ -247,19 +252,24 @@ export const useAppStore = create<AppState>()(
       cart: [],
       addToCart: (item) => {
         const cart = get().cart
-        const existing = cart.find(i => i.productId === item.productId)
+        const cartKey = item.cartKey || getCartItemKey(item)
+        const existing = cart.find(i => (i.cartKey || getCartItemKey(i)) === cartKey)
         if (existing) {
-          set({ cart: cart.map(i => i.productId === item.productId ? { ...i, quantity: i.quantity + item.quantity } : i) })
+          set({
+            cart: cart.map(i => (i.cartKey || getCartItemKey(i)) === cartKey
+              ? { ...i, cartKey, quantity: i.quantity + item.quantity }
+              : i)
+          })
         } else {
-          set({ cart: [...cart, item] })
+          set({ cart: [...cart, { ...item, cartKey }] })
         }
       },
-      removeFromCart: (productId) => set({ cart: get().cart.filter(i => i.productId !== productId) }),
-      updateCartQuantity: (productId, quantity) => {
+      removeFromCart: (cartKey) => set({ cart: get().cart.filter(i => (i.cartKey || getCartItemKey(i)) !== cartKey) }),
+      updateCartQuantity: (cartKey, quantity) => {
         if (quantity <= 0) {
-          set({ cart: get().cart.filter(i => i.productId !== productId) })
+          set({ cart: get().cart.filter(i => (i.cartKey || getCartItemKey(i)) !== cartKey) })
         } else {
-          set({ cart: get().cart.map(i => i.productId === productId ? { ...i, quantity } : i) })
+          set({ cart: get().cart.map(i => (i.cartKey || getCartItemKey(i)) === cartKey ? { ...i, cartKey, quantity } : i) })
         }
       },
       cartTotal: () => get().cart.reduce((sum, item) => sum + item.price * item.quantity, 0),

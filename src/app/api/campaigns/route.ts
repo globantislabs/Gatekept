@@ -26,6 +26,7 @@ export async function GET(request: NextRequest) {
       where,
       orderBy: { created_at: 'desc' },
       include: {
+        product: true,
         _count: {
           select: { qrScans: true },
         },
@@ -63,6 +64,7 @@ export async function POST(request: NextRequest) {
       channel,
       partner_name,
       location,
+      product_id,
       start_date,
       end_date,
       status,
@@ -75,11 +77,13 @@ export async function POST(request: NextRequest) {
         channel: channel as string || 'HOTEL',
         partner_name: partner_name as string || null,
         location: location as string || null,
+        product_id: product_id ? (product_id as string) : null,
         start_date: start_date ? new Date(start_date as string) : null,
         end_date: end_date ? new Date(end_date as string) : null,
         status: status as string || 'ACTIVE',
         qr_code_url: qr_code_url as string || null,
       },
+      include: { product: true },
     })
 
     return jsonResponse({ campaign }, 201)

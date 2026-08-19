@@ -29,6 +29,7 @@ export interface Product {
   description?: string | null
   short_description?: string | null
   price: number
+  subscription_price?: number | null
   mrp?: number | null
   stock: number
   image_url?: string | null
@@ -42,8 +43,6 @@ export interface Product {
   tags?: string | null
   active: boolean
   featured?: boolean | null
-  brand?: string | null
-  flavor?: string | null
   serving_size?: string | null
   allergen_info?: string | null
   storage_info?: string | null
@@ -82,7 +81,6 @@ export interface ProductQuiz {
   question: string
   options: string[]  // parsed from JSON
   answer: number
-  category?: string | null
   difficulty: string
   order: number
   active: boolean
@@ -110,6 +108,8 @@ export interface Campaign {
   channel: string
   partner_name?: string | null
   location?: string | null
+  product_id?: string | null
+  product?: Product | null
   start_date?: string | null
   end_date?: string | null
   status: string
@@ -121,10 +121,38 @@ export interface Campaign {
 export interface QrScan {
   id: string
   campaign_id?: string | null
+  product_id?: string | null
   user_id?: string | null
   device?: string | null
   location?: string | null
   created_at: string
+}
+
+export interface Invoice {
+  id: string
+  order_id: string
+  invoice_number: string
+  user_id: string
+  customer_name: string
+  customer_phone?: string | null
+  customer_email?: string | null
+  billing_address?: string | null
+  billing_city?: string | null
+  billing_state?: string | null
+  billing_pincode?: string | null
+  items: any[]  // parsed from JSON
+  subtotal: number
+  tax_amount: number
+  discount_amount: number
+  total_amount: number
+  payment_method?: string | null
+  payment_status: string
+  status: string
+  notes?: string | null
+  pdf_url?: string | null
+  issued_at: string
+  created_at: string
+  updated_at: string
 }
 
 // ─── Order & Subscription Types ────────────────────────────
@@ -157,28 +185,42 @@ export interface Order {
   id: string
   user_id: string
   order_number: string
+  invoice_number?: string | null
   status: string
   total_amount: number
   subtotal: number
   tax_amount: number
   discount_amount: number
   currency: string
+  // Billing address
+  billing_name?: string | null
+  billing_phone?: string | null
+  billing_email?: string | null
+  billing_address?: string | null
+  billing_city?: string | null
+  billing_state?: string | null
+  billing_pincode?: string | null
+  // Shipping address
   shipping_name?: string | null
   shipping_phone?: string | null
+  shipping_email?: string | null
   shipping_address?: string | null
   shipping_city?: string | null
   shipping_state?: string | null
   shipping_pincode?: string | null
+  same_as_billing?: boolean | null
   payment_method?: string | null
   payment_status: string
   payment_ref?: string | null
   notes?: string | null
   delivered_at?: string | null
+  invoice_generated_at?: string | null
   created_at: string
   updated_at: string
   items?: OrderItem[]
   tracking?: OrderTracking[]
   subscription?: Subscription | null
+  invoice?: Invoice | null
 }
 
 export interface Subscription {
@@ -436,6 +478,15 @@ export const campaignService = {
     return res.campaigns || res as unknown as Campaign[]
   },
 
+  async get(id: string): Promise<Campaign | null> {
+    try {
+      const res = await apiFetch<{ campaign: Campaign }>(`/api/campaigns/${id}`)
+      return res.campaign || res as unknown as Campaign
+    } catch {
+      return null
+    }
+  },
+
   async create(data: Partial<Campaign>, userId: string): Promise<Campaign> {
     const res = await apiFetch<{ campaign: Campaign }>('/api/campaigns', {
       method: 'POST',
@@ -578,12 +629,23 @@ export const orderService = {
   async create(data: {
     user_id: string
     items: any[]
+    // Billing address (primary contact)
+    billing_name?: string
+    billing_phone?: string
+    billing_email?: string
+    billing_address?: string
+    billing_city?: string
+    billing_state?: string
+    billing_pincode?: string
+    // Shipping address
     shipping_name?: string
     shipping_phone?: string
+    shipping_email?: string
     shipping_address?: string
     shipping_city?: string
     shipping_state?: string
     shipping_pincode?: string
+    same_as_billing?: boolean
     payment_method?: string
     notes?: string
   }): Promise<Order> {
@@ -632,8 +694,90 @@ export const orderService = {
   },
 }
 
+// ─── Invoice Service ───────────────────────────────────────
+
+export interface InvoiceListItem extends Invoice {
+  order?: {
+    id: string
+    order_number: string
+    status: string
+    payment_status: string
+    payment_method?: string | null
+  } | null
+  user?: {
+    id: string
+    name: string
+    email?: string | null
+    phone?: string | null
+  } | null
+}
+
+export interface InvoiceLineItem {
+  name: string
+  quantity: number
+  unit_price: number
+  total_price: number
+  pack_type?: string | null
+}
+
+export const invoiceService = {
+  async list(userId: string, filters?: { status?: string; order_id?: string }): Promise<InvoiceListItem[]> {
+    const params = new URLSearchParams()
+    if (filters?.status) params.set('status', filters.status)
+    if (filters?.order_id) params.set('order_id', filters.order_id)
+    const res = await apiFetch<{ data: InvoiceListItem[]; total: number }>(
+      `/api/invoices?${params.toString()}`,
+      { headers: getAdminHeaders(userId) },
+    )
+    return res.data || []
+  },
+
+  async get(id: string, userId: string): Promise<InvoiceListItem | null> {
+    try {
+      const res = await apiFetch<{ data: InvoiceListItem }>(`/api/invoices/${id}`, {
+        headers: getAdminHeaders(userId),
+      })
+      return res.data || null
+    } catch {
+      return null
+    }
+  },
+
+  async getByOrderId(orderId: string, userId: string): Promise<InvoiceListItem | null> {
+    const list = await this.list(userId, { order_id: orderId })
+    return list && list.length > 0 ? list[0] : null
+  },
+
+  async create(data: { order_id: string; notes?: string }, userId: string): Promise<InvoiceListItem> {
+    const res = await apiFetch<{ data: InvoiceListItem }>('/api/invoices', {
+      method: 'POST',
+      body: JSON.stringify(data),
+      headers: getAdminHeaders(userId),
+    })
+    return res.data
+  },
+
+  async update(
+    id: string,
+    data: { status?: string; notes?: string; payment_status?: string; payment_method?: string },
+    userId: string,
+  ): Promise<InvoiceListItem> {
+    const res = await apiFetch<{ data: InvoiceListItem }>(`/api/invoices/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+      headers: getAdminHeaders(userId),
+    })
+    return res.data
+  },
+
+  /** Returns a printable URL for the invoice (HTML page with @media print rules). */
+  getDownloadUrl(id: string): string {
+    return `/api/invoices/download/${id}`
+  },
+}
+
 export const qrScanService = {
-  async create(data: { campaign_id?: string; user_id?: string; device?: string; location?: string }): Promise<QrScan> {
+  async create(data: { campaign_id?: string; product_id?: string | null; user_id?: string; device?: string; location?: string }): Promise<QrScan> {
     const res = await apiFetch<{ scan: QrScan }>('/api/scans', {
       method: 'POST',
       body: JSON.stringify(data),

@@ -1,8 +1,28 @@
 import { PrismaClient, Prisma } from '@prisma/client'
 
+// Bump this whenever the Prisma schema is regenerated with new/changed
+// relations. In dev mode Turbopack re-evaluates this module on file changes,
+// and the version mismatch will force us to discard the cached (stale) client
+// and create a fresh one that knows about the new schema.
+const PRISMA_SCHEMA_VERSION = '2025-09-10-invoice-model-v1'
+
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined
+  prismaSchemaVersion: string | undefined
   dbConnectionState: 'unknown' | 'connected' | 'disconnected' | 'error'
+}
+
+// Invalidate cached client if it was generated against a different schema.
+// This is critical in dev mode where Turbopack may re-evaluate this module
+// but the global Prisma client singleton was created from an older generated
+// client (before a `prisma generate` ran).
+if (globalForPrisma.prisma && globalForPrisma.prismaSchemaVersion !== PRISMA_SCHEMA_VERSION) {
+  try {
+    void globalForPrisma.prisma.$disconnect()
+  } catch {
+    // ignore
+  }
+  globalForPrisma.prisma = undefined
 }
 
 // ─── Connection State ─────────────────────────────────────────
@@ -33,7 +53,10 @@ function createPrismaClient(): PrismaClient {
 
 export const db = globalForPrisma.prisma ?? createPrismaClient()
 
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = db
+if (process.env.NODE_ENV !== 'production') {
+  globalForPrisma.prisma = db
+  globalForPrisma.prismaSchemaVersion = PRISMA_SCHEMA_VERSION
+}
 
 // ─── Connection Health Check ─────────────────────────────────
 // Tests the database connection with a lightweight query.

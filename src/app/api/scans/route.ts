@@ -14,6 +14,7 @@ export async function POST(request: NextRequest) {
     const scan = await db.qrScan.create({
       data: {
         campaign_id: body.campaign_id || null,
+        product_id: body.product_id || null,
         user_id: body.user_id || null,
         device: body.device || null,
         location: body.location || null,
@@ -40,7 +41,7 @@ export async function GET(request: NextRequest) {
       where,
       orderBy: { created_at: 'desc' },
       include: {
-        campaign: { select: { id: true, name: true, channel: true } },
+        campaign: { select: { id: true, name: true, channel: true, product_id: true } },
         user: { select: { id: true, name: true, user_id: true } },
       },
     })

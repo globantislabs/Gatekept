@@ -38,6 +38,7 @@ model UserProfile {
   subscriptions       Subscription[]
   otpVerifications    OtpVerification[]
   notificationLogs    NotificationLog[]
+  invoices            Invoice[]
 
   @@index([user_id])
   @@index([email])
@@ -90,6 +91,7 @@ model Product {
   learningProgress ProductLearningProgress[]
   orderItems      OrderItem[]
   subscriptions   Subscription[]
+  campaigns       Campaign[]
 
   @@index([slug])
   @@index([active])
@@ -173,6 +175,7 @@ model Campaign {
   channel         String   @default("HOTEL") @db.VarChar(50)
   partner_name    String?  @db.VarChar(255)
   location        String?  @db.VarChar(255)
+  product_id      String?  @db.VarChar(30)  // linked product for scan tracking + pricing
   start_date      DateTime? @db.DateTime(3)
   end_date        DateTime? @db.DateTime(3)
   status          String   @default("ACTIVE") @db.VarChar(30)
@@ -181,10 +184,12 @@ model Campaign {
   updated_at      DateTime @updatedAt @db.DateTime(3)
 
   // Relations
+  product         Product?  @relation(fields: [product_id], references: [id], onDelete: SetNull)
   qrScans         QrScan[]
 
   @@index([status])
   @@index([channel])
+  @@index([product_id])
 }
 
 // ─── QR Scan Tracking ──────────────────────────────────────
@@ -192,6 +197,7 @@ model Campaign {
 model QrScan {
   id              String   @id @default(cuid()) @db.VarChar(30)
   campaign_id     String?  @db.VarChar(30)
+  product_id      String?  @db.VarChar(30)  // track which product's QR was scanned
   user_id         String?  @db.VarChar(30)
   device          String?  @db.VarChar(100)
   location        String?  @db.VarChar(255)
@@ -202,6 +208,7 @@ model QrScan {
 
   @@index([campaign_id])
   @@index([user_id])
+  @@index([product_id])
   @@index([created_at])
 }
 
@@ -217,14 +224,28 @@ model Order {
   tax_amount      Float    @default(0)
   discount_amount Float    @default(0)
   currency        String   @default("INR") @db.VarChar(10)
+  // Billing address (primary contact)
+  billing_name    String?  @db.VarChar(255)
+  billing_phone   String?  @db.VarChar(20)
+  billing_email   String?  @db.VarChar(191)
+  billing_address String?  @db.Text
+  billing_city    String?  @db.VarChar(100)
+  billing_state   String?  @db.VarChar(100)
+  billing_pincode String?  @db.VarChar(10)
+  // Shipping address
   shipping_name   String?  @db.VarChar(255)
   shipping_phone  String?  @db.VarChar(20)
+  shipping_email  String?  @db.VarChar(191)
   shipping_address String? @db.Text
   shipping_city   String?  @db.VarChar(100)
   shipping_state  String?  @db.VarChar(100)
   shipping_pincode String? @db.VarChar(10)
+  same_as_billing Boolean?
+  // Invoice link
+  invoice_number       String?  @unique @db.VarChar(50)
+  invoice_generated_at DateTime? @db.DateTime(3)
   payment_method  String?  @default("UPI") @db.VarChar(50)
-  payment_status  String   @default("PENDING") @db.VarChar(30) // PENDING, COMPLETED, FAILED, REFUNDED
+  payment_status  String   @default("PENDING") @db.VarChar(30) // PENDING, COMPLETED, FAILED, REFUNDED, COD_PENDING
   payment_ref     String?  @db.VarChar(255)
   notes           String?  @db.Text
   delivered_at    DateTime? @db.DateTime(3)
@@ -236,11 +257,50 @@ model Order {
   items           OrderItem[]
   tracking        OrderTracking[]
   subscription    Subscription?
+  invoice         Invoice?
 
   @@index([user_id])
   @@index([order_number])
   @@index([status])
   @@index([created_at])
+}
+
+// ─── Invoices ────────────────────────────────────────────────────
+
+model Invoice {
+  id              String   @id @default(cuid()) @db.VarChar(30)
+  order_id        String   @unique @db.VarChar(30)
+  invoice_number  String   @unique @db.VarChar(50)
+  user_id         String   @db.VarChar(30)
+  customer_name   String   @db.VarChar(255)
+  customer_phone  String?  @db.VarChar(20)
+  customer_email  String?  @db.VarChar(191)
+  billing_address String?  @db.Text
+  billing_city    String?  @db.VarChar(100)
+  billing_state   String?  @db.VarChar(100)
+  billing_pincode String?  @db.VarChar(10)
+  items           String   @default("[]") @db.LongText  // JSON array of { name, quantity, unit_price, total_price, pack_type? }
+  subtotal        Float    @default(0)
+  tax_amount      Float    @default(0)
+  discount_amount Float    @default(0)
+  total_amount    Float    @default(0)
+  payment_method  String?  @db.VarChar(50)
+  payment_status  String   @default("PENDING") @db.VarChar(30)
+  status          String   @default("ISSUED") @db.VarChar(30) // ISSUED, PAID, CANCELLED, OVERDUE
+  notes           String?  @db.Text
+  pdf_url         String?  @db.Text
+  issued_at       DateTime @default(now()) @db.DateTime(3)
+  created_at      DateTime @default(now()) @db.DateTime(3)
+  updated_at      DateTime @updatedAt @db.DateTime(3)
+
+  // Relations
+  order           Order      @relation(fields: [order_id], references: [id], onDelete: Cascade)
+  user            UserProfile @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@index([invoice_number])
+  @@index([status])
+  @@index([issued_at])
 }
 
 model OrderItem {

@@ -7,6 +7,30 @@ export async function OPTIONS() {
   return handleOptions()
 }
 
+// GET /api/campaigns/[id] - Fetch a single campaign (with linked product)
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params
+    const campaign = await db.campaign.findUnique({
+      where: { id },
+      include: {
+        product: true,
+        _count: { select: { qrScans: true } },
+      },
+    })
+    if (!campaign) {
+      return errorResponse('Campaign not found', 404)
+    }
+    return jsonResponse({ campaign })
+  } catch (error) {
+    console.error('Error fetching campaign:', error)
+    return errorResponse('Failed to fetch campaign', 500)
+  }
+}
+
 // PUT /api/campaigns/[id] - Update campaign (admin only)
 export async function PUT(
   request: NextRequest,
@@ -32,13 +56,21 @@ export async function PUT(
 
     const allowedFields = [
       'name', 'channel', 'partner_name', 'location',
-      'start_date', 'end_date', 'status', 'qr_code_url',
+      'product_id', 'start_date', 'end_date', 'status', 'qr_code_url',
     ]
 
     const updateData: Record<string, unknown> = {}
     for (const field of allowedFields) {
       if (sanitized[field] !== undefined) {
         updateData[field] = sanitized[field]
+      }
+    }
+
+    // Treat empty string product_id as null (unlink)
+    if (updateData.product_id !== undefined) {
+      const pid = updateData.product_id
+      if (pid === '' || pid === null) {
+        updateData.product_id = null
       }
     }
 
@@ -53,6 +85,7 @@ export async function PUT(
     const campaign = await db.campaign.update({
       where: { id },
       data: updateData,
+      include: { product: true },
     })
 
     return jsonResponse({ campaign })

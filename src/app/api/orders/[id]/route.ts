@@ -18,6 +18,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         items: true,
         tracking: { orderBy: { tracked_at: 'desc' } },
         subscription: true,
+        invoice: true,
         user: { select: { id: true, name: true, email: true, phone: true } },
       },
     })
@@ -86,6 +87,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       include: {
         items: true,
         tracking: { orderBy: { tracked_at: 'desc' } },
+        invoice: true,
       },
     })
 

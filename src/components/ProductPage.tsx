@@ -321,19 +321,11 @@ export default function ProductPage() {
 
                           {/* Product Content */}
                           <CardContent className="p-5 lg:p-6 flex flex-col gap-3">
-                            {/* Brand + Type row */}
+                            {/* Type row */}
                             <div className="flex items-center gap-2 flex-wrap">
-                              {product.brand && (
-                                <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-white/60 border border-white/15 rounded-full px-2.5 py-0.5 bg-white/[0.03]">
-                                  {product.brand}
-                                </span>
-                              )}
                               <p className="text-[11px] font-semibold tracking-[0.35em] uppercase text-[#48805b]">{product.type} Variant</p>
                               {product.category && (
                                 <span className="text-[9px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#2e91b2]/20 text-[#2e91b2]">{product.category}</span>
-                              )}
-                              {product.flavor && (
-                                <span className="text-[10px] font-semibold tracking-wide px-2.5 py-0.5 rounded-full bg-[#afb75d]/15 text-[#afb75d] border border-[#afb75d]/25">{product.flavor}</span>
                               )}
                             </div>
 

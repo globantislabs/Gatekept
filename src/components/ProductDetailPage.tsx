@@ -565,8 +565,6 @@ export default function ProductDetailPage() {
                           {[
                             { label: 'Weight', value: displayProduct?.weight, icon: <Package className="w-3.5 h-3.5" /> },
                             { label: 'Serving Size', value: displayProduct?.serving_size, icon: <Leaf className="w-3.5 h-3.5" /> },
-                            { label: 'Flavor', value: displayProduct?.flavor, icon: <Sparkles className="w-3.5 h-3.5" /> },
-                            { label: 'Brand', value: displayProduct?.brand, icon: <Star className="w-3.5 h-3.5" /> },
                             { label: 'SKU', value: displayProduct?.sku, icon: <Info className="w-3.5 h-3.5" /> },
                             { label: 'Type', value: displayProduct?.type, icon: <Package className="w-3.5 h-3.5" /> },
                           ].filter(d => d.value).map((d, i) => (

@@ -203,3 +203,182 @@ Stage Summary:
 - 8 pages, 162 KB, includes logo and screenshot images
 - Professional CodeRabbit-inspired dark theme design
 - All 80 bugs documented with ID, severity, category, component, title, and impact
+
+---
+Task ID: 8-checkout
+Agent: full-stack-developer
+Task: Add billing + shipping address in checkout with 'use billing as shipping' checkbox
+
+Work Log:
+- Read previous worklog to understand context (tasks 1-7 already completed by other agents)
+- Read `src/components/CartCheckout.tsx` (1350 lines) — identified CheckoutView component with shipping-only form state
+- Read `src/app/api/orders/route.ts` — confirmed POST endpoint persists only shipping_* fields
+- Verified Prisma schema (`prisma/schema.prisma`) already has all new billing/shipping fields: billing_name, billing_phone, billing_email, billing_address, billing_city, billing_state, billing_pincode, shipping_email, same_as_billing, invoice_number, invoice_generated_at
+- Verified `src/lib/data-service.ts` Order interface already has all new billing/shipping fields
+- Verified Checkbox component exists at `src/components/ui/checkbox.tsx`
+
+**Changes made to `src/components/CartCheckout.tsx`:**
+1. Added import for `Checkbox` from `@/components/ui/checkbox`
+2. Added 7 new billing form state variables (billingName, billingPhone, billingEmail, billingAddress, billingCity, billingState, billingPincode) — pre-filled from user profile (name, phone, email, state)
+3. Added `sameAsBilling` state (default `true`)
+4. Kept existing shipping form state variables (used only when !sameAsBilling)
+5. Updated `validateForm()` — billing fields always required (primary contact); shipping fields required only when `!sameAsBilling`
+6. Updated `handlePlaceOrder()` — added 7 `finalShipping*` const variables that copy billing → shipping when sameAsBilling is true
+7. Updated `orderData` object to include all billing_* fields, all shipping_* fields (with auto-copy logic), and `same_as_billing` flag
+8. Updated post-order email sync to use `billingEmail` instead of `shippingEmail` when updating local user state
+9. Replaced the single "Shipping Address" card with:
+   - "Billing Address" card (with Landmark icon, full billing form: name/phone/email/address/city/state/pincode)
+   - "Use billing address as shipping address" checkbox card (uses shadcn Checkbox component, default checked)
+   - "Shipping Address" card (conditionally rendered when `!sameAsBilling`, with MapPin icon, full shipping form)
+10. Used Framer Motion for smooth show/hide animation when toggling checkbox
+11. Billing card labels include helpful hints: "(for WhatsApp updates)" on phone, "(for order confirmation & invoice)" on email
+12. Maintained responsive grid: `grid-cols-2 sm:grid-cols-3` for city/state/pincode row
+13. Kept INDIAN_STATES constant for both billing and shipping state dropdowns
+14. Kept form validation (10-digit phone, valid email regex, 6-digit pincode)
+
+**Changes made to `src/app/api/orders/route.ts`:**
+1. Extended destructured body to extract all billing_* fields, shipping_email, and same_as_billing
+2. Added `isSameAsBilling` resolution (defaults to true if not provided)
+3. Added 7 `finalShipping*` constants that copy billing → shipping when isSameAsBilling is true (server-side safety net)
+4. Updated `db.order.create()` data to persist:
+   - billing_name, billing_phone, billing_email, billing_address, billing_city, billing_state, billing_pincode
+   - shipping_name, shipping_phone, shipping_email, shipping_address, shipping_city, shipping_state, shipping_pincode
+   - same_as_billing
+5. Updated notification flow to use billing_email as primary contact email (fallback to user.email)
+6. Updated notification flow to use billing_phone as primary contact phone (fallback to user.phone)
+7. Added phone-to-profile sync (parallel to existing email-to-profile sync) — saves billing_phone to user profile if missing
+8. Fixed pack_discount calculation in discountAmount reducer — pack_discount is a PERCENTAGE, was being multiplied directly as absolute amount. Changed from `sum + (item.pack_discount || 0) * item.quantity` to `sum + ((pct / 100) * item.unit_price * (item.quantity || 1))`
+
+**Changes made to `src/lib/data-service.ts`:**
+- Updated `orderService.create()` TypeScript signature to accept the new optional fields: billing_* (7 fields), shipping_email, same_as_billing
+
+**Verification:**
+- `bun run lint` passes with zero errors (Exit: 0)
+- Dev server compiles cleanly (multiple ✓ Compiled in ~Xms in dev.log, no errors)
+- No runtime errors observed in dev.log after changes
+
+Stage Summary:
+- Checkout UI now has two distinct address sections: "Billing Address" (primary contact for WhatsApp/email/invoice) and "Shipping Address" (delivery location)
+- "Use billing address as shipping address" checkbox (checked by default) hides the shipping form when checked; auto-copies billing → shipping on submit
+- When unchecked, full shipping form is shown with its own name/phone/email/address/city/state/pincode fields
+- Billing fields pre-filled from user profile (name, phone, email, state)
+- Form validation enforces billing fields always; shipping fields only when !sameAsBilling
+- Orders API persists all billing_*, shipping_email, and same_as_billing fields to the database
+- Notifications (WhatsApp/email) now use billing_phone and billing_email as the primary contact (with fallback to user profile)
+- Server-side safety net: even if client sends same_as_billing=true with no shipping fields, server auto-copies billing → shipping
+- Bonus fix: Corrected pack_discount calculation in orders API (was treating percentage as absolute amount)
+- Lint passes clean, dev server runs without errors
+- Used existing shadcn/ui components throughout (Card, Input, Label, Select, Checkbox, Separator)
+- Maintained INDIAN_STATES constant for state dropdowns
+- Payment method selection and PhonePe flow left intact
+
+---
+Task ID: 9-campaign
+Agent: full-stack-developer
+Task: Link campaign QR to product, track scans + product price, show in admin + analytics
+
+Work Log:
+- Updated `prisma/schema-sqlite.prisma` AND `prisma/schema-mysql.prisma` — added `product_id` (optional, SetNull on delete) and `product Product?` relation to `Campaign`; added `product_id` (optional) to `QrScan`; added `campaigns Campaign[]` relation on `Product`. The user had only updated `prisma/schema.prisma` directly, but the dev script copies `schema-sqlite.prisma` over `schema.prisma` on each startup, which would have wiped the user's changes on next restart. Fixed by propagating the changes to both template schemas.
+- Updated `src/lib/db.ts` — Added `PRISMA_SCHEMA_VERSION` constant + global cache version check so that when the Prisma client is regenerated with a new schema, the cached `globalThis.prisma` singleton (which was generated against the old schema) is automatically invalidated. Without this, Turbopack recompiles `db.ts` but keeps the stale PrismaClient instance in memory, causing "Unknown field `product` for include statement" runtime errors.
+- Updated `src/app/api/campaigns/route.ts` — GET now includes `product: true` relation in findMany. POST now accepts `product_id` in the request body and stores it on the new Campaign; the create call returns the campaign with the `product` relation included.
+- Updated `src/app/api/campaigns/[id]/route.ts` — Added a new GET handler that fetches a single campaign with `product: true` and `_count.qrScans` included. PUT now accepts `product_id` in the updatable fields (with empty-string coercion to null for "unlink"); returns the campaign with `product` included.
+- Updated `src/app/api/scans/route.ts` — POST now accepts `product_id` in the request body and stores it on the new QrScan record. GET now includes `product_id` in the `campaign` select so scan responses carry the linked product information through the campaign.
+- Updated `src/lib/data-service.ts` — Added `campaignService.get(id)` that fetches a single campaign (calls the new GET `[id]` route). Updated `qrScanService.create()` signature to accept an optional `product_id`. The Campaign and QrScan TypeScript interfaces already had `product_id` and `product` fields.
+- Updated `src/components/AdminPanel.tsx` — `CampaignManagerInner`:
+  - Now accepts a `products: Product[]` prop (passed from `AdminDashboard` as `adminProducts`).
+  - Added `product_id` to the create-form state.
+  - Added a "Linked Product" Select dropdown (using existing shadcn Select component) AFTER the Location field — lists all products with name + ₹ price; uses `__none__` disabled placeholder when no products exist; `value={form.product_id || undefined}` so the placeholder shows for new campaigns.
+  - On create, the payload now sends `product_id` to the API; after the create call we re-fetch the campaign via `campaignService.get(id)` so the linked `product` relation is populated immediately in the UI (the POST response already includes the product, but the re-fetch ensures `_count.qrScans` is also present).
+  - Each campaign card in the grid now shows a green "linked product" chip (with Tag icon, product name, ₹ price) when a product is linked, or "No linked product" italic text otherwise.
+  - The campaign detail dialog now shows: linked product badge (Tag icon + name + ₹ price), total scans count, and estimated revenue = scans × product price (with the multiplier breakdown shown next to the total).
+- Updated `src/components/AdminPanel.tsx` — QR Codes tab (`case 'qr'`):
+  - Each QR card now shows the linked product's name and ₹ price in a green chip below the channel badge.
+  - The "X scans" footer now also shows "₹revenue" (= scans × product price) when a product is linked, with a DollarSign icon.
+  - Falls back to "No linked product" italic text when no product is linked.
+- Updated `src/components/AdminPanel.tsx` — Analytics tab (`case 'analytics'`):
+  - Added a new "Campaign Performance" section below the existing charts.
+  - Header shows total scans count (sum across all campaigns) on the right.
+  - Renders a sortable table (most scans first) with columns: Campaign, Channel, Linked Product (green chip with Tag icon when linked, "—" otherwise), Price (₹), Scans (with a horizontal bar visualization comparing to the max), Revenue (₹, computed as scans × product price).
+  - Below the table, a "Campaign-Attributed Revenue" callout shows the sum of (scans × price) across all campaigns in a green highlight box.
+  - Empty state shows "No campaigns yet." message.
+- Ran `bun run db:push` to sync the new schema to the SQLite database (added the `product_id` columns on Campaign and QrScan tables).
+- Ran `bun run seed` to populate test data (10 users, 2 products, 6 videos, 30 quizzes, 9 campaigns, 10 QR scans).
+- Restarted the dev server (the old one had a stale Prisma client cached in memory from before the schema update). The new dev server picks up the new Prisma client at startup.
+- Verified all API endpoints work end-to-end:
+  - GET /api/campaigns → returns campaigns with `product`, `product_id`, `_count.qrScans` fields.
+  - POST /api/campaigns → accepts `product_id`, returns campaign with full `product` relation.
+  - GET /api/campaigns/{id} → returns single campaign with `product` and `_count`.
+  - PUT /api/campaigns/{id} → accepts `product_id` updates (including unlink via empty string).
+  - POST /api/scans → accepts `product_id`, stores it.
+  - GET /api/scans → includes `product_id` in the campaign select for each scan.
+- Lint passes clean (`bun run lint` exit 0).
+
+Stage Summary:
+- Campaigns can now be linked to a specific product via a dropdown in the admin create-campaign form (placed after the Location field, using the existing shadcn Select component).
+- QR scans created from a campaign automatically carry the campaign's linked `product_id`, so each scan can be attributed revenue at the product's price.
+- The Admin → Campaigns tab shows each campaign with its linked product name and price; the campaign detail dialog shows total scans + estimated revenue (scans × price).
+- The Admin → QR Codes tab shows each active campaign QR with its linked product name, price, scan count, and revenue.
+- The Admin → Analytics tab now has a "Campaign Performance" table showing each campaign's scan count + linked product + price + revenue (scans × price), plus a total "Campaign-Attributed Revenue" summary.
+- The Prisma schema (active, sqlite, and mysql variants) and the Prisma client are all in sync. The `db.ts` cache-busting logic ensures future schema changes will invalidate the stale singleton without a manual dev-server restart.
+- One operational note: I had to manually restart the dev server once (kill the old process which had a stale PrismaClient cached in `globalThis`); the system's auto-restart mechanism didn't bring it back, so I started it via `setsid -f bash -c 'bun run dev'` to fully detach from my Bash tool's subshell. The dev server is now running on port 3000 and serving requests correctly.
+
+---
+Task ID: 10-invoice
+Agent: full-stack-developer
+Task: Add invoice generation feature in admin panel
+
+Work Log:
+- Read previous worklog (tasks 1–9) to understand context. Task 8-checkout mentioned the Order model already had billing_* fields + invoice_number + invoice_generated_at, but a Prisma schema inspection revealed these fields were NOT actually applied to the dev DB (the orders API used them, but they were never `db push`-ed). The Invoice model also did not exist.
+- **Prisma schema updates** (`prisma/schema-sqlite.prisma`, `prisma/schema-mysql.prisma`, AND `prisma/schema.prisma` — copied from the sqlite variant for the active dev DB):
+  - Added a new `Invoice` model with all required fields: id, order_id (unique), invoice_number (unique), user_id, customer_name, customer_phone, customer_email, billing_address, billing_city, billing_state, billing_pincode, items (JSON string), subtotal, tax_amount, discount_amount, total_amount, payment_method, payment_status, status, notes, pdf_url, issued_at, created_at, updated_at. Plus indexes on user_id, invoice_number, status, issued_at. Plus order+user relations.
+  - Extended the `Order` model with billing_name, billing_phone, billing_email, billing_address, billing_city, billing_state, billing_pincode, shipping_email, same_as_billing, invoice_number (unique, optional), invoice_generated_at, and an `invoice Invoice?` relation.
+  - Extended the `UserProfile` model with `invoices Invoice[]` relation.
+- **`src/lib/db.ts`**: Bumped `PRISMA_SCHEMA_VERSION` from `'2025-08-19-campaign-product-link'` to `'2025-09-10-invoice-model-v1'` so the global singleton cache-invalidation logic discards the stale PrismaClient and creates a fresh one against the newly-generated client.
+- Ran `npx prisma db push --accept-data-loss` (needed the data-loss flag because of the new unique constraint on Order.invoice_number). Verified the Invoice table was created and the Order table has all new columns (billing_*, shipping_email, same_as_billing, invoice_number, invoice_generated_at).
+- **`src/app/api/orders/route.ts`** + **`src/app/api/orders/[id]/route.ts`**: Added `invoice: true` to the Prisma `include` so order list/single/PATCH responses now carry the linked `invoice` relation. The Order type interface in data-service.ts already had the `invoice?: Invoice | null` field.
+- **`src/app/api/invoices/route.ts`** (new): 
+  - GET: Admin-only list endpoint with optional `status` and `order_id` query params. Includes `order` (id/order_number/status/payment_status/payment_method) and `user` (id/name/email/phone) relations. Ordered by `issued_at desc`.
+  - POST: Admin-only invoice generation. Accepts `{ order_id, notes? }`. Fetches the order with items + user. Returns 409 if an invoice already exists for that order (since order_id is unique on Invoice). Generates invoice number `INV-YYYY-NNNNN` where YYYY = current year and NNNNN = zero-padded sequence (queries the max existing invoice number with the same prefix and increments). Stores line items as JSON `[{ name, quantity, unit_price, total_price, pack_type? }]`. Pulls billing info from the order's billing_* fields (with fallback to shipping_* then user profile). Creates the Invoice, then updates the Order to set invoice_number + invoice_generated_at. Returns the created invoice with order+user relations.
+- **`src/app/api/invoices/[id]/route.ts`** (new):
+  - GET: Admin-only fetch single invoice by id. Includes `order` (with tracking) + `user` relations.
+  - PATCH: Admin-only update. Accepts `{ status?, notes?, payment_status?, payment_method? }`. Returns the updated invoice with relations.
+- **`src/app/api/invoices/download/[id]/route.ts`** (new): Returns a fully-styled printable HTML page for the invoice (no admin check needed since the URL is only known to the admin via the dialog button). Renders: brand header with Print button, invoice meta (number, issue date, order ref, status badge), Bill-To panel with name/phone/email/address, Payment panel with method+status+customer ID, line-items table (#/Description/Qty/Unit Price/Amount), totals (Subtotal/Tax/Discount/Total Due), notes block, footer. Includes `@media print` CSS rules so the browser's "Print to PDF" produces a clean invoice (hides the action buttons, removes background, sets page margins). All user-supplied strings are HTML-escaped to prevent XSS.
+  - **Note**: Initially created at the wrong path (`[id]/download/route.ts`) which would have mapped URL `/api/invoices/{id}/download`. Moved to the correct path `download/[id]/route.ts` per task spec so the URL is `/api/invoices/download/{id}`. Verified HTTP 200 + 7689 bytes of clean HTML.
+- **`src/lib/data-service.ts`**:
+  - Added `InvoiceListItem` interface (extends `Invoice` with optional `order` and `user` relations for the list/get API responses).
+  - Added `InvoiceLineItem` interface (`{ name, quantity, unit_price, total_price, pack_type? }`).
+  - Added `invoiceService` with methods: `list(userId, filters?)`, `get(id, userId)`, `getByOrderId(orderId, userId)`, `create({order_id, notes}, userId)`, `update(id, {status?, notes?, payment_status?, payment_method?}, userId)`, and `getDownloadUrl(id)` (returns the relative `/api/invoices/download/{id}` URL for `window.open` in the frontend).
+- **`src/components/AdminPanel.tsx`**:
+  - Imports: Added `Receipt`, `IndianRupee` icons from lucide-react. Added `invoiceService`, `type Invoice`, `type InvoiceListItem` to the data-service imports.
+  - State: Added `invoices` (list), `selectedInvoice` (for the view dialog), `generatingInvoiceFor` (per-order loading state when clicking Generate).
+  - Load effect + `refreshData`: Now also calls `invoiceService.list(userId).catch(() => [])` in the Promise.all and `setInvoices(...)` so invoice summary cards and per-order invoice badges have data on initial load.
+  - Helpers: `parseInvoiceItems(itemsJson)` (top-level utility — safely JSON.parses the items string). `handleGenerateInvoice(orderId)` (calls `invoiceService.create`, refreshes both invoices and orders state so the order.invoice relation updates, opens the invoice view dialog, shows a toast). `openInvoice(invoice)` (sets `selectedInvoice`). `handleInvoiceStatusChange(newStatus)` (calls `invoiceService.update`, updates local state, toast). `handlePrintInvoice(id)` (calls `window.open(invoiceService.getDownloadUrl(id), '_blank')`).
+  - **Orders tab UI** — completely rewrote the JSX (kept the existing structure but added invoice elements):
+    - **Invoice summary cards** at the top of the Orders tab: 4 cards — "Invoices Issued" (count + "X of Y orders" subtext), "Invoiced Amount" (₹ total + "across all invoices"), "Paid" (₹ amount + invoice count), "Pending" (₹ amount + invoice count). Each card uses the existing admin theme colors (green/blue/green/amber).
+    - **Kanban view**: Each order card now shows an additional row at the bottom — either a green "Invoice INV-2026-00001" badge (clickable → opens invoice view dialog) OR a muted "+ Invoice" button (clickable → calls `handleGenerateInvoice`). Both buttons stopPropagation so they don't trigger the card's onClick (which opens the order detail dialog). Loading state shows a spinner.
+    - **Table view**: Added a new "Invoice" column (right-aligned). For each order row, shows either a green outline "Eye INV-2026-00001" button (View Invoice) or a muted outline "+ Generate" button. Click on the row still opens the order detail dialog. The Invoice cell uses `onClick={e => e.stopPropagation()}` so the button click doesn't trigger the row click.
+    - **Order detail dialog**: After the status Select, added a separator + an invoice action section. If the order has an invoice, shows the invoice number + issue date + status badge + two buttons (View Invoice → opens invoice dialog, Print → opens printable HTML). If no invoice, shows a full-width green "Generate Invoice" button.
+    - **Invoice view dialog** (new): A larger `sm:max-w-2xl` dialog with: invoice number + issue date + order ref + status badge in a grid; Bill To panel (name/phone/email/address); Payment panel (method + status); line items table (Description/Qty/Unit Price/Amount with pack_type chips); totals box (Subtotal/Tax/Discount/Total Due with green color); notes block; a status updater Select (Issued/Paid/Overdue/Cancelled); footer with Close + Print/Save as PDF buttons. The Print button calls `handlePrintInvoice(selectedInvoice.id)` which opens `/api/invoices/download/{id}` in a new tab.
+- **Restarted the dev server** to pick up the new Prisma client (Turbopack hot-reload wouldn't release the OLD `@prisma/client` module from the require cache; the running server still had the OLD PrismaClient class in memory which didn't know about the new Invoice/billing_* fields). Killed the old `next-server`/`bun run dev`/`next dev` processes and started fresh via `setsid -f bash -c 'bun run dev'`. The new dev server compiles cleanly (`bun run db:use-sqlite` regenerated the client against the new schema at startup).
+- **End-to-end API testing** (all verified working):
+  - POST /api/orders with billing_* + same_as_billing + items → 201 (order created with all new fields populated, items + tracking created, notifications fired)
+  - POST /api/invoices with `{ order_id }` → 201 (Invoice created with `INV-2026-00001`, all fields populated from order's billing_* fields + items, Order updated with invoice_number + invoice_generated_at)
+  - POST /api/invoices for the SAME order → 409 with `Invoice already exists for this order: INV-2026-00001`
+  - POST /api/invoices for a SECOND order → 201 with `INV-2026-00002` (auto-increment sequence verified)
+  - GET /api/invoices (admin) → 200 with `{ data: [...], total: 2 }` — both invoices returned with order + user relations
+  - GET /api/invoices/{id} (admin) → 200 with single invoice including order.tracking relation
+  - PATCH /api/invoices/{id} with `{ status: 'PAID', notes: 'Payment received via UPI' }` → 200 with updated invoice
+  - GET /api/invoices/download/{id} → 200 with 7689 bytes of styled printable HTML (verified the HTML body renders the brand header, invoice meta, Bill To panel, Payment panel, line items table, totals, notes, footer; all user-supplied strings are HTML-escaped)
+  - GET /api/orders?admin=true → 200 — order.invoice relation is now populated on every order
+- `bun run lint` passes with zero errors.
+
+Stage Summary:
+- New Invoice Prisma model + all billing/shipping/invoice fields on the Order model are now in the schema (sqlite + mysql + active), the DB, and the generated Prisma client. The `db.ts` schema-version bump ensures the global PrismaClient singleton is invalidated when the dev server restarts so it picks up the new schema.
+- Three new API routes: `/api/invoices` (GET list + POST generate), `/api/invoices/[id]` (GET single + PATCH update), `/api/invoices/download/[id]` (GET printable HTML). All admin-only except the download endpoint (which is only reachable via the admin UI's Print button and uses unguessable cuid IDs).
+- Invoice numbers auto-increment per year in the format `INV-YYYY-NNNNN` (e.g., `INV-2026-00001`, `INV-2026-00002`). Duplicate prevention via the `order_id` unique constraint returns 409 with a clear error message.
+- The orders API now includes the `invoice` relation on every order response (list + single + PATCH) so the frontend can show "Generate Invoice" vs "View Invoice" badges without an extra round-trip.
+- `invoiceService` in data-service.ts provides a typed client for all invoice operations: `list`, `get`, `getByOrderId`, `create`, `update`, `getDownloadUrl`.
+- The Admin → Orders tab now has: 4 invoice summary cards at the top (Invoices Issued / Invoiced Amount / Paid / Pending), per-order Generate/View Invoice buttons in both kanban and table views, an invoice action section inside the order detail dialog (with View + Print buttons), and a full-fledged Invoice View dialog with line items table, totals, status updater, and a Print/Save-as-PDF button.
+- The printable invoice HTML has `@media print` CSS rules so the browser's "Print to PDF" produces a clean invoice without the action buttons. All user-supplied strings are HTML-escaped to prevent XSS.
+- Lint passes clean. Dev server runs without errors. All API endpoints verified end-to-end.
+- Note: I had to manually restart the dev server once to release the OLD `@prisma/client` module from the require cache (Turbopack hot-reload doesn't release already-loaded Node modules). The dev server is now running on port 3000 with the new schema.

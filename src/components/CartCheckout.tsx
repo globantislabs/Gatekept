@@ -23,6 +23,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue
 } from '@/components/ui/select'
+import { Checkbox } from '@/components/ui/checkbox'
 import { toast } from 'sonner'
 
 // ─── BRAND CONSTANTS ────────────────────────────────────────
@@ -381,7 +382,16 @@ export function CheckoutView() {
     setLastOrderId, setLastOrderNumber, setLastPaymentMethod, setRedirectAfterLogin, setUser
   } = useAppStore()
 
-  // ── Form State ──
+  // ── Billing Form State (PRIMARY contact for WhatsApp / email) ──
+  const [billingName, setBillingName] = useState(user?.name || '')
+  const [billingPhone, setBillingPhone] = useState(user?.phone || '')
+  const [billingEmail, setBillingEmail] = useState(user?.email || '')
+  const [billingAddress, setBillingAddress] = useState('')
+  const [billingCity, setBillingCity] = useState('')
+  const [billingState, setBillingState] = useState(user?.state || '')
+  const [billingPincode, setBillingPincode] = useState('')
+
+  // ── Shipping Form State (used only when !sameAsBilling) ──
   const [shippingName, setShippingName] = useState(user?.name || '')
   const [shippingPhone, setShippingPhone] = useState(user?.phone || '')
   const [shippingEmail, setShippingEmail] = useState(user?.email || '')
@@ -389,6 +399,10 @@ export function CheckoutView() {
   const [shippingCity, setShippingCity] = useState('')
   const [shippingState, setShippingState] = useState(user?.state || '')
   const [shippingPincode, setShippingPincode] = useState('')
+
+  // ── Same as billing flag (default true) ──
+  const [sameAsBilling, setSameAsBilling] = useState(true)
+
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('COD')
   const [placing, setPlacing] = useState(false)
   const [formErrors, setFormErrors] = useState<Record<string, string>>({})
@@ -421,16 +435,31 @@ export function CheckoutView() {
   const validateForm = (): boolean => {
     const errors: Record<string, string> = {}
 
-    if (!shippingName.trim()) errors.shippingName = 'Name is required'
-    if (!shippingPhone.trim()) errors.shippingPhone = 'Phone is required'
-    else if (!/^[\d]{10}$/.test(shippingPhone.trim())) errors.shippingPhone = 'Enter a valid 10-digit phone number'
-    if (!shippingEmail.trim()) errors.shippingEmail = 'Email is required for order confirmation'
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(shippingEmail.trim())) errors.shippingEmail = 'Enter a valid email address'
-    if (!shippingAddress.trim()) errors.shippingAddress = 'Address is required'
-    if (!shippingCity.trim()) errors.shippingCity = 'City is required'
-    if (!shippingState) errors.shippingState = 'State is required'
-    if (!shippingPincode.trim()) errors.shippingPincode = 'Pincode is required'
-    else if (!/^[\d]{6}$/.test(shippingPincode.trim())) errors.shippingPincode = 'Enter a valid 6-digit pincode'
+    // ── Billing validation (always required — primary contact) ──
+    if (!billingName.trim()) errors.billingName = 'Name is required'
+    if (!billingPhone.trim()) errors.billingPhone = 'Phone is required'
+    else if (!/^[\d]{10}$/.test(billingPhone.trim())) errors.billingPhone = 'Enter a valid 10-digit phone number'
+    if (!billingEmail.trim()) errors.billingEmail = 'Email is required for order confirmation'
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(billingEmail.trim())) errors.billingEmail = 'Enter a valid email address'
+    if (!billingAddress.trim()) errors.billingAddress = 'Address is required'
+    if (!billingCity.trim()) errors.billingCity = 'City is required'
+    if (!billingState) errors.billingState = 'State is required'
+    if (!billingPincode.trim()) errors.billingPincode = 'Pincode is required'
+    else if (!/^[\d]{6}$/.test(billingPincode.trim())) errors.billingPincode = 'Enter a valid 6-digit pincode'
+
+    // ── Shipping validation (only when shipping differs from billing) ──
+    if (!sameAsBilling) {
+      if (!shippingName.trim()) errors.shippingName = 'Name is required'
+      if (!shippingPhone.trim()) errors.shippingPhone = 'Phone is required'
+      else if (!/^[\d]{10}$/.test(shippingPhone.trim())) errors.shippingPhone = 'Enter a valid 10-digit phone number'
+      if (!shippingEmail.trim()) errors.shippingEmail = 'Email is required'
+      else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(shippingEmail.trim())) errors.shippingEmail = 'Enter a valid email address'
+      if (!shippingAddress.trim()) errors.shippingAddress = 'Address is required'
+      if (!shippingCity.trim()) errors.shippingCity = 'City is required'
+      if (!shippingState) errors.shippingState = 'State is required'
+      if (!shippingPincode.trim()) errors.shippingPincode = 'Pincode is required'
+      else if (!/^[\d]{6}$/.test(shippingPincode.trim())) errors.shippingPincode = 'Enter a valid 6-digit pincode'
+    }
 
     setFormErrors(errors)
     return Object.keys(errors).length === 0
@@ -452,6 +481,17 @@ export function CheckoutView() {
     setPlacing(true)
 
     try {
+      const totalAmount = cartTotal() * (purchaseMode === 'subscription' && subPack ? (1 - subPack.discount / 100) : 1)
+
+      // Resolve shipping fields — when sameAsBilling, copy billing → shipping
+      const finalShippingName = sameAsBilling ? billingName.trim() : shippingName.trim()
+      const finalShippingPhone = sameAsBilling ? billingPhone.trim() : shippingPhone.trim()
+      const finalShippingEmail = sameAsBilling ? billingEmail.trim() : shippingEmail.trim()
+      const finalShippingAddress = sameAsBilling ? billingAddress.trim() : shippingAddress.trim()
+      const finalShippingCity = sameAsBilling ? billingCity.trim() : shippingCity.trim()
+      const finalShippingState = sameAsBilling ? billingState : shippingState
+      const finalShippingPincode = sameAsBilling ? billingPincode.trim() : shippingPincode.trim()
+
       const orderData = {
         user_id: user.id,
         items: cart.map(item => ({
@@ -465,22 +505,32 @@ export function CheckoutView() {
           pack_days: purchaseMode === 'subscription' ? subPack?.days : (item.packDays || null),
           pack_discount: purchaseMode === 'subscription' ? subPack?.discount : (item.packDiscount || null),
         })),
-        shipping_name: shippingName.trim(),
-        shipping_phone: shippingPhone.trim(),
-        shipping_email: shippingEmail.trim(),
-        shipping_address: shippingAddress.trim(),
-        shipping_city: shippingCity.trim(),
-        shipping_state: shippingState,
-        shipping_pincode: shippingPincode.trim(),
+        // ── Billing address (primary contact) ──
+        billing_name: billingName.trim(),
+        billing_phone: billingPhone.trim(),
+        billing_email: billingEmail.trim(),
+        billing_address: billingAddress.trim(),
+        billing_city: billingCity.trim(),
+        billing_state: billingState,
+        billing_pincode: billingPincode.trim(),
+        // ── Shipping address (auto-copied from billing when same_as_billing) ──
+        shipping_name: finalShippingName,
+        shipping_phone: finalShippingPhone,
+        shipping_email: finalShippingEmail,
+        shipping_address: finalShippingAddress,
+        shipping_city: finalShippingCity,
+        shipping_state: finalShippingState,
+        shipping_pincode: finalShippingPincode,
+        same_as_billing: sameAsBilling,
         payment_method: paymentMethod,
         purchase_mode: purchaseMode,
       }
 
       const order = await orderService.create(orderData)
 
-      // Success — update local user state with email if it was missing from profile
-      if (user && shippingEmail.trim() && !user.email) {
-        setUser({ ...user, email: shippingEmail.trim() })
+      // Success — update local user state with billing email if it was missing from profile
+      if (user && billingEmail.trim() && !user.email) {
+        setUser({ ...user, email: billingEmail.trim() })
       }
 
       setLastOrderId(order.id)
@@ -623,112 +673,113 @@ export function CheckoutView() {
         variants={staggerContainer}
         className="flex-1 max-w-4xl mx-auto w-full px-4 py-6 lg:grid lg:grid-cols-5 lg:gap-6"
       >
-        {/* Left Column — Shipping & Payment */}
+        {/* Left Column — Billing / Shipping / Payment */}
         <div className="lg:col-span-3 space-y-5 mb-6 lg:mb-0">
-          {/* Shipping Address */}
+          {/* ─── Billing Address ─── */}
           <motion.div variants={fadeInUp}>
             <Card className="bg-white border-[#e3dfd8] shadow-sm rounded-xl">
               <CardHeader className="pb-2">
                 <CardTitle className="font-heading text-lg text-[#1f1e1c] flex items-center gap-2">
-                  <MapPin className="w-5 h-5 text-[#48805b]" />
-                  Shipping Address
+                  <Landmark className="w-5 h-5 text-[#48805b]" />
+                  Billing Address
                 </CardTitle>
                 <CardDescription className="text-[#88837b] text-sm">
-                  Where should we deliver your wellness shots?
+                  Primary contact for invoice, order confirmation &amp; WhatsApp updates
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4 pt-2">
                 {/* Full Name */}
                 <div className="space-y-1.5">
-                  <Label htmlFor="shipping-name" className="text-sm font-medium text-[#1f1e1c]">
+                  <Label htmlFor="billing-name" className="text-sm font-medium text-[#1f1e1c]">
                     Full Name <span className="text-red-400">*</span>
                   </Label>
                   <Input
-                    id="shipping-name"
-                    value={shippingName}
-                    onChange={e => setShippingName(e.target.value)}
+                    id="billing-name"
+                    value={billingName}
+                    onChange={e => setBillingName(e.target.value)}
                     placeholder="Enter your full name"
-                    className={`bg-[#f4f3f0] border-[#e3dfd8] focus:border-[#48805b] focus:ring-[#48805b]/20 rounded-lg ${formErrors.shippingName ? 'border-red-400 focus:border-red-400' : ''}`}
+                    className={`bg-[#f4f3f0] border-[#e3dfd8] focus:border-[#48805b] focus:ring-[#48805b]/20 rounded-lg ${formErrors.billingName ? 'border-red-400 focus:border-red-400' : ''}`}
                   />
-                  {formErrors.shippingName && <p className="text-xs text-red-500">{formErrors.shippingName}</p>}
+                  {formErrors.billingName && <p className="text-xs text-red-500">{formErrors.billingName}</p>}
                 </div>
 
                 {/* Phone */}
                 <div className="space-y-1.5">
-                  <Label htmlFor="shipping-phone" className="text-sm font-medium text-[#1f1e1c]">
+                  <Label htmlFor="billing-phone" className="text-sm font-medium text-[#1f1e1c]">
                     Phone Number <span className="text-red-400">*</span>
+                    <span className="text-[#88837b] font-normal ml-1">(for WhatsApp updates)</span>
                   </Label>
                   <div className="flex items-center gap-2">
                     <span className="text-sm text-[#88837b] font-medium bg-[#f4f3f0] px-2.5 py-1.5 rounded-lg border border-[#e3dfd8]">+91</span>
                     <Input
-                      id="shipping-phone"
-                      value={shippingPhone}
-                      onChange={e => setShippingPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                      id="billing-phone"
+                      value={billingPhone}
+                      onChange={e => setBillingPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
                       placeholder="10-digit mobile number"
                       maxLength={10}
-                      className={`bg-[#f4f3f0] border-[#e3dfd8] focus:border-[#48805b] focus:ring-[#48805b]/20 rounded-lg ${formErrors.shippingPhone ? 'border-red-400 focus:border-red-400' : ''}`}
+                      className={`bg-[#f4f3f0] border-[#e3dfd8] focus:border-[#48805b] focus:ring-[#48805b]/20 rounded-lg ${formErrors.billingPhone ? 'border-red-400 focus:border-red-400' : ''}`}
                     />
                   </div>
-                  {formErrors.shippingPhone && <p className="text-xs text-red-500">{formErrors.shippingPhone}</p>}
+                  {formErrors.billingPhone && <p className="text-xs text-red-500">{formErrors.billingPhone}</p>}
                 </div>
 
-                {/* Email — Required for order confirmation */}
+                {/* Email */}
                 <div className="space-y-1.5">
-                  <Label htmlFor="shipping-email" className="text-sm font-medium text-[#1f1e1c]">
+                  <Label htmlFor="billing-email" className="text-sm font-medium text-[#1f1e1c]">
                     Email <span className="text-red-400">*</span>
-                    <span className="text-[#88837b] font-normal ml-1">(for order confirmation)</span>
+                    <span className="text-[#88837b] font-normal ml-1">(for order confirmation &amp; invoice)</span>
                   </Label>
                   <div className="flex items-center gap-2">
                     <Mail className="w-4 h-4 text-[#88837b] shrink-0" />
                     <Input
-                      id="shipping-email"
+                      id="billing-email"
                       type="email"
-                      value={shippingEmail}
-                      onChange={e => setShippingEmail(e.target.value)}
+                      value={billingEmail}
+                      onChange={e => setBillingEmail(e.target.value)}
                       placeholder="you@example.com"
-                      className={`bg-[#f4f3f0] border-[#e3dfd8] focus:border-[#48805b] focus:ring-[#48805b]/20 rounded-lg ${formErrors.shippingEmail ? 'border-red-400 focus:border-red-400' : ''}`}
+                      className={`bg-[#f4f3f0] border-[#e3dfd8] focus:border-[#48805b] focus:ring-[#48805b]/20 rounded-lg ${formErrors.billingEmail ? 'border-red-400 focus:border-red-400' : ''}`}
                     />
                   </div>
-                  {formErrors.shippingEmail && <p className="text-xs text-red-500">{formErrors.shippingEmail}</p>}
+                  {formErrors.billingEmail && <p className="text-xs text-red-500">{formErrors.billingEmail}</p>}
                 </div>
 
                 {/* Address */}
                 <div className="space-y-1.5">
-                  <Label htmlFor="shipping-address" className="text-sm font-medium text-[#1f1e1c]">
+                  <Label htmlFor="billing-address" className="text-sm font-medium text-[#1f1e1c]">
                     Address <span className="text-red-400">*</span>
                   </Label>
                   <Input
-                    id="shipping-address"
-                    value={shippingAddress}
-                    onChange={e => setShippingAddress(e.target.value)}
+                    id="billing-address"
+                    value={billingAddress}
+                    onChange={e => setBillingAddress(e.target.value)}
                     placeholder="House/flat no., street, area"
-                    className={`bg-[#f4f3f0] border-[#e3dfd8] focus:border-[#48805b] focus:ring-[#48805b]/20 rounded-lg ${formErrors.shippingAddress ? 'border-red-400 focus:border-red-400' : ''}`}
+                    className={`bg-[#f4f3f0] border-[#e3dfd8] focus:border-[#48805b] focus:ring-[#48805b]/20 rounded-lg ${formErrors.billingAddress ? 'border-red-400 focus:border-red-400' : ''}`}
                   />
-                  {formErrors.shippingAddress && <p className="text-xs text-red-500">{formErrors.shippingAddress}</p>}
+                  {formErrors.billingAddress && <p className="text-xs text-red-500">{formErrors.billingAddress}</p>}
                 </div>
 
                 {/* City, State, Pincode Row */}
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   <div className="space-y-1.5 col-span-2 sm:col-span-1">
-                    <Label htmlFor="shipping-city" className="text-sm font-medium text-[#1f1e1c]">
+                    <Label htmlFor="billing-city" className="text-sm font-medium text-[#1f1e1c]">
                       City <span className="text-red-400">*</span>
                     </Label>
                     <Input
-                      id="shipping-city"
-                      value={shippingCity}
-                      onChange={e => setShippingCity(e.target.value)}
+                      id="billing-city"
+                      value={billingCity}
+                      onChange={e => setBillingCity(e.target.value)}
                       placeholder="City"
-                      className={`bg-[#f4f3f0] border-[#e3dfd8] focus:border-[#48805b] focus:ring-[#48805b]/20 rounded-lg ${formErrors.shippingCity ? 'border-red-400 focus:border-red-400' : ''}`}
+                      className={`bg-[#f4f3f0] border-[#e3dfd8] focus:border-[#48805b] focus:ring-[#48805b]/20 rounded-lg ${formErrors.billingCity ? 'border-red-400 focus:border-red-400' : ''}`}
                     />
-                    {formErrors.shippingCity && <p className="text-xs text-red-500">{formErrors.shippingCity}</p>}
+                    {formErrors.billingCity && <p className="text-xs text-red-500">{formErrors.billingCity}</p>}
                   </div>
 
                   <div className="space-y-1.5">
                     <Label className="text-sm font-medium text-[#1f1e1c]">
                       State <span className="text-red-400">*</span>
                     </Label>
-                    <Select value={shippingState} onValueChange={setShippingState}>
-                      <SelectTrigger className={`bg-[#f4f3f0] border-[#e3dfd8] focus:border-[#48805b] rounded-lg w-full ${formErrors.shippingState ? 'border-red-400' : ''}`}>
+                    <Select value={billingState} onValueChange={setBillingState}>
+                      <SelectTrigger className={`bg-[#f4f3f0] border-[#e3dfd8] focus:border-[#48805b] rounded-lg w-full ${formErrors.billingState ? 'border-red-400' : ''}`}>
                         <SelectValue placeholder="Select state" />
                       </SelectTrigger>
                       <SelectContent className="bg-white border-[#e3dfd8] rounded-lg max-h-[240px]">
@@ -739,27 +790,191 @@ export function CheckoutView() {
                         ))}
                       </SelectContent>
                     </Select>
-                    {formErrors.shippingState && <p className="text-xs text-red-500">{formErrors.shippingState}</p>}
+                    {formErrors.billingState && <p className="text-xs text-red-500">{formErrors.billingState}</p>}
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label htmlFor="shipping-pincode" className="text-sm font-medium text-[#1f1e1c]">
+                    <Label htmlFor="billing-pincode" className="text-sm font-medium text-[#1f1e1c]">
                       Pincode <span className="text-red-400">*</span>
                     </Label>
                     <Input
-                      id="shipping-pincode"
-                      value={shippingPincode}
-                      onChange={e => setShippingPincode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                      id="billing-pincode"
+                      value={billingPincode}
+                      onChange={e => setBillingPincode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                       placeholder="6-digit code"
                       maxLength={6}
-                      className={`bg-[#f4f3f0] border-[#e3dfd8] focus:border-[#48805b] focus:ring-[#48805b]/20 rounded-lg ${formErrors.shippingPincode ? 'border-red-400 focus:border-red-400' : ''}`}
+                      className={`bg-[#f4f3f0] border-[#e3dfd8] focus:border-[#48805b] focus:ring-[#48805b]/20 rounded-lg ${formErrors.billingPincode ? 'border-red-400 focus:border-red-400' : ''}`}
                     />
-                    {formErrors.shippingPincode && <p className="text-xs text-red-500">{formErrors.shippingPincode}</p>}
+                    {formErrors.billingPincode && <p className="text-xs text-red-500">{formErrors.billingPincode}</p>}
                   </div>
                 </div>
               </CardContent>
             </Card>
           </motion.div>
+
+          {/* ─── Same as Billing Checkbox ─── */}
+          <motion.div variants={fadeInUp}>
+            <div className="flex items-start gap-3 p-4 bg-white border border-[#e3dfd8] rounded-xl shadow-sm">
+              <Checkbox
+                id="same-as-billing"
+                checked={sameAsBilling}
+                onCheckedChange={(checked) => setSameAsBilling(checked === true)}
+                className="border-[#48805b] data-[state=checked]:bg-[#48805b] data-[state=checked]:text-white data-[state=checked]:border-[#48805b] mt-0.5"
+              />
+              <div className="space-y-0.5">
+                <Label htmlFor="same-as-billing" className="text-sm font-medium text-[#1f1e1c] cursor-pointer">
+                  Use billing address as shipping address
+                </Label>
+                <p className="text-xs text-[#88837b]">
+                  {sameAsBilling
+                    ? 'Your order will be delivered to the billing address above.'
+                    : 'Enter a different shipping address below for delivery.'}
+                </p>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* ─── Shipping Address (only shown when !sameAsBilling) ─── */}
+          {!sameAsBilling && (
+            <motion.div
+              variants={fadeInUp}
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+            >
+              <Card className="bg-white border-[#e3dfd8] shadow-sm rounded-xl">
+                <CardHeader className="pb-2">
+                  <CardTitle className="font-heading text-lg text-[#1f1e1c] flex items-center gap-2">
+                    <MapPin className="w-5 h-5 text-[#48805b]" />
+                    Shipping Address
+                  </CardTitle>
+                  <CardDescription className="text-[#88837b] text-sm">
+                    Where should we deliver your wellness shots?
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4 pt-2">
+                  {/* Full Name */}
+                  <div className="space-y-1.5">
+                    <Label htmlFor="shipping-name" className="text-sm font-medium text-[#1f1e1c]">
+                      Full Name <span className="text-red-400">*</span>
+                    </Label>
+                    <Input
+                      id="shipping-name"
+                      value={shippingName}
+                      onChange={e => setShippingName(e.target.value)}
+                      placeholder="Recipient's full name"
+                      className={`bg-[#f4f3f0] border-[#e3dfd8] focus:border-[#48805b] focus:ring-[#48805b]/20 rounded-lg ${formErrors.shippingName ? 'border-red-400 focus:border-red-400' : ''}`}
+                    />
+                    {formErrors.shippingName && <p className="text-xs text-red-500">{formErrors.shippingName}</p>}
+                  </div>
+
+                  {/* Phone */}
+                  <div className="space-y-1.5">
+                    <Label htmlFor="shipping-phone" className="text-sm font-medium text-[#1f1e1c]">
+                      Phone Number <span className="text-red-400">*</span>
+                    </Label>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-[#88837b] font-medium bg-[#f4f3f0] px-2.5 py-1.5 rounded-lg border border-[#e3dfd8]">+91</span>
+                      <Input
+                        id="shipping-phone"
+                        value={shippingPhone}
+                        onChange={e => setShippingPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                        placeholder="10-digit mobile number"
+                        maxLength={10}
+                        className={`bg-[#f4f3f0] border-[#e3dfd8] focus:border-[#48805b] focus:ring-[#48805b]/20 rounded-lg ${formErrors.shippingPhone ? 'border-red-400 focus:border-red-400' : ''}`}
+                      />
+                    </div>
+                    {formErrors.shippingPhone && <p className="text-xs text-red-500">{formErrors.shippingPhone}</p>}
+                  </div>
+
+                  {/* Email */}
+                  <div className="space-y-1.5">
+                    <Label htmlFor="shipping-email" className="text-sm font-medium text-[#1f1e1c]">
+                      Email <span className="text-red-400">*</span>
+                    </Label>
+                    <div className="flex items-center gap-2">
+                      <Mail className="w-4 h-4 text-[#88837b] shrink-0" />
+                      <Input
+                        id="shipping-email"
+                        type="email"
+                        value={shippingEmail}
+                        onChange={e => setShippingEmail(e.target.value)}
+                        placeholder="recipient@example.com"
+                        className={`bg-[#f4f3f0] border-[#e3dfd8] focus:border-[#48805b] focus:ring-[#48805b]/20 rounded-lg ${formErrors.shippingEmail ? 'border-red-400 focus:border-red-400' : ''}`}
+                      />
+                    </div>
+                    {formErrors.shippingEmail && <p className="text-xs text-red-500">{formErrors.shippingEmail}</p>}
+                  </div>
+
+                  {/* Address */}
+                  <div className="space-y-1.5">
+                    <Label htmlFor="shipping-address" className="text-sm font-medium text-[#1f1e1c]">
+                      Address <span className="text-red-400">*</span>
+                    </Label>
+                    <Input
+                      id="shipping-address"
+                      value={shippingAddress}
+                      onChange={e => setShippingAddress(e.target.value)}
+                      placeholder="House/flat no., street, area"
+                      className={`bg-[#f4f3f0] border-[#e3dfd8] focus:border-[#48805b] focus:ring-[#48805b]/20 rounded-lg ${formErrors.shippingAddress ? 'border-red-400 focus:border-red-400' : ''}`}
+                    />
+                    {formErrors.shippingAddress && <p className="text-xs text-red-500">{formErrors.shippingAddress}</p>}
+                  </div>
+
+                  {/* City, State, Pincode Row */}
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    <div className="space-y-1.5 col-span-2 sm:col-span-1">
+                      <Label htmlFor="shipping-city" className="text-sm font-medium text-[#1f1e1c]">
+                        City <span className="text-red-400">*</span>
+                      </Label>
+                      <Input
+                        id="shipping-city"
+                        value={shippingCity}
+                        onChange={e => setShippingCity(e.target.value)}
+                        placeholder="City"
+                        className={`bg-[#f4f3f0] border-[#e3dfd8] focus:border-[#48805b] focus:ring-[#48805b]/20 rounded-lg ${formErrors.shippingCity ? 'border-red-400 focus:border-red-400' : ''}`}
+                      />
+                      {formErrors.shippingCity && <p className="text-xs text-red-500">{formErrors.shippingCity}</p>}
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label className="text-sm font-medium text-[#1f1e1c]">
+                        State <span className="text-red-400">*</span>
+                      </Label>
+                      <Select value={shippingState} onValueChange={setShippingState}>
+                        <SelectTrigger className={`bg-[#f4f3f0] border-[#e3dfd8] focus:border-[#48805b] rounded-lg w-full ${formErrors.shippingState ? 'border-red-400' : ''}`}>
+                          <SelectValue placeholder="Select state" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-white border-[#e3dfd8] rounded-lg max-h-[240px]">
+                          {INDIAN_STATES.map(state => (
+                            <SelectItem key={state} value={state} className="text-sm text-[#1f1e1c]">
+                              {state}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {formErrors.shippingState && <p className="text-xs text-red-500">{formErrors.shippingState}</p>}
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label htmlFor="shipping-pincode" className="text-sm font-medium text-[#1f1e1c]">
+                        Pincode <span className="text-red-400">*</span>
+                      </Label>
+                      <Input
+                        id="shipping-pincode"
+                        value={shippingPincode}
+                        onChange={e => setShippingPincode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                        placeholder="6-digit code"
+                        maxLength={6}
+                        className={`bg-[#f4f3f0] border-[#e3dfd8] focus:border-[#48805b] focus:ring-[#48805b]/20 rounded-lg ${formErrors.shippingPincode ? 'border-red-400 focus:border-red-400' : ''}`}
+                      />
+                      {formErrors.shippingPincode && <p className="text-xs text-red-500">{formErrors.shippingPincode}</p>}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          )}
 
           {/* Purchase Mode — One-time vs Subscription */}
           <motion.div variants={fadeInUp}>

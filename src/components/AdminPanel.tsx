@@ -10,17 +10,18 @@ import {
   HelpCircle, QrCode, ShoppingCart,
   FileText, CreditCard, X, Download, ExternalLink,
   TrendingUp,
-  Info, Tag, Columns3, ClipboardList, DollarSign, Upload
+  Info, Tag, Columns3, ClipboardList, DollarSign, Upload,
+  Receipt, IndianRupee,
 } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
 import { useAppStore } from '@/store/app-store'
 import {
   productService, productVideoService, productQuizService,
   adminStatsService, userService, campaignService,
-  orderService, subscriptionService, qrScanService,
+  orderService, subscriptionService, qrScanService, invoiceService,
   type Product, type ProductVideo, type ProductQuiz,
   type Campaign, type QrScan, type UserProfile,
-  type Order, type Subscription,
+  type Order, type Subscription, type Invoice, type InvoiceListItem,
   type AdminStatsResponse,
 } from '@/lib/data-service'
 import { Button } from '@/components/ui/button'
@@ -103,6 +104,19 @@ function exportToCSV(data: any[], filename: string, columns: { key: string; labe
   a.download = `${filename}.csv`
   a.click()
   URL.revokeObjectURL(url)
+}
+
+// ─── Invoice line-item parser ─────────────────────────────
+// The Invoice.items field is a JSON string; this safely parses it.
+function parseInvoiceItems(itemsJson: string | undefined | null) {
+  if (!itemsJson) return [] as Array<{ name: string; quantity: number; unit_price: number; total_price: number; pack_type?: string | null }>
+  try {
+    const parsed = JSON.parse(itemsJson)
+    if (Array.isArray(parsed)) return parsed
+    return []
+  } catch {
+    return []
+  }
 }
 
 // ─── Image Upload Helper ──────────────────────────────────
@@ -192,6 +206,10 @@ function AdminDashboard() {
   const [productFilter, setProductFilter] = useState<'all' | 'active' | 'inactive'>('all')
   const [galleryUploading, setGalleryUploading] = useState(false)
   const [showProductQrCodes, setShowProductQrCodes] = useState(false)
+  // Invoice state
+  const [invoices, setInvoices] = useState<InvoiceListItem[]>([])
+  const [selectedInvoice, setSelectedInvoice] = useState<InvoiceListItem | null>(null)
+  const [generatingInvoiceFor, setGeneratingInvoiceFor] = useState<string | null>(null)
   // Manage Learning Content dialog
   const [showManageLearning, setShowManageLearning] = useState(false)
   const [learningProductId, setLearningProductId] = useState<string | null>(null)
@@ -205,24 +223,25 @@ function AdminDashboard() {
   const [videoUploading, setVideoUploading] = useState(false)
   const learningScrollRef = useRef<HTMLDivElement>(null)
   const [newVideo, setNewVideo] = useState({ title: '', duration: '', description: '', order: 1, video_url: '', thumbnail_url: '' })
-  const [newQuiz, setNewQuiz] = useState({ question: '', options: ['', '', '', ''], answer: 0, category: '', difficulty: 'EASY', order: 1, video_id: '' })
+  const [newQuiz, setNewQuiz] = useState({ question: '', options: ['', '', '', ''], answer: 0, difficulty: 'EASY', order: 1, video_id: '' })
+  const [quizQueue, setQuizQueue] = useState<Array<{ question: string; options: string[]; answer: number; difficulty: string; order: number; video_id: string }>>([])
   const [newProduct, setNewProduct] = useState({
-    name: '', slug: '', description: '', short_description: '', price: 0, mrp: 0, stock: 0,
-    image_url: '', gallery_images: '', type: 'FIZZ', category: 'Wellness Shot',
+    name: '', slug: '', description: '', short_description: '', price: 0, subscription_price: 0, mrp: 0, stock: 0,
+    image_url: '', gallery_images: '', type: 'FIZZ', category: '',
     sku: '', weight: '', ingredients: '', nutrition_info: '', tags: '',
     active: true, featured: false,
-    brand: '', flavor: '', serving_size: '', allergen_info: '', storage_info: '',
+    serving_size: '', allergen_info: '', storage_info: '',
     shelf_life: '', country_origin: '', fssai_license: '', hsn_code: '',
     gst_rate: 0, min_order_qty: 1, max_order_qty: 10, discount_label: '', highlights: '',
   })
 
   const resetProductForm = () => {
     setNewProduct({
-      name: '', slug: '', description: '', short_description: '', price: 0, mrp: 0, stock: 0,
-      image_url: '', gallery_images: '', type: 'FIZZ', category: 'Wellness Shot',
+      name: '', slug: '', description: '', short_description: '', price: 0, subscription_price: 0, mrp: 0, stock: 0,
+      image_url: '', gallery_images: '', type: 'FIZZ', category: '',
       sku: '', weight: '', ingredients: '', nutrition_info: '', tags: '',
       active: true, featured: false,
-      brand: '', flavor: '', serving_size: '', allergen_info: '', storage_info: '',
+      serving_size: '', allergen_info: '', storage_info: '',
       shelf_life: '', country_origin: '', fssai_license: '', hsn_code: '',
       gst_rate: 0, min_order_qty: 1, max_order_qty: 10, discount_label: '', highlights: '',
     })
@@ -271,7 +290,7 @@ function AdminDashboard() {
     }
   }
 
-  // Save quiz (create or update)
+  // Save quiz (create or update) — also handles batch queue saving
   const handleSaveQuiz = async () => {
     if (!learningProductId || !newQuiz.question || !newQuiz.video_id) { toast.error('Question and video are required'); return }
     try {
@@ -284,12 +303,43 @@ function AdminDashboard() {
       }
       setEditingQuiz(null)
       setShowAddQuiz(false)
-      setNewQuiz({ question: '', options: ['', '', '', ''], answer: 0, category: '', difficulty: 'EASY', order: 1, video_id: '' })
+      setNewQuiz({ question: '', options: ['', '', '', ''], answer: 0, difficulty: 'EASY', order: 1, video_id: '' })
       loadLearningContent(learningProductId)
     } catch (err) {
       console.error('Failed to save question:', err)
       toast.error('Failed to save question — check console for details')
     }
+  }
+
+  // Add current quiz form to queue (without API call)
+  const handleAddQuizToQueue = () => {
+    if (!newQuiz.question || !newQuiz.video_id) { toast.error('Question and video are required'); return }
+    setQuizQueue(prev => [...prev, { ...newQuiz, options: [...newQuiz.options] }])
+    toast.success('Question added to queue')
+    setNewQuiz({ question: '', options: ['', '', '', ''], answer: 0, difficulty: 'EASY', order: quizQueue.length + 2, video_id: newQuiz.video_id })
+  }
+
+  // Remove a queued quiz question
+  const handleRemoveFromQueue = (idx: number) => {
+    setQuizQueue(prev => prev.filter((_, i) => i !== idx))
+  }
+
+  // Save all queued quiz questions at once
+  const handleSaveAllQuizzes = async () => {
+    if (!learningProductId) { toast.error('No product selected'); return }
+    if (quizQueue.length === 0) { toast.error('Queue is empty'); return }
+    let success = 0, failed = 0
+    for (const q of quizQueue) {
+      try {
+        await productQuizService.create(learningProductId, { ...q, product_id: learningProductId, options: q.options } as any, userId)
+        success++
+      } catch { failed++ }
+    }
+    if (success > 0) toast.success(`${success} question${success > 1 ? 's' : ''} saved!`)
+    if (failed > 0) toast.error(`${failed} question${failed > 1 ? 's' : ''} failed to save`)
+    setQuizQueue([])
+    setShowAddQuiz(false)
+    loadLearningContent(learningProductId)
   }
 
   // Delete video
@@ -379,13 +429,14 @@ function AdminDashboard() {
     if (!user?.is_admin) { navigateTo('landing'); return }
     const load = async () => {
       try {
-        const [statsRes, usersRes, camps, productsRes, ordersRes, subsRes] = await Promise.all([
+        const [statsRes, usersRes, camps, productsRes, ordersRes, subsRes, invoicesRes] = await Promise.all([
           adminStatsService.get(userId),
           userService.list(undefined, userId),
           campaignService.list(),
           productService.getAllForAdmin(),
           orderService.getAll(userId),
           subscriptionService.getAll(userId),
+          invoiceService.list(userId).catch(() => [] as InvoiceListItem[]),
         ])
 
         setStats(statsRes.stats)
@@ -394,6 +445,7 @@ function AdminDashboard() {
         setAdminProducts(productsRes)
         setOrders(ordersRes)
         setAdminSubscriptions(subsRes)
+        setInvoices(invoicesRes)
 
         // Get quiz questions from all products
         const allQuestions: QuizQuestion[] = []
@@ -449,13 +501,14 @@ function AdminDashboard() {
   const refreshData = async () => {
     setLoading(true)
     try {
-      const [statsRes, usersRes, camps, productsRes, ordersRes, subsRes] = await Promise.all([
+      const [statsRes, usersRes, camps, productsRes, ordersRes, subsRes, invoicesRes] = await Promise.all([
         adminStatsService.get(userId),
         userService.list(undefined, userId),
         campaignService.list(),
         productService.getAllForAdmin(),
         orderService.getAll(userId),
         subscriptionService.getAll(userId),
+        invoiceService.list(userId).catch(() => [] as InvoiceListItem[]),
       ])
       setStats(statsRes.stats)
       setUsers(usersRes.users)
@@ -463,10 +516,55 @@ function AdminDashboard() {
       setAdminProducts(productsRes)
       setOrders(ordersRes)
       setAdminSubscriptions(subsRes)
+      setInvoices(invoicesRes)
     } catch (err) {
       console.error('Failed to refresh data:', err)
     }
     setLoading(false)
+  }
+
+  // ─── Invoice handlers ───────────────────────────────────────
+  const handleGenerateInvoice = async (orderId: string) => {
+    setGeneratingInvoiceFor(orderId)
+    try {
+      const created = await invoiceService.create({ order_id: orderId }, userId)
+      // Refresh invoices list and orders (so the order.invoice relation is updated)
+      const [refreshedInvoices, refreshedOrders] = await Promise.all([
+        invoiceService.list(userId).catch(() => [] as InvoiceListItem[]),
+        orderService.getAll(userId),
+      ])
+      setInvoices(refreshedInvoices)
+      setOrders(refreshedOrders)
+      setSelectedInvoice(created)
+      toast.success(`Invoice ${created.invoice_number} generated`)
+    } catch (err: any) {
+      console.error('Failed to generate invoice:', err)
+      toast.error(err?.message || 'Failed to generate invoice')
+    } finally {
+      setGeneratingInvoiceFor(null)
+    }
+  }
+
+  const openInvoice = (invoice: InvoiceListItem) => {
+    setSelectedInvoice(invoice)
+  }
+
+  const handleInvoiceStatusChange = async (newStatus: string) => {
+    if (!selectedInvoice) return
+    try {
+      const updated = await invoiceService.update(selectedInvoice.id, { status: newStatus }, userId)
+      setSelectedInvoice(updated)
+      setInvoices(prev => prev.map(i => i.id === updated.id ? updated : i))
+      toast.success(`Invoice marked as ${newStatus}`)
+    } catch (err: any) {
+      console.error('Failed to update invoice:', err)
+      toast.error(err?.message || 'Failed to update invoice')
+    }
+  }
+
+  const handlePrintInvoice = (invoiceId: string) => {
+    // Open the printable HTML page in a new tab
+    window.open(invoiceService.getDownloadUrl(invoiceId), '_blank', 'noopener,noreferrer')
   }
 
   // ─── User CRUD handlers ────────────────────────────────────
@@ -571,12 +669,12 @@ function AdminDashboard() {
 
   const sidebarItems = [
     { value: 'dashboard', label: 'Overview', icon: LayoutDashboard, badge: null },
-    { value: 'users', label: 'Users', icon: Users, badge: users.length },
-    { value: 'campaigns', label: 'Campaigns', icon: Megaphone, badge: campaigns.length },
     { value: 'products', label: 'Products', icon: Package, badge: null },
+    { value: 'campaigns', label: 'Campaigns', icon: Megaphone, badge: campaigns.length },
     { value: 'qr', label: 'QR Codes', icon: QrCode, badge: campaigns.filter(c => c.status === 'ACTIVE').length },
     { value: 'orders', label: 'Orders', icon: ShoppingCart, badge: orders.length },
     { value: 'subscriptions', label: 'Subscriptions', icon: CreditCard, badge: null },
+    { value: 'users', label: 'Users', icon: Users, badge: users.length },
     { value: 'analytics', label: 'Analytics', icon: TrendingUp, badge: null },
     { value: 'content', label: 'Content', icon: FileText, badge: questions.length },
   ]
@@ -948,7 +1046,7 @@ function AdminDashboard() {
 
       // ─── CAMPAIGNS TAB ───────────────────────────────────
       case 'campaigns':
-        return <CampaignManagerInner campaigns={campaigns} setCampaigns={setCampaigns} scans={scans} orders={orders} userId={userId} />
+        return <CampaignManagerInner campaigns={campaigns} setCampaigns={setCampaigns} scans={scans} orders={orders} userId={userId} products={adminProducts} />
 
       // ─── QR CODES TAB ────────────────────────────────────
       case 'qr':
@@ -964,6 +1062,8 @@ function AdminDashboard() {
               {campaigns.filter(c => c.status === 'ACTIVE').map(campaign => {
                 const campaignScans = scans.filter(s => s.campaign_id === campaign.id)
                 const qrUrl = `https://notjustwatr.com/scan/${campaign.id}`
+                const linkedProduct = campaign.product || adminProducts.find(p => p.id === campaign.product_id) || null
+                const revenue = linkedProduct ? campaignScans.length * linkedProduct.price : 0
                 return (
                   <div key={campaign.id} className="bg-white border rounded-lg p-5 text-center hover:shadow-sm transition-shadow" style={{ borderColor: A.border }}>
                     <div className="mb-4 inline-block p-3 bg-white rounded-lg border" style={{ borderColor: A.borderLight }}>
@@ -971,8 +1071,20 @@ function AdminDashboard() {
                     </div>
                     <h3 className="font-semibold text-sm mb-1" style={{ color: A.text }}>{campaign.name}</h3>
                     <span className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded mb-3" style={{ color: A.blue, background: A.blueLight }}>{campaign.channel}</span>
+                    {linkedProduct ? (
+                      <div className="mb-3 px-3 py-2 rounded-md border text-left" style={{ borderColor: A.borderLight, background: A.greenLight }}>
+                        <div className="flex items-center gap-1.5">
+                          <Tag className="w-3 h-3" style={{ color: A.green }} />
+                          <span className="text-[11px] font-semibold truncate" style={{ color: A.green }}>{linkedProduct.name}</span>
+                          <span className="text-[11px] font-bold ml-auto" style={{ color: A.green }}>₹{linkedProduct.price.toLocaleString()}</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="mb-3 text-[10px] italic" style={{ color: A.textMuted }}>No linked product</p>
+                    )}
                     <div className="flex items-center justify-center gap-4 text-[11px] mb-4" style={{ color: A.textSecondary }}>
                       <span className="flex items-center gap-1"><Scan className="w-3 h-3" /> {campaignScans.length} scans</span>
+                      {linkedProduct && <span className="flex items-center gap-1"><DollarSign className="w-3 h-3" style={{ color: A.green }} /> ₹{revenue.toLocaleString()}</span>}
                     </div>
                     <div className="flex gap-2">
                       <Button variant="outline" size="sm" className="flex-1 rounded-md text-[11px] h-8" style={{ borderColor: A.border, color: A.text }} onClick={() => { navigator.clipboard.writeText(qrUrl); toast.success('QR URL copied!') }}>
@@ -994,6 +1106,14 @@ function AdminDashboard() {
 
       // ─── ORDERS TAB ──────────────────────────────────────
       case 'orders':
+        // ── Invoice summary metrics (computed from invoices list) ──
+        const totalInvoices = invoices.length
+        const totalInvoicedAmount = invoices.reduce((sum, inv) => sum + (inv.total_amount || 0), 0)
+        const paidInvoices = invoices.filter(i => (i.payment_status || i.status) === 'COMPLETED' || i.status === 'PAID')
+        const pendingInvoices = invoices.filter(i => i.status !== 'PAID' && i.status !== 'CANCELLED' && (i.payment_status || 'PENDING') !== 'COMPLETED')
+        const paidAmount = paidInvoices.reduce((sum, inv) => sum + (inv.total_amount || 0), 0)
+        const pendingAmount = pendingInvoices.reduce((sum, inv) => sum + (inv.total_amount || 0), 0)
+
         return (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
@@ -1011,6 +1131,27 @@ function AdminDashboard() {
               </div>
             </div>
 
+            {/* ═══ Invoice Summary Cards ═══ */}
+            <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+              {[
+                { label: 'Invoices Issued', value: totalInvoices, icon: Receipt, color: A.green, bgColor: A.greenLight, sub: `${orders.filter(o => (o as any).invoice).length} of ${orders.length} orders` },
+                { label: 'Invoiced Amount', value: `₹${totalInvoicedAmount.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`, icon: IndianRupee, color: A.blue, bgColor: A.blueLight, sub: 'across all invoices' },
+                { label: 'Paid', value: `₹${paidAmount.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`, icon: CheckCircle, color: A.green, bgColor: A.greenLight, sub: `${paidInvoices.length} invoices` },
+                { label: 'Pending', value: `₹${pendingAmount.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`, icon: AlertCircle, color: A.amber, bgColor: A.amberLight, sub: `${pendingInvoices.length} invoices` },
+              ].map(card => (
+                <div key={card.label} className="bg-white border rounded-lg p-4 hover:shadow-sm transition-shadow" style={{ borderColor: A.border }}>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="w-8 h-8 rounded-md flex items-center justify-center" style={{ backgroundColor: card.bgColor }}>
+                      <card.icon className="w-4 h-4" style={{ color: card.color }} />
+                    </div>
+                  </div>
+                  <p className="text-xl font-bold" style={{ color: A.text }}>{card.value}</p>
+                  <p className="text-[12px] mt-0.5" style={{ color: A.textSecondary }}>{card.label}</p>
+                  <p className="text-[11px] mt-1" style={{ color: A.textMuted }}>{card.sub}</p>
+                </div>
+              ))}
+            </div>
+
             {orderView === 'kanban' ? (
               <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
                 {orderStatuses.map(status => {
@@ -1026,26 +1167,52 @@ function AdminDashboard() {
                         <span className="text-[10px] font-bold px-1.5 py-0.5 rounded" style={{ color: c.text, background: c.bg }}>{statusOrders.length}</span>
                       </div>
                       <div className="space-y-2 max-h-[420px] overflow-y-auto">
-                        {statusOrders.map((o) => (
-                          <div key={o.id} className="bg-white border rounded-lg p-3 cursor-pointer hover:shadow-sm transition-shadow" style={{ borderColor: A.border }} onClick={() => setSelectedOrder(o)}>
-                            <p className="font-mono text-[9px] mb-1" style={{ color: A.textMuted }}>{o.id.slice(0, 10)}</p>
-                            <p className="text-[12px] font-medium truncate" style={{ color: A.text }}>{(o as any).user?.name || 'Customer'}</p>
-                            <div className="flex items-center justify-between mt-2">
-                              <p className="font-semibold text-[12px]" style={{ color: A.green }}>₹{(o.total_amount || 0).toLocaleString()}</p>
-                              <Select value={o.status} onValueChange={async (newStatus) => { await orderService.updateStatus(o.id, newStatus, userId); setOrders(prev => prev.map(p => p.id === o.id ? { ...p, status: newStatus } : p)); toast.success('Status updated') }}>
-                                <SelectTrigger className="h-5 text-[9px] w-[70px]" style={{ background: A.bg, borderColor: A.border, color: A.textSecondary }} onClick={e => e.stopPropagation()}><SelectValue /></SelectTrigger>
-                                <SelectContent style={{ background: '#fff', borderColor: A.border }}>
-                                  <SelectItem value="PLACED" style={{ color: A.text }}>Placed</SelectItem>
-                                  <SelectItem value="CONFIRMED" style={{ color: A.text }}>Confirmed</SelectItem>
-                                  <SelectItem value="SHIPPED" style={{ color: A.text }}>Shipped</SelectItem>
-                                  <SelectItem value="DELIVERED" style={{ color: A.text }}>Delivered</SelectItem>
-                                  <SelectItem value="CANCELLED" style={{ color: A.text }}>Cancelled</SelectItem>
-                                </SelectContent>
-                              </Select>
+                        {statusOrders.map((o) => {
+                          const inv = (o as any).invoice as InvoiceListItem | null | undefined
+                          return (
+                            <div key={o.id} className="bg-white border rounded-lg p-3 cursor-pointer hover:shadow-sm transition-shadow" style={{ borderColor: A.border }} onClick={() => setSelectedOrder(o)}>
+                              <p className="font-mono text-[9px] mb-1" style={{ color: A.textMuted }}>{o.id.slice(0, 10)}</p>
+                              <p className="text-[12px] font-medium truncate" style={{ color: A.text }}>{(o as any).user?.name || 'Customer'}</p>
+                              <div className="flex items-center justify-between mt-2">
+                                <p className="font-semibold text-[12px]" style={{ color: A.green }}>₹{(o.total_amount || 0).toLocaleString()}</p>
+                                <Select value={o.status} onValueChange={async (newStatus) => { await orderService.updateStatus(o.id, newStatus, userId); setOrders(prev => prev.map(p => p.id === o.id ? { ...p, status: newStatus } : p)); toast.success('Status updated') }}>
+                                  <SelectTrigger className="h-5 text-[9px] w-[70px]" style={{ background: A.bg, borderColor: A.border, color: A.textSecondary }} onClick={e => e.stopPropagation()}><SelectValue /></SelectTrigger>
+                                  <SelectContent style={{ background: '#fff', borderColor: A.border }}>
+                                    <SelectItem value="PLACED" style={{ color: A.text }}>Placed</SelectItem>
+                                    <SelectItem value="CONFIRMED" style={{ color: A.text }}>Confirmed</SelectItem>
+                                    <SelectItem value="SHIPPED" style={{ color: A.text }}>Shipped</SelectItem>
+                                    <SelectItem value="DELIVERED" style={{ color: A.text }}>Delivered</SelectItem>
+                                    <SelectItem value="CANCELLED" style={{ color: A.text }}>Cancelled</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div className="flex items-center justify-between mt-1">
+                                <p className="text-[9px]" style={{ color: A.textMuted }}>{new Date(o.created_at).toLocaleDateString()}</p>
+                                {inv ? (
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); openInvoice(inv) }}
+                                    className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-medium transition-colors"
+                                    style={{ color: A.green, background: A.greenLight, border: `1px solid ${A.greenLight}` }}
+                                    title={`Invoice ${inv.invoice_number}`}
+                                  >
+                                    <Receipt className="w-2.5 h-2.5" /> {inv.invoice_number}
+                                  </button>
+                                ) : (
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); handleGenerateInvoice(o.id) }}
+                                    disabled={generatingInvoiceFor === o.id}
+                                    className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-medium transition-colors"
+                                    style={{ color: A.textSecondary, background: A.bg, border: `1px solid ${A.borderLight}` }}
+                                    title="Generate Invoice"
+                                  >
+                                    {generatingInvoiceFor === o.id ? <Loader2 className="w-2.5 h-2.5 animate-spin" /> : <Plus className="w-2.5 h-2.5" />}
+                                    Invoice
+                                  </button>
+                                )}
+                              </div>
                             </div>
-                            <p className="text-[9px] mt-1" style={{ color: A.textMuted }}>{new Date(o.created_at).toLocaleDateString()}</p>
-                          </div>
-                        ))}
+                          )
+                        })}
                         {statusOrders.length === 0 && <p className="text-[10px] text-center py-6" style={{ color: A.textMuted }}>No orders</p>}
                       </div>
                     </div>
@@ -1063,24 +1230,54 @@ function AdminDashboard() {
                       <TableHead className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: A.textMuted }}>Status</TableHead>
                       <TableHead className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: A.textMuted }}>Payment</TableHead>
                       <TableHead className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: A.textMuted }}>Date</TableHead>
+                      <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-right" style={{ color: A.textMuted }}>Invoice</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {orders.map((o) => (
-                      <TableRow key={o.id} className="hover:bg-[#f8f7f5] cursor-pointer" style={{ borderColor: A.borderLight }} onClick={() => setSelectedOrder(o)}>
-                        <TableCell className="font-mono text-[11px]" style={{ color: A.textMuted }}>{o.id.slice(0, 10)}</TableCell>
-                        <TableCell className="text-[12px]" style={{ color: A.text }}>{(o as any).user?.name || 'Customer'}</TableCell>
-                        <TableCell className="font-semibold text-[12px]" style={{ color: A.green }}>₹{(o.total_amount || 0).toLocaleString()}</TableCell>
-                        <TableCell><StatusBadge status={o.status} /></TableCell>
-                        <TableCell className="text-[11px]" style={{ color: A.textSecondary }}>{o.payment_method || 'N/A'}</TableCell>
-                        <TableCell className="text-[11px]" style={{ color: A.textMuted }}>{new Date(o.created_at).toLocaleDateString()}</TableCell>
-                      </TableRow>
-                    ))}
+                    {orders.map((o) => {
+                      const inv = (o as any).invoice as InvoiceListItem | null | undefined
+                      return (
+                        <TableRow key={o.id} className="hover:bg-[#f8f7f5] cursor-pointer" style={{ borderColor: A.borderLight }} onClick={() => setSelectedOrder(o)}>
+                          <TableCell className="font-mono text-[11px]" style={{ color: A.textMuted }}>{o.id.slice(0, 10)}</TableCell>
+                          <TableCell className="text-[12px]" style={{ color: A.text }}>{(o as any).user?.name || 'Customer'}</TableCell>
+                          <TableCell className="font-semibold text-[12px]" style={{ color: A.green }}>₹{(o.total_amount || 0).toLocaleString()}</TableCell>
+                          <TableCell><StatusBadge status={o.status} /></TableCell>
+                          <TableCell className="text-[11px]" style={{ color: A.textSecondary }}>{o.payment_method || 'N/A'}</TableCell>
+                          <TableCell className="text-[11px]" style={{ color: A.textMuted }}>{new Date(o.created_at).toLocaleDateString()}</TableCell>
+                          <TableCell className="text-right" onClick={e => e.stopPropagation()}>
+                            {inv ? (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-7 gap-1.5 text-[11px] rounded-md"
+                                style={{ borderColor: A.green, color: A.green, background: A.greenLight }}
+                                onClick={() => openInvoice(inv)}
+                              >
+                                <Eye className="w-3 h-3" /> {inv.invoice_number}
+                              </Button>
+                            ) : (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-7 gap-1.5 text-[11px] rounded-md"
+                                style={{ borderColor: A.border, color: A.textSecondary }}
+                                onClick={() => handleGenerateInvoice(o.id)}
+                                disabled={generatingInvoiceFor === o.id}
+                              >
+                                {generatingInvoiceFor === o.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />}
+                                Generate
+                              </Button>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      )
+                    })}
                   </TableBody>
                 </Table>
               </div>
             )}
 
+            {/* ═══ Order Detail Dialog ═══ */}
             <Dialog open={!!selectedOrder} onOpenChange={() => setSelectedOrder(null)}>
               <DialogContent className="max-w-md" style={{ background: '#fff', borderColor: A.border, color: A.text }}>
                 <DialogHeader><DialogTitle style={{ color: A.text }}>Order Details</DialogTitle></DialogHeader>
@@ -1105,8 +1302,221 @@ function AdminDashboard() {
                         <SelectItem value="CANCELLED" style={{ color: A.text }}>Cancelled</SelectItem>
                       </SelectContent>
                     </Select>
+
+                    {/* ─── Invoice action ─── */}
+                    <Separator style={{ background: A.border }} />
+                    {(() => {
+                      const inv = (selectedOrder as any).invoice as InvoiceListItem | null | undefined
+                      if (inv) {
+                        return (
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="text-[11px] uppercase tracking-wider" style={{ color: A.textMuted }}>Invoice</p>
+                                <p className="font-mono font-semibold text-[13px]" style={{ color: A.green }}>{inv.invoice_number}</p>
+                                <p className="text-[10px]" style={{ color: A.textMuted }}>Issued {new Date(inv.issued_at).toLocaleDateString()}</p>
+                              </div>
+                              <StatusBadge status={inv.status} />
+                            </div>
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                className="flex-1 h-8 text-[11px] rounded-md text-white"
+                                style={{ background: A.green }}
+                                onClick={() => openInvoice(inv)}
+                              >
+                                <Eye className="w-3.5 h-3.5 mr-1" /> View Invoice
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-8 text-[11px] rounded-md"
+                                style={{ borderColor: A.border, color: A.text }}
+                                onClick={() => handlePrintInvoice(inv.id)}
+                              >
+                                <ExternalLink className="w-3.5 h-3.5 mr-1" /> Print
+                              </Button>
+                            </div>
+                          </div>
+                        )
+                      }
+                      return (
+                        <Button
+                          size="sm"
+                          className="w-full h-8 text-[11px] rounded-md text-white"
+                          style={{ background: A.green }}
+                          onClick={() => handleGenerateInvoice(selectedOrder.id)}
+                          disabled={generatingInvoiceFor === selectedOrder.id}
+                        >
+                          {generatingInvoiceFor === selectedOrder.id
+                            ? <><Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> Generating...</>
+                            : <><FileText className="w-3.5 h-3.5 mr-1" /> Generate Invoice</>}
+                        </Button>
+                      )
+                    })()}
                   </div>
                 )}
+              </DialogContent>
+            </Dialog>
+
+            {/* ═══ Invoice View Dialog ═══ */}
+            <Dialog open={!!selectedInvoice} onOpenChange={(open) => { if (!open) setSelectedInvoice(null) }}>
+              <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto" style={{ background: '#fff', borderColor: A.border, color: A.text }}>
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2" style={{ color: A.text }}>
+                    <Receipt className="w-5 h-5" style={{ color: A.green }} />
+                    Invoice {selectedInvoice?.invoice_number}
+                  </DialogTitle>
+                  <DialogDescription className="text-[#88837b]">Review invoice details and print or save as PDF</DialogDescription>
+                </DialogHeader>
+                {selectedInvoice && (() => {
+                  const lineItems = parseInvoiceItems(selectedInvoice.items as unknown as string)
+                  const invStatus = selectedInvoice.status
+                  return (
+                    <div className="space-y-4">
+                      {/* Invoice meta */}
+                      <div className="grid grid-cols-2 gap-3 text-sm">
+                        <div>
+                          <p className="text-[11px] uppercase tracking-wider" style={{ color: A.textMuted }}>Invoice No</p>
+                          <p className="font-mono font-semibold text-[12px]" style={{ color: A.text }}>{selectedInvoice.invoice_number}</p>
+                        </div>
+                        <div>
+                          <p className="text-[11px] uppercase tracking-wider" style={{ color: A.textMuted }}>Issue Date</p>
+                          <p className="text-[12px]" style={{ color: A.text }}>{new Date(selectedInvoice.issued_at).toLocaleDateString()}</p>
+                        </div>
+                        <div>
+                          <p className="text-[11px] uppercase tracking-wider" style={{ color: A.textMuted }}>Order Ref</p>
+                          <p className="font-mono text-[11px]" style={{ color: A.textSecondary }}>{selectedInvoice.order?.order_number || '—'}</p>
+                        </div>
+                        <div>
+                          <p className="text-[11px] uppercase tracking-wider" style={{ color: A.textMuted }}>Status</p>
+                          <StatusBadge status={invStatus} />
+                        </div>
+                      </div>
+
+                      <Separator style={{ background: A.border }} />
+
+                      {/* Customer details */}
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-[11px] uppercase tracking-wider mb-1" style={{ color: A.textMuted }}>Bill To</p>
+                          <p className="text-[13px] font-medium" style={{ color: A.text }}>{selectedInvoice.customer_name}</p>
+                          {selectedInvoice.customer_phone && <p className="text-[11px]" style={{ color: A.textSecondary }}>📞 {selectedInvoice.customer_phone}</p>}
+                          {selectedInvoice.customer_email && <p className="text-[11px]" style={{ color: A.textSecondary }}>✉ {selectedInvoice.customer_email}</p>}
+                          {selectedInvoice.billing_address && (
+                            <p className="text-[11px] mt-1" style={{ color: A.textSecondary }}>
+                              {selectedInvoice.billing_address}
+                              {selectedInvoice.billing_city ? `, ${selectedInvoice.billing_city}` : ''}
+                              {selectedInvoice.billing_state ? `, ${selectedInvoice.billing_state}` : ''}
+                              {selectedInvoice.billing_pincode ? ` - ${selectedInvoice.billing_pincode}` : ''}
+                            </p>
+                          )}
+                        </div>
+                        <div>
+                          <p className="text-[11px] uppercase tracking-wider mb-1" style={{ color: A.textMuted }}>Payment</p>
+                          <p className="text-[12px]" style={{ color: A.text }}>{selectedInvoice.payment_method || '—'}</p>
+                          <p className="text-[11px] mt-0.5" style={{ color: A.textSecondary }}>Status: {selectedInvoice.payment_status}</p>
+                        </div>
+                      </div>
+
+                      <Separator style={{ background: A.border }} />
+
+                      {/* Line items table */}
+                      <div className="bg-white border rounded-lg overflow-hidden" style={{ borderColor: A.border }}>
+                        <Table>
+                          <TableHeader>
+                            <TableRow className="hover:bg-transparent" style={{ borderColor: A.borderLight, background: A.bg }}>
+                              <TableHead className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: A.textMuted }}>Item</TableHead>
+                              <TableHead className="text-[10px] font-semibold uppercase tracking-wider text-center" style={{ color: A.textMuted }}>Qty</TableHead>
+                              <TableHead className="text-[10px] font-semibold uppercase tracking-wider text-right" style={{ color: A.textMuted }}>Unit Price</TableHead>
+                              <TableHead className="text-[10px] font-semibold uppercase tracking-wider text-right" style={{ color: A.textMuted }}>Amount</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {lineItems.length === 0 ? (
+                              <TableRow><TableCell colSpan={4} className="text-center text-[11px] py-4" style={{ color: A.textMuted }}>No items</TableCell></TableRow>
+                            ) : (
+                              lineItems.map((it, idx) => (
+                                <TableRow key={idx} style={{ borderColor: A.borderLight }}>
+                                  <TableCell className="text-[12px]" style={{ color: A.text }}>
+                                    {it.name}
+                                    {it.pack_type && (
+                                      <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium" style={{ color: A.blue, background: A.blueLight }}>
+                                        {it.pack_type.replace(/_/g, ' ')}
+                                      </span>
+                                    )}
+                                  </TableCell>
+                                  <TableCell className="text-[11px] text-center" style={{ color: A.textSecondary }}>{it.quantity}</TableCell>
+                                  <TableCell className="text-[11px] text-right" style={{ color: A.textSecondary }}>₹{Number(it.unit_price || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 })}</TableCell>
+                                  <TableCell className="text-[11px] text-right font-semibold" style={{ color: A.green }}>₹{Number(it.total_price || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 })}</TableCell>
+                                </TableRow>
+                              ))
+                            )}
+                          </TableBody>
+                        </Table>
+                      </div>
+
+                      {/* Totals */}
+                      <div className="ml-auto w-full sm:w-64 space-y-1.5 text-[12px]">
+                        <div className="flex justify-between" style={{ color: A.textSecondary }}>
+                          <span>Subtotal</span><span>₹{Number(selectedInvoice.subtotal || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 })}</span>
+                        </div>
+                        <div className="flex justify-between" style={{ color: A.textSecondary }}>
+                          <span>Tax (GST)</span><span>₹{Number(selectedInvoice.tax_amount || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 })}</span>
+                        </div>
+                        <div className="flex justify-between" style={{ color: A.textSecondary }}>
+                          <span>Discount</span><span>− ₹{Number(selectedInvoice.discount_amount || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 })}</span>
+                        </div>
+                        <div className="flex justify-between pt-2 border-t-2 font-bold text-[14px]" style={{ borderColor: A.text, color: A.text }}>
+                          <span>Total</span><span style={{ color: A.green }}>₹{Number(selectedInvoice.total_amount || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 })}</span>
+                        </div>
+                      </div>
+
+                      {selectedInvoice.notes && (
+                        <div className="p-3 rounded-md border text-[11px]" style={{ borderColor: A.borderLight, background: A.bg, color: A.textSecondary }}>
+                          <p className="font-medium mb-0.5" style={{ color: A.text }}>Notes</p>
+                          {selectedInvoice.notes}
+                        </div>
+                      )}
+
+                      {/* Status changer */}
+                      <Separator style={{ background: A.border }} />
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px]" style={{ color: A.textMuted }}>Update status:</span>
+                        <Select value={invStatus} onValueChange={(v) => handleInvoiceStatusChange(v)}>
+                          <SelectTrigger className="h-8 text-[11px] flex-1 rounded-md" style={{ borderColor: A.border, color: A.text }}>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent style={{ background: '#fff', borderColor: A.border }}>
+                            <SelectItem value="ISSUED" style={{ color: A.text }}>Issued</SelectItem>
+                            <SelectItem value="PAID" style={{ color: A.text }}>Paid</SelectItem>
+                            <SelectItem value="OVERDUE" style={{ color: A.text }}>Overdue</SelectItem>
+                            <SelectItem value="CANCELLED" style={{ color: A.text }}>Cancelled</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {/* Print / download */}
+                      <DialogFooter className="gap-2 sm:gap-2">
+                        <Button
+                          variant="outline"
+                          className="h-9 text-[12px] rounded-md"
+                          style={{ borderColor: A.border, color: A.text }}
+                          onClick={() => setSelectedInvoice(null)}
+                        >
+                          Close
+                        </Button>
+                        <Button
+                          className="h-9 text-[12px] rounded-md text-white"
+                          style={{ background: A.green }}
+                          onClick={() => handlePrintInvoice(selectedInvoice.id)}
+                        >
+                          <Download className="w-4 h-4 mr-1.5" /> Print / Save as PDF
+                        </Button>
+                      </DialogFooter>
+                    </div>
+                  )
+                })()}
               </DialogContent>
             </Dialog>
           </div>
@@ -1185,7 +1595,97 @@ function AdminDashboard() {
       case 'analytics':
         return (
           <div className="space-y-4">
-            <h2 className="text-base font-semibold" style={{ color: A.text }}>Analytics</h2>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <h2 className="text-base font-semibold" style={{ color: A.text }}>Analytics</h2>
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline" className="text-xs h-8 gap-1.5" onClick={() => {
+                  exportToCSV(campaigns.map(c => {
+                    const cScans = scans.filter(s => s.campaign_id === c.id)
+                    const product = c.product || adminProducts.find(p => p.id === c.product_id) || null
+                    return {
+                      campaign: c.name,
+                      channel: c.channel,
+                      partner: c.partner_name || '',
+                      location: c.location || '',
+                      linked_product: product?.name || '',
+                      product_price: product?.price || 0,
+                      scans: cScans.length,
+                      estimated_revenue: product ? cScans.length * product.price : 0,
+                      status: c.status,
+                    }
+                  }), 'campaign-analytics', [
+                    { key: 'campaign', label: 'Campaign' },
+                    { key: 'channel', label: 'Channel' },
+                    { key: 'partner', label: 'Partner' },
+                    { key: 'location', label: 'Location' },
+                    { key: 'linked_product', label: 'Linked Product' },
+                    { key: 'product_price', label: 'Product Price' },
+                    { key: 'scans', label: 'Scans' },
+                    { key: 'estimated_revenue', label: 'Estimated Revenue' },
+                    { key: 'status', label: 'Status' },
+                  ])
+                  toast.success('Campaign analytics exported!')
+                }}>
+                  <Download className="w-3.5 h-3.5" /> Export Campaigns
+                </Button>
+                <Button size="sm" variant="outline" className="text-xs h-8 gap-1.5" onClick={() => {
+                  exportToCSV(scans.map(s => {
+                    const camp = campaigns.find(c => c.id === s.campaign_id)
+                    const product = camp?.product || adminProducts.find(p => p.id === camp?.product_id) || null
+                    return {
+                      scan_id: s.id,
+                      campaign: camp?.name || '',
+                      channel: camp?.channel || '',
+                      linked_product: product?.name || '',
+                      product_price: product?.price || 0,
+                      device: s.device || '',
+                      location: s.location || '',
+                      scanned_at: new Date(s.created_at).toISOString(),
+                    }
+                  }), 'qr-scan-analytics', [
+                    { key: 'scan_id', label: 'Scan ID' },
+                    { key: 'campaign', label: 'Campaign' },
+                    { key: 'channel', label: 'Channel' },
+                    { key: 'linked_product', label: 'Linked Product' },
+                    { key: 'product_price', label: 'Product Price' },
+                    { key: 'device', label: 'Device' },
+                    { key: 'location', label: 'Location' },
+                    { key: 'scanned_at', label: 'Scanned At' },
+                  ])
+                  toast.success('QR scan data exported!')
+                }}>
+                  <Download className="w-3.5 h-3.5" /> Export QR Scans
+                </Button>
+                <Button size="sm" variant="outline" className="text-xs h-8 gap-1.5" onClick={() => {
+                  exportToCSV(orders.map(o => ({
+                    order_number: o.order_number,
+                    invoice_number: o.invoice_number || '',
+                    customer: o.shipping_name || o.billing_name || '',
+                    phone: o.billing_phone || o.shipping_phone || '',
+                    email: o.billing_email || o.shipping_email || '',
+                    total: o.total_amount,
+                    status: o.status,
+                    payment_method: o.payment_method || '',
+                    payment_status: o.payment_status,
+                    created_at: new Date(o.created_at).toISOString(),
+                  })), 'order-analytics', [
+                    { key: 'order_number', label: 'Order Number' },
+                    { key: 'invoice_number', label: 'Invoice Number' },
+                    { key: 'customer', label: 'Customer' },
+                    { key: 'phone', label: 'Phone' },
+                    { key: 'email', label: 'Email' },
+                    { key: 'total', label: 'Total Amount' },
+                    { key: 'status', label: 'Order Status' },
+                    { key: 'payment_method', label: 'Payment Method' },
+                    { key: 'payment_status', label: 'Payment Status' },
+                    { key: 'created_at', label: 'Created At' },
+                  ])
+                  toast.success('Order analytics exported!')
+                }}>
+                  <Download className="w-3.5 h-3.5" /> Export Orders
+                </Button>
+              </div>
+            </div>
             <div className="grid lg:grid-cols-2 gap-4">
               <div className="bg-white border rounded-lg p-5" style={{ borderColor: A.border }}>
                 <h3 className="text-sm font-semibold mb-4" style={{ color: A.text }}>Campaigns by Channel</h3>
@@ -1237,6 +1737,88 @@ function AdminDashboard() {
                 </ResponsiveContainer>
               </div>
             </div>
+
+            {/* ═══ Campaign Performance — scan counts × product price ═══ */}
+            <div className="bg-white border rounded-lg p-5" style={{ borderColor: A.border }}>
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-sm font-semibold" style={{ color: A.text }}>Campaign Performance</h3>
+                  <p className="text-[11px]" style={{ color: A.textMuted }}>Scan counts with linked product price · estimated revenue = scans × price</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-[10px] uppercase tracking-wider" style={{ color: A.textMuted }}>Total Scans</p>
+                  <p className="text-lg font-bold" style={{ color: A.blue }}>{scans.length}</p>
+                </div>
+              </div>
+              {(() => {
+                const rows = campaigns.map(c => {
+                  const cScans = scans.filter(s => s.campaign_id === c.id)
+                  const product = c.product || adminProducts.find(p => p.id === c.product_id) || null
+                  const revenue = product ? cScans.length * product.price : 0
+                  return { campaign: c, scans: cScans.length, product, revenue }
+                }).sort((a, b) => b.scans - a.scans)
+                const totalRevenue = rows.reduce((sum, r) => sum + r.revenue, 0)
+                const maxScans = Math.max(1, ...rows.map(r => r.scans))
+                if (rows.length === 0) {
+                  return <p className="text-[12px] py-6 text-center" style={{ color: A.textMuted }}>No campaigns yet.</p>
+                }
+                return (
+                  <>
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="text-[11px]" style={{ color: A.textMuted }}>Campaign</TableHead>
+                            <TableHead className="text-[11px]" style={{ color: A.textMuted }}>Channel</TableHead>
+                            <TableHead className="text-[11px]" style={{ color: A.textMuted }}>Linked Product</TableHead>
+                            <TableHead className="text-[11px] text-right" style={{ color: A.textMuted }}>Price</TableHead>
+                            <TableHead className="text-[11px] text-right" style={{ color: A.textMuted }}>Scans</TableHead>
+                            <TableHead className="text-[11px] text-right" style={{ color: A.textMuted }}>Revenue</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {rows.map(r => (
+                            <TableRow key={r.campaign.id}>
+                              <TableCell className="text-[12px] font-medium" style={{ color: A.text }}>{r.campaign.name}</TableCell>
+                              <TableCell className="text-[11px]" style={{ color: A.textSecondary }}>{r.campaign.channel}</TableCell>
+                              <TableCell className="text-[12px]" style={{ color: A.textSecondary }}>
+                                {r.product ? (
+                                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded" style={{ background: A.greenLight, color: A.green }}>
+                                    <Tag className="w-3 h-3" />
+                                    <span className="truncate max-w-[160px]">{r.product.name}</span>
+                                  </span>
+                                ) : <span className="italic" style={{ color: A.textMuted }}>—</span>}
+                              </TableCell>
+                              <TableCell className="text-[12px] text-right font-semibold" style={{ color: A.text }}>
+                                {r.product ? `₹${r.product.price.toLocaleString()}` : '—'}
+                              </TableCell>
+                              <TableCell className="text-[12px] text-right" style={{ color: A.textSecondary }}>
+                                <div className="flex items-center justify-end gap-2">
+                                  <div className="hidden sm:block w-24 h-1.5 rounded-full" style={{ background: A.borderLight }}>
+                                    <div className="h-full rounded-full" style={{ width: `${(r.scans / maxScans) * 100}%`, background: A.blue }} />
+                                  </div>
+                                  <span className="font-semibold" style={{ color: A.blue }}>{r.scans}</span>
+                                </div>
+                              </TableCell>
+                              <TableCell className="text-[12px] text-right font-bold" style={{ color: A.green }}>
+                                {r.revenue > 0 ? `₹${r.revenue.toLocaleString()}` : '—'}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                    <div className="mt-4 flex items-center justify-between px-4 py-3 rounded-md" style={{ background: A.greenLight }}>
+                      <div>
+                        <p className="text-[11px] uppercase tracking-wider" style={{ color: A.green }}>Campaign-Attributed Revenue</p>
+                        <p className="text-[10px]" style={{ color: A.textMuted }}>Sum of (scans × linked product price) across all campaigns</p>
+                      </div>
+                      <p className="text-xl font-bold" style={{ color: A.green }}>₹{totalRevenue.toLocaleString()}</p>
+                    </div>
+                  </>
+                )
+              })()}
+            </div>
           </div>
         )
 
@@ -1247,7 +1829,7 @@ function AdminDashboard() {
       // ─── PRODUCTS TAB ────────────────────────────────────
       case 'products': {
         const filteredProducts = adminProducts.filter(p => {
-          const matchSearch = !productSearch || p.name.toLowerCase().includes(productSearch.toLowerCase()) || p.type.toLowerCase().includes(productSearch.toLowerCase()) || (p.category || '').toLowerCase().includes(productSearch.toLowerCase()) || (p.brand || '').toLowerCase().includes(productSearch.toLowerCase())
+          const matchSearch = !productSearch || p.name.toLowerCase().includes(productSearch.toLowerCase()) || p.type.toLowerCase().includes(productSearch.toLowerCase()) || (p.category || '').toLowerCase().includes(productSearch.toLowerCase())
           const matchFilter = productFilter === 'all' || (productFilter === 'active' ? p.active : !p.active)
           return matchSearch && matchFilter
         })
@@ -1365,14 +1947,6 @@ function AdminDashboard() {
                               <Textarea placeholder="Detailed description (max 5000 chars)..." rows={6} maxLength={5000} value={newProduct.description} onChange={e => setNewProduct({ ...newProduct, description: e.target.value })} className="text-sm resize-y" />
                               <p className="text-[10px] text-right" style={{ color: A.textMuted }}>{(newProduct.description || '').length}/5000</p>
                             </div>
-                            <div>
-                              <Label className="text-xs mb-1">Brand</Label>
-                              <Input placeholder="NOTJUST" value={newProduct.brand} onChange={e => setNewProduct({ ...newProduct, brand: e.target.value })} className="text-sm h-9" />
-                            </div>
-                            <div>
-                              <Label className="text-xs mb-1">Flavor</Label>
-                              <Input placeholder="e.g. Original" value={newProduct.flavor} onChange={e => setNewProduct({ ...newProduct, flavor: e.target.value })} className="text-sm h-9" />
-                            </div>
                           </div>
                         </div>
                       </div>
@@ -1386,33 +1960,11 @@ function AdminDashboard() {
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div>
                               <Label className="text-xs mb-1">Product Type *</Label>
-                              <Select value={newProduct.type} onValueChange={v => setNewProduct({ ...newProduct, type: v })}>
-                                <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Select type" /></SelectTrigger>
-                                <SelectContent>
-                                  {['FIZZ', 'STILL', 'BERRY', 'HERBAL', 'OTHER'].map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-                                </SelectContent>
-                              </Select>
-                              <Input
-                                placeholder="Or type custom type"
-                                value={!['FIZZ', 'STILL', 'BERRY', 'HERBAL', 'OTHER'].includes(newProduct.type) ? newProduct.type : ''}
-                                onChange={e => setNewProduct({ ...newProduct, type: e.target.value })}
-                                className="text-sm h-9 mt-1.5"
-                              />
+                              <Input placeholder="e.g. FIZZ, STILL, BERRY" value={newProduct.type} onChange={e => setNewProduct({ ...newProduct, type: e.target.value })} className="text-sm h-9" />
                             </div>
                             <div>
                               <Label className="text-xs mb-1">Category</Label>
-                              <Select value={newProduct.category} onValueChange={v => setNewProduct({ ...newProduct, category: v })}>
-                                <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Select category" /></SelectTrigger>
-                                <SelectContent>
-                                  {['Wellness Shot', 'Health Drink', 'Supplement', 'Functional Beverage', 'Other'].map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                                </SelectContent>
-                              </Select>
-                              <Input
-                                placeholder="Or type custom category"
-                                value={!['Wellness Shot', 'Health Drink', 'Supplement', 'Functional Beverage', 'Other'].includes(newProduct.category) ? newProduct.category : ''}
-                                onChange={e => setNewProduct({ ...newProduct, category: e.target.value })}
-                                className="text-sm h-9 mt-1.5"
-                              />
+                              <Input placeholder="e.g. Wellness Shot" value={newProduct.category} onChange={e => setNewProduct({ ...newProduct, category: e.target.value })} className="text-sm h-9" />
                             </div>
                           </div>
                         </div>
@@ -1425,6 +1977,10 @@ function AdminDashboard() {
                               <Input type="number" placeholder="2999" value={newProduct.price || ''} onChange={e => setNewProduct({ ...newProduct, price: Number(e.target.value) })} className="text-sm h-9" />
                             </div>
                             <div>
+                              <Label className="text-xs mb-1">Subscription Price (₹) <span className="font-normal" style={{ color: A.textMuted }}>(per cycle)</span></Label>
+                              <Input type="number" placeholder="e.g. 2499" value={newProduct.subscription_price || ''} onChange={e => setNewProduct({ ...newProduct, subscription_price: Number(e.target.value) })} className="text-sm h-9" />
+                            </div>
+                            <div>
                               <Label className="text-xs mb-1">MRP (₹)</Label>
                               <Input type="number" placeholder="3499" value={newProduct.mrp || ''} onChange={e => setNewProduct({ ...newProduct, mrp: Number(e.target.value) })} className="text-sm h-9" />
                             </div>
@@ -1432,7 +1988,7 @@ function AdminDashboard() {
                               <Label className="text-xs mb-1">Stock Quantity</Label>
                               <Input type="number" placeholder="500" value={newProduct.stock || ''} onChange={e => setNewProduct({ ...newProduct, stock: Number(e.target.value) })} className="text-sm h-9" />
                             </div>
-                            <div>
+                            <div className="sm:col-span-2">
                               <Label className="text-xs mb-1">Discount Label</Label>
                               <Input placeholder="e.g. Launch Offer" value={newProduct.discount_label} onChange={e => setNewProduct({ ...newProduct, discount_label: e.target.value })} className="text-sm h-9" />
                             </div>
@@ -1565,7 +2121,7 @@ function AdminDashboard() {
             <div className="flex flex-col sm:flex-row gap-2">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: A.textMuted }} />
-                <Input placeholder="Search by name, type, category, or brand..." value={productSearch} onChange={e => setProductSearch(e.target.value)} className="pl-9 h-9 text-sm" />
+                <Input placeholder="Search by name, type, or category..." value={productSearch} onChange={e => setProductSearch(e.target.value)} className="pl-9 h-9 text-sm" />
               </div>
               <div className="flex gap-1.5">
                 {(['all', 'active', 'inactive'] as const).map(filter => (
@@ -1645,13 +2201,12 @@ function AdminDashboard() {
                           setEditingProduct(product)
                           setNewProduct({
                             name: product.name, description: product.description || '', short_description: product.short_description || '',
-                            price: product.price, mrp: product.mrp || 0, stock: product.stock,
+                            price: product.price, subscription_price: (product as any).subscription_price || 0, mrp: product.mrp || 0, stock: product.stock,
                             image_url: product.image_url || '', gallery_images: product.gallery_images || '',
-                            type: product.type, category: product.category || 'Wellness Shot',
+                            type: product.type, category: product.category || '',
                             sku: product.sku || '', weight: product.weight || '',
                             ingredients: product.ingredients || '', nutrition_info: product.nutrition_info || '',
                             tags: product.tags || '', active: product.active, featured: product.featured || false,
-                            brand: product.brand || '', flavor: product.flavor || '',
                             serving_size: product.serving_size || '', allergen_info: product.allergen_info || '',
                             storage_info: product.storage_info || '', shelf_life: product.shelf_life || '',
                             country_origin: product.country_origin || '', fssai_license: product.fssai_license || '',
@@ -1874,11 +2429,11 @@ function AdminDashboard() {
                             <div className="space-y-2">
                               <label className="flex items-center gap-2 p-2 rounded-lg border border-dashed cursor-pointer hover:bg-gray-50 transition-colors" style={{ borderColor: A.border }}>
                                 <Upload className="w-4 h-4 shrink-0" style={{ color: A.textMuted }} />
-                                <span className="text-xs truncate" style={{ color: A.textMuted }}>{videoUploading ? 'Uploading...' : 'Upload video file (MP4/MOV/WebM, max 100MB)'}</span>
+                                <span className="text-xs truncate" style={{ color: A.textMuted }}>{videoUploading ? 'Uploading...' : 'Upload video file (MP4/MOV/WebM, max 50MB)'}</span>
                                 <input type="file" accept="video/mp4,video/webm,video/quicktime,.mp4,.mov,.webm,.avi" className="hidden" onChange={async (e) => {
                                   const f = e.target.files?.[0]
                                   if (!f) return
-                                  if (f.size > 100 * 1024 * 1024) { toast.error('Video too large (max 100MB)'); return }
+                                  if (f.size > 50 * 1024 * 1024) { toast.error('Video too large (max 50MB)'); return }
                                   // Check video duration (max 10 minutes for learning content)
                                   const durationOk = await new Promise<boolean>((resolve) => {
                                     const v = document.createElement('video')
@@ -1993,8 +2548,7 @@ function AdminDashboard() {
                               </div>
                             ))}
                           </div>
-                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                            <div><Label className="text-xs mb-1">Category</Label><Input placeholder="e.g. intro, usage" value={newQuiz.category} onChange={e => setNewQuiz({ ...newQuiz, category: e.target.value })} className="h-8 text-sm" /></div>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             <div>
                               <Label className="text-xs mb-1">Difficulty</Label>
                               <Select value={newQuiz.difficulty} onValueChange={v => setNewQuiz({ ...newQuiz, difficulty: v })}>
@@ -2005,9 +2559,34 @@ function AdminDashboard() {
                             <div><Label className="text-xs mb-1">Order</Label><Input type="number" value={newQuiz.order} onChange={e => setNewQuiz({ ...newQuiz, order: Number(e.target.value) })} className="h-8 text-sm" /></div>
                           </div>
                         </div>
-                        <div className="flex gap-2 mt-3">
-                          <Button size="sm" className="text-xs h-7" style={{ background: A.blue, color: '#fff' }} onClick={handleSaveQuiz}><Save className="w-3 h-3 mr-1" /> {editingQuiz ? 'Update' : 'Add'} Question</Button>
-                          <Button size="sm" variant="outline" className="text-xs h-7" onClick={() => { setShowAddQuiz(false); setEditingQuiz(null) }}>Cancel</Button>
+                        {/* Queued questions preview */}
+                        {quizQueue.length > 0 && (
+                          <div className="mt-3 p-2 rounded-lg border" style={{ borderColor: A.border, background: A.bg }}>
+                            <div className="flex items-center justify-between mb-1.5">
+                              <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: A.textSecondary }}>Queued ({quizQueue.length})</p>
+                              <button onClick={() => setQuizQueue([])} className="text-[9px]" style={{ color: A.red }}>Clear all</button>
+                            </div>
+                            <div className="space-y-1 max-h-24 overflow-y-auto">
+                              {quizQueue.map((q, idx) => (
+                                <div key={idx} className="flex items-center gap-2 p-1.5 rounded border" style={{ borderColor: A.border, background: A.surface }}>
+                              <span className="text-[9px] font-bold shrink-0" style={{ color: A.green }}>Q{idx + 1}</span>
+                              <p className="text-[10px] flex-1 truncate" style={{ color: A.text }}>{q.question}</p>
+                              <span className="text-[8px]" style={{ color: A.textMuted }}>{q.difficulty}</span>
+                              <button onClick={() => handleRemoveFromQueue(idx)} className="text-[9px] shrink-0" style={{ color: A.red }}><X className="w-3 h-3" /></button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      )}
+                        <div className="flex gap-2 mt-3 flex-wrap">
+                          {!editingQuiz && (
+                            <Button size="sm" className="text-xs h-7" style={{ background: A.lime, color: A.dark }} onClick={handleAddQuizToQueue}><Plus className="w-3 h-3 mr-1" /> Add to Queue</Button>
+                          )}
+                          {!editingQuiz && quizQueue.length > 0 && (
+                            <Button size="sm" className="text-xs h-7" style={{ background: A.green, color: '#fff' }} onClick={handleSaveAllQuizzes}><Save className="w-3 h-3 mr-1" /> Save All ({quizQueue.length})</Button>
+                          )}
+                          <Button size="sm" className="text-xs h-7" style={{ background: A.blue, color: '#fff' }} onClick={handleSaveQuiz}><Save className="w-3 h-3 mr-1" /> {editingQuiz ? 'Update' : 'Save Now'}</Button>
+                          <Button size="sm" variant="outline" className="text-xs h-7" onClick={() => { setShowAddQuiz(false); setEditingQuiz(null); setQuizQueue([]) }}>Cancel</Button>
                         </div>
                       </div>
                     )}
@@ -2015,7 +2594,7 @@ function AdminDashboard() {
                     {/* ─── ADD QUIZ BUTTON ─── */}
                     {!showAddQuiz && learningVideos.length > 0 && (
                       <div className="flex justify-center pt-2">
-                        <Button size="sm" className="text-xs gap-1 h-7" style={{ background: A.blue, color: '#fff' }} onClick={() => { setShowAddQuiz(true); setEditingQuiz(null); setNewQuiz({ question: '', options: ['', '', '', ''], answer: 0, category: '', difficulty: 'EASY', order: 1, video_id: learningVideos[0]?.id || '' }) }}>
+                        <Button size="sm" className="text-xs gap-1 h-7" style={{ background: A.blue, color: '#fff' }} onClick={() => { setShowAddQuiz(true); setEditingQuiz(null); setQuizQueue([]); setNewQuiz({ question: '', options: ['', '', '', ''], answer: 0, difficulty: 'EASY', order: 1, video_id: learningVideos[0]?.id || '' }) }}>
                           <Plus className="w-3 h-3" /> Add Quiz Question
                         </Button>
                       </div>
@@ -2123,24 +2702,36 @@ function AdminDashboard() {
 // ============================================================
 // CAMPAIGN MANAGER — Light Theme
 // ============================================================
-function CampaignManagerInner({ campaigns, setCampaigns, scans, orders, userId }: { campaigns: Campaign[]; setCampaigns: React.Dispatch<React.SetStateAction<Campaign[]>>; scans: QrScan[]; orders: Order[]; userId: string }) {
+function CampaignManagerInner({ campaigns, setCampaigns, scans, orders, userId, products }: { campaigns: Campaign[]; setCampaigns: React.Dispatch<React.SetStateAction<Campaign[]>>; scans: QrScan[]; orders: Order[]; userId: string; products: Product[] }) {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [detailCampaign, setDetailCampaign] = useState<Campaign | null>(null)
-  const [form, setForm] = useState({ name: '', channel: 'HOTEL', partner_name: '', location: '' })
+  const [form, setForm] = useState<{ name: string; channel: string; partner_name: string; location: string; product_id: string }>({ name: '', channel: 'HOTEL', partner_name: '', location: '', product_id: '' })
 
   const channelIcons: Record<string, string> = {
     HOTEL: '🏨', HOSPITAL: '🏥', CLINIC: '🏥', DOCTOR: '👨‍⚕️',
     EVENT: '🎉', CORPORATE: '🏢', INFLUENCER: '📱', WELLNESS: '🧘',
   }
 
+  const getProductById = (id?: string | null) => products.find(p => p.id === id) || null
+
   const handleCreate = async () => {
     if (!form.name) { toast.error('Campaign name is required'); return }
     try {
-      const result = await campaignService.create(form as any, userId)
-      setCampaigns(prev => [result, ...prev])
+      const payload: Partial<Campaign> = {
+        name: form.name,
+        channel: form.channel,
+        partner_name: form.partner_name || undefined,
+        location: form.location || undefined,
+        product_id: form.product_id || null,
+      }
+      const result = await campaignService.create(payload, userId)
+      // Fetch full record (with product relation) so UI shows linked product immediately
+      const full = await campaignService.get(result.id)
+      const merged = full || { ...result, product: getProductById(result.product_id) || null }
+      setCampaigns(prev => [merged, ...prev])
       toast.success('Campaign created')
       setDialogOpen(false)
-      setForm({ name: '', channel: 'HOTEL', partner_name: '', location: '' })
+      setForm({ name: '', channel: 'HOTEL', partner_name: '', location: '', product_id: '' })
     } catch {
       toast.error('Failed to create campaign')
     }
@@ -2185,6 +2776,26 @@ function CampaignManagerInner({ campaigns, setCampaigns, scans, orders, userId }
               </div>
               <div className="space-y-1.5"><Label style={{ color: A.textSecondary }}>Partner</Label><Input value={form.partner_name} onChange={e => setForm(p => ({ ...p, partner_name: e.target.value }))} className="rounded-md" style={{ borderColor: A.border, color: A.text }} /></div>
               <div className="space-y-1.5"><Label style={{ color: A.textSecondary }}>Location</Label><Input value={form.location} onChange={e => setForm(p => ({ ...p, location: e.target.value }))} className="rounded-md" style={{ borderColor: A.border, color: A.text }} /></div>
+              <div className="space-y-1.5">
+                <Label style={{ color: A.textSecondary }}>Linked Product</Label>
+                <Select value={form.product_id || undefined} onValueChange={v => setForm(p => ({ ...p, product_id: v === '__none__' ? '' : v }))}>
+                  <SelectTrigger className="rounded-md w-full" style={{ borderColor: A.border, color: A.text }}>
+                    <SelectValue placeholder="Select a product to track scans & revenue" />
+                  </SelectTrigger>
+                  <SelectContent style={{ background: '#fff', borderColor: A.border }}>
+                    {products.length === 0 && <SelectItem value="__none__" disabled style={{ color: A.textMuted }}>No products available</SelectItem>}
+                    {products.map(p => (
+                      <SelectItem key={p.id} value={p.id} style={{ color: A.text }}>
+                        <span className="flex items-center justify-between w-full">
+                          <span className="truncate">{p.name}</span>
+                          <span className="text-[10px] font-semibold ml-2" style={{ color: A.green }}>₹{p.price.toLocaleString()}</span>
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-[10px]" style={{ color: A.textMuted }}>Each scan on this campaign's QR will track revenue at the linked product's price.</p>
+              </div>
               <div className="flex items-center gap-2 p-3 rounded-md" style={{ background: A.greenLight, border: `1px solid ${A.green}20` }}>
                 <QrCode className="w-4 h-4" style={{ color: A.green }} />
                 <span className="text-[11px]" style={{ color: A.green }}>QR code will be auto-generated for this campaign</span>
@@ -2200,6 +2811,7 @@ function CampaignManagerInner({ campaigns, setCampaigns, scans, orders, userId }
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {campaigns.map(campaign => {
           const qrUrl = `https://notjustwatr.com/scan/${campaign.id}`
+          const linkedProduct = campaign.product || getProductById(campaign.product_id)
           return (
             <div key={campaign.id} className="bg-white border rounded-lg p-4 hover:shadow-sm transition-shadow" style={{ borderColor: A.border }}>
               <div className="flex items-start gap-3">
@@ -2212,6 +2824,15 @@ function CampaignManagerInner({ campaigns, setCampaigns, scans, orders, userId }
                     <span className="text-[9px] font-medium px-1.5 py-0.5 rounded" style={{ color: A.blue, background: A.blueLight }}>{channelIcons[campaign.channel] || '📋'} {campaign.channel}</span>
                   </div>
                   <p className="text-[10px] mt-1" style={{ color: A.textMuted }}>{campaign.partner_name || 'No partner'}</p>
+                  {linkedProduct ? (
+                    <div className="mt-2 flex items-center gap-1.5 text-[10px] px-2 py-1 rounded" style={{ background: A.greenLight, color: A.green }}>
+                      <Tag className="w-3 h-3" />
+                      <span className="font-medium truncate">{linkedProduct.name}</span>
+                      <span className="font-bold ml-auto">₹{linkedProduct.price.toLocaleString()}</span>
+                    </div>
+                  ) : (
+                    <p className="text-[10px] mt-2 italic" style={{ color: A.textMuted }}>No linked product</p>
+                  )}
                 </div>
               </div>
               <div className="flex items-center justify-between mt-3 pt-3" style={{ borderTop: `1px solid ${A.borderLight}` }}>
@@ -2235,7 +2856,11 @@ function CampaignManagerInner({ campaigns, setCampaigns, scans, orders, userId }
       <Dialog open={!!detailCampaign} onOpenChange={() => setDetailCampaign(null)}>
         <DialogContent className="max-w-lg" style={{ background: '#fff', borderColor: A.border, color: A.text }}>
           <DialogHeader><DialogTitle style={{ color: A.text }}>Campaign Details</DialogTitle></DialogHeader>
-          {detailCampaign && (
+          {detailCampaign && (() => {
+            const detailProduct = detailCampaign.product || getProductById(detailCampaign.product_id)
+            const detailScans = scans.filter(s => s.campaign_id === detailCampaign.id)
+            const revenue = detailProduct ? detailScans.length * detailProduct.price : 0
+            return (
             <div className="space-y-4">
               <div className="flex items-start gap-6">
                 <div className="p-4 bg-white rounded-lg border" style={{ borderColor: A.border }}>
@@ -2250,6 +2875,20 @@ function CampaignManagerInner({ campaigns, setCampaigns, scans, orders, userId }
                   <div className="text-[12px] space-y-1" style={{ color: A.textSecondary }}>
                     <p>Partner: {detailCampaign.partner_name || '-'}</p>
                     <p>Location: {detailCampaign.location || '-'}</p>
+                    <p className="flex items-center gap-1.5">
+                      <span>Linked Product:</span>
+                      {detailProduct ? (
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded" style={{ background: A.greenLight, color: A.green }}>
+                          <Tag className="w-3 h-3" />
+                          <span className="font-medium">{detailProduct.name}</span>
+                          <span className="font-bold">· ₹{detailProduct.price.toLocaleString()}</span>
+                        </span>
+                      ) : <span style={{ color: A.textMuted }}>Not linked</span>}
+                    </p>
+                    <p>Total Scans: <span className="font-semibold" style={{ color: A.text }}>{detailScans.length}</span></p>
+                    {detailProduct && (
+                      <p>Estimated Revenue: <span className="font-bold" style={{ color: A.green }}>₹{revenue.toLocaleString()}</span> <span className="text-[10px]" style={{ color: A.textMuted }}>({detailScans.length} × ₹{detailProduct.price.toLocaleString()})</span></p>
+                    )}
                   </div>
                   <div className="flex gap-2 pt-2">
                     <Button variant="outline" size="sm" className="rounded-md text-[11px] h-8" style={{ borderColor: A.border, color: A.text }} onClick={() => { navigator.clipboard.writeText(`https://notjustwatr.com/scan/${detailCampaign.id}`); toast.success('QR URL copied!') }}>
@@ -2262,7 +2901,8 @@ function CampaignManagerInner({ campaigns, setCampaigns, scans, orders, userId }
                 </div>
               </div>
             </div>
-          )}
+            )
+          })()}
         </DialogContent>
       </Dialog>
     </div>
@@ -2274,7 +2914,7 @@ function CampaignManagerInner({ campaigns, setCampaigns, scans, orders, userId }
 // ============================================================
 function QuizManagerInner({ questions, setQuestions }: { questions: QuizQuestion[]; setQuestions: React.Dispatch<React.SetStateAction<QuizQuestion[]>> }) {
   const [dialogOpen, setDialogOpen] = useState(false)
-  const [form, setForm] = useState({ question: '', option1: '', option2: '', option3: '', option4: '', answer: '0', category: 'usage', difficulty: 'EASY' })
+  const [form, setForm] = useState({ question: '', option1: '', option2: '', option3: '', option4: '', answer: '0', difficulty: 'EASY' })
   const [filterCategory, setFilterCategory] = useState<string>('all')
   const [filterDifficulty, setFilterDifficulty] = useState<string>('all')
 

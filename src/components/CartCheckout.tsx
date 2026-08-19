@@ -551,17 +551,11 @@ export function CheckoutView() {
         shipping_state: finalShippingState,
         shipping_pincode: finalShippingPincode,
         same_as_billing: sameAsBilling,
-        campaign_id: typeof window !== 'undefined' ? localStorage.getItem('notjust_campaign_id') : null,
         payment_method: paymentMethod,
         purchase_mode: purchaseMode,
       }
 
       const order = await orderService.create(orderData)
-
-      // Clear campaign attribution after order is placed
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('notjust_campaign_id')
-      }
 
       // Success — update local user state with billing email if it was missing from profile
       if (user && billingEmail.trim() && !user.email) {

@@ -29,7 +29,7 @@ export interface Product {
   description?: string | null
   short_description?: string | null
   price: number
-  subscription_plans?: string | null
+  subscription_price?: number | null
   mrp?: number | null
   stock: number
   image_url?: string | null

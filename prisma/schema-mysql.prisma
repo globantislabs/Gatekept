@@ -243,8 +243,11 @@ model Order {
   // Invoice link
   invoice_number       String?  @unique @db.VarChar(50)
   invoice_generated_at DateTime? @db.DateTime(3)
+<<<<<<< HEAD
   // Campaign attribution
   campaign_id          String?  @db.VarChar(30)
+=======
+>>>>>>> 07b9f1b (feat: admin panel overhaul — remove brand/flavor, text inputs, quiz queue, billing/shipping, campaign-product linking, invoices, exports)
   payment_method  String?  @default("UPI") @db.VarChar(50)
   payment_status  String   @default("PENDING") @db.VarChar(30) // PENDING, COMPLETED, FAILED, REFUNDED, COD_PENDING
   payment_ref     String?  @db.VarChar(255)
@@ -259,7 +262,10 @@ model Order {
   tracking        OrderTracking[]
   subscription    Subscription?
   invoice         Invoice?
+<<<<<<< HEAD
   campaign        Campaign? @relation(fields: [campaign_id], references: [id], onDelete: SetNull)
+=======
+>>>>>>> 07b9f1b (feat: admin panel overhaul — remove brand/flavor, text inputs, quiz queue, billing/shipping, campaign-product linking, invoices, exports)
 
   @@index([user_id])
   @@index([order_number])

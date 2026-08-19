@@ -71,7 +71,6 @@ export async function POST(req: NextRequest) {
       shipping_name, shipping_phone, shipping_email, shipping_address,
       shipping_city, shipping_state, shipping_pincode,
       same_as_billing,
-      campaign_id, // campaign attribution (from QR scan)
       payment_method, notes,
     } = body
 
@@ -128,7 +127,6 @@ export async function POST(req: NextRequest) {
         shipping_state: finalShippingState,
         shipping_pincode: finalShippingPincode,
         same_as_billing: isSameAsBilling,
-        campaign_id: campaign_id || null,
         payment_method: payment_method || 'UPI',
         payment_status: payment_method === 'COD' ? 'COD_PENDING' : 'PENDING',
         notes,

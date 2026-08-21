@@ -1,87 +1,57 @@
 -- ════════════════════════════════════════════════════════════════════
--- NOTJUST Watr — Database Migration Script (MySQL / Plesk)
--- Run this in phpMyAdmin > notjustwatr_com database > SQL tab
--- Safe to run multiple times — checks if column exists before adding
+-- NOTJUST Watr — Database Migration for phpMyAdmin (MariaDB/MySQL)
+-- ════════════════════════════════════════════════════════════════════
+-- HOW TO USE:
+--   1. Open phpMyAdmin
+--   2. Select your database (notjustwatrdb) from the left sidebar
+--   3. Click the "SQL" tab at the top
+--   4. Copy ALL the text below (from the first ALTER to the last SELECT)
+--   5. Paste it into the SQL box
+--   6. Click "Go" (bottom right)
+--   7. You'll see "Your SQL query has been executed successfully"
+--
+-- This script is IDEMPOTENT — safe to run multiple times.
+-- Uses MariaDB IF EXISTS / IF NOT EXISTS syntax (no errors on re-run).
 -- ════════════════════════════════════════════════════════════════════
 
--- Drop brand and flavor from Product (if they exist)
+
+-- ─── Product table: drop brand/flavor, add subscription_price ───
 ALTER TABLE `Product` DROP COLUMN IF EXISTS `brand`;
 ALTER TABLE `Product` DROP COLUMN IF EXISTS `flavor`;
+ALTER TABLE `Product` ADD COLUMN IF NOT EXISTS `subscription_price` DOUBLE NULL;
 
--- Add subscription_price to Product (if not exists)
-SET @col_exists = (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'Product' AND COLUMN_NAME = 'subscription_price');
-SET @sql = IF(@col_exists = 0, 'ALTER TABLE `Product` ADD COLUMN `subscription_price` DOUBLE NULL', 'SELECT "subscription_price already exists"');
-PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPREPARE stmt;
-
--- Drop category from ProductQuiz (if exists)
+-- ─── ProductQuiz: drop category ───
 ALTER TABLE `ProductQuiz` DROP COLUMN IF EXISTS `category`;
 
--- Add product_id to Campaign (if not exists)
-SET @col_exists = (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'Campaign' AND COLUMN_NAME = 'product_id');
-SET @sql = IF(@col_exists = 0, 'ALTER TABLE `Campaign` ADD COLUMN `product_id` VARCHAR(30) NULL', 'SELECT "Campaign.product_id already exists"');
-PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPREPARE stmt;
+-- ─── Campaign: add product_id ───
+ALTER TABLE `Campaign` ADD COLUMN IF NOT EXISTS `product_id` VARCHAR(30) NULL;
 
--- Add product_id to QrScan (if not exists)
-SET @col_exists = (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'QrScan' AND COLUMN_NAME = 'product_id');
-SET @sql = IF(@col_exists = 0, 'ALTER TABLE `QrScan` ADD COLUMN `product_id` VARCHAR(30) NULL', 'SELECT "QrScan.product_id already exists"');
-PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPREPARE stmt;
+-- ─── QrScan: add product_id ───
+ALTER TABLE `QrScan` ADD COLUMN IF NOT EXISTS `product_id` VARCHAR(30) NULL;
 
--- ═══ Order table: add billing + shipping_email + invoice columns ═══
+-- ─── Order table: add billing + shipping_email + invoice columns ───
+ALTER TABLE `Order` ADD COLUMN IF NOT EXISTS `billing_name` VARCHAR(255) NULL;
+ALTER TABLE `Order` ADD COLUMN IF NOT EXISTS `billing_phone` VARCHAR(20) NULL;
+ALTER TABLE `Order` ADD COLUMN IF NOT EXISTS `billing_email` VARCHAR(191) NULL;
+ALTER TABLE `Order` ADD COLUMN IF NOT EXISTS `billing_address` TEXT NULL;
+ALTER TABLE `Order` ADD COLUMN IF NOT EXISTS `billing_city` VARCHAR(100) NULL;
+ALTER TABLE `Order` ADD COLUMN IF NOT EXISTS `billing_state` VARCHAR(100) NULL;
+ALTER TABLE `Order` ADD COLUMN IF NOT EXISTS `billing_pincode` VARCHAR(10) NULL;
+ALTER TABLE `Order` ADD COLUMN IF NOT EXISTS `shipping_email` VARCHAR(191) NULL;
+ALTER TABLE `Order` ADD COLUMN IF NOT EXISTS `same_as_billing` BOOLEAN NULL;
+ALTER TABLE `Order` ADD COLUMN IF NOT EXISTS `invoice_number` VARCHAR(50) NULL;
+ALTER TABLE `Order` ADD COLUMN IF NOT EXISTS `invoice_generated_at` DATETIME NULL;
 
-SET @col_exists = (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'Order' AND COLUMN_NAME = 'billing_name');
-SET @sql = IF(@col_exists = 0, 'ALTER TABLE `Order` ADD COLUMN `billing_name` VARCHAR(255) NULL', 'SELECT "billing_name exists"');
-PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPREPARE stmt;
+-- ─── Order: unique index on invoice_number ───
+ALTER TABLE `Order` ADD UNIQUE INDEX IF NOT EXISTS `Order_invoice_number_key` (`invoice_number`);
 
-SET @col_exists = (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'Order' AND COLUMN_NAME = 'billing_phone');
-SET @sql = IF(@col_exists = 0, 'ALTER TABLE `Order` ADD COLUMN `billing_phone` VARCHAR(20) NULL', 'SELECT "billing_phone exists"');
-PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPREPARE stmt;
+-- ─── Campaign: index on product_id ───
+ALTER TABLE `Campaign` ADD INDEX IF NOT EXISTS `Campaign_product_id_idx` (`product_id`);
 
-SET @col_exists = (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'Order' AND COLUMN_NAME = 'billing_email');
-SET @sql = IF(@col_exists = 0, 'ALTER TABLE `Order` ADD COLUMN `billing_email` VARCHAR(191) NULL', 'SELECT "billing_email exists"');
-PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPREPARE stmt;
+-- ─── QrScan: index on product_id ───
+ALTER TABLE `QrScan` ADD INDEX IF NOT EXISTS `QrScan_product_id_idx` (`product_id`);
 
-SET @col_exists = (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'Order' AND COLUMN_NAME = 'billing_address');
-SET @sql = IF(@col_exists = 0, 'ALTER TABLE `Order` ADD COLUMN `billing_address` TEXT NULL', 'SELECT "billing_address exists"');
-PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPREPARE stmt;
-
-SET @col_exists = (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'Order' AND COLUMN_NAME = 'billing_city');
-SET @sql = IF(@col_exists = 0, 'ALTER TABLE `Order` ADD COLUMN `billing_city` VARCHAR(100) NULL', 'SELECT "billing_city exists"');
-PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPREPARE stmt;
-
-SET @col_exists = (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'Order' AND COLUMN_NAME = 'billing_state');
-SET @sql = IF(@col_exists = 0, 'ALTER TABLE `Order` ADD COLUMN `billing_state` VARCHAR(100) NULL', 'SELECT "billing_state exists"');
-PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPREPARE stmt;
-
-SET @col_exists = (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'Order' AND COLUMN_NAME = 'billing_pincode');
-SET @sql = IF(@col_exists = 0, 'ALTER TABLE `Order` ADD COLUMN `billing_pincode` VARCHAR(10) NULL', 'SELECT "billing_pincode exists"');
-PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPREPARE stmt;
-
--- shipping_email (was missing before)
-SET @col_exists = (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'Order' AND COLUMN_NAME = 'shipping_email');
-SET @sql = IF(@col_exists = 0, 'ALTER TABLE `Order` ADD COLUMN `shipping_email` VARCHAR(191) NULL', 'SELECT "shipping_email exists"');
-PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPREPARE stmt;
-
--- same_as_billing
-SET @col_exists = (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'Order' AND COLUMN_NAME = 'same_as_billing');
-SET @sql = IF(@col_exists = 0, 'ALTER TABLE `Order` ADD COLUMN `same_as_billing` BOOLEAN NULL', 'SELECT "same_as_billing exists"');
-PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPREPARE stmt;
-
--- invoice_number + invoice_generated_at on Order
-SET @col_exists = (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'Order' AND COLUMN_NAME = 'invoice_number');
-SET @sql = IF(@col_exists = 0, 'ALTER TABLE `Order` ADD COLUMN `invoice_number` VARCHAR(50) NULL', 'SELECT "invoice_number exists"');
-PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPREPARE stmt;
-
-SET @col_exists = (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'Order' AND COLUMN_NAME = 'invoice_generated_at');
-SET @sql = IF(@col_exists = 0, 'ALTER TABLE `Order` ADD COLUMN `invoice_generated_at` DATETIME NULL', 'SELECT "invoice_generated_at exists"');
-PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPREPARE stmt;
-
--- Add unique index on Order.invoice_number (if not exists)
-SET @idx_exists = (SELECT COUNT(*) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'Order' AND INDEX_NAME = 'Order_invoice_number_key');
-SET @sql = IF(@idx_exists = 0, 'ALTER TABLE `Order` ADD UNIQUE INDEX `Order_invoice_number_key`(`invoice_number`)', 'SELECT "index exists"');
-PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPREPARE stmt;
-
--- ═══ Create Invoice table (if not exists) ═══
-
+-- ─── Create Invoice table ───
 CREATE TABLE IF NOT EXISTS `Invoice` (
   `id` VARCHAR(30) NOT NULL,
   `order_id` VARCHAR(30) NOT NULL,
@@ -108,25 +78,17 @@ CREATE TABLE IF NOT EXISTS `Invoice` (
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  UNIQUE INDEX `Invoice_order_id_key`(`order_id`),
-  UNIQUE INDEX `Invoice_invoice_number_key`(`invoice_number`),
-  INDEX `Invoice_user_id_idx`(`user_id`),
-  INDEX `Invoice_invoice_number_idx`(`invoice_number`),
-  INDEX `Invoice_status_idx`(`status`),
-  INDEX `Invoice_issued_at_idx`(`issued_at`),
-  CONSTRAINT `Invoice_order_id_fkey` FOREIGN KEY (`order_id`) REFERENCES `Order`(`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `Invoice_user_id_fkey` FOREIGN KEY (`user_id`) REFERENCES `UserProfile`(`id`) ON DELETE CASCADE ON UPDATE CASCADE
+  UNIQUE INDEX `Invoice_order_id_key` (`order_id`),
+  UNIQUE INDEX `Invoice_invoice_number_key` (`invoice_number`),
+  INDEX `Invoice_user_id_idx` (`user_id`),
+  INDEX `Invoice_invoice_number_idx` (`invoice_number`),
+  INDEX `Invoice_status_idx` (`status`),
+  INDEX `Invoice_issued_at_idx` (`issued_at`),
+  CONSTRAINT `Invoice_order_id_fkey` FOREIGN KEY (`order_id`) REFERENCES `Order` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `Invoice_user_id_fkey` FOREIGN KEY (`user_id`) REFERENCES `UserProfile` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Add Campaign.product_id foreign key index (if not exists)
-SET @idx_exists = (SELECT COUNT(*) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'Campaign' AND INDEX_NAME = 'Campaign_product_id_idx');
-SET @sql = IF(@idx_exists = 0, 'ALTER TABLE `Campaign` ADD INDEX `Campaign_product_id_idx`(`product_id`)', 'SELECT "index exists"');
-PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPREPARE stmt;
-
--- Add QrScan.product_id index (if not exists)
-SET @idx_exists = (SELECT COUNT(*) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'QrScan' AND INDEX_NAME = 'QrScan_product_id_idx');
-SET @sql = IF(@idx_exists = 0, 'ALTER TABLE `QrScan` ADD INDEX `QrScan_product_id_idx`(`product_id`)', 'SELECT "index exists"');
-PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPREPARE stmt;
-
--- Done!
-SELECT 'Migration completed successfully!' AS result;
+-- ─── Done! Verify ───
+SELECT '✅ Migration complete! billing_name exists:' AS status,
+       (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'Order' AND COLUMN_NAME = 'billing_name') AS billing_name_present,
+       (SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'Invoice') AS invoice_table_present;

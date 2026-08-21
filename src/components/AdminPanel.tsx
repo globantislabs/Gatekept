@@ -1066,8 +1066,12 @@ function AdminDashboard() {
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {campaigns.filter(c => c.status === 'ACTIVE').map(campaign => {
                 const campaignScans = scans.filter(s => s.campaign_id === campaign.id)
-                const qrUrl = `https://notjustwatr.com/?campaign=${campaign.id}`
                 const linkedProduct = campaign.product || adminProducts.find(p => p.id === campaign.product_id) || null
+                // QR redirects to the linked product detail page with campaign tracking
+                const productSlug = linkedProduct?.slug || ''
+                const qrUrl = linkedProduct
+                  ? `https://notjustwatr.com/product?campaign=${campaign.id}&product=${productSlug}`
+                  : `https://notjustwatr.com/?campaign=${campaign.id}`
                 const revenue = linkedProduct ? campaignScans.length * linkedProduct.price : 0
                 return (
                   <div key={campaign.id} className="bg-white border rounded-lg p-5 text-center hover:shadow-sm transition-shadow" style={{ borderColor: A.border }}>
@@ -1085,7 +1089,7 @@ function AdminDashboard() {
                         </div>
                       </div>
                     ) : (
-                      <p className="mb-3 text-[10px] italic" style={{ color: A.textMuted }}>No linked product</p>
+                      <p className="mb-3 text-[10px] italic" style={{ color: A.textMuted }}>No linked product — QR points to homepage</p>
                     )}
                     <div className="flex items-center justify-center gap-4 text-[11px] mb-4" style={{ color: A.textSecondary }}>
                       <span className="flex items-center gap-1"><Scan className="w-3 h-3" /> {campaignScans.length} scans</span>
@@ -1907,13 +1911,49 @@ function AdminDashboard() {
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h3 className="text-sm font-semibold" style={{ color: A.text }}>Campaign Performance</h3>
-                  <p className="text-[11px]" style={{ color: A.textMuted }}>Scan counts with linked product price · estimated revenue = scans × price</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-[10px] uppercase tracking-wider" style={{ color: A.textMuted }}>Total Scans</p>
-                  <p className="text-lg font-bold" style={{ color: A.blue }}>{scans.length}</p>
+                  <p className="text-[11px]" style={{ color: A.textMuted }}>Scans, purchases, conversion, and revenue per campaign</p>
                 </div>
               </div>
+
+              {/* ── Total Summary Cards ── */}
+              {(() => {
+                const totalScansCount = scans.length
+                const totalPurchasesCount = orders.filter(o => (o as any).campaign_id).length
+                const totalPurchaseRevenue = orders.filter(o => (o as any).campaign_id).reduce((sum, o) => sum + (o.total_amount || 0), 0)
+                const overallConvRate = totalScansCount > 0 ? ((totalPurchasesCount / totalScansCount) * 100).toFixed(1) : '0.0'
+                return (
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
+                    <div className="rounded-lg p-3" style={{ background: A.blueLight, border: `1px solid ${A.blue}20` }}>
+                      <div className="flex items-center gap-2 mb-1">
+                        <Scan className="w-3.5 h-3.5" style={{ color: A.blue }} />
+                        <span className="text-[10px] uppercase tracking-wider font-semibold" style={{ color: A.blue }}>Total Scans</span>
+                      </div>
+                      <p className="text-2xl font-bold" style={{ color: A.blue }}>{totalScansCount}</p>
+                    </div>
+                    <div className="rounded-lg p-3" style={{ background: A.greenLight, border: `1px solid ${A.green}20` }}>
+                      <div className="flex items-center gap-2 mb-1">
+                        <ShoppingCart className="w-3.5 h-3.5" style={{ color: A.green }} />
+                        <span className="text-[10px] uppercase tracking-wider font-semibold" style={{ color: A.green }}>Total Purchases</span>
+                      </div>
+                      <p className="text-2xl font-bold" style={{ color: A.green }}>{totalPurchasesCount}</p>
+                    </div>
+                    <div className="rounded-lg p-3" style={{ background: A.amberLight, border: `1px solid ${A.amber}20` }}>
+                      <div className="flex items-center gap-2 mb-1">
+                        <TrendingUp className="w-3.5 h-3.5" style={{ color: A.amber }} />
+                        <span className="text-[10px] uppercase tracking-wider font-semibold" style={{ color: A.amber }}>Conv. Rate</span>
+                      </div>
+                      <p className="text-2xl font-bold" style={{ color: A.amber }}>{overallConvRate}%</p>
+                    </div>
+                    <div className="rounded-lg p-3" style={{ background: A.greenLight, border: `1px solid ${A.green}20` }}>
+                      <div className="flex items-center gap-2 mb-1">
+                        <IndianRupee className="w-3.5 h-3.5" style={{ color: A.green }} />
+                        <span className="text-[10px] uppercase tracking-wider font-semibold" style={{ color: A.green }}>Total Revenue</span>
+                      </div>
+                      <p className="text-2xl font-bold" style={{ color: A.green }}>₹{totalPurchaseRevenue.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</p>
+                    </div>
+                  </div>
+                )
+              })()}
               {(() => {
                 const rows = campaigns.map(c => {
                   const cScans = scans.filter(s => s.campaign_id === c.id)
@@ -3014,8 +3054,11 @@ function CampaignManagerInner({ campaigns, setCampaigns, scans, orders, userId, 
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {campaigns.map(campaign => {
-          const qrUrl = `https://notjustwatr.com/?campaign=${campaign.id}`
           const linkedProduct = campaign.product || getProductById(campaign.product_id)
+          const productSlug = linkedProduct?.slug || ''
+          const qrUrl = linkedProduct
+            ? `https://notjustwatr.com/product?campaign=${campaign.id}&product=${productSlug}`
+            : `https://notjustwatr.com/?campaign=${campaign.id}`
           return (
             <div key={campaign.id} className="bg-white border rounded-lg p-4 hover:shadow-sm transition-shadow" style={{ borderColor: A.border }}>
               <div className="flex items-start gap-3">
@@ -3068,7 +3111,7 @@ function CampaignManagerInner({ campaigns, setCampaigns, scans, orders, userId, 
             <div className="space-y-4">
               <div className="flex items-start gap-6">
                 <div className="p-4 bg-white rounded-lg border" style={{ borderColor: A.border }}>
-                  <QRCodeSVG value={`https://notjustwatr.com/?campaign=${detailCampaign.id}`} size={130} bgColor="#ffffff" fgColor="#1f1e1c" level="M" />
+                  <QRCodeSVG value={detailProduct ? `https://notjustwatr.com/product?campaign=${detailCampaign.id}&product=${detailProduct.slug || ''}` : `https://notjustwatr.com/?campaign=${detailCampaign.id}`} size={130} bgColor="#ffffff" fgColor="#1f1e1c" level="M" />
                 </div>
                 <div className="flex-1 space-y-2">
                   <h3 className="font-bold text-lg" style={{ color: A.text }}>{detailCampaign.name}</h3>
@@ -3095,7 +3138,7 @@ function CampaignManagerInner({ campaigns, setCampaigns, scans, orders, userId, 
                     )}
                   </div>
                   <div className="flex gap-2 pt-2">
-                    <Button variant="outline" size="sm" className="rounded-md text-[11px] h-8" style={{ borderColor: A.border, color: A.text }} onClick={() => { navigator.clipboard.writeText(`https://notjustwatr.com/?campaign=${detailCampaign.id}`); toast.success('QR URL copied!') }}>
+                    <Button variant="outline" size="sm" className="rounded-md text-[11px] h-8" style={{ borderColor: A.border, color: A.text }} onClick={() => { navigator.clipboard.writeText(detailProduct ? `https://notjustwatr.com/product?campaign=${detailCampaign.id}&product=${detailProduct.slug || ''}` : `https://notjustwatr.com/?campaign=${detailCampaign.id}`); toast.success('QR URL copied!') }}>
                       <Copy className="w-3 h-3 mr-1" /> Copy URL
                     </Button>
                     <Button variant="outline" size="sm" className="rounded-md text-[11px] h-8" style={{ borderColor: A.border, color: A.text }} onClick={() => toggleStatus(detailCampaign.id, detailCampaign.status)}>

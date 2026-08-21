@@ -16,6 +16,7 @@
     "db:use-mysql": "cp prisma/schema-mysql.prisma prisma/schema.prisma && npx prisma generate",
     "db:use-sqlite": "cp prisma/schema-sqlite.prisma prisma/schema.prisma && npx prisma generate",
     "seed": "npx tsx prisma/seed.ts",
+    "db:migrate-production": "node scripts/migrate-production.js",
     "test:email": "npx tsx scripts/test-email.ts",
     "test:messages": "npx tsx scripts/test-all-messages.ts"
   },

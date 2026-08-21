@@ -30,7 +30,7 @@ export async function PUT(
     }
 
     const allowedFields = [
-      'video_id', 'question', 'options', 'answer', 'category', 'difficulty', 'order', 'active',
+      'video_id', 'question', 'options', 'answer', 'difficulty', 'order', 'active',
     ]
 
     const updateData: Record<string, unknown> = {}

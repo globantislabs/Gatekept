@@ -457,7 +457,6 @@ function AdminDashboard() {
               question: q.question,
               options: q.options,
               answer: q.answer,
-              category: q.category,
               difficulty: q.difficulty,
               product_id: q.product_id,
               video_id: q.video_id,

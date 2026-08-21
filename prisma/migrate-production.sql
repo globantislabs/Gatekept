@@ -92,3 +92,7 @@ CREATE TABLE IF NOT EXISTS `Invoice` (
 SELECT '✅ Migration complete! billing_name exists:' AS status,
        (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'Order' AND COLUMN_NAME = 'billing_name') AS billing_name_present,
        (SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'Invoice') AS invoice_table_present;
+
+-- ─── Order: campaign_id (campaign attribution for conversion tracking) ───
+ALTER TABLE `Order` ADD COLUMN IF NOT EXISTS `campaign_id` VARCHAR(30) NULL;
+ALTER TABLE `Order` ADD INDEX IF NOT EXISTS `Order_campaign_id_idx` (`campaign_id`);

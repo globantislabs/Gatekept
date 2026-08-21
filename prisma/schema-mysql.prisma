@@ -184,6 +184,7 @@ model Campaign {
   // Relations
   product         Product?  @relation(fields: [product_id], references: [id], onDelete: SetNull)
   qrScans         QrScan[]
+  orders          Order[]
 
   @@index([status])
   @@index([channel])
@@ -242,6 +243,8 @@ model Order {
   // Invoice link
   invoice_number       String?  @unique @db.VarChar(50)
   invoice_generated_at DateTime? @db.DateTime(3)
+  // Campaign attribution
+  campaign_id          String?  @db.VarChar(30)
   payment_method  String?  @default("UPI") @db.VarChar(50)
   payment_status  String   @default("PENDING") @db.VarChar(30) // PENDING, COMPLETED, FAILED, REFUNDED, COD_PENDING
   payment_ref     String?  @db.VarChar(255)
@@ -256,6 +259,7 @@ model Order {
   tracking        OrderTracking[]
   subscription    Subscription?
   invoice         Invoice?
+  campaign        Campaign? @relation(fields: [campaign_id], references: [id], onDelete: SetNull)
 
   @@index([user_id])
   @@index([order_number])

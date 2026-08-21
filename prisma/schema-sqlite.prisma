@@ -166,6 +166,7 @@ model Campaign {
   // Relations
   product         Product?  @relation(fields: [product_id], references: [id], onDelete: SetNull)
   qrScans         QrScan[]
+  orders          Order[]
 }
 
 // ─── QR Scan Tracking ──────────────────────────────────────
@@ -215,6 +216,8 @@ model Order {
   // Invoice link
   invoice_number       String?  @unique
   invoice_generated_at DateTime?
+  // Campaign attribution — tracks which campaign QR led to this order
+  campaign_id          String?
   payment_method  String?  @default("UPI")
   payment_status  String   @default("PENDING") // PENDING, COMPLETED, FAILED, REFUNDED, COD_PENDING
   payment_ref     String?
@@ -229,6 +232,7 @@ model Order {
   tracking        OrderTracking[]
   subscription    Subscription?
   invoice         Invoice?
+  campaign        Campaign? @relation(fields: [campaign_id], references: [id], onDelete: SetNull)
 }
 
 // ─── Invoices ────────────────────────────────────────────────────

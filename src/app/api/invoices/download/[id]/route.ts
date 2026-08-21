@@ -14,21 +14,22 @@ const COMPANY = {
   product: 'NOTJUST Watr',
   tagline: 'Wellness, simplified.',
   legalName: 'Zum Heilen Healthcare Private Limited',
-  gstin: '29AAGCZ1234R1ZP',          // GSTIN (replace with actual)
-  pan: 'AAGCZ1234R',
-  cin: 'U74999KA2022PTC123456',
-  address: 'Bengaluru, Karnataka 560022, India',
+  gstin: '29AAACZ8161A2ZA',
+  pan: 'AAACZ8161A',
+  cin: 'U74999KA2022PTC163096',
+  address: '9/36, 203, Vaishnavi Sapphire Centre, 2nd Floor, Tumkur Road, Yeshwanthpura, Bengaluru, Karnataka 560022, India',
+  addressShort: 'Vaishnavi Sapphire Centre, 2nd Floor, Tumkur Road, Yeshwanthpura, Bengaluru, Karnataka 560022',
   email: 'info@zh-onehealth.com',
-  phone: '+91 92880 07431',
+  phone: '+91 79940 04422',
   website: 'notjustwatr.com',
   stateCode: '29',                    // Karnataka state code for GST
 }
 
-// NotJust logo as inline SVG (avoids external file dependency in printable HTML)
+// NotJust logo as inline SVG (branded colors — dark bg + lime accent)
 const LOGO_SVG = `
-<svg width="44" height="44" viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg">
-  <rect width="44" height="44" rx="10" fill="#1f1e1c"/>
-  <text x="22" y="29" font-family="-apple-system,system-ui,sans-serif" font-size="17" font-weight="800" fill="#afb75d" text-anchor="middle" letter-spacing="-0.5">NJ</text>
+<svg width="48" height="48" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+  <rect width="48" height="48" rx="10" fill="#1f1e1c"/>
+  <text x="24" y="32" font-family="-apple-system,system-ui,sans-serif" font-size="18" font-weight="800" fill="#afb75d" text-anchor="middle" letter-spacing="-0.5">NJ</text>
 </svg>`
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {

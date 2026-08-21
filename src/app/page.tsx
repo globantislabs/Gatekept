@@ -82,6 +82,18 @@ function UrlSyncHandler() {
   const currentView = useAppStore(s => s.currentView)
 
   useEffect(() => {
+    // Capture campaign ID from URL (?campaign=ID) — stored for checkout attribution
+    const campaignId = searchParams.get('campaign')
+    if (campaignId && typeof window !== 'undefined') {
+      localStorage.setItem('notjust_campaign_id', campaignId)
+      // Record the scan
+      fetch('/api/scans', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ campaign_id: campaignId, device: navigator.userAgent }),
+      }).catch(() => {})
+    }
+
     // Handle PhonePe payment return redirect
     const paymentReturn = searchParams.get('payment')
     if (paymentReturn === 'return') {

@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+
+/* eslint-disable @typescript-eslint/no-require-imports */
 /**
  * NOTJUST Watr — Production Database Migration Script
  *
@@ -101,6 +103,7 @@ const MIGRATION_STATEMENTS = [
   { sql: 'ALTER TABLE `Order` ADD COLUMN `same_as_billing` BOOLEAN NULL', ignore: ['Duplicate column', 'already exists'] },
   { sql: 'ALTER TABLE `Order` ADD COLUMN `invoice_number` VARCHAR(50) NULL', ignore: ['Duplicate column', 'already exists'] },
   { sql: 'ALTER TABLE `Order` ADD COLUMN `invoice_generated_at` DATETIME NULL', ignore: ['Duplicate column', 'already exists'] },
+  { sql: 'ALTER TABLE `Order` ADD COLUMN `campaign_id` VARCHAR(30) NULL', ignore: ['Duplicate column', 'already exists'] },
 
   // Unique index on Order.invoice_number
   { sql: 'ALTER TABLE `Order` ADD UNIQUE INDEX `Order_invoice_number_key`(`invoice_number`)', ignore: ['Duplicate key name', 'already exists'] },

@@ -1061,7 +1061,7 @@ function AdminDashboard() {
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {campaigns.filter(c => c.status === 'ACTIVE').map(campaign => {
                 const campaignScans = scans.filter(s => s.campaign_id === campaign.id)
-                const qrUrl = `https://notjustwatr.com/scan/${campaign.id}`
+                const qrUrl = `https://notjustwatr.com/?campaign=${campaign.id}`
                 const linkedProduct = campaign.product || adminProducts.find(p => p.id === campaign.product_id) || null
                 const revenue = linkedProduct ? campaignScans.length * linkedProduct.price : 0
                 return (
@@ -1910,10 +1910,16 @@ function AdminDashboard() {
                 const rows = campaigns.map(c => {
                   const cScans = scans.filter(s => s.campaign_id === c.id)
                   const product = c.product || adminProducts.find(p => p.id === c.product_id) || null
-                  const revenue = product ? cScans.length * product.price : 0
-                  return { campaign: c, scans: cScans.length, product, revenue }
+                  // Real purchases: orders attributed to this campaign via campaign_id
+                  const cOrders = orders.filter(o => (o as any).campaign_id === c.id)
+                  const purchaseCount = cOrders.length
+                  const purchaseRevenue = cOrders.reduce((sum, o) => sum + (o.total_amount || 0), 0)
+                  const conversionRate = cScans.length > 0 ? ((purchaseCount / cScans.length) * 100).toFixed(1) : '0.0'
+                  return { campaign: c, scans: cScans.length, product, revenue: purchaseRevenue, purchases: purchaseCount, conversionRate }
                 }).sort((a, b) => b.scans - a.scans)
                 const totalRevenue = rows.reduce((sum, r) => sum + r.revenue, 0)
+                const totalPurchases = rows.reduce((sum, r) => sum + r.purchases, 0)
+                const totalScans = rows.reduce((sum, r) => sum + r.scans, 0)
                 const maxScans = Math.max(1, ...rows.map(r => r.scans))
                 if (rows.length === 0) {
                   return <p className="text-[12px] py-6 text-center" style={{ color: A.textMuted }}>No campaigns yet.</p>
@@ -1927,8 +1933,9 @@ function AdminDashboard() {
                             <TableHead className="text-[11px]" style={{ color: A.textMuted }}>Campaign</TableHead>
                             <TableHead className="text-[11px]" style={{ color: A.textMuted }}>Channel</TableHead>
                             <TableHead className="text-[11px]" style={{ color: A.textMuted }}>Linked Product</TableHead>
-                            <TableHead className="text-[11px] text-right" style={{ color: A.textMuted }}>Price</TableHead>
                             <TableHead className="text-[11px] text-right" style={{ color: A.textMuted }}>Scans</TableHead>
+                            <TableHead className="text-[11px] text-right" style={{ color: A.textMuted }}>Purchases</TableHead>
+                            <TableHead className="text-[11px] text-right" style={{ color: A.textMuted }}>Conv. %</TableHead>
                             <TableHead className="text-[11px] text-right" style={{ color: A.textMuted }}>Revenue</TableHead>
                           </TableRow>
                         </TableHeader>
@@ -1945,9 +1952,6 @@ function AdminDashboard() {
                                   </span>
                                 ) : <span className="italic" style={{ color: A.textMuted }}>—</span>}
                               </TableCell>
-                              <TableCell className="text-[12px] text-right font-semibold" style={{ color: A.text }}>
-                                {r.product ? `₹${r.product.price.toLocaleString()}` : '—'}
-                              </TableCell>
                               <TableCell className="text-[12px] text-right" style={{ color: A.textSecondary }}>
                                 <div className="flex items-center justify-end gap-2">
                                   <div className="hidden sm:block w-24 h-1.5 rounded-full" style={{ background: A.borderLight }}>
@@ -1956,8 +1960,14 @@ function AdminDashboard() {
                                   <span className="font-semibold" style={{ color: A.blue }}>{r.scans}</span>
                                 </div>
                               </TableCell>
+                              <TableCell className="text-[12px] text-right font-semibold" style={{ color: A.green }}>
+                                {r.purchases > 0 ? r.purchases : <span style={{ color: A.textMuted }}>—</span>}
+                              </TableCell>
+                              <TableCell className="text-[11px] text-right" style={{ color: A.textSecondary }}>
+                                {r.scans > 0 ? `${r.conversionRate}%` : '—'}
+                              </TableCell>
                               <TableCell className="text-[12px] text-right font-bold" style={{ color: A.green }}>
-                                {r.revenue > 0 ? `₹${r.revenue.toLocaleString()}` : '—'}
+                                {r.revenue > 0 ? `₹${r.revenue.toLocaleString('en-IN', { maximumFractionDigits: 0 })}` : '—'}
                               </TableCell>
                             </TableRow>
                           ))}
@@ -1967,7 +1977,7 @@ function AdminDashboard() {
                     <div className="mt-4 flex items-center justify-between px-4 py-3 rounded-md" style={{ background: A.greenLight }}>
                       <div>
                         <p className="text-[11px] uppercase tracking-wider" style={{ color: A.green }}>Campaign-Attributed Revenue</p>
-                        <p className="text-[10px]" style={{ color: A.textMuted }}>Sum of (scans × linked product price) across all campaigns</p>
+                        <p className="text-[10px]" style={{ color: A.textMuted }}>Real purchase revenue from campaign QR scans · {totalPurchases} purchases from {totalScans} scans</p>
                       </div>
                       <p className="text-xl font-bold" style={{ color: A.green }}>₹{totalRevenue.toLocaleString()}</p>
                     </div>
@@ -2133,8 +2143,9 @@ function AdminDashboard() {
                               <Input type="number" placeholder="2999" value={newProduct.price || ''} onChange={e => setNewProduct({ ...newProduct, price: Number(e.target.value) })} className="text-sm h-9" />
                             </div>
                             <div>
-                              <Label className="text-xs mb-1">Subscription Price (₹) <span className="font-normal" style={{ color: A.textMuted }}>(per cycle)</span></Label>
-                              <Input type="number" placeholder="e.g. 2499" value={newProduct.subscription_price || ''} onChange={e => setNewProduct({ ...newProduct, subscription_price: Number(e.target.value) })} className="text-sm h-9" />
+                              <Label className="text-xs mb-1">Subscription Price per Cycle (₹) <span className="font-normal" style={{ color: A.textMuted }}>(30-day cycle)</span></Label>
+                              <Input type="number" step="0.01" placeholder="e.g. 2499.00" value={newProduct.subscription_price || ''} onChange={e => setNewProduct({ ...newProduct, subscription_price: Number(e.target.value) })} className="text-sm h-9" />
+                              <p className="text-[10px] mt-1" style={{ color: A.textMuted }}>Base price per 30-day subscription cycle. Packs (60/90/180 day) auto-calculate from this + discount.</p>
                             </div>
                             <div>
                               <Label className="text-xs mb-1">MRP (₹)</Label>
@@ -2186,6 +2197,28 @@ function AdminDashboard() {
                             <div>
                               <Label className="text-xs mb-1">Tags (comma separated)</Label>
                               <Input placeholder="e.g. vegan, sugar-free" value={newProduct.tags} onChange={e => setNewProduct({ ...newProduct, tags: e.target.value })} className="text-sm h-9" />
+                            </div>
+                          </div>
+                        </div>
+                        <Separator />
+                        <div className="space-y-3">
+                          <Label className="text-xs font-bold uppercase tracking-wider" style={{ color: A.textSecondary }}>Storage & Allergen Info</Label>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div className="sm:col-span-2">
+                              <Label className="text-xs mb-1">Storage Instructions</Label>
+                              <Textarea placeholder="e.g. Store in cool dry place, refrigerate after opening..." rows={2} value={newProduct.storage_info} onChange={e => setNewProduct({ ...newProduct, storage_info: e.target.value })} className="text-sm resize-none" />
+                            </div>
+                            <div>
+                              <Label className="text-xs mb-1">Shelf Life</Label>
+                              <Input placeholder="e.g. 12 months" value={newProduct.shelf_life} onChange={e => setNewProduct({ ...newProduct, shelf_life: e.target.value })} className="text-sm h-9" />
+                            </div>
+                            <div>
+                              <Label className="text-xs mb-1">Serving Size</Label>
+                              <Input placeholder="e.g. 50ml per shot" value={newProduct.serving_size} onChange={e => setNewProduct({ ...newProduct, serving_size: e.target.value })} className="text-sm h-9" />
+                            </div>
+                            <div className="sm:col-span-2">
+                              <Label className="text-xs mb-1">Allergen Information</Label>
+                              <Textarea placeholder="e.g. Contains apple cider vinegar. May contain traces of sulphites..." rows={2} value={newProduct.allergen_info} onChange={e => setNewProduct({ ...newProduct, allergen_info: e.target.value })} className="text-sm resize-none" />
                             </div>
                           </div>
                         </div>
@@ -2294,6 +2327,9 @@ function AdminDashboard() {
                 const vCount = productVideoCounts[product.id] || 0
                 const qCount = productQuizCounts[product.id] || 0
                 const discount = product.mrp && product.mrp > product.price ? Math.round((1 - product.price / product.mrp) * 100) : 0
+                const slug = product.slug || product.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+                const productQrUrl = product.qr_code_url || `https://notjustwatr.com/?product=${slug}`
+                const productQrId = `mini-qr-${product.id}`
 
                 return (
                   <div key={product.id} className="rounded-xl border overflow-hidden transition-all hover:shadow-lg group" style={{ borderColor: A.border, background: '#fff' }}>
@@ -2317,6 +2353,10 @@ function AdminDashboard() {
                         <Badge className="text-[9px] font-bold px-1.5 py-0 h-5 rounded-md" style={{ background: product.active ? A.green : A.red, color: '#fff' }}>
                           {product.active ? 'Active' : 'Inactive'}
                         </Badge>
+                      </div>
+                      {/* Small QR overlay */}
+                      <div className="absolute bottom-2 right-2 p-1 bg-white rounded-md border shadow-sm cursor-pointer hover:scale-110 transition-transform" style={{ borderColor: A.borderLight }} title="Product QR — click to copy URL" onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(productQrUrl); toast.success('QR URL copied!') }}>
+                        <QRCodeSVG id={productQrId} value={productQrUrl} size={36} bgColor="#ffffff" fgColor="#1f1e1c" level="L" />
                       </div>
                     </div>
 
@@ -2966,7 +3006,7 @@ function CampaignManagerInner({ campaigns, setCampaigns, scans, orders, userId, 
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {campaigns.map(campaign => {
-          const qrUrl = `https://notjustwatr.com/scan/${campaign.id}`
+          const qrUrl = `https://notjustwatr.com/?campaign=${campaign.id}`
           const linkedProduct = campaign.product || getProductById(campaign.product_id)
           return (
             <div key={campaign.id} className="bg-white border rounded-lg p-4 hover:shadow-sm transition-shadow" style={{ borderColor: A.border }}>
@@ -3020,7 +3060,7 @@ function CampaignManagerInner({ campaigns, setCampaigns, scans, orders, userId, 
             <div className="space-y-4">
               <div className="flex items-start gap-6">
                 <div className="p-4 bg-white rounded-lg border" style={{ borderColor: A.border }}>
-                  <QRCodeSVG value={`https://notjustwatr.com/scan/${detailCampaign.id}`} size={130} bgColor="#ffffff" fgColor="#1f1e1c" level="M" />
+                  <QRCodeSVG value={`https://notjustwatr.com/?campaign=${detailCampaign.id}`} size={130} bgColor="#ffffff" fgColor="#1f1e1c" level="M" />
                 </div>
                 <div className="flex-1 space-y-2">
                   <h3 className="font-bold text-lg" style={{ color: A.text }}>{detailCampaign.name}</h3>
@@ -3047,7 +3087,7 @@ function CampaignManagerInner({ campaigns, setCampaigns, scans, orders, userId, 
                     )}
                   </div>
                   <div className="flex gap-2 pt-2">
-                    <Button variant="outline" size="sm" className="rounded-md text-[11px] h-8" style={{ borderColor: A.border, color: A.text }} onClick={() => { navigator.clipboard.writeText(`https://notjustwatr.com/scan/${detailCampaign.id}`); toast.success('QR URL copied!') }}>
+                    <Button variant="outline" size="sm" className="rounded-md text-[11px] h-8" style={{ borderColor: A.border, color: A.text }} onClick={() => { navigator.clipboard.writeText(`https://notjustwatr.com/?campaign=${detailCampaign.id}`); toast.success('QR URL copied!') }}>
                       <Copy className="w-3 h-3 mr-1" /> Copy URL
                     </Button>
                     <Button variant="outline" size="sm" className="rounded-md text-[11px] h-8" style={{ borderColor: A.border, color: A.text }} onClick={() => toggleStatus(detailCampaign.id, detailCampaign.status)}>

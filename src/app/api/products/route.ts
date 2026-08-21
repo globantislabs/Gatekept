@@ -33,6 +33,7 @@ function getSafeProductSelect() {
     description: true,
     short_description: true,
     price: true,
+    subscription_price: true,
     mrp: true,
     stock: true,
     image_url: true,
@@ -46,8 +47,6 @@ function getSafeProductSelect() {
     tags: true,
     active: true,
     featured: true,
-    brand: true,
-    flavor: true,
     serving_size: true,
     allergen_info: true,
     storage_info: true,
@@ -181,7 +180,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Sanitize string fields — short fields at 255, long text fields at 5000
-    const sanitizedShort = sanitizeStringFields(body, ['name', 'slug', 'sku', 'type', 'category', 'brand', 'flavor'], 255)
+    const sanitizedShort = sanitizeStringFields(body, ['name', 'slug', 'sku', 'type', 'category'], 255)
     const sanitizedLong = sanitizeStringFields(body, ['description', 'short_description', 'ingredients', 'nutrition_info', 'allergen_info', 'storage_info', 'highlights'], 5000)
     const sanitized = { ...sanitizedShort, ...sanitizedLong }
 
@@ -191,6 +190,7 @@ export async function POST(request: NextRequest) {
       description,
       short_description,
       price,
+      subscription_price,
       mrp,
       stock,
       image_url,
@@ -204,8 +204,6 @@ export async function POST(request: NextRequest) {
       tags,
       active,
       featured,
-      brand,
-      flavor,
       serving_size,
       allergen_info,
       storage_info,
@@ -255,8 +253,7 @@ export async function POST(request: NextRequest) {
       tags: tags as string || null,
       active: typeof active === 'boolean' ? active : true,
       featured: typeof featured === 'boolean' ? featured : false,
-      brand: brand as string || 'NOTJUST',
-      flavor: flavor as string || null,
+      subscription_price: subscription_price ? parseFloat(String(subscription_price)) : null,
       serving_size: serving_size as string || null,
       allergen_info: allergen_info as string || null,
       storage_info: storage_info as string || null,

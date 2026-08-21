@@ -49,12 +49,13 @@ model Product {
   description     String?
   short_description String?
   price           Float
+  subscription_price Float?  // subscription price (per cycle)
   mrp             Float?
   stock           Int      @default(0)
   image_url       String?
   gallery_images  String?
   type            String   @default("FIZZ")
-  category        String?  @default("Wellness Shot")
+  category        String?
   sku             String?
   weight          String?
   ingredients     String?
@@ -62,8 +63,6 @@ model Product {
   tags            String?
   active          Boolean  @default(true)
   featured        Boolean  @default(false)
-  brand           String?  @default("NOTJUST")
-  flavor          String?
   serving_size    String?
   allergen_info   String?
   storage_info    String?
@@ -117,7 +116,6 @@ model ProductQuiz {
   question        String
   options         String   // JSON array of strings
   answer          Int
-  category        String?  @default("general")
   difficulty      String   @default("EASY")
   order           Int      @default(0)
   active          Boolean  @default(true)

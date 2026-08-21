@@ -25,6 +25,7 @@ export type AppView =
   | 'admin-campaigns'
   | 'admin-qr'
   | 'admin-orders'
+  | 'admin-invoices'
   | 'admin-analytics'
   | 'admin-content'
   | 'admin-subscriptions'
@@ -64,6 +65,7 @@ const viewToPath: Record<AppView, string> = {
   'admin-campaigns': '/admin/campaigns',
   'admin-qr': '/admin/qr',
   'admin-orders': '/admin/orders',
+  'admin-invoices': '/admin/invoices',
   'admin-analytics': '/admin/analytics',
   'admin-content': '/admin/content',
   'admin-subscriptions': '/admin/subscriptions',

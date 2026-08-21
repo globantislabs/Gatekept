@@ -54,12 +54,13 @@ model Product {
   description     String?  @db.Text
   short_description String? @db.VarChar(500)
   price           Float
+  subscription_price Float?  // subscription price (per cycle)
   mrp             Float?
   stock           Int      @default(0)
   image_url       String?  @db.Text
   gallery_images  String?  @db.Text    // JSON array
   type            String   @default("FIZZ") @db.VarChar(50)
-  category        String?  @default("Wellness Shot") @db.VarChar(100)
+  category        String?  @db.VarChar(100)
   sku             String?  @db.VarChar(100)
   weight          String?  @db.VarChar(50)
   ingredients     String?  @db.Text    // JSON data
@@ -67,8 +68,6 @@ model Product {
   tags            String?  @db.Text    // JSON array
   active          Boolean  @default(true)
   featured        Boolean  @default(false)
-  brand           String?  @default("NOTJUST") @db.VarChar(100)
-  flavor          String?  @db.VarChar(100)
   serving_size    String?  @db.VarChar(50)
   allergen_info   String?  @db.Text
   storage_info    String?  @db.Text
@@ -129,7 +128,6 @@ model ProductQuiz {
   question        String   @db.Text
   options         String   @db.Text  // JSON array of strings
   answer          Int
-  category        String?  @default("general") @db.VarChar(50)
   difficulty      String   @default("EASY") @db.VarChar(20)
   order           Int      @default(0)
   active          Boolean  @default(true)

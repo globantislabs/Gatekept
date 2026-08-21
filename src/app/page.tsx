@@ -55,6 +55,7 @@ const pathToView = (pathname: string): AppView => {
     case '/admin/campaigns': return 'admin-campaigns'
     case '/admin/qr': return 'admin-qr'
     case '/admin/orders': return 'admin-orders'
+    case '/admin/invoices': return 'admin-invoices'
     case '/admin/analytics': return 'admin-analytics'
     case '/admin/content': return 'admin-content'
     case '/admin/subscriptions': return 'admin-subscriptions'
@@ -209,6 +210,7 @@ function ViewRenderer() {
       case 'admin-campaigns':
       case 'admin-qr':
       case 'admin-orders':
+      case 'admin-invoices':
       case 'admin-analytics':
       case 'admin-content':
       case 'admin-subscriptions':

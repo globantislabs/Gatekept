@@ -11,7 +11,7 @@ import {
   FileText, CreditCard, X, Download, ExternalLink,
   TrendingUp,
   Info, Tag, Columns3, ClipboardList, DollarSign, Upload,
-  Receipt, IndianRupee,
+  Receipt, IndianRupee, Clock,
 } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
 import { useAppStore } from '@/store/app-store'
@@ -673,6 +673,7 @@ function AdminDashboard() {
     { value: 'campaigns', label: 'Campaigns', icon: Megaphone, badge: campaigns.length },
     { value: 'qr', label: 'QR Codes', icon: QrCode, badge: campaigns.filter(c => c.status === 'ACTIVE').length },
     { value: 'orders', label: 'Orders', icon: ShoppingCart, badge: orders.length },
+    { value: 'invoices', label: 'Invoices', icon: Receipt, badge: invoices.length },
     { value: 'subscriptions', label: 'Subscriptions', icon: CreditCard, badge: null },
     { value: 'users', label: 'Users', icon: Users, badge: users.length },
     { value: 'analytics', label: 'Analytics', icon: TrendingUp, badge: null },
@@ -1523,6 +1524,162 @@ function AdminDashboard() {
         )
 
       // ─── SUBSCRIPTIONS TAB ───────────────────────────────
+      // ─── INVOICES TAB ─────────────────────────────────────
+      case 'invoices': {
+        const totalInvoices = invoices.length
+        const totalInvoicedAmount = invoices.reduce((sum, inv) => sum + (inv.total_amount || 0), 0)
+        const paidInvoices = invoices.filter(i => (i.payment_status || i.status) === 'COMPLETED' || i.status === 'PAID')
+        const pendingInvoices = invoices.filter(i => i.status !== 'PAID' && i.status !== 'CANCELLED' && (i.payment_status || 'PENDING') !== 'COMPLETED')
+        const paidAmount = paidInvoices.reduce((sum, inv) => sum + (inv.total_amount || 0), 0)
+        const pendingAmount = pendingInvoices.reduce((sum, inv) => sum + (inv.total_amount || 0), 0)
+        return (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-base font-semibold" style={{ color: A.text }}>Invoices</h2>
+                <p className="text-[12px]" style={{ color: A.textMuted }}>{totalInvoices} invoices · ₹{totalInvoicedAmount.toLocaleString('en-IN', { maximumFractionDigits: 0 })} total value</p>
+              </div>
+              <Button size="sm" variant="outline" className="text-xs h-8 gap-1.5" onClick={() => {
+                exportToCSV(invoices.map(inv => ({
+                  invoice_number: inv.invoice_number,
+                  order_number: inv.order?.order_number || '',
+                  customer: inv.customer_name,
+                  phone: inv.customer_phone || '',
+                  email: inv.customer_email || '',
+                  subtotal: inv.subtotal,
+                  tax: inv.tax_amount,
+                  discount: inv.discount_amount,
+                  total: inv.total_amount,
+                  payment_method: inv.payment_method || '',
+                  payment_status: inv.payment_status,
+                  status: inv.status,
+                  issued_at: new Date(inv.issued_at).toISOString(),
+                })), 'invoices-export', [
+                  { key: 'invoice_number', label: 'Invoice Number' },
+                  { key: 'order_number', label: 'Order Number' },
+                  { key: 'customer', label: 'Customer' },
+                  { key: 'phone', label: 'Phone' },
+                  { key: 'email', label: 'Email' },
+                  { key: 'subtotal', label: 'Subtotal' },
+                  { key: 'tax', label: 'Tax' },
+                  { key: 'discount', label: 'Discount' },
+                  { key: 'total', label: 'Total' },
+                  { key: 'payment_method', label: 'Payment Method' },
+                  { key: 'payment_status', label: 'Payment Status' },
+                  { key: 'status', label: 'Status' },
+                  { key: 'issued_at', label: 'Issued At' },
+                ])
+                toast.success('Invoices exported!')
+              }}>
+                <Download className="w-3.5 h-3.5" /> Export CSV
+              </Button>
+            </div>
+
+            {/* Summary Cards */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+              <div className="bg-white border rounded-lg p-4" style={{ borderColor: A.border }}>
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-7 h-7 rounded-md flex items-center justify-center" style={{ background: A.greenLight }}>
+                    <Receipt className="w-3.5 h-3.5" style={{ color: A.green }} />
+                  </div>
+                  <span className="text-[10px] uppercase tracking-wider" style={{ color: A.textMuted }}>Total Issued</span>
+                </div>
+                <p className="text-xl font-bold" style={{ color: A.text }}>{totalInvoices}</p>
+                <p className="text-[10px]" style={{ color: A.textMuted }}>invoices generated</p>
+              </div>
+              <div className="bg-white border rounded-lg p-4" style={{ borderColor: A.border }}>
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-7 h-7 rounded-md flex items-center justify-center" style={{ background: A.greenLight }}>
+                    <IndianRupee className="w-3.5 h-3.5" style={{ color: A.green }} />
+                  </div>
+                  <span className="text-[10px] uppercase tracking-wider" style={{ color: A.textMuted }}>Invoiced</span>
+                </div>
+                <p className="text-xl font-bold" style={{ color: A.text }}>₹{totalInvoicedAmount.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</p>
+                <p className="text-[10px]" style={{ color: A.textMuted }}>total value</p>
+              </div>
+              <div className="bg-white border rounded-lg p-4" style={{ borderColor: A.border }}>
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-7 h-7 rounded-md flex items-center justify-center" style={{ background: A.greenLight }}>
+                    <CheckCircle className="w-3.5 h-3.5" style={{ color: A.green }} />
+                  </div>
+                  <span className="text-[10px] uppercase tracking-wider" style={{ color: A.textMuted }}>Paid</span>
+                </div>
+                <p className="text-xl font-bold" style={{ color: A.green }}>₹{paidAmount.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</p>
+                <p className="text-[10px]" style={{ color: A.textMuted }}>{paidInvoices.length} invoices</p>
+              </div>
+              <div className="bg-white border rounded-lg p-4" style={{ borderColor: A.border }}>
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-7 h-7 rounded-md flex items-center justify-center" style={{ background: A.amberLight }}>
+                    <Clock className="w-3.5 h-3.5" style={{ color: A.amber }} />
+                  </div>
+                  <span className="text-[10px] uppercase tracking-wider" style={{ color: A.textMuted }}>Pending</span>
+                </div>
+                <p className="text-xl font-bold" style={{ color: A.amber }}>₹{pendingAmount.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</p>
+                <p className="text-[10px]" style={{ color: A.textMuted }}>{pendingInvoices.length} invoices</p>
+              </div>
+            </div>
+
+            {/* Invoices Table */}
+            <div className="bg-white border rounded-lg overflow-hidden" style={{ borderColor: A.border }}>
+              {invoices.length === 0 ? (
+                <div className="p-12 text-center">
+                  <Receipt className="w-12 h-12 mx-auto mb-3" style={{ color: A.textMuted, opacity: 0.3 }} />
+                  <p className="text-sm font-medium" style={{ color: A.text }}>No invoices yet</p>
+                  <p className="text-[12px] mt-1" style={{ color: A.textMuted }}>Invoices are auto-generated when orders are placed.</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="text-[11px]" style={{ color: A.textMuted }}>Invoice #</TableHead>
+                        <TableHead className="text-[11px]" style={{ color: A.textMuted }}>Order</TableHead>
+                        <TableHead className="text-[11px]" style={{ color: A.textMuted }}>Customer</TableHead>
+                        <TableHead className="text-[11px] text-right" style={{ color: A.textMuted }}>Amount</TableHead>
+                        <TableHead className="text-[11px]" style={{ color: A.textMuted }}>Payment</TableHead>
+                        <TableHead className="text-[11px]" style={{ color: A.textMuted }}>Status</TableHead>
+                        <TableHead className="text-[11px]" style={{ color: A.textMuted }}>Issued</TableHead>
+                        <TableHead className="text-[11px] text-right" style={{ color: A.textMuted }}>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {invoices.map(inv => (
+                        <TableRow key={inv.id} className="cursor-pointer hover:bg-gray-50" onClick={() => setSelectedInvoice(inv)}>
+                          <TableCell className="text-[12px] font-mono font-semibold" style={{ color: A.text }}>{inv.invoice_number}</TableCell>
+                          <TableCell className="text-[11px] font-mono" style={{ color: A.textSecondary }}>{inv.order?.order_number || '—'}</TableCell>
+                          <TableCell className="text-[12px]" style={{ color: A.text }}>
+                            <div>
+                              <p className="font-medium">{inv.customer_name}</p>
+                              {inv.customer_phone && <p className="text-[10px]" style={{ color: A.textMuted }}>{inv.customer_phone}</p>}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-[12px] text-right font-bold" style={{ color: A.green }}>₹{Number(inv.total_amount || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 })}</TableCell>
+                          <TableCell className="text-[11px]" style={{ color: A.textSecondary }}>{inv.payment_method || '—'}</TableCell>
+                          <TableCell>
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold" style={{
+                              background: inv.status === 'PAID' ? A.greenLight : inv.status === 'CANCELLED' ? A.redLight : A.amberLight,
+                              color: inv.status === 'PAID' ? A.green : inv.status === 'CANCELLED' ? A.red : A.amber,
+                            }}>{inv.status}</span>
+                          </TableCell>
+                          <TableCell className="text-[11px]" style={{ color: A.textMuted }}>{new Date(inv.issued_at).toLocaleDateString('en-IN')}</TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex justify-end gap-1">
+                              <button onClick={(e) => { e.stopPropagation(); handlePrintInvoice(inv.id) }} className="p-1.5 rounded hover:bg-gray-100" title="View / Print">
+                                <ExternalLink className="w-3.5 h-3.5" style={{ color: A.blue }} />
+                              </button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </div>
+          </div>
+        )
+      }
+
       case 'subscriptions':
         return (
           <div className="space-y-4">

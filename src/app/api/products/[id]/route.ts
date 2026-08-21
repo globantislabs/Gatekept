@@ -29,6 +29,7 @@ function getSafeProductSelectWithoutQrCode() {
     description: true,
     short_description: true,
     price: true,
+    subscription_price: true,
     mrp: true,
     stock: true,
     image_url: true,
@@ -42,8 +43,6 @@ function getSafeProductSelectWithoutQrCode() {
     tags: true,
     active: true,
     featured: true,
-    brand: true,
-    flavor: true,
     serving_size: true,
     allergen_info: true,
     storage_info: true,
@@ -202,7 +201,7 @@ export async function PUT(
     }
 
     // Sanitize string fields — short fields at 255, long text fields at 5000
-    const sanitizedShort = sanitizeStringFields(body, ['name', 'slug', 'sku', 'type', 'category', 'brand', 'flavor'], 255)
+    const sanitizedShort = sanitizeStringFields(body, ['name', 'slug', 'sku', 'type', 'category'], 255)
     const sanitizedLong = sanitizeStringFields(body, ['description', 'short_description', 'ingredients', 'nutrition_info', 'allergen_info', 'storage_info', 'highlights'], 5000)
     const sanitized = { ...sanitizedShort, ...sanitizedLong }
 
@@ -229,7 +228,7 @@ export async function PUT(
       'name', 'slug', 'description', 'short_description', 'price', 'mrp',
       'stock', 'image_url', 'gallery_images', 'type', 'category', 'sku',
       'weight', 'ingredients', 'nutrition_info', 'tags', 'active', 'featured',
-      'brand', 'flavor', 'serving_size', 'allergen_info', 'storage_info',
+      'subscription_price', 'serving_size', 'allergen_info', 'storage_info',
       'shelf_life', 'country_origin', 'fssai_license', 'hsn_code', 'gst_rate',
       'min_order_qty', 'max_order_qty', 'discount_label', 'highlights',
       'qr_code_url',

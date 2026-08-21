@@ -49,7 +49,7 @@ model Product {
   description     String?
   short_description String?
   price           Float
-  subscription_price Float?  // subscription price (per cycle)
+  subscription_plans String?  // JSON: [{cycle:30, price:2499, label:"Monthly"}, ...]
   mrp             Float?
   stock           Int      @default(0)
   image_url       String?

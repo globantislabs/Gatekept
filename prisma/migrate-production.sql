@@ -96,3 +96,7 @@ SELECT '✅ Migration complete! billing_name exists:' AS status,
 -- ─── Order: campaign_id (campaign attribution for conversion tracking) ───
 ALTER TABLE `Order` ADD COLUMN IF NOT EXISTS `campaign_id` VARCHAR(30) NULL;
 ALTER TABLE `Order` ADD INDEX IF NOT EXISTS `Order_campaign_id_idx` (`campaign_id`);
+
+-- ─── Product: replace subscription_price with subscription_plans (JSON) ───
+ALTER TABLE `Product` ADD COLUMN IF NOT EXISTS `subscription_plans` TEXT NULL;
+ALTER TABLE `Product` DROP COLUMN IF EXISTS `subscription_price`;

@@ -79,8 +79,8 @@ const MIGRATION_STATEMENTS = [
   { sql: 'ALTER TABLE `Product` DROP COLUMN `brand`', ignore: ['column does not exist', 'Unknown column'] },
   { sql: 'ALTER TABLE `Product` DROP COLUMN `flavor`', ignore: ['column does not exist', 'Unknown column'] },
 
-  // Add subscription_price to Product
-  { sql: 'ALTER TABLE `Product` ADD COLUMN `subscription_price` DOUBLE NULL', ignore: ['Duplicate column', 'already exists'] },
+  // Add subscription_plans (JSON) to Product — replaces subscription_price
+  { sql: 'ALTER TABLE `Product` ADD COLUMN `subscription_plans` TEXT NULL', ignore: ['Duplicate column', 'already exists'] },
 
   // Drop category from ProductQuiz
   { sql: 'ALTER TABLE `ProductQuiz` DROP COLUMN `category`', ignore: ['column does not exist', 'Unknown column'] },

@@ -410,16 +410,44 @@ export function CheckoutView() {
   // ── Subscription State ──
   const [purchaseMode, setPurchaseMode] = useState<PurchaseMode>('one-time')
   const [selectedPack, setSelectedPack] = useState<SubscriptionPack>('30_DAY')
+  // Product-specific subscription plans (parsed from product.subscription_plans JSON)
+  const [productSubPlans, setProductSubPlans] = useState<Array<{cycle: number, price: number, label: string}>>([])
+  const [selectedSubPlanIdx, setSelectedSubPlanIdx] = useState(0)
+
+  // Fetch product subscription plans when subscription mode is selected
+  useEffect(() => {
+    if (purchaseMode !== 'subscription' || cart.length === 0) return
+    const firstItem = cart[0]
+    fetch(`/api/products/${firstItem.productId}`)
+      .then(res => res.json())
+      .then(data => {
+        const product = data.product || data
+        try {
+          const plans = JSON.parse(product.subscription_plans || '[]')
+          if (Array.isArray(plans) && plans.length > 0) {
+            setProductSubPlans(plans)
+            setSelectedSubPlanIdx(0)
+          }
+        } catch { /* no plans */ }
+      })
+      .catch(() => {})
+  }, [purchaseMode, cart])
 
   // ── Derived ──
   const subtotal = cartTotal()
   const taxAmount = Math.round(subtotal * 0.18)
   const subPack = SUBSCRIPTION_PACKS.find(p => p.value === selectedPack)
-  const subscriptionDiscount = purchaseMode === 'subscription' && subPack
+  // For product-specific plans, use the plan's price directly
+  const selectedSubPlan = productSubPlans[selectedSubPlanIdx] || null
+  const subscriptionDiscount = purchaseMode === 'subscription' && subPack && productSubPlans.length === 0
     ? Math.round(subtotal * (subPack.discount / 100))
     : 0
+  // When using product-specific plans, the subscription price replaces the cart price
+  const subscriptionSubtotal = purchaseMode === 'subscription' && selectedSubPlan
+    ? selectedSubPlan.price * cart.reduce((sum, item) => sum + item.quantity, 0)
+    : subtotal
   const discountAmount = cart.reduce((sum, item) => sum + ((item.packDiscount || 0) / 100) * item.price * item.quantity, 0) + subscriptionDiscount
-  const totalAmount = subtotal + taxAmount - discountAmount
+  const totalAmount = (purchaseMode === 'subscription' && selectedSubPlan ? subscriptionSubtotal : subtotal) + taxAmount - discountAmount
   const isEmpty = cart.length === 0
 
   // ── Auth Guard ──
@@ -499,11 +527,12 @@ export function CheckoutView() {
           product_name: item.name,
           product_type: item.type || 'FIZZ',
           quantity: item.quantity,
-          unit_price: item.price,
-          total_price: item.price * item.quantity,
-          pack_type: purchaseMode === 'subscription' ? selectedPack : (item.packType || null),
-          pack_days: purchaseMode === 'subscription' ? subPack?.days : (item.packDays || null),
-          pack_discount: purchaseMode === 'subscription' ? subPack?.discount : (item.packDiscount || null),
+          // When using product-specific subscription plan, use the plan's price
+          unit_price: purchaseMode === 'subscription' && selectedSubPlan ? selectedSubPlan.price : item.price,
+          total_price: purchaseMode === 'subscription' && selectedSubPlan ? selectedSubPlan.price * item.quantity : item.price * item.quantity,
+          pack_type: purchaseMode === 'subscription' ? (selectedSubPlan ? (selectedSubPlan.label || `${selectedSubPlan.cycle}_DAY`) : selectedPack) : (item.packType || null),
+          pack_days: purchaseMode === 'subscription' ? (selectedSubPlan ? selectedSubPlan.cycle : subPack?.days) : (item.packDays || null),
+          pack_discount: purchaseMode === 'subscription' ? (selectedSubPlan ? 0 : subPack?.discount) : (item.packDiscount || null),
         })),
         // ── Billing address (primary contact) ──
         billing_name: billingName.trim(),
@@ -1048,33 +1077,61 @@ export function CheckoutView() {
                     exit={{ opacity: 0, height: 0 }}
                     className="space-y-2"
                   >
-                    <p className="text-xs font-medium text-[#88837b] uppercase tracking-wider">Select Pack Duration</p>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                      {SUBSCRIPTION_PACKS.map(pack => (
-                        <button
-                          key={pack.value}
-                          type="button"
-                          onClick={() => setSelectedPack(pack.value)}
-                          className={`p-2.5 rounded-lg border-2 text-center transition-all ${
-                            selectedPack === pack.value
-                              ? 'border-[#48805b] bg-[#48805b]/8'
-                              : 'border-[#e3dfd8] bg-[#f4f3f0] hover:border-[#48805b]/30'
-                          }`}
-                        >
-                          <p className="font-semibold text-sm text-[#1f1e1c]">{pack.label}</p>
-                          <p className="text-xs text-[#48805b] font-medium mt-0.5">{pack.discount}% off</p>
-                          <div className="flex items-center justify-center gap-1 mt-1">
-                            <Calendar className="w-3 h-3 text-[#88837b]" />
-                            <p className="text-[10px] text-[#88837b]">{pack.frequency}</p>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                    {subPack && (
+                    <p className="text-xs font-medium text-[#88837b] uppercase tracking-wider">Select Subscription Cycle</p>
+                    {productSubPlans.length > 0 ? (
+                      /* Product-specific subscription plans */
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {productSubPlans.map((plan, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => setSelectedSubPlanIdx(idx)}
+                            className={`p-3 rounded-lg border-2 text-left transition-all ${
+                              selectedSubPlanIdx === idx
+                                ? 'border-[#48805b] bg-[#48805b]/8'
+                                : 'border-[#e3dfd8] bg-[#f4f3f0] hover:border-[#48805b]/30'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between">
+                              <p className="font-semibold text-sm text-[#1f1e1c]">{plan.label || `${plan.cycle} days`}</p>
+                              <p className="font-bold text-sm text-[#48805b]">₹{plan.price.toLocaleString('en-IN')}</p>
+                            </div>
+                            <div className="flex items-center gap-1 mt-1">
+                              <Calendar className="w-3 h-3 text-[#88837b]" />
+                              <p className="text-[10px] text-[#88837b]">Every {plan.cycle} days · ₹{Math.round(plan.price / plan.cycle)}/day</p>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      /* Fallback: hardcoded packs (when product has no custom plans) */
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        {SUBSCRIPTION_PACKS.map(pack => (
+                          <button
+                            key={pack.value}
+                            type="button"
+                            onClick={() => setSelectedPack(pack.value)}
+                            className={`p-2.5 rounded-lg border-2 text-center transition-all ${
+                              selectedPack === pack.value
+                                ? 'border-[#48805b] bg-[#48805b]/8'
+                                : 'border-[#e3dfd8] bg-[#f4f3f0] hover:border-[#48805b]/30'
+                            }`}
+                          >
+                            <p className="font-semibold text-sm text-[#1f1e1c]">{pack.label}</p>
+                            <p className="text-xs text-[#48805b] font-medium mt-0.5">{pack.discount}% off</p>
+                            <div className="flex items-center justify-center gap-1 mt-1">
+                              <Calendar className="w-3 h-3 text-[#88837b]" />
+                              <p className="text-[10px] text-[#88837b]">{pack.frequency}</p>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    {selectedSubPlan && (
                       <div className="p-2.5 bg-[#48805b]/10 border border-[#48805b]/20 rounded-lg flex items-center gap-2">
                         <Sparkles className="w-4 h-4 text-[#48805b] flex-shrink-0" />
                         <p className="text-xs text-[#48805b]">
-                          You save <strong>₹{subscriptionDiscount.toLocaleString('en-IN')}</strong> with the {subPack.label}! Delivered every {subPack.frequency.toLowerCase()}.
+                          <strong>{selectedSubPlan.label || `${selectedSubPlan.cycle} days`}</strong> subscription · ₹{selectedSubPlan.price.toLocaleString('en-IN')} per cycle · delivered every {selectedSubPlan.cycle} days.
                         </p>
                       </div>
                     )}

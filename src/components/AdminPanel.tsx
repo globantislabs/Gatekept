@@ -226,7 +226,7 @@ function AdminDashboard() {
   const [newQuiz, setNewQuiz] = useState({ question: '', options: ['', '', '', ''], answer: 0, difficulty: 'EASY', order: 1, video_id: '' })
   const [quizQueue, setQuizQueue] = useState<Array<{ question: string; options: string[]; answer: number; difficulty: string; order: number; video_id: string }>>([])
   const [newProduct, setNewProduct] = useState({
-    name: '', slug: '', description: '', short_description: '', price: 0, subscription_price: 0, mrp: 0, stock: 0,
+    name: '', slug: '', description: '', short_description: '', price: 0, subscription_plans: '', mrp: 0, stock: 0,
     image_url: '', gallery_images: '', type: 'FIZZ', category: '',
     sku: '', weight: '', ingredients: '', nutrition_info: '', tags: '',
     active: true, featured: false,
@@ -237,7 +237,7 @@ function AdminDashboard() {
 
   const resetProductForm = () => {
     setNewProduct({
-      name: '', slug: '', description: '', short_description: '', price: 0, subscription_price: 0, mrp: 0, stock: 0,
+      name: '', slug: '', description: '', short_description: '', price: 0, subscription_plans: '', mrp: 0, stock: 0,
       image_url: '', gallery_images: '', type: 'FIZZ', category: '',
       sku: '', weight: '', ingredients: '', nutrition_info: '', tags: '',
       active: true, featured: false,
@@ -2190,10 +2190,37 @@ function AdminDashboard() {
                               <Label className="text-xs mb-1">Selling Price (₹) *</Label>
                               <Input type="number" placeholder="2999" value={newProduct.price || ''} onChange={e => setNewProduct({ ...newProduct, price: Number(e.target.value) })} className="text-sm h-9" />
                             </div>
-                            <div>
-                              <Label className="text-xs mb-1">Subscription Price per Cycle (₹) <span className="font-normal" style={{ color: A.textMuted }}>(30-day cycle)</span></Label>
-                              <Input type="number" step="0.01" placeholder="e.g. 2499.00" value={newProduct.subscription_price || ''} onChange={e => setNewProduct({ ...newProduct, subscription_price: Number(e.target.value) })} className="text-sm h-9" />
-                              <p className="text-[10px] mt-1" style={{ color: A.textMuted }}>Base price per 30-day subscription cycle. Packs (60/90/180 day) auto-calculate from this + discount.</p>
+                            <div className="sm:col-span-2">
+                              <Label className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color: A.textSecondary }}>Subscription Plans (Customizable Cycles)</Label>
+                              <p className="text-[10px] mb-2" style={{ color: A.textMuted }}>Add custom subscription cycles with individual pricing. Users choose from these at checkout.</p>
+                              {(() => {
+                                // Parse current subscription_plans JSON into array for editing
+                                let plans: Array<{cycle: number, price: number, label: string}> = []
+                                try { plans = JSON.parse(newProduct.subscription_plans || '[]') } catch { plans = [] }
+                                const updatePlans = (newPlans: Array<{cycle: number, price: number, label: string}>) => {
+                                  setNewProduct({ ...newProduct, subscription_plans: JSON.stringify(newPlans) })
+                                }
+                                return (
+                                  <div className="space-y-2">
+                                    {plans.map((plan, idx) => (
+                                      <div key={idx} className="flex items-center gap-2 p-2 rounded-lg border" style={{ borderColor: A.border, background: A.bg }}>
+                                        <Input type="number" placeholder="Days (e.g. 30)" value={plan.cycle || ''} onChange={e => { const n = [...plans]; n[idx] = { ...n[idx], cycle: Number(e.target.value) }; updatePlans(n) }} className="text-xs h-8 w-24" />
+                                        <Input type="number" step="0.01" placeholder="Price (₹)" value={plan.price || ''} onChange={e => { const n = [...plans]; n[idx] = { ...n[idx], price: Number(e.target.value) }; updatePlans(n) }} className="text-xs h-8 w-28" />
+                                        <Input placeholder="Label (e.g. Monthly)" value={plan.label || ''} onChange={e => { const n = [...plans]; n[idx] = { ...n[idx], label: e.target.value }; updatePlans(n) }} className="text-xs h-8 flex-1" />
+                                        <button onClick={() => updatePlans(plans.filter((_, i) => i !== idx))} className="p-1.5 rounded-md hover:bg-red-50 shrink-0" style={{ color: A.red }} title="Remove cycle"><Trash2 className="w-3.5 h-3.5" /></button>
+                                      </div>
+                                    ))}
+                                    <Button variant="outline" size="sm" className="text-xs h-8 gap-1 w-full border-dashed" onClick={() => updatePlans([...plans, { cycle: 30, price: 0, label: '' }])}>
+                                      <Plus className="w-3.5 h-3.5" /> Add Subscription Cycle
+                                    </Button>
+                                    {plans.length > 0 && (
+                                      <div className="text-[10px] p-2 rounded-lg" style={{ background: A.greenLight, color: A.green }}>
+                                        {plans.length} cycle(s) configured · {plans.map(p => `${p.label || p.cycle + 'd'}: ₹${p.price}`).join(', ')}
+                                      </div>
+                                    )}
+                                  </div>
+                                )
+                              })()}
                             </div>
                             <div>
                               <Label className="text-xs mb-1">MRP (₹)</Label>
@@ -2445,7 +2472,7 @@ function AdminDashboard() {
                           setEditingProduct(product)
                           setNewProduct({
                             name: product.name, description: product.description || '', short_description: product.short_description || '',
-                            price: product.price, subscription_price: (product as any).subscription_price || 0, mrp: product.mrp || 0, stock: product.stock,
+                            price: product.price, subscription_plans: (product as any).subscription_plans || '', mrp: product.mrp || 0, stock: product.stock,
                             image_url: product.image_url || '', gallery_images: product.gallery_images || '',
                             type: product.type, category: product.category || '',
                             sku: product.sku || '', weight: product.weight || '',

@@ -214,7 +214,7 @@ export default function ProductDetailPage() {
   // ─── Handlers ─────────────────────────────────────────────
   // Buy Now — adds product to cart and redirects to cart page.
   // LOCKED until the user is logged in AND has completed the learning module.
-  const handleAddToCart = useCallback(() => {
+  const handleAddToCart = () => {
     if (!user) {
       // Not logged in — send to login, return here after
       if (!product) return
@@ -243,9 +243,9 @@ export default function ProductDetailPage() {
     })
     toast.success(`${activeProduct.name} added to cart!`)
     navigateTo('cart')
-  }, [user, isCompleted, product, displayProduct, quantity, addToCart, navigateTo, setSelectedProductId, setRedirectAfterLogin])
+  }
 
-  const handleSubscribe = useCallback(() => {
+  const handleSubscribe = () => {
     const activeProduct = displayProduct || product
     if (!activeProduct || !isCompleted) return
     addToCart({
@@ -259,7 +259,7 @@ export default function ProductDetailPage() {
     })
     toast.success(`${activeProduct.name} subscription added to cart!`)
     navigateTo('cart')
-  }, [displayProduct, product, isCompleted, quantity, addToCart, navigateTo])
+  }
 
   const handleStartLearning = useCallback(() => {
     if (!product) return

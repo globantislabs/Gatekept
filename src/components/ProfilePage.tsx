@@ -7,7 +7,7 @@ import {
   CheckCircle, Award, Globe, RefreshCw, Package, Truck, Clock,
   CreditCard, ChevronRight, AlertCircle, Calendar, Pause, Play,
   XCircle, ShoppingBag, Repeat, Eye, Store,
-  MapPinned, RotateCcw, ChevronDown, KeyRound, EyeOff,
+  MapPinned, RotateCcw, ChevronDown, KeyRound, EyeOff, FileText, Download,
 } from 'lucide-react'
 import SiteFooter from '@/components/SiteFooter'
 import { useAppStore } from '@/store/app-store'
@@ -614,6 +614,21 @@ export function ProfilePage() {
 
                                   {/* ── Actions ── */}
                                   <div className="mt-4 flex flex-wrap gap-2">
+                                    {/* Download Invoice — available for all orders with an invoice */}
+                                    {order.invoice && (
+                                      <Button
+                                        onClick={() => window.open(`/api/invoices/download/${order.invoice!.id}`, '_blank')}
+                                        className="bg-[#1f1e1c] hover:bg-[#2a2926] text-white font-heading font-semibold min-h-[44px] flex items-center gap-2"
+                                      >
+                                        <Download className="w-4 h-4" /> Download Invoice
+                                      </Button>
+                                    )}
+                                    {order.invoice_number && !order.invoice && (
+                                      <span className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-[#e3dfd8] text-xs text-[#88837b] min-h-[44px]">
+                                        <FileText className="w-4 h-4" /> Invoice: {order.invoice_number}
+                                      </span>
+                                    )}
+
                                     {/* Cancel order for PLACED/CONFIRMED/PROCESSING */}
                                     {(order.status === 'PLACED' || order.status === 'CONFIRMED' || order.status === 'PROCESSING') && (
                                       <Button

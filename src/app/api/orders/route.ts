@@ -47,6 +47,7 @@ export async function GET(req: NextRequest) {
         items: true,
         tracking: { orderBy: { tracked_at: 'desc' } },
         subscription: true,
+        invoice: true,
       },
       orderBy: { created_at: 'desc' },
     })
@@ -152,11 +153,72 @@ export async function POST(req: NextRequest) {
       include: {
         items: true,
         tracking: true,
+        invoice: true,
       },
     })
 
-    // Fire order placed notification only for COD orders.
-    // Online payments should only notify after payment is confirmed.
+    // ── Auto-generate invoice for this order ──
+    try {
+      const year = new Date().getFullYear()
+      const prefix = `INV-${year}-`
+      const lastInvoice = await db.invoice.findFirst({
+        where: { invoice_number: { startsWith: prefix } },
+        orderBy: { invoice_number: 'desc' },
+        select: { invoice_number: true },
+      })
+      let nextSeq = 1
+      if (lastInvoice) {
+        const seqPart = lastInvoice.invoice_number.slice(prefix.length)
+        const parsed = parseInt(seqPart, 10)
+        if (!Number.isNaN(parsed)) nextSeq = parsed + 1
+      }
+      const invoiceNumber = `${prefix}${String(nextSeq).padStart(5, '0')}`
+
+      const itemsJson = JSON.stringify(
+        order.items.map(i => ({
+          name: i.product_name,
+          quantity: i.quantity,
+          unit_price: i.unit_price,
+          total_price: i.total_price,
+          pack_type: i.pack_type ?? null,
+        }))
+      )
+
+      const customerName = billing_name || order.user_id || 'Customer'
+      await db.invoice.create({
+        data: {
+          order_id: order.id,
+          invoice_number: invoiceNumber,
+          user_id: order.user_id,
+          customer_name: customerName,
+          customer_phone: billing_phone || null,
+          customer_email: billing_email || null,
+          billing_address: billing_address || null,
+          billing_city: billing_city || null,
+          billing_state: billing_state || null,
+          billing_pincode: billing_pincode || null,
+          items: itemsJson,
+          subtotal: order.subtotal,
+          tax_amount: order.tax_amount,
+          discount_amount: order.discount_amount,
+          total_amount: order.total_amount,
+          payment_method: order.payment_method || null,
+          payment_status: order.payment_status || 'PENDING',
+          status: 'ISSUED',
+          issued_at: new Date(),
+        },
+      })
+      await db.order.update({
+        where: { id: order.id },
+        data: { invoice_number: invoiceNumber, invoice_generated_at: new Date() },
+      })
+      console.log(`[Orders] Auto-generated invoice ${invoiceNumber} for order ${order.order_number}`)
+    } catch (invErr: any) {
+      console.error('[Orders] Failed to auto-generate invoice:', invErr.message)
+      // Don't block order creation if invoice generation fails
+    }
+
+    // Fire order placed notification asynchronously (don't block the response)
     try {
       const user = await db.userProfile.findUnique({ where: { id: user_id } })
       if (user) {
@@ -178,7 +240,6 @@ export async function POST(req: NextRequest) {
             console.error('Could not save email to profile:', emailErr.message)
           }
         }
-      }
 
         // If user provided a phone at checkout and their profile doesn't have one, save it
         if (phoneToUse && !user.phone) {

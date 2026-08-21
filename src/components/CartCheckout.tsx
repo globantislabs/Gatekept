@@ -6,7 +6,7 @@ import {
   ShoppingBag, Trash2, Plus, Minus, ArrowLeft, ArrowRight,
   MapPin, Phone, CreditCard, Landmark, Smartphone, CheckCircle,
   Package, Truck, ShieldCheck, ChevronRight, X, Loader2,
-  ShoppingCart, Sparkles, Leaf, Banknote, Mail, Repeat, Calendar
+  ShoppingCart, Sparkles, Leaf, Banknote, Mail, Repeat, Calendar, Download
 } from 'lucide-react'
 import { useAppStore, type CartItem, getCartItemKey } from '@/store/app-store'
 import ProductImage from '@/components/ProductImage'
@@ -1504,69 +1504,44 @@ export function OrderSuccessView() {
             }
           </motion.p>
 
-          {getPaymentStatusContent()}
-
-          {user?.email && (
-            <motion.div
-              variants={fadeInUp}
-              className="mt-3 p-3 bg-[#2e91b2]/5 border border-[#2e91b2]/15 rounded-lg"
-            >
-              <p className="text-sm text-[#2e91b2] flex flex-wrap items-center justify-center gap-1.5 font-medium break-words">
-                <Mail className="w-4 h-4" />
-                Confirmation sent to {user.email}
-              </p>
-            </motion.div>
-          )}
-
-          {(!isOnlinePayment && !isPaymentReturn) && (
-            <motion.div
-              variants={fadeInUp}
-              className="mt-3 p-3 bg-[#48805b]/5 border border-[#48805b]/15 rounded-lg"
-            >
-              <p className="text-sm text-[#48805b] flex items-center justify-center gap-1.5 font-medium">
-                <Banknote className="w-4 h-4" />
-                Pay on Delivery - Keep the exact amount ready when your order arrives.
-              </p>
-            </motion.div>
-          )}
-
-          {(isOnlinePayment && !isPaymentReturn && !paymentStatus) && (
-            <motion.div
-              variants={fadeInUp}
-              className="mt-3 p-3 bg-[#48805b]/5 border border-[#48805b]/15 rounded-lg"
-            >
-              <p className="text-sm text-[#48805b] flex items-center justify-center gap-1.5 font-medium">
-                <ShieldCheck className="w-4 h-4" />
-                Secure payment powered by PhonePe
-              </p>
-            </motion.div>
-          )}
-
-          {displayOrderNumber && (
-            <motion.p
-              variants={fadeInUp}
-              className="text-sm text-[#88837b] mb-8 mt-3 break-words"
-            >
-              Order ID: <span className="font-semibold text-[#1f1e1c]">{displayOrderNumber}</span>
-            </motion.p>
-          )}
-
-          <motion.div variants={fadeInUp} className="grid gap-3 sm:grid-cols-2">
+        <motion.div variants={fadeInUp} className="space-y-3">
+          <Button
+            onClick={() => navigateTo('profile')}
+            className="bg-[#48805b] hover:bg-[#48805b]/90 text-white px-8 py-3 rounded-lg font-semibold text-base shadow-md transition-all hover:shadow-lg w-full"
+          >
+            <Package className="w-4 h-4 mr-2" />
+            View My Orders
+          </Button>
+          {lastOrderId && (
             <Button
-              onClick={() => navigateTo('profile')}
-              className="bg-[#48805b] hover:bg-[#48805b]/90 text-white px-6 py-3 rounded-lg font-semibold text-sm sm:text-base shadow-md transition-all hover:shadow-lg w-full min-h-[48px]"
+              onClick={async () => {
+                try {
+                  const res = await fetch(`/api/invoices/by-order/${lastOrderId}`)
+                  const data = await res.json()
+                  if (data?.data?.download_url) {
+                    window.open(data.data.download_url, '_blank')
+                  } else {
+                    toast.error('Invoice not ready yet — please check your orders page shortly.')
+                  }
+                } catch {
+                  toast.error('Failed to load invoice')
+                }
+              }}
+              variant="outline"
+              className="w-full border-[#1f1e1c] text-[#1f1e1c] hover:bg-[#1f1e1c] hover:text-white rounded-lg py-3 font-semibold transition-all"
             >
-              <Package className="w-4 h-4 mr-2" />
-              View My Orders
+              <Download className="w-4 h-4 mr-2" />
+              Download Invoice
             </Button>
-            <Button
-              onClick={() => navigateTo('products')}
-              className="w-full bg-[#48805b] hover:bg-[#3a6a4a] text-white rounded-lg py-3 font-semibold text-sm sm:text-base shadow-md transition-all hover:shadow-lg min-h-[48px]"
-            >
-              <ShoppingBag className="w-4 h-4 mr-2" />
-              Keep Shopping
-            </Button>
-          </motion.div>
+          )}
+          <Button
+            onClick={() => navigateTo('products')}
+            className="w-full bg-[#48805b] hover:bg-[#3a6a4a] text-white rounded-lg py-3 font-semibold shadow-md transition-all hover:shadow-lg"
+          >
+            <ShoppingBag className="w-4 h-4 mr-2" />
+            Keep Shopping
+          </Button>
+        </motion.div>
         </div>
       </motion.div>
       <SiteFooter />

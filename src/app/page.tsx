@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, Suspense } from 'react'
+import React, { useEffect, useRef, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useAppStore, type AppView } from '@/store/app-store'
@@ -80,18 +80,25 @@ function UrlSyncHandler() {
   const products = useAppStore(s => s.products)
   const setProducts = useAppStore(s => s.setProducts)
   const currentView = useAppStore(s => s.currentView)
+  // Track which campaign IDs have already been scanned in this session
+  // to prevent duplicate scan records when the useEffect re-runs
+  const scannedCampaignRef = useRef<string | null>(null)
 
   useEffect(() => {
     // Capture campaign ID from URL (?campaign=ID) — stored for checkout attribution
+    // Only record the scan ONCE per campaign per page session
     const campaignId = searchParams.get('campaign')
     if (campaignId && typeof window !== 'undefined') {
       localStorage.setItem('notjust_campaign_id', campaignId)
-      // Record the scan
-      fetch('/api/scans', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ campaign_id: campaignId, device: navigator.userAgent }),
-      }).catch(() => {})
+      // Only POST the scan if we haven't already for this campaign
+      if (scannedCampaignRef.current !== campaignId) {
+        scannedCampaignRef.current = campaignId
+        fetch('/api/scans', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ campaign_id: campaignId, device: navigator.userAgent }),
+        }).catch(() => {})
+      }
     }
 
     // Handle PhonePe payment return redirect

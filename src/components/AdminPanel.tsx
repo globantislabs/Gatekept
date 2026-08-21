@@ -500,7 +500,7 @@ function AdminDashboard() {
   const refreshData = async () => {
     setLoading(true)
     try {
-      const [statsRes, usersRes, camps, productsRes, ordersRes, subsRes, invoicesRes] = await Promise.all([
+      const [statsRes, usersRes, camps, productsRes, ordersRes, subsRes, invoicesRes, scansRes] = await Promise.all([
         adminStatsService.get(userId),
         userService.list(undefined, userId),
         campaignService.list(),
@@ -508,6 +508,7 @@ function AdminDashboard() {
         orderService.getAll(userId),
         subscriptionService.getAll(userId),
         invoiceService.list(userId).catch(() => [] as InvoiceListItem[]),
+        qrScanService.list().catch(() => scans),
       ])
       setStats(statsRes.stats)
       setUsers(usersRes.users)
@@ -516,6 +517,7 @@ function AdminDashboard() {
       setOrders(ordersRes)
       setAdminSubscriptions(subsRes)
       setInvoices(invoicesRes)
+      setScans(scansRes)
     } catch (err) {
       console.error('Failed to refresh data:', err)
     }
@@ -1057,6 +1059,9 @@ function AdminDashboard() {
                 <h2 className="text-base font-semibold" style={{ color: A.text }}>QR Codes</h2>
                 <p className="text-[12px]" style={{ color: A.textMuted }}>Generate and manage QR codes for campaigns</p>
               </div>
+              <Button size="sm" variant="outline" className="text-xs h-8 gap-1.5" onClick={refreshData}>
+                <RefreshCw className="w-3.5 h-3.5" /> Refresh
+              </Button>
             </div>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {campaigns.filter(c => c.status === 'ACTIVE').map(campaign => {
@@ -1839,6 +1844,9 @@ function AdminDashboard() {
                   toast.success('Order analytics exported!')
                 }}>
                   <Download className="w-3.5 h-3.5" /> Export Orders
+                </Button>
+                <Button size="sm" variant="outline" className="text-xs h-8 gap-1.5" onClick={refreshData}>
+                  <RefreshCw className="w-3.5 h-3.5" /> Refresh Data
                 </Button>
               </div>
             </div>

@@ -573,11 +573,11 @@ export default function LandingPage() {
                           className="object-contain group-hover:scale-105 transition-transform duration-500 p-4"
                         />
                         <div className="absolute bottom-3 left-3 rounded-full bg-black/35 backdrop-blur-sm px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-white">
-                          {product.type === 'STILL' ? 'Still' : 'Carbonated'}
+                          {product.type}
                         </div>
                       </div>
                       <div className="px-4 py-3 border-t border-white/[0.08]">
-                        <p className="text-[10px] font-semibold tracking-[0.28em] uppercase text-[#afb75d] mb-2">{product.type} Variant</p>
+                        <p className="text-[10px] font-semibold tracking-[0.28em] uppercase text-[#afb75d] mb-2">{product.category || product.type}</p>
                         <div className="flex items-end justify-between gap-4">
                           <div className="min-w-0">
                             <h3 className="text-base font-medium text-white truncate">{product.name}</h3>
@@ -970,7 +970,7 @@ export default function LandingPage() {
                           {/* Bottom-left badges */}
                           <div className="absolute bottom-4 left-4 flex flex-wrap gap-2">
                             <span className="rounded-full bg-white/15 backdrop-blur-md px-3 py-1.5 text-[11px] font-bold uppercase tracking-widest text-white">
-                              {isStill ? 'Still Variant' : 'Fizz Variant'}
+                              {product.type}
                             </span>
                             {discount > 0 && (
                               <span className="rounded-full bg-[#48805b] px-3 py-1.5 text-[11px] font-bold uppercase tracking-widest text-white">
@@ -1011,7 +1011,7 @@ export default function LandingPage() {
                         <CardContent className="p-5 lg:p-6 flex flex-col gap-3">
                           {/* Type row */}
                           <div className="flex items-center gap-2 flex-wrap">
-                            <p className="text-[11px] font-semibold tracking-[0.35em] uppercase text-[#48805b]">{product.type} Variant</p>
+                            <p className="text-[11px] font-semibold tracking-[0.35em] uppercase text-[#48805b]">{product.category || product.type}</p>
                             {product.category && (
                               <span className="text-[9px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#2e91b2]/20 text-[#2e91b2]">{product.category}</span>
                             )}

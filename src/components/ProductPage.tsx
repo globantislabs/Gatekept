@@ -323,7 +323,7 @@ export default function ProductPage() {
                           <CardContent className="p-5 lg:p-6 flex flex-col gap-3">
                             {/* Type row */}
                             <div className="flex items-center gap-2 flex-wrap">
-                              <p className="text-[11px] font-semibold tracking-[0.35em] uppercase text-[#48805b]">{product.type} Variant</p>
+                              <p className="text-[11px] font-semibold tracking-[0.35em] uppercase text-[#48805b]">{product.category || product.type}</p>
                               {product.category && (
                                 <span className="text-[9px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#2e91b2]/20 text-[#2e91b2]">{product.category}</span>
                               )}

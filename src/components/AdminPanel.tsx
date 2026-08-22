@@ -11,7 +11,7 @@ import {
   FileText, CreditCard, X, Download, ExternalLink,
   TrendingUp,
   Info, Tag, Columns3, ClipboardList, DollarSign, Upload,
-  Receipt, IndianRupee,
+  Receipt, IndianRupee, Clock,
 } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
 import { useAppStore } from '@/store/app-store'
@@ -206,6 +206,7 @@ function AdminDashboard() {
   const [productFilter, setProductFilter] = useState<'all' | 'active' | 'inactive'>('all')
   const [galleryUploading, setGalleryUploading] = useState(false)
   const [showProductQrCodes, setShowProductQrCodes] = useState(false)
+  const [qrPopupProduct, setQrPopupProduct] = useState<Product | null>(null)
   // Invoice state
   const [invoices, setInvoices] = useState<InvoiceListItem[]>([])
   const [selectedInvoice, setSelectedInvoice] = useState<InvoiceListItem | null>(null)
@@ -676,7 +677,6 @@ function AdminDashboard() {
     { value: 'subscriptions', label: 'Subscriptions', icon: CreditCard, badge: null },
     { value: 'users', label: 'Users', icon: Users, badge: users.length },
     { value: 'analytics', label: 'Analytics', icon: TrendingUp, badge: null },
-    { value: 'content', label: 'Content', icon: FileText, badge: questions.length },
   ]
 
   const filteredUsers = userSearch
@@ -2441,17 +2441,7 @@ function AdminDashboard() {
                         <Button variant="ghost" size="sm" className="h-7 text-[11px] gap-1 flex-1" style={{ color: A.green }} onClick={() => loadLearningContent(product.id)}>
                           <BookOpen className="w-3 h-3" /> Learning
                         </Button>
-                        <Button variant="ghost" size="sm" className="h-7 text-[11px] gap-1" style={{ color: A.textSecondary }} onClick={() => {
-                          const slug = product.slug || product.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
-                          const qrUrl = product.qr_code_url || `https://notjustwatr.com?product=${slug}`
-                          navigator.clipboard.writeText(qrUrl)
-                          toast.success(`QR URL copied: ${qrUrl}`)
-                          const w = window.open('', '_blank', 'width=400,height=500')
-                          if (w) {
-                            w.document.write(`<html><head><title>QR Code - ${product.name}</title><script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script></head><body style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;font-family:system-ui;margin:0;padding:20px"><h2 style="color:#1f1e1c">${product.name}</h2><canvas id="qr-canvas"></canvas><p style="color:#88837b;font-size:12px;word-break:break-all;max-width:300px">${qrUrl}</p><button onclick="navigator.clipboard.writeText('${qrUrl}');this.textContent='Copied!'" style="margin-top:12px;padding:8px 16px;background:#48805b;color:#fff;border:none;border-radius:8px;cursor:pointer">Copy URL</button><script>QRCode.toCanvas(document.getElementById('qr-canvas'),'${qrUrl}',{width:200,color:{dark:'#1f1e1c',light:'#ffffff'}},function(){})</script></body></html>`)
-                            w.document.close()
-                          }
-                        }}>
+                        <Button variant="ghost" size="sm" className="h-7 text-[11px] gap-1" style={{ color: A.textSecondary }} onClick={() => setQrPopupProduct(product)}>
                           <QrCode className="w-3 h-3" /> QR
                         </Button>
                         <Button variant="ghost" size="sm" className="h-7 text-[11px] gap-1 flex-1" style={{ color: A.destructive }} onClick={async () => {
@@ -2531,6 +2521,45 @@ function AdminDashboard() {
                 </div>
               )}
             </div>
+
+            {/* ═══ PRODUCT QR POPUP DIALOG ═══ */}
+            <Dialog open={!!qrPopupProduct} onOpenChange={(open) => { if (!open) setQrPopupProduct(null) }}>
+              <DialogContent className="sm:max-w-[400px]">
+                <DialogHeader>
+                  <DialogTitle className="text-lg flex items-center gap-2">
+                    <QrCode className="w-5 h-5" style={{ color: A.green }} /> Product QR Code
+                  </DialogTitle>
+                  <DialogDescription>Scan or download the QR code for this product</DialogDescription>
+                </DialogHeader>
+                {qrPopupProduct && (() => {
+                  const slug = qrPopupProduct.slug || qrPopupProduct.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+                  const qrUrl = qrPopupProduct.qr_code_url || `https://notjustwatr.com?product=${slug}`
+                  const qrId = `popup-qr-${qrPopupProduct.id}`
+                  return (
+                    <div className="flex flex-col items-center gap-4 py-4">
+                      <div className="inline-block p-4 bg-white rounded-xl border" style={{ borderColor: A.border }}>
+                        <QRCodeSVG id={qrId} value={qrUrl} size={200} bgColor="#ffffff" fgColor="#1f1e1c" level="M" />
+                      </div>
+                      <div className="text-center">
+                        <p className="font-bold text-sm" style={{ color: A.text }}>{qrPopupProduct.name}</p>
+                        <p className="text-[10px] mt-1 break-all" style={{ color: A.textMuted }}>{qrUrl}</p>
+                      </div>
+                      <div className="flex gap-2 w-full">
+                        <Button className="flex-1 rounded-md text-xs h-9 text-white" style={{ background: A.green }} onClick={() => {
+                          const svgEl = document.getElementById(qrId) as unknown as SVGElement | null
+                          downloadQrCodeAsPng(svgEl, `qr-${slug}`)
+                        }}>
+                          <Download className="w-3.5 h-3.5 mr-1.5" /> Download PNG
+                        </Button>
+                        <Button variant="outline" className="flex-1 rounded-md text-xs h-9" style={{ borderColor: A.border, color: A.text }} onClick={() => { navigator.clipboard.writeText(qrUrl); toast.success('QR URL copied!') }}>
+                          <Copy className="w-3.5 h-3.5 mr-1.5" /> Copy URL
+                        </Button>
+                      </div>
+                    </div>
+                  )
+                })()}
+              </DialogContent>
+            </Dialog>
 
             {/* ═══ MANAGE LEARNING CONTENT DIALOG ═══ */}
             <Dialog open={showManageLearning} onOpenChange={(open) => { setShowManageLearning(open); if (!open) { setLearningProductId(null); setLearningVideos([]); setLearningQuizzes([]); setShowAddVideo(false); setShowAddQuiz(false); setEditingVideo(null); setEditingQuiz(null) } }}>

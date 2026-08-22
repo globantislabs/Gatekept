@@ -109,6 +109,7 @@ export default function ProductDetailPage() {
   const [quantity, setQuantity] = useState(1)
   const [descExpanded, setDescExpanded] = useState(false)
   const [progressFetchKey, setProgressFetchKey] = useState(0)
+  const [selectedImageIdx, setSelectedImageIdx] = useState(0)
 
   // Derived: are we currently loading?
   // Use cached product for immediate display — only show loading if we don't have any data at all
@@ -209,6 +210,13 @@ export default function ProductDetailPage() {
 
   // Highlights & ingredients
   const highlights = displayProduct ? parseHighlights(displayProduct.highlights) : []
+
+  // Gallery images: combine main image + gallery_images (comma-separated)
+  const allImages = displayProduct ? [
+    displayProduct.image_url,
+    ...(displayProduct.gallery_images ? displayProduct.gallery_images.split(',').map(u => u.trim()).filter(Boolean) : []),
+  ].filter(Boolean) as string[] : []
+  const activeImage = allImages[selectedImageIdx] || displayProduct?.image_url
   const ingredientsList = displayProduct ? parseIngredients(displayProduct.ingredients) : []
 
   // ─── Handlers ─────────────────────────────────────────────
@@ -446,7 +454,7 @@ export default function ProductDetailPage() {
 
                 {/* Product image */}
                 <ProductImage
-                  src={displayProduct?.image_url}
+                  src={activeImage}
                   alt={displayProduct?.name || 'Product'}
                   productType={displayProduct?.type}
                   fill
@@ -493,6 +501,30 @@ export default function ProductDetailPage() {
                   </div>
                 )}
               </div>
+
+              {/* ─── Gallery Thumbnails (Amazon-style) ─── */}
+              {allImages.length > 1 && (
+                <div className="flex gap-2 overflow-x-auto pb-1">
+                  {allImages.map((img, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setSelectedImageIdx(idx)}
+                      className={`relative w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden border-2 flex-shrink-0 transition-all ${
+                        selectedImageIdx === idx ? 'border-[#48805b] shadow-md' : 'border-[#e3dfd8] hover:border-[#48805b]/40'
+                      }`}
+                      style={{ backgroundColor: `${BRAND.surface}30` }}
+                    >
+                      <ProductImage
+                        src={img}
+                        alt={`Gallery ${idx + 1}`}
+                        productType={displayProduct?.type}
+                        fill
+                        className="object-contain p-1"
+                      />
+                    </button>
+                  ))}
+                </div>
+              )}
 
               {/* ─── Product Details Tabs (below image on left) ──── */}
               <Tabs defaultValue="overview" className="w-full">

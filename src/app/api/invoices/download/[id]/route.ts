@@ -198,7 +198,6 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   <div class="page">
     <div class="topbar">
       <div class="brand">
-        <div class="logo">NJ</div>
         <div class="logo"><img src="https://notjustwatr.com/images/notjust-logo-clean.png" alt="NOTJUST" /></div>
         <div>
           <div class="name">NOTJUST</div>

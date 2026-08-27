@@ -141,6 +141,9 @@ interface AppState {
   // Learning completion cache
   completedProductIds: string[]
   markProductCompleted: (productId: string) => void
+  skippedProductIds: string[]
+  markProductSkipped: (productId: string) => void
+  unmarkProductSkipped: (productId: string) => void
 
   // URL share slug
   shareSlug: string | null
@@ -245,6 +248,17 @@ export const useAppStore = create<AppState>()(
           set({ completedProductIds: [...completedProductIds, productId] })
         }
       },
+      skippedProductIds: [],
+      markProductSkipped: (productId) => {
+        const skippedProductIds = get().skippedProductIds || []
+        if (!skippedProductIds.includes(productId)) {
+          set({ skippedProductIds: [...skippedProductIds, productId] })
+        }
+      },
+      unmarkProductSkipped: (productId) => {
+        const skippedProductIds = get().skippedProductIds || []
+        set({ skippedProductIds: skippedProductIds.filter(id => id !== productId) })
+      },
 
       // URL share slug
       shareSlug: null,
@@ -330,6 +344,7 @@ export const useAppStore = create<AppState>()(
           currentView: 'landing',
           previousView: null,
           completedProductIds: [],
+          skippedProductIds: [],
         })
       },
 
@@ -354,6 +369,7 @@ export const useAppStore = create<AppState>()(
           pendingOtpType: state.pendingOtpType,
           scannedCampaignId: state.scannedCampaignId,
           completedProductIds: state.completedProductIds,
+          skippedProductIds: state.skippedProductIds || [],
         }
       },
     }

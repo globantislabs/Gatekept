@@ -390,19 +390,21 @@ function AdminDashboard() {
     }
   }
 
-  const handleSkipProductLearning = async () => {
+  const handleToggleProductLearningSkip = async () => {
     if (!learningProductId) return
-    if (!confirm('Skip learning for this product? Existing videos and quizzes will be made inactive, not deleted.')) return
+    const shouldUnskip = learningVideos.length > 0 && learningVideos.every(v => v.active === false)
+    if (!confirm(shouldUnskip ? 'Unskip learning for this product?' : 'Skip learning for this product? Existing videos and quizzes will be made inactive, not deleted.')) return
     try {
+      const active = shouldUnskip
       await Promise.all([
-        ...learningVideos.filter(v => v.active !== false).map(v => productVideoService.update(learningProductId, v.id, { active: false }, userId)),
-        ...learningQuizzes.filter(q => q.active !== false).map(q => productQuizService.update(learningProductId, q.id, { active: false }, userId)),
+        ...learningVideos.filter(v => v.active !== active).map(v => productVideoService.update(learningProductId, v.id, { active }, userId)),
+        ...learningQuizzes.filter(q => q.active !== active).map(q => productQuizService.update(learningProductId, q.id, { active }, userId)),
       ])
-      toast.success('Product learning skipped')
+      toast.success(shouldUnskip ? 'Product learning enabled' : 'Product learning skipped')
       loadLearningContent(learningProductId)
     } catch (err) {
-      console.error('Failed to skip learning:', err)
-      toast.error('Failed to skip learning')
+      console.error('Failed to update learning skip:', err)
+      toast.error('Failed to update learning skip')
     }
   }
 

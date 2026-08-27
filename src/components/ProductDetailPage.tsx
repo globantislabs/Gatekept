@@ -8,7 +8,7 @@ import {
   ChevronRight, Home, GraduationCap, RefreshCw, ShieldCheck, Truck,
   Leaf, Clock, Globe, Mail, MessageCircle, Smartphone, ShoppingCart,
   Minus, Plus, CreditCard, BookOpen, Star, AlertTriangle, Info,
-  Sparkles, Eye, EyeOff, Repeat
+  Sparkles, Eye, EyeOff, Repeat, FastForward, RotateCcw
 } from 'lucide-react'
 import SiteFooter from '@/components/SiteFooter'
 import { useAppStore, type CartItem } from '@/store/app-store'
@@ -97,6 +97,7 @@ export default function ProductDetailPage() {
     user, selectedProductId, navigateTo, goBack,
     setSelectedProductId, setRedirectAfterLogin,
     addToCart, setShareSlug, shareSlug, completedProductIds,
+    skippedProductIds, markProductSkipped, unmarkProductSkipped, markProductCompleted,
     products: cachedProducts, setProducts
   } = useAppStore()
 
@@ -203,7 +204,8 @@ export default function ProductDetailPage() {
   const learningStatus = getLearningStatus(productProgress)
   const activeLearningVideoCount = product ? product.videos.filter(v => v.active !== false).length : null
   const noLearningRequired = activeLearningVideoCount === 0
-  const isCompleted = noLearningRequired || learningStatus === 'COMPLETED' || (selectedProductId ? completedProductIds.includes(selectedProductId) : false)
+  const isSkipped = selectedProductId ? skippedProductIds.includes(selectedProductId) : false
+  const isCompleted = noLearningRequired || isSkipped || learningStatus === 'COMPLETED' || (selectedProductId ? completedProductIds.includes(selectedProductId) : false)
   const isInProgress = learningStatus === 'IN_PROGRESS'
   const videoProgressPct = getVideoProgressPercent(productProgress)
 
@@ -907,12 +909,14 @@ export default function ProductDetailPage() {
 
               {/* ─── Type & Category Badges ────────────────────── */}
               <div className="flex flex-wrap gap-2">
-                <Badge
-                  className="min-h-[28px] px-3 text-xs font-medium"
-                  style={{ backgroundColor: BRAND.green, color: '#fff', borderColor: 'transparent' }}
-                >
-                  {displayProduct?.type === 'FIZZ' ? '🫧 FIZZ' : '💧 STILL'}
-                </Badge>
+                {displayProduct?.type && (
+                  <Badge
+                    className="min-h-[28px] px-3 text-xs font-medium"
+                    style={{ backgroundColor: BRAND.green, color: '#fff', borderColor: 'transparent' }}
+                  >
+                    {displayProduct.type === 'FIZZ' ? '🫧 FIZZ' : displayProduct.type}
+                  </Badge>
+                )}
                 {displayProduct?.category && (
                   <Badge
                     className="min-h-[28px] px-3 text-xs font-medium"
@@ -1059,48 +1063,109 @@ export default function ProductDetailPage() {
                   )}
 
                   {/* ─── Action Button (sign/learn) ──────────────── */}
-                  <div className="px-6">
-                    {!user ? (
-                      <Button
-                        onClick={handleLoginToSave}
-                        className="pointer-events-auto min-h-[48px] w-full rounded-xl font-heading font-semibold text-xs sm:text-sm transition-colors cursor-pointer touch-manipulation select-none"
-                        style={{ backgroundColor: BRAND.green, color: '#fff', borderColor: 'transparent', WebkitTapHighlightColor: 'transparent' }}
-                      >
-                        <Play className="w-4 h-4 sm:w-5 sm:h-5 mr-2 flex-shrink-0" />
-                        <span className="sm:hidden">Sign in to Learn & Buy</span>
-                        <span className="hidden sm:inline">Sign in to access product learning & enable purchase</span>
-                      </Button>
-                    ) : learningStatus === 'NOT_STARTED' ? (
-                      <Button
-                        onClick={handleStartLearning}
-                        className="pointer-events-auto min-h-[48px] w-full rounded-xl font-heading font-semibold text-xs sm:text-sm transition-colors cursor-pointer touch-manipulation select-none"
-                        style={{ backgroundColor: BRAND.green, color: '#fff', borderColor: 'transparent', WebkitTapHighlightColor: 'transparent' }}
-                      >
-                        <Play className="w-4 h-4 sm:w-5 sm:h-5 mr-2 flex-shrink-0" />
-                        <span className="sm:hidden">Start Learning</span>
-                        <span className="hidden sm:inline">Start the learning module to unlock purchase</span>
-                      </Button>
-                    ) : isInProgress ? (
-                      <Button
-                        onClick={handleContinueLearning}
-                        className="pointer-events-auto min-h-[48px] w-full rounded-xl font-heading font-semibold text-xs sm:text-sm transition-colors cursor-pointer touch-manipulation select-none"
-                        style={{ backgroundColor: BRAND.green, color: '#fff', borderColor: 'transparent', WebkitTapHighlightColor: 'transparent' }}
-                      >
-                        <BookOpen className="w-4 h-4 sm:w-5 sm:h-5 mr-2 flex-shrink-0" />
-                        <span className="sm:hidden">Continue Learning</span>
-                        <span className="hidden sm:inline">Continue Learning to Unlock Purchase</span>
-                      </Button>
-                    ) : (
-                      <Button
-                        onClick={handleReview}
-                        variant="outline"
-                        className="pointer-events-auto min-h-[48px] w-full rounded-xl font-heading font-semibold text-xs sm:text-sm border-[#e3dfd8] transition-colors cursor-pointer touch-manipulation select-none"
-                      >
-                        <Eye className="w-4 h-4 sm:w-5 sm:h-5 mr-2 flex-shrink-0" />
-                        Review Learning Module
-                      </Button>
-                    )}
-                  </div>
+                    <div className="px-6">
+                      {!user ? (
+                        <Button
+                          onClick={handleLoginToSave}
+                          className="pointer-events-auto min-h-[48px] w-full rounded-xl font-heading font-semibold text-xs sm:text-sm transition-colors cursor-pointer touch-manipulation select-none"
+                          style={{ backgroundColor: BRAND.green, color: '#fff', borderColor: 'transparent', WebkitTapHighlightColor: 'transparent' }}
+                        >
+                          <Play className="w-4 h-4 sm:w-5 sm:h-5 mr-2 flex-shrink-0" />
+                          <span className="sm:hidden">Sign in to Learn & Buy</span>
+                          <span className="hidden sm:inline">Sign in to access product learning & enable purchase</span>
+                        </Button>
+                      ) : learningStatus === 'NOT_STARTED' && !isSkipped ? (
+                        <Button
+                          onClick={handleStartLearning}
+                          className="pointer-events-auto min-h-[48px] w-full rounded-xl font-heading font-semibold text-xs sm:text-sm transition-colors cursor-pointer touch-manipulation select-none"
+                          style={{ backgroundColor: BRAND.green, color: '#fff', borderColor: 'transparent', WebkitTapHighlightColor: 'transparent' }}
+                        >
+                          <Play className="w-4 h-4 sm:w-5 sm:h-5 mr-2 flex-shrink-0" />
+                          <span className="sm:hidden">Start Learning</span>
+                          <span className="hidden sm:inline">Start the learning module to unlock purchase</span>
+                        </Button>
+                      ) : isInProgress && !isSkipped ? (
+                        <Button
+                          onClick={handleContinueLearning}
+                          className="pointer-events-auto min-h-[48px] w-full rounded-xl font-heading font-semibold text-xs sm:text-sm transition-colors cursor-pointer touch-manipulation select-none"
+                          style={{ backgroundColor: BRAND.green, color: '#fff', borderColor: 'transparent', WebkitTapHighlightColor: 'transparent' }}
+                        >
+                          <BookOpen className="w-4 h-4 sm:w-5 sm:h-5 mr-2 flex-shrink-0" />
+                          <span className="sm:hidden">Continue Learning</span>
+                          <span className="hidden sm:inline">Continue Learning to Unlock Purchase</span>
+                        </Button>
+                      ) : (
+                        <Button
+                          onClick={handleReview}
+                          variant="outline"
+                          className="pointer-events-auto min-h-[48px] w-full rounded-xl font-heading font-semibold text-xs sm:text-sm border-[#e3dfd8] transition-colors cursor-pointer touch-manipulation select-none"
+                        >
+                          <Eye className="w-4 h-4 sm:w-5 sm:h-5 mr-2 flex-shrink-0" />
+                          Review Learning Module & Videos
+                        </Button>
+                      )}
+
+                      {/* Skip / Unskip Learning Action Buttons */}
+                      {user && (
+                        <div className="mt-3 pt-2 border-t flex flex-col items-center gap-2" style={{ borderColor: BRAND.surface }}>
+                          {isSkipped ? (
+                            <div className="flex items-center justify-between w-full p-2.5 rounded-xl border bg-amber-500/10 border-amber-500/20">
+                              <span className="text-xs font-medium flex items-center gap-1.5" style={{ color: BRAND.dark }}>
+                                <FastForward className="w-3.5 h-3.5 text-amber-600" />
+                                Learning Skipped (Unlocked)
+                              </span>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  if (selectedProductId) {
+                                    unmarkProductSkipped(selectedProductId)
+                                    toast.info('Learning requirement restored')
+                                  }
+                                }}
+                                className="h-7 text-xs px-2.5 border-amber-500/30 hover:bg-amber-500/15 cursor-pointer"
+                              >
+                                <RotateCcw className="w-3 h-3 mr-1" />
+                                Unskip
+                              </Button>
+                            </div>
+                          ) : !isCompleted ? (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                if (selectedProductId) {
+                                  markProductSkipped(selectedProductId)
+                                  markProductCompleted(selectedProductId)
+                                  toast.success('Learning skipped! Product unlocked.')
+                                }
+                              }}
+                              className="pointer-events-auto w-full min-h-[36px] rounded-xl text-xs font-medium transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                              style={{ color: BRAND.muted }}
+                            >
+                              <FastForward className="w-3.5 h-3.5" style={{ color: BRAND.green }} />
+                              Skip Learning & Unlock Instantly
+                            </Button>
+                          ) : (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                if (selectedProductId) {
+                                  markProductSkipped(selectedProductId)
+                                  toast.success('Learning status set to skipped')
+                                }
+                              }}
+                              className="pointer-events-auto text-[11px] font-medium flex items-center justify-center gap-1 cursor-pointer"
+                              style={{ color: BRAND.muted }}
+                            >
+                              <FastForward className="w-3 h-3" />
+                              Skip Learning Mode
+                            </Button>
+                          )}
+                        </div>
+                      )}
+                    </div>
 
                   {/* ─── Bottom: Sign to access note ────── */}
                   {!user && (

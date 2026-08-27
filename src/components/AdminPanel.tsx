@@ -2611,9 +2611,15 @@ function AdminDashboard() {
                 </DialogHeader>
                 {learningProductId && (
                   <div className="flex justify-end">
-                    <Button variant="outline" size="sm" className="text-xs h-8 gap-1.5" style={{ borderColor: A.amber, color: A.amber }} onClick={handleSkipProductLearning}>
-                      <EyeOff className="w-3.5 h-3.5" /> Skip Learning
-                    </Button>
+                    {(() => {
+                      const isSkipped = learningVideos.length > 0 && learningVideos.every(v => v.active === false)
+                      return (
+                        <Button variant="outline" size="sm" className="text-xs h-8 gap-1.5" style={{ borderColor: A.amber, color: A.amber }} onClick={handleToggleProductLearningSkip}>
+                          {isSkipped ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                          {isSkipped ? 'Unskip Learning' : 'Skip Learning'}
+                        </Button>
+                      )
+                    })()}
                   </div>
                 )}
 

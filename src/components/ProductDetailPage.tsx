@@ -201,7 +201,9 @@ export default function ProductDetailPage() {
 
   // Learning status
   const learningStatus = getLearningStatus(productProgress)
-  const isCompleted = learningStatus === 'COMPLETED' || (selectedProductId ? completedProductIds.includes(selectedProductId) : false)
+  const activeLearningVideoCount = product ? product.videos.filter(v => v.active !== false).length : null
+  const noLearningRequired = activeLearningVideoCount === 0
+  const isCompleted = noLearningRequired || learningStatus === 'COMPLETED' || (selectedProductId ? completedProductIds.includes(selectedProductId) : false)
   const isInProgress = learningStatus === 'IN_PROGRESS'
   const videoProgressPct = getVideoProgressPercent(productProgress)
 
@@ -652,7 +654,6 @@ export default function ProductDetailPage() {
                                   borderColor: `${BRAND.green}18`
                                 }}
                               >
-                                <Leaf className="w-3 h-3 mr-1 inline" />
                                 {ing}
                               </motion.span>
                             ))}
@@ -977,7 +978,7 @@ export default function ProductDetailPage() {
               </div>
 
               {/* ─── Learning Module Card ───────────────────────── */}
-              <Card className="border rounded-2xl overflow-hidden" style={{ borderColor: BRAND.surface }}>
+              {!noLearningRequired && <Card className="border rounded-2xl overflow-hidden" style={{ borderColor: BRAND.surface }}>
                 <CardHeader className="pb-2">
                   <div className="flex items-center gap-2">
                     <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ backgroundColor: `${BRAND.green}12` }}>
@@ -1111,10 +1112,10 @@ export default function ProductDetailPage() {
                     </div>
                   )}
                 </CardContent>
-              </Card>
+              </Card>}
 
               {/* ─── Trust Badges ─────────────────────────────── */}
-              <div className="grid grid-cols-3 gap-1.5 sm:gap-3">
+              <div className="grid grid-cols-2 gap-1.5 sm:gap-3">
                 <div className="flex flex-col items-center text-center p-2 sm:p-3 rounded-xl bg-white border" style={{ borderColor: BRAND.surface }}>
                   <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 mb-1" style={{ color: BRAND.green }} />
                   <p className="text-[9px] sm:text-[10px] font-medium" style={{ color: BRAND.dark }}>FSSAI Certified</p>
@@ -1124,11 +1125,6 @@ export default function ProductDetailPage() {
                   <Truck className="w-4 h-4 sm:w-5 sm:h-5 mb-1" style={{ color: BRAND.green }} />
                   <p className="text-[9px] sm:text-[10px] font-medium" style={{ color: BRAND.dark }}>Free Shipping</p>
                   <p className="text-[8px] sm:text-[9px]" style={{ color: BRAND.muted }}>Pan India</p>
-                </div>
-                <div className="flex flex-col items-center text-center p-2 sm:p-3 rounded-xl bg-white border" style={{ borderColor: BRAND.surface }}>
-                  <Leaf className="w-4 h-4 sm:w-5 sm:h-5 mb-1" style={{ color: BRAND.green }} />
-                  <p className="text-[9px] sm:text-[10px] font-medium" style={{ color: BRAND.dark }}>100% Natural</p>
-                  <p className="text-[8px] sm:text-[9px]" style={{ color: BRAND.muted }}>{displayProduct?.country_origin || 'Made in India'}</p>
                 </div>
               </div>
             </motion.div>

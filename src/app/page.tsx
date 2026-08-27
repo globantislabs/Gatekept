@@ -110,6 +110,12 @@ function UrlSyncHandler() {
       return
     }
 
+    const slug = searchParams.get('product')
+    if (!slug) return
+
+    const pathname = typeof window !== 'undefined' ? window.location.pathname : ''
+    const isProductLinkPath = pathname === '/' || pathname === '/product'
+
     // Don't override user-initiated navigations to other views.
     // searchParams can be stale after pushState (useSearchParams doesn't
     // update on manual history.pushState calls). This previously caused
@@ -121,16 +127,17 @@ function UrlSyncHandler() {
     //   'product-learning' (learning module for the product).
     // For ALL other views, exit early so user navigations are respected.
     if (
+      !isProductLinkPath &&
       currentView !== 'product-detail' &&
       currentView !== 'product-learning'
     ) {
       return
     }
 
-    const slug = searchParams.get('product')
-    if (!slug) return
-
     const findAndNavigate = async () => {
+      const productQuery = new URLSearchParams(searchParams.toString())
+      productQuery.set('product', slug)
+
       if (products.length === 0) {
         try {
           const { productService } = await import('@/lib/data-service')
@@ -140,7 +147,7 @@ function UrlSyncHandler() {
           if (found) {
             setSelectedProductId(found.id)
             if (currentView !== 'product-detail' && currentView !== 'product-learning') {
-              navigateTo('product-detail')
+              navigateTo('product-detail', productQuery.toString())
             }
           }
         } catch { /* ignore */ }
@@ -149,7 +156,7 @@ function UrlSyncHandler() {
         if (found) {
           setSelectedProductId(found.id)
           if (currentView !== 'product-detail' && currentView !== 'product-learning') {
-            navigateTo('product-detail')
+            navigateTo('product-detail', productQuery.toString())
           }
         }
       }

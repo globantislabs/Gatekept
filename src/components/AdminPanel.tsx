@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import {
   LayoutDashboard, Package, BookOpen, Users, Megaphone,
   Plus, Pencil, Trash2, Copy, Search,
-  Eye, Loader2,
+  Eye, EyeOff, Loader2,
   Shield, CheckCircle, XCircle, ChevronLeft, ChevronRight, ChevronUp, ChevronDown,
   RefreshCw, Leaf, Video, Play, Scan, Edit, Save, Star, AlertCircle,
   HelpCircle, QrCode, ShoppingCart,
@@ -75,6 +75,25 @@ const A = {
 }
 
 const CHART_COLORS = [A.green, A.lime, A.blue, A.amber, A.red, '#7c3aed']
+const PUBLIC_SITE_URL = 'https://notjustwatr.com'
+
+function slugifyProduct(product: Pick<Product, 'name' | 'slug'>) {
+  return product.slug || product.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+}
+
+function buildProductUrl(product: Pick<Product, 'name' | 'slug'>, campaignId?: string | null) {
+  const url = new URL('/product', PUBLIC_SITE_URL)
+  if (campaignId) url.searchParams.set('campaign', campaignId)
+  url.searchParams.set('product', slugifyProduct(product))
+  return url.toString()
+}
+
+function buildCampaignUrl(campaign: Campaign, product?: Product | null) {
+  if (product) return buildProductUrl(product, campaign.id)
+  const url = new URL('/', PUBLIC_SITE_URL)
+  url.searchParams.set('campaign', campaign.id)
+  return url.toString()
+}
 
 // ─── Mobile Detection ────────────────────────────────────
 function useIsMobile() {
@@ -368,6 +387,22 @@ function AdminDashboard() {
     } catch (err) {
       console.error('Failed to delete question:', err)
       toast.error('Failed to delete question')
+    }
+  }
+
+  const handleSkipProductLearning = async () => {
+    if (!learningProductId) return
+    if (!confirm('Skip learning for this product? Existing videos and quizzes will be made inactive, not deleted.')) return
+    try {
+      await Promise.all([
+        ...learningVideos.filter(v => v.active !== false).map(v => productVideoService.update(learningProductId, v.id, { active: false }, userId)),
+        ...learningQuizzes.filter(q => q.active !== false).map(q => productQuizService.update(learningProductId, q.id, { active: false }, userId)),
+      ])
+      toast.success('Product learning skipped')
+      loadLearningContent(learningProductId)
+    } catch (err) {
+      console.error('Failed to skip learning:', err)
+      toast.error('Failed to skip learning')
     }
   }
 
@@ -1064,8 +1099,8 @@ function AdminDashboard() {
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {campaigns.filter(c => c.status === 'ACTIVE').map(campaign => {
                 const campaignScans = scans.filter(s => s.campaign_id === campaign.id)
-                const qrUrl = `https://notjustwatr.com/scan/${campaign.id}`
                 const linkedProduct = campaign.product || adminProducts.find(p => p.id === campaign.product_id) || null
+                const qrUrl = buildCampaignUrl(campaign, linkedProduct)
                 const revenue = linkedProduct ? campaignScans.length * linkedProduct.price : 0
                 return (
                   <div key={campaign.id} className="bg-white border rounded-lg p-5 text-center hover:shadow-sm transition-shadow" style={{ borderColor: A.border }}>
@@ -2351,8 +2386,8 @@ function AdminDashboard() {
                 const vCount = productVideoCounts[product.id] || 0
                 const qCount = productQuizCounts[product.id] || 0
                 const discount = product.mrp && product.mrp > product.price ? Math.round((1 - product.price / product.mrp) * 100) : 0
-                const slug = product.slug || product.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
-                const productQrUrl = product.qr_code_url || `https://notjustwatr.com/?product=${slug}`
+                const slug = slugifyProduct(product)
+                const productQrUrl = buildProductUrl(product)
                 const productQrId = `mini-qr-${product.id}`
 
                 return (
@@ -2484,8 +2519,8 @@ function AdminDashboard() {
                 <div className="p-4 pt-0">
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                     {filteredProducts.map(product => {
-                      const slug = product.slug || product.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
-                      const qrUrl = product.qr_code_url || `https://notjustwatr.com/?product=${slug}`
+                      const slug = slugifyProduct(product)
+                      const qrUrl = buildProductUrl(product)
                       const qrId = `product-qr-${product.id}`
                       return (
                         <div key={product.id} className="rounded-lg border p-3 text-center hover:shadow-sm transition-shadow" style={{ borderColor: A.borderLight, background: A.bg }}>
@@ -2532,8 +2567,8 @@ function AdminDashboard() {
                   <DialogDescription>Scan or download the QR code for this product</DialogDescription>
                 </DialogHeader>
                 {qrPopupProduct && (() => {
-                  const slug = qrPopupProduct.slug || qrPopupProduct.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
-                  const qrUrl = qrPopupProduct.qr_code_url || `https://notjustwatr.com?product=${slug}`
+                  const slug = slugifyProduct(qrPopupProduct)
+                  const qrUrl = buildProductUrl(qrPopupProduct)
                   const qrId = `popup-qr-${qrPopupProduct.id}`
                   return (
                     <div className="flex flex-col items-center gap-4 py-4">
@@ -2572,6 +2607,13 @@ function AdminDashboard() {
                     {learningProductId ? `Manage content for ${adminProducts.find(p => p.id === learningProductId)?.name || 'product'}` : 'Select a product'}
                   </DialogDescription>
                 </DialogHeader>
+                {learningProductId && (
+                  <div className="flex justify-end">
+                    <Button variant="outline" size="sm" className="text-xs h-8 gap-1.5" style={{ borderColor: A.amber, color: A.amber }} onClick={handleSkipProductLearning}>
+                      <EyeOff className="w-3.5 h-3.5" /> Skip Learning
+                    </Button>
+                  </div>
+                )}
 
                 {learningLoading ? (
                   <div className="flex items-center justify-center py-16">
@@ -2997,6 +3039,18 @@ function CampaignManagerInner({ campaigns, setCampaigns, scans, orders, userId, 
     }
   }
 
+  const handleDeleteCampaign = async (id: string) => {
+    if (!confirm('Delete this campaign?')) return
+    try {
+      await campaignService.delete(id, userId)
+      setCampaigns(prev => prev.filter(c => c.id !== id))
+      if (detailCampaign?.id === id) setDetailCampaign(null)
+      toast.success('Campaign deleted')
+    } catch {
+      toast.error('Failed to delete campaign')
+    }
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -3059,8 +3113,8 @@ function CampaignManagerInner({ campaigns, setCampaigns, scans, orders, userId, 
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {campaigns.map(campaign => {
-          const qrUrl = `https://notjustwatr.com/scan/${campaign.id}`
           const linkedProduct = campaign.product || getProductById(campaign.product_id)
+          const qrUrl = buildCampaignUrl(campaign, linkedProduct)
           return (
             <div key={campaign.id} className="bg-white border rounded-lg p-4 hover:shadow-sm transition-shadow" style={{ borderColor: A.border }}>
               <div className="flex items-start gap-3">
@@ -3089,6 +3143,7 @@ function CampaignManagerInner({ campaigns, setCampaigns, scans, orders, userId, 
                 <div className="flex items-center gap-1">
                   <Button variant="ghost" size="sm" className="text-[10px] h-6 px-2" style={{ color: A.textSecondary }} onClick={() => setDetailCampaign(campaign)}><Eye className="w-3 h-3 mr-0.5" /> View</Button>
                   <Button variant="ghost" size="sm" className="text-[10px] h-6 px-2" style={{ color: A.textSecondary }} onClick={() => toggleStatus(campaign.id, campaign.status)}>{campaign.status === 'ACTIVE' ? 'Archive' : 'Activate'}</Button>
+                  <Button variant="ghost" size="sm" className="text-[10px] h-6 px-2" style={{ color: A.red }} onClick={() => handleDeleteCampaign(campaign.id)}><Trash2 className="w-3 h-3 mr-0.5" /> Delete</Button>
                 </div>
               </div>
             </div>
@@ -3109,11 +3164,12 @@ function CampaignManagerInner({ campaigns, setCampaigns, scans, orders, userId, 
             const detailProduct = detailCampaign.product || getProductById(detailCampaign.product_id)
             const detailScans = scans.filter(s => s.campaign_id === detailCampaign.id)
             const revenue = detailProduct ? detailScans.length * detailProduct.price : 0
+            const detailQrUrl = buildCampaignUrl(detailCampaign, detailProduct)
             return (
             <div className="space-y-4">
               <div className="flex items-start gap-6">
                 <div className="p-4 bg-white rounded-lg border" style={{ borderColor: A.border }}>
-                  <QRCodeSVG value={detailProduct ? `https://notjustwatr.com/product?campaign=${detailCampaign.id}&product=${detailProduct.slug || ''}` : `https://notjustwatr.com/?campaign=${detailCampaign.id}`} size={130} bgColor="#ffffff" fgColor="#1f1e1c" level="M" />
+                  <QRCodeSVG value={detailQrUrl} size={130} bgColor="#ffffff" fgColor="#1f1e1c" level="M" />
                 </div>
                 <div className="flex-1 space-y-2">
                   <h3 className="font-bold text-lg" style={{ color: A.text }}>{detailCampaign.name}</h3>
@@ -3140,11 +3196,14 @@ function CampaignManagerInner({ campaigns, setCampaigns, scans, orders, userId, 
                     )}
                   </div>
                   <div className="flex gap-2 pt-2">
-                    <Button variant="outline" size="sm" className="rounded-md text-[11px] h-8" style={{ borderColor: A.border, color: A.text }} onClick={() => { navigator.clipboard.writeText(detailProduct ? `https://notjustwatr.com/product?campaign=${detailCampaign.id}&product=${detailProduct.slug || ''}` : `https://notjustwatr.com/?campaign=${detailCampaign.id}`); toast.success('QR URL copied!') }}>
+                    <Button variant="outline" size="sm" className="rounded-md text-[11px] h-8" style={{ borderColor: A.border, color: A.text }} onClick={() => { navigator.clipboard.writeText(detailQrUrl); toast.success('QR URL copied!') }}>
                       <Copy className="w-3 h-3 mr-1" /> Copy URL
                     </Button>
                     <Button variant="outline" size="sm" className="rounded-md text-[11px] h-8" style={{ borderColor: A.border, color: A.text }} onClick={() => toggleStatus(detailCampaign.id, detailCampaign.status)}>
                       {detailCampaign.status === 'ACTIVE' ? 'Archive' : 'Activate'}
+                    </Button>
+                    <Button variant="outline" size="sm" className="rounded-md text-[11px] h-8" style={{ borderColor: A.red, color: A.red }} onClick={() => handleDeleteCampaign(detailCampaign.id)}>
+                      <Trash2 className="w-3 h-3 mr-1" /> Delete
                     </Button>
                   </div>
                 </div>

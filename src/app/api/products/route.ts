@@ -302,7 +302,7 @@ export async function POST(request: NextRequest) {
     // Auto-generate QR code URL if not provided
     if (!product.qr_code_url) {
       const baseUrl = process.env.NEXTAUTH_URL || 'https://notjustwatr.com'
-      const qrUrl = `${baseUrl}/?product=${product.slug}`
+      const qrUrl = `${baseUrl}/product?product=${product.slug}`
       const updateResult = await safeDbQuery(
         (client) => client.product.update({
           where: { id: product.id },

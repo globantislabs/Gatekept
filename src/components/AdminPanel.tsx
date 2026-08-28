@@ -249,7 +249,7 @@ function AdminDashboard() {
     name: '', slug: '', description: '', short_description: '', price: 0, subscription_price: 0, mrp: 0, stock: 0,
     image_url: '', gallery_images: '', type: 'FIZZ', category: '',
     sku: '', weight: '', ingredients: '', nutrition_info: '', tags: '',
-    active: true, featured: false,
+    active: true, featured: false, requires_learning: true,
     serving_size: '', allergen_info: '', storage_info: '',
     shelf_life: '', country_origin: '', fssai_license: '', hsn_code: '',
     gst_rate: 0, min_order_qty: 1, max_order_qty: 10, discount_label: '', highlights: '',
@@ -260,7 +260,7 @@ function AdminDashboard() {
       name: '', slug: '', description: '', short_description: '', price: 0, subscription_price: 0, mrp: 0, stock: 0,
       image_url: '', gallery_images: '', type: 'FIZZ', category: '',
       sku: '', weight: '', ingredients: '', nutrition_info: '', tags: '',
-      active: true, featured: false,
+      active: true, featured: false, requires_learning: true,
       serving_size: '', allergen_info: '', storage_info: '',
       shelf_life: '', country_origin: '', fssai_license: '', hsn_code: '',
       gst_rate: 0, min_order_qty: 1, max_order_qty: 10, discount_label: '', highlights: '',
@@ -292,6 +292,7 @@ function AdminDashboard() {
   // Save video (create or update)
   const handleSaveVideo = async () => {
     if (!learningProductId || !newVideo.title) { toast.error('Title is required'); return }
+    if (!newVideo.video_url) { toast.error('Video file is mandatory'); return }
     try {
       if (editingVideo) {
         await productVideoService.update(learningProductId, editingVideo.id, newVideo as any, userId)
@@ -2332,6 +2333,16 @@ function AdminDashboard() {
                               </div>
                               <Switch checked={newProduct.featured} onCheckedChange={v => setNewProduct({ ...newProduct, featured: v })} />
                             </div>
+                            <div className="flex items-center justify-between rounded-lg p-3 sm:col-span-2 border" style={{ background: A.amberLight, borderColor: A.amber }}>
+                              <div className="flex items-center gap-2">
+                                <BookOpen className="w-4 h-4" style={{ color: A.amber }} />
+                                <div>
+                                  <Label className="text-xs font-medium" style={{ color: A.text }}>Requires Learning</Label>
+                                  <p className="text-[10px]" style={{ color: A.textMuted }}>If off, users can buy directly without watching videos.</p>
+                                </div>
+                              </div>
+                              <Switch checked={newProduct.requires_learning} onCheckedChange={v => setNewProduct({ ...newProduct, requires_learning: v })} />
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -2470,6 +2481,7 @@ function AdminDashboard() {
                             hsn_code: product.hsn_code || '', gst_rate: product.gst_rate || 0,
                             min_order_qty: product.min_order_qty || 1, max_order_qty: product.max_order_qty || 10,
                             discount_label: product.discount_label || '', highlights: product.highlights || '',
+                            requires_learning: product.requires_learning !== undefined ? product.requires_learning : true,
                           })
                           setShowAddProduct(true)
                         }}>
@@ -2487,8 +2499,8 @@ function AdminDashboard() {
                               await productService.delete(product.id, userId)
                               toast.success('Product deleted')
                               refreshData()
-                            } catch {
-                              toast.error('Failed to delete')
+                            } catch (e: any) {
+                              toast.error(e.message || 'Failed to delete product')
                             }
                           }
                         }}>
@@ -2725,7 +2737,11 @@ function AdminDashboard() {
                           <div className="sm:col-span-2"><Label className="text-xs mb-1">Title *</Label><Input placeholder="e.g. Introduction" value={newVideo.title} onChange={e => setNewVideo({ ...newVideo, title: e.target.value })} className="h-8 text-sm" /></div>
                           <div><Label className="text-xs mb-1">Duration</Label><Input placeholder="e.g. 4:32" value={newVideo.duration} onChange={e => setNewVideo({ ...newVideo, duration: e.target.value })} className="h-8 text-sm" /></div>
                           <div><Label className="text-xs mb-1">Order</Label><Input type="number" value={newVideo.order} onChange={e => setNewVideo({ ...newVideo, order: Number(e.target.value) })} className="h-8 text-sm" /></div>
-                          <div className="sm:col-span-2"><Label className="text-xs mb-1">Description</Label><Textarea placeholder="Video description..." rows={2} value={newVideo.description} onChange={e => setNewVideo({ ...newVideo, description: e.target.value })} className="text-sm resize-none" /></div>
+                          <div className="sm:col-span-2">
+                            <Label className="text-xs mb-1">Description</Label>
+                            <Textarea placeholder="Video description..." rows={2} value={newVideo.description} onChange={e => setNewVideo({ ...newVideo, description: e.target.value })} className="text-sm resize-none" />
+                            <p className="text-[10px] text-right" style={{ color: A.textMuted }}>{(newVideo.description || '').length} characters</p>
+                          </div>
                           <div className="sm:col-span-2">
                             <Label className="text-xs mb-1">Video File</Label>
                             <div className="space-y-2">
@@ -2851,13 +2867,7 @@ function AdminDashboard() {
                             ))}
                           </div>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                            <div>
-                              <Label className="text-xs mb-1">Difficulty</Label>
-                              <Select value={newQuiz.difficulty} onValueChange={v => setNewQuiz({ ...newQuiz, difficulty: v })}>
-                                <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
-                                <SelectContent>{['EASY', 'MEDIUM', 'HARD'].map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}</SelectContent>
-                              </Select>
-                            </div>
+                            {/* Difficulty removed as requested */}
                             <div><Label className="text-xs mb-1">Order</Label><Input type="number" value={newQuiz.order} onChange={e => setNewQuiz({ ...newQuiz, order: Number(e.target.value) })} className="h-8 text-sm" /></div>
                           </div>
                         </div>
@@ -3269,12 +3279,6 @@ function QuizManagerInner({ questions, setQuestions }: { questions: QuizQuestion
             {categories.map(c => <SelectItem key={c} value={c || 'all'} style={{ color: A.text }}>{c === 'all' ? 'All Categories' : c}</SelectItem>)}
           </SelectContent>
         </Select>
-        <Select value={filterDifficulty} onValueChange={setFilterDifficulty}>
-          <SelectTrigger className="w-32 rounded-md h-8 text-[11px]" style={{ background: '#fff', borderColor: A.border, color: A.text }}><SelectValue placeholder="Difficulty" /></SelectTrigger>
-          <SelectContent style={{ background: '#fff', borderColor: A.border }}>
-            {difficulties.map(d => <SelectItem key={d} value={d} style={{ color: A.text }}>{d === 'all' ? 'All Levels' : d}</SelectItem>)}
-          </SelectContent>
-        </Select>
         <span className="text-[10px] px-2 py-0.5 rounded" style={{ color: A.textSecondary, background: A.bg }}>{filtered.length} shown</span>
       </div>
 
@@ -3285,7 +3289,6 @@ function QuizManagerInner({ questions, setQuestions }: { questions: QuizQuestion
             <TableRow className="hover:bg-transparent" style={{ borderColor: A.borderLight }}>
               <TableHead className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: A.textMuted }}>Question</TableHead>
               <TableHead className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: A.textMuted }}>Category</TableHead>
-              <TableHead className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: A.textMuted }}>Difficulty</TableHead>
               <TableHead className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: A.textMuted }}>Answer</TableHead>
             </TableRow>
           </TableHeader>
@@ -3294,7 +3297,6 @@ function QuizManagerInner({ questions, setQuestions }: { questions: QuizQuestion
               <TableRow key={q.id || idx} className="hover:bg-[#f8f7f5]" style={{ borderColor: A.borderLight }}>
                 <TableCell className="text-[12px] max-w-md truncate" style={{ color: A.text }}>{q.question}</TableCell>
                 <TableCell><span className="text-[9px] font-medium px-1.5 py-0.5 rounded" style={{ color: A.blue, background: A.blueLight }}>{q.category || '-'}</span></TableCell>
-                <TableCell><span className="text-[9px] font-medium px-1.5 py-0.5 rounded" style={{ color: (difficultyColors[q.difficulty]?.text) || A.textMuted, background: (difficultyColors[q.difficulty]?.bg) || A.bg }}>{q.difficulty || '-'}</span></TableCell>
                 <TableCell className="text-[11px]" style={{ color: A.textSecondary }}>Option {(q.answer || 0) + 1}</TableCell>
               </TableRow>
             ))}

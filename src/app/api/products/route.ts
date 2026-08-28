@@ -59,6 +59,7 @@ function getSafeProductSelect() {
     max_order_qty: true,
     discount_label: true,
     highlights: true,
+    requires_learning: true,
     // qr_code_url excluded from safe select — column may not exist in production DB
     created_at: true,
     updated_at: true,
@@ -267,6 +268,7 @@ export async function POST(request: NextRequest) {
       discount_label: discount_label as string || null,
       highlights: highlights as string || null,
       qr_code_url: qr_code_url as string || null,
+      requires_learning: typeof body.requires_learning === 'boolean' ? body.requires_learning : true,
     }
 
     const createResult = await safeDbQuery(

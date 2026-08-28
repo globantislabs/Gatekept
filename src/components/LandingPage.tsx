@@ -1065,16 +1065,25 @@ export default function LandingPage() {
                               onClick={() => handleLearnMore(product)}
                               className="bg-[#48805b] hover:bg-[#3a6a4a] text-white font-heading font-semibold rounded-full text-sm px-5 min-h-[44px] shadow-lg shadow-[#48805b]/20 transition-all duration-300 flex items-center gap-1.5"
                             >
-                              {!user || !completedProductIds.has(product.id) ? (
-                                <>
-                                  Learn More <ChevronRight className="w-3.5 h-3.5" />
-                                </>
-                              ) : (
-                                <>
-                                  <ShoppingBag className="w-4 h-4" />
-                                  Shop Now <ChevronRight className="w-3.5 h-3.5" />
-                                </>
-                              )}
+                              {/* learning_skipped = product has videos but all inactive, OR no videos at all */}
+                              {(() => {
+                                const hasActiveVideos = product.videos && product.videos.some(v => v.active)
+                                const learningSkipped = product.requires_learning === false || !hasActiveVideos
+                                const learningCompleted = user && completedProductIds.has(product.id)
+                                if (learningSkipped || learningCompleted) {
+                                  return (
+                                    <>
+                                      <ShoppingBag className="w-4 h-4" />
+                                      Shop Now <ChevronRight className="w-3.5 h-3.5" />
+                                    </>
+                                  )
+                                }
+                                return (
+                                  <>
+                                    Learn More <ChevronRight className="w-3.5 h-3.5" />
+                                  </>
+                                )
+                              })()}
                             </Button>
                           </div>
 

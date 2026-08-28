@@ -1077,15 +1077,6 @@ export function ProductLearningModule() {
                             >
                               Question {currentQuestionIdx + 1} of {quizQuestions.length}
                             </Badge>
-                            {quizQuestions[currentQuestionIdx].difficulty && (
-                              <Badge
-                                variant="outline"
-                                className="text-xs"
-                                style={{ borderColor: BRAND.surface, color: BRAND.muted }}
-                              >
-                                {quizQuestions[currentQuestionIdx].difficulty}
-                              </Badge>
-                            )}
                           </div>
                           <CardTitle
                             className="font-heading text-lg mt-3"

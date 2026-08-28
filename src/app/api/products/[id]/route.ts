@@ -55,6 +55,7 @@ function getSafeProductSelectWithoutQrCode() {
     max_order_qty: true,
     discount_label: true,
     highlights: true,
+    requires_learning: true,
     // qr_code_url intentionally excluded — column may not exist in production DB
     created_at: true,
     updated_at: true,
@@ -231,7 +232,7 @@ export async function PUT(
       'subscription_plans', 'serving_size', 'allergen_info', 'storage_info',
       'shelf_life', 'country_origin', 'fssai_license', 'hsn_code', 'gst_rate',
       'min_order_qty', 'max_order_qty', 'discount_label', 'highlights',
-      'qr_code_url',
+      'qr_code_url', 'requires_learning'
     ]
 
     for (const field of allowedFields) {
@@ -318,16 +319,46 @@ export async function DELETE(
       return errorResponse('Product not found', 404)
     }
 
+    // Check if product has linked orders (foreign key constraint)
+    const orderItemsResult = await safeDbQuery(
+      (client) => client.orderItem.findFirst({ where: { product_id: id } }),
+      { operationName: `DELETE /api/products/${id} (check orderItems)` }
+    )
+    if (orderItemsResult.success && orderItemsResult.data) {
+      return errorResponse(
+        'Cannot delete product: it has linked orders. Deactivate it instead (set Active = false).',
+        409
+      )
+    }
+
+    // Check linked subscriptions
+    const subscriptionResult = await safeDbQuery(
+      (client) => client.subscription.findFirst({ where: { product_id: id } }),
+      { operationName: `DELETE /api/products/${id} (check subscriptions)` }
+    )
+    if (subscriptionResult.success && subscriptionResult.data) {
+      return errorResponse(
+        'Cannot delete product: it has linked subscriptions. Deactivate it instead (set Active = false).',
+        409
+      )
+    }
+
     const deleteResult = await safeDbQuery(
       (client) => client.product.delete({ where: { id } }),
       { operationName: `DELETE /api/products/${id} (delete)` }
     )
 
     if (!deleteResult.success) {
-      return errorResponse(
-        `Failed to delete product: ${deleteResult.error?.message || 'Unknown error'}`,
-        500
-      )
+      // Check if it's a foreign key constraint error
+      const errMsg = deleteResult.error?.message || 'Unknown error'
+      const isFkError = errMsg.toLowerCase().includes('foreign key') || errMsg.toLowerCase().includes('constraint')
+      if (isFkError) {
+        return errorResponse(
+          'Cannot delete product: it is linked to existing orders or subscriptions. Deactivate it instead.',
+          409
+        )
+      }
+      return errorResponse(`Failed to delete product: ${errMsg}`, 500)
     }
 
     return jsonResponse({ message: 'Product deleted successfully' })

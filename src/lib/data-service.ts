@@ -56,8 +56,11 @@ export interface Product {
   discount_label?: string | null
   highlights?: string | null
   qr_code_url?: string | null
+  requires_learning?: boolean
   created_at: string
   updated_at: string
+  // Optional: returned by list API to detect learning_skipped
+  videos?: { id: string; active: boolean }[]
 }
 
 export interface ProductVideo {

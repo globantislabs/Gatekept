@@ -768,6 +768,7 @@ function CTASection() {
             style={{
               borderColor: `${BRAND.muted}40`,
               color: '#f4f3f0',
+              background: 'transparent',
             }}
           >
             <ArrowLeft className="w-4 h-4 mr-2" />

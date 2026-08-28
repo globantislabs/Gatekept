@@ -2,9 +2,9 @@ const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
 
-const run = (cmd) => {
+const run = (cmd, env = {}) => {
   console.log(`\n> Running: ${cmd}`);
-  execSync(cmd, { stdio: 'inherit' });
+  execSync(cmd, { stdio: 'inherit', env: { ...process.env, ...env } });
 };
 
 const copy = (src, dest) => {
@@ -30,6 +30,15 @@ try {
 
   console.log('💿 Using MySQL schema...');
   run('npm run db:use-mysql');
+
+  console.log('🔄 Safely syncing database schema (will abort if data loss is detected)...');
+  let dbEnv = {};
+  if (fs.existsSync('.env.production')) {
+    const envFile = fs.readFileSync('.env.production', 'utf8');
+    const dbUrlMatch = envFile.match(/^DATABASE_URL=(.*)$/m);
+    if (dbUrlMatch) dbEnv.DATABASE_URL = dbUrlMatch[1].trim();
+  }
+  run('npx prisma db push', dbEnv);
 
   console.log('📦 Building Next.js...');
   run('npx next build');

@@ -7,7 +7,7 @@ import ProductImage from '@/components/ProductImage'
 import {
   ArrowRight, ChevronLeft, ChevronRight, CheckCircle, Leaf,
   Package, Shield, Star, Sparkles, Zap, TrendingUp,
-  Lock, Unlock, ShoppingBag,
+  Lock, Unlock, ShoppingBag, BookOpen, ShoppingCart
 } from 'lucide-react'
 import SiteFooter from '@/components/SiteFooter'
 import { useAppStore } from '@/store/app-store'
@@ -67,9 +67,8 @@ export default function ProductPage() {
   const { navigateTo, user, setSelectedProductId, products, setProducts, setRedirectAfterLogin } = useAppStore()
   const [localProducts, setLocalProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
-  const [activeProductIndex, setActiveProductIndex] = useState(0)
   const [completedProductIds, setCompletedProductIds] = useState<Set<string>>(new Set())
-  const carouselRef = useRef<HTMLDivElement>(null)
+  const [visibleCount, setVisibleCount] = useState(12)
 
   // ── Fetch products on mount ──
   useEffect(() => {
@@ -100,24 +99,6 @@ export default function ProductPage() {
         // Silently fail — progress fetch is non-critical
       })
   }, [user])
-
-  // ── Carousel scroll tracking ──
-  const updateActiveIndex = useCallback(() => {
-    if (!carouselRef.current) return
-    const container = carouselRef.current
-    const scrollLeft = container.scrollLeft
-    const childWidth = container.firstElementChild?.clientWidth || 400
-    const gap = 16
-    const newIndex = Math.round(scrollLeft / (childWidth + gap))
-    setActiveProductIndex(Math.max(0, newIndex))
-  }, [])
-
-  useEffect(() => {
-    const container = carouselRef.current
-    if (!container) return
-    container.addEventListener('scroll', updateActiveIndex, { passive: true })
-    return () => container.removeEventListener('scroll', updateActiveIndex)
-  }, [updateActiveIndex, loading])
 
   // ── Product navigation handler ──
   const handleLearnMore = (product: Product) => {
@@ -212,45 +193,9 @@ export default function ProductPage() {
               </div>
             ) : (
               <div className="relative">
-                {/* Scroll arrows — Desktop */}
-                <button
-                  onClick={() => {
-                    if (!carouselRef.current) return
-                    const container = carouselRef.current
-                    const childWidth = container.firstElementChild?.clientWidth || 400
-                    container.scrollTo({ left: container.scrollLeft - (childWidth + 16), behavior: 'smooth' })
-                  }}
-                  className="hidden lg:flex absolute -left-5 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-white shadow-lg shadow-black/10 border border-[#e3dfd8] items-center justify-center text-[#48805b] hover:bg-[#48805b] hover:text-white transition-all duration-300"
-                  aria-label="Scroll left"
-                >
-                  <ChevronLeft className="w-5 h-5" />
-                </button>
-                <button
-                  onClick={() => {
-                    if (!carouselRef.current) return
-                    const container = carouselRef.current
-                    const childWidth = container.firstElementChild?.clientWidth || 400
-                    container.scrollTo({ left: container.scrollLeft + (childWidth + 16), behavior: 'smooth' })
-                  }}
-                  className="hidden lg:flex absolute -right-5 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-white shadow-lg shadow-black/10 border border-[#e3dfd8] items-center justify-center text-[#48805b] hover:bg-[#48805b] hover:text-white transition-all duration-300"
-                  aria-label="Scroll right"
-                >
-                  <ChevronRight className="w-5 h-5" />
-                </button>
-
-                {/* Carousel Container */}
-                <div
-                  ref={carouselRef}
-                  className="flex gap-4 overflow-x-auto scroll-snap-type-x mandatory pb-4 scrollbar-thin"
-                  style={{
-                    scrollSnapType: 'x mandatory',
-                    scrollBehavior: 'smooth',
-                    WebkitOverflowScrolling: 'touch',
-                    scrollbarWidth: 'none',
-                  }}
-                >
-                  {displayProducts.map((product, idx) => {
-                    const isStill = product.type === 'STILL'
+                {/* Product Grid (no scroll, 3 columns) */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {displayProducts.slice(0, visibleCount).map((product, idx) => {
                     const discount = product.mrp && product.mrp > product.price ? Math.round((1 - product.price / product.mrp) * 100) : 0
                     const highlightItems = product.highlights ? product.highlights.split(',').map(h => h.trim()) : []
                     const visibleHighlights = highlightItems.slice(0, 3)
@@ -258,53 +203,30 @@ export default function ProductPage() {
                     return (
                       <motion.div
                         key={product.id}
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        whileInView={{ opacity: 1, scale: 1 }}
+                        initial={{ opacity: 0, y: 30 }}
+                        whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
-                        transition={{ duration: 0.5, delay: idx * 0.15 }}
-                        className="flex-shrink-0 w-[85vw] md:w-[400px] scroll-snap-align-start"
-                        style={{ scrollSnapAlign: 'start' }}
+                        transition={{ duration: 0.5, delay: idx * 0.05 }}
+                        className="w-full"
                       >
-                        <Card className="border-[#3c3a35] bg-[#262520] text-white overflow-hidden rounded-2xl shadow-2xl shadow-black/15 hover:shadow-3xl hover:shadow-black/20 transition-shadow duration-500 premium-card h-full">
-                          {/* Product Image */}
-                          <div className="relative min-h-[280px] lg:min-h-[320px] overflow-hidden bg-[#1f1e1c]">
+                        <Card className="border-[#3c3a35] bg-[#262520] text-white overflow-hidden rounded-2xl shadow-2xl shadow-black/15 hover:shadow-3xl hover:shadow-black/20 transition-shadow duration-500 premium-card h-full flex flex-col">
+                          {/* Product Image - Fixed 1:1 aspect ratio */}
+                          <div className="relative w-full aspect-square overflow-hidden bg-[#1f1e1c]">
                             <ProductImage
                               src={product.image_url}
                               alt={product.name}
                               productType={product.type}
                               fill
-                              sizes="(max-width: 768px) 85vw, 400px"
+                              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                               className="object-contain p-8"
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-[#1f1e1c]/80 via-transparent to-transparent" />
-                            <div className="absolute inset-0 bg-gradient-to-r from-transparent to-[#262520]/25" />
-
-                            {/* Bottom-left badges */}
-                            <div className="absolute bottom-4 left-4 flex flex-wrap gap-2">
-                              <span className="rounded-full bg-white/15 backdrop-blur-md px-3 py-1.5 text-[11px] font-bold uppercase tracking-widest text-white">
-                                {isStill ? 'Still Variant' : 'Fizz Variant'}
-                              </span>
-                              {discount > 0 && (
-                                <span className="rounded-full bg-[#48805b] px-3 py-1.5 text-[11px] font-bold uppercase tracking-widest text-white">
-                                  {discount}% OFF
-                                </span>
-                              )}
-                            </div>
 
                             {/* Featured badge */}
                             {product.featured && (
                               <div className="absolute top-4 right-4">
                                 <span className="rounded-full bg-[#e7b973] px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-white flex items-center gap-1">
                                   <Star className="w-3 h-3 fill-white" /> Featured
-                                </span>
-                              </div>
-                            )}
-
-                            {/* Discount label */}
-                            {product.discount_label && (
-                              <div className="absolute top-4 left-4">
-                                <span className="rounded-full bg-[#afb75d] px-3.5 py-1.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-lg shadow-[#afb75d]/20">
-                                  {product.discount_label}
                                 </span>
                               </div>
                             )}
@@ -317,10 +239,19 @@ export default function ProductPage() {
                                 </span>
                               </div>
                             )}
+
+                            {/* Discount label */}
+                            {product.discount_label && (
+                              <div className="absolute top-4 left-4">
+                                <span className="rounded-full bg-[#afb75d] px-3.5 py-1.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-lg shadow-[#afb75d]/20">
+                                  {product.discount_label}
+                                </span>
+                              </div>
+                            )}
                           </div>
 
                           {/* Product Content */}
-                          <CardContent className="p-5 lg:p-6 flex flex-col gap-3">
+                          <CardContent className="p-5 lg:p-6 flex flex-col gap-3 flex-1">
                             {/* Type row */}
                             <div className="flex items-center gap-2 flex-wrap">
                               <p className="text-[11px] font-semibold tracking-[0.35em] uppercase text-[#48805b]">{product.category || product.type}</p>
@@ -335,21 +266,7 @@ export default function ProductPage() {
                               <CardDescription className="text-[#afb75d] text-sm font-medium">{product.short_description}</CardDescription>
                             )}
 
-                            <p className="text-sm text-white/45 leading-relaxed line-clamp-3">{product.description}</p>
-
-                            {/* Quick Stats */}
-                            <div className="grid grid-cols-3 gap-3">
-                              {[
-                                { value: product.weight ? product.weight.split(',')[0]?.trim() : '14 shots', label: 'Per pack' },
-                                { value: '50 ml', label: 'Per shot' },
-                                { value: '0 cal', label: 'Zero calorie' },
-                              ].map(stat => (
-                                <div key={stat.label} className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5 text-center">
-                                  <p className="text-base font-bold text-white leading-none">{stat.value}</p>
-                                  <p className="text-[9px] uppercase tracking-wide text-white/30 mt-1.5">{stat.label}</p>
-                                </div>
-                              ))}
-                            </div>
+                            <p className="text-sm text-white/45 leading-relaxed line-clamp-3 flex-1">{product.description}</p>
 
                             {/* Highlights */}
                             {visibleHighlights.length > 0 && (
@@ -363,7 +280,7 @@ export default function ProductPage() {
                             )}
 
                             {/* Price + CTA */}
-                            <div className="flex items-center justify-between gap-4 mt-2 pt-3 border-t border-white/[0.06]">
+                            <div className="flex items-center justify-between gap-4 mt-auto pt-3 border-t border-white/[0.06]">
                               <div>
                                 <div className="flex items-baseline gap-2">
                                   <p className="font-heading text-2xl font-bold text-white">₹{product.price.toLocaleString()}</p>
@@ -371,13 +288,11 @@ export default function ProductPage() {
                                     <p className="text-sm line-through text-white/30">₹{product.mrp.toLocaleString()}</p>
                                   )}
                                 </div>
-                                <p className="text-[10px] text-white/35 mt-0.5">incl. tax {discount > 0 && `· Save ₹${(product.mrp! - product.price).toLocaleString()}`}</p>
                               </div>
                               <Button
                                 onClick={() => handleLearnMore(product)}
                                 className="bg-[#48805b] hover:bg-[#3a6a4a] text-white font-heading font-semibold rounded-full text-sm px-5 min-h-[44px] shadow-lg shadow-[#48805b]/20 transition-all duration-300 flex items-center gap-1.5"
                               >
-                                {/* learning_skipped = product has videos but all inactive, OR no videos at all */}
                                 {(() => {
                                   const hasActiveVideos = product.videos && product.videos.some(v => v.active)
                                   const learningSkipped = product.requires_learning === false || !hasActiveVideos
@@ -385,27 +300,20 @@ export default function ProductPage() {
                                   if (learningSkipped || learningCompleted) {
                                     return (
                                       <>
-                                        <ShoppingBag className="w-4 h-4" />
-                                        Shop Now <ChevronRight className="w-3.5 h-3.5" />
+                                        <ShoppingCart className="w-4 h-4" />
+                                        Shop Now
                                       </>
                                     )
                                   }
                                   return (
                                     <>
-                                      Learn More <ChevronRight className="w-3.5 h-3.5" />
+                                      <BookOpen className="w-4 h-4" />
+                                      Learn More
                                     </>
                                   )
                                 })()}
                               </Button>
                             </div>
-
-                            {/* FSSAI badge */}
-                            {product.fssai_license && (
-                              <div className="mt-2 pt-2 border-t border-white/[0.06] flex items-center gap-2">
-                                <Shield className="w-3 h-3 text-white/30" />
-                                <span className="text-[10px] text-white/30 tracking-wide">FSSAI Lic. {product.fssai_license}</span>
-                              </div>
-                            )}
                           </CardContent>
                         </Card>
                       </motion.div>
@@ -413,29 +321,15 @@ export default function ProductPage() {
                   })}
                 </div>
 
-                {/* ── Scroll Progress Dots ── */}
-                {displayProducts.length > 1 && (
-                  <div className="flex items-center justify-center gap-2 mt-6">
-                    {displayProducts.map((_, idx) => (
-                      <button
-                        key={idx}
-                        onClick={() => {
-                          if (!carouselRef.current) return
-                          const container = carouselRef.current
-                          const childWidth = container.firstElementChild?.clientWidth || 400
-                          container.scrollTo({ left: idx * (childWidth + 16), behavior: 'smooth' })
-                          setActiveProductIndex(idx)
-                        }}
-                        className={`rounded-full transition-all duration-300 min-h-[44px] flex items-center justify-center ${
-                          idx === activeProductIndex
-                            ? 'w-8 h-3 bg-[#48805b]'
-                            : 'w-3 h-3 bg-[#e3dfd8] hover:bg-[#88837b]/50'
-                        }`}
-                        aria-label={`View product ${idx + 1}`}
-                      >
-                        <span className="sr-only">Product {idx + 1}</span>
-                      </button>
-                    ))}
+                {/* ── Load More Button ── */}
+                {displayProducts.length > visibleCount && (
+                  <div className="flex justify-center mt-12">
+                    <Button
+                      onClick={() => setVisibleCount(prev => prev + 12)}
+                      className="bg-[#1f1e1c] hover:bg-[#262520] text-white border border-white/10 hover:border-white/20 font-heading font-semibold rounded-full px-8 py-3 shadow-xl transition-all duration-300"
+                    >
+                      Load More Products
+                    </Button>
                   </div>
                 )}
               </div>

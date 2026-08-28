@@ -956,7 +956,7 @@ export default function LandingPage() {
                     >
                       <Card className="border-[#3c3a35] bg-[#262520] text-white overflow-hidden rounded-2xl shadow-2xl shadow-black/15 hover:shadow-3xl hover:shadow-black/20 transition-shadow duration-500 premium-card h-full">
                         {/* Product Image */}
-                        <div className="relative min-h-[280px] lg:min-h-[320px] overflow-hidden bg-[#1f1e1c]">
+                        <div className="relative w-full aspect-square overflow-hidden bg-[#1f1e1c]">
                           <ProductImage
                             src={product.image_url}
                             alt={product.name}
@@ -1008,7 +1008,7 @@ export default function LandingPage() {
                         </div>
 
                         {/* Product Content */}
-                        <CardContent className="p-5 lg:p-6 flex flex-col gap-3">
+                        <CardContent className="p-5 lg:p-6 flex flex-col gap-3 flex-1">
                           {/* Type row */}
                           <div className="flex items-center gap-2 flex-wrap">
                             <p className="text-[11px] font-semibold tracking-[0.35em] uppercase text-[#48805b]">{product.category || product.type}</p>
@@ -1023,21 +1023,7 @@ export default function LandingPage() {
                             <CardDescription className="text-[#afb75d] text-sm font-medium">{product.short_description}</CardDescription>
                           )}
 
-                          <p className="text-sm text-white/45 leading-relaxed line-clamp-3">{product.description}</p>
-
-                          {/* Quick Stats */}
-                          <div className="grid grid-cols-3 gap-3">
-                            {[
-                              { value: product.weight ? product.weight.split(',')[0]?.trim() : '14 shots', label: 'Per pack' },
-                              { value: '50 ml', label: 'Per shot' },
-                              { value: '0 cal', label: 'Zero calorie' },
-                            ].map(stat => (
-                              <div key={stat.label} className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5 text-center">
-                                <p className="text-base font-bold text-white leading-none">{stat.value}</p>
-                                <p className="text-[9px] uppercase tracking-wide text-white/30 mt-1.5">{stat.label}</p>
-                              </div>
-                            ))}
-                          </div>
+                          <p className="text-sm text-white/45 leading-relaxed line-clamp-3 flex-1">{product.description}</p>
 
                           {/* Highlights */}
                           {visibleHighlights.length > 0 && (

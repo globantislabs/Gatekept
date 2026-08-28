@@ -392,7 +392,7 @@ function AdminDashboard() {
 
   const handleToggleProductLearningSkip = async () => {
     if (!learningProductId) return
-    const shouldUnskip = learningVideos.length > 0 && learningVideos.every(v => v.active === false)
+    const shouldUnskip = learningVideos.length > 0 && learningVideos.every(v => v.active !== true)
     if (!confirm(shouldUnskip ? 'Unskip learning for this product?' : 'Skip learning for this product? Existing videos and quizzes will be made inactive, not deleted.')) return
     try {
       const active = shouldUnskip
@@ -2612,7 +2612,7 @@ function AdminDashboard() {
                 {learningProductId && (
                   <div className="flex justify-end">
                     {(() => {
-                      const isSkipped = learningVideos.length > 0 && learningVideos.every(v => v.active === false)
+                      const isSkipped = learningVideos.length > 0 && learningVideos.every(v => v.active !== true)
                       return (
                         <Button variant="outline" size="sm" className="text-xs h-8 gap-1.5" style={{ borderColor: A.amber, color: A.amber }} onClick={handleToggleProductLearningSkip}>
                           {isSkipped ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
@@ -2627,17 +2627,27 @@ function AdminDashboard() {
                   <div className="flex items-center justify-center py-16">
                     <RefreshCw className="w-8 h-8 animate-spin" style={{ color: A.green }} />
                   </div>
-                ) : (
+                ) : (() => {
+                  const isLearningSkipped = learningVideos.length > 0 && learningVideos.every(v => v.active !== true)
+                  return (
                   <div ref={learningScrollRef} className="flex-1 overflow-y-auto space-y-6 pr-1" style={{ maxHeight: 'calc(92vh - 120px)' }}>
+                    {isLearningSkipped && (
+                      <div className="flex items-center gap-2 p-3 rounded-lg border text-xs font-medium" style={{ borderColor: A.amber, background: A.amberLight, color: A.amber }}>
+                        <EyeOff className="w-4 h-4 shrink-0" />
+                        <span>Learning is currently <strong>skipped</strong> for this product. Content is inactive. Click &ldquo;Unskip Learning&rdquo; to re-enable.</span>
+                      </div>
+                    )}
                     {/* ─── VIDEOS SECTION ─── */}
                     <div>
                       <div className="flex items-center justify-between mb-3">
                         <h3 className="text-sm font-bold flex items-center gap-2" style={{ color: A.text }}>
                           <Play className="w-4 h-4" style={{ color: A.green }} /> Videos ({learningVideos.length})
                         </h3>
-                        <Button size="sm" className="text-xs gap-1 h-7" style={{ background: A.green, color: '#fff' }} onClick={() => { setShowAddVideo(true); setEditingVideo(null); setNewVideo({ title: '', duration: '', description: '', order: learningVideos.length + 1, video_url: '', thumbnail_url: '' }) }}>
-                          <Plus className="w-3 h-3" /> Add Video
-                        </Button>
+                        {!isLearningSkipped && (
+                          <Button size="sm" className="text-xs gap-1 h-7" style={{ background: A.green, color: '#fff' }} onClick={() => { setShowAddVideo(true); setEditingVideo(null); setNewVideo({ title: '', duration: '', description: '', order: learningVideos.length + 1, video_url: '', thumbnail_url: '' }) }}>
+                            <Plus className="w-3 h-3" /> Add Video
+                          </Button>
+                        )}
                       </div>
 
                       {learningVideos.length === 0 ? (
@@ -2661,18 +2671,7 @@ function AdminDashboard() {
                                   {video.video_url && <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 shrink-0" style={{ borderColor: A.green, color: A.green }}>Video ✓</Badge>}
                                 </div>
                                 <p className="text-[11px] mt-0.5 line-clamp-1" style={{ color: A.textMuted }}>{video.description}</p>
-                                {/* Video preview thumbnail */}
-                                {video.video_url && (
-                                  <div className="mt-2 w-32 h-20 rounded-md overflow-hidden bg-black flex items-center justify-center">
-                                    <video
-                                      src={video.video_url.startsWith('/uploads/') ? `/api${video.video_url}` : video.video_url}
-                                      className="w-full h-full object-cover"
-                                      muted
-                                      preload="metadata"
-                                      onError={(e) => { (e.target as HTMLVideoElement).style.display = 'none'; const parent = (e.target as HTMLVideoElement).parentElement; if (parent) parent.innerHTML = '<span class="text-[9px] text-red-400 p-1 text-center">Video unavailable</span>'; }}
-                                    />
-                                  </div>
-                                )}
+
                                 {/* Quizzes for this video */}
                                 {learningQuizzes.filter(q => q.video_id === video.id).length > 0 && (
                                   <div className="mt-2 space-y-1.5">
@@ -2693,19 +2692,23 @@ function AdminDashboard() {
                                             ))}
                                           </div>
                                         </div>
-                                        <div className="flex gap-1 shrink-0">
-                                          <Button size="sm" variant="outline" className="text-[10px] h-6 px-1.5 gap-0.5" style={{ borderColor: A.blue, color: A.blue }} onClick={() => { setEditingQuiz(quiz); setShowAddQuiz(true); setNewQuiz({ question: quiz.question, options: quiz.options, answer: quiz.answer, category: quiz.category || '', difficulty: quiz.difficulty || 'EASY', order: quiz.order, video_id: quiz.video_id }); setTimeout(() => learningScrollRef.current?.querySelector('#edit-quiz-form')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100) }}><Pencil className="w-2.5 h-2.5" /> Edit</Button>
-                                          <Button size="sm" variant="outline" className="text-[10px] h-6 px-1.5 gap-0.5" style={{ borderColor: A.red, color: A.red }} onClick={() => handleDeleteQuiz(quiz.id)}><Trash2 className="w-2.5 h-2.5" /> Del</Button>
-                                        </div>
+                                        {!isLearningSkipped && (
+                                          <div className="flex gap-1 shrink-0">
+                                            <Button size="sm" variant="outline" className="text-[10px] h-6 px-1.5 gap-0.5" style={{ borderColor: A.blue, color: A.blue }} onClick={() => { setEditingQuiz(quiz); setShowAddQuiz(true); setNewQuiz({ question: quiz.question, options: quiz.options, answer: quiz.answer, category: quiz.category || '', difficulty: quiz.difficulty || 'EASY', order: quiz.order, video_id: quiz.video_id }); setTimeout(() => learningScrollRef.current?.querySelector('#edit-quiz-form')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100) }}><Pencil className="w-2.5 h-2.5" /> Edit</Button>
+                                            <Button size="sm" variant="outline" className="text-[10px] h-6 px-1.5 gap-0.5" style={{ borderColor: A.red, color: A.red }} onClick={() => handleDeleteQuiz(quiz.id)}><Trash2 className="w-2.5 h-2.5" /> Del</Button>
+                                          </div>
+                                        )}
                                       </div>
                                     ))}
                                   </div>
                                 )}
                               </div>
-                              <div className="flex gap-1 shrink-0">
-                                <Button size="sm" variant="outline" className="text-[10px] h-6 px-1.5 gap-0.5" style={{ borderColor: A.blue, color: A.blue }} onClick={() => { setEditingVideo(video); setShowAddVideo(true); setNewVideo({ title: video.title, duration: video.duration, description: video.description || '', order: video.order, video_url: video.video_url || '', thumbnail_url: video.thumbnail_url || '' }); setTimeout(() => learningScrollRef.current?.querySelector('#edit-video-form')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100) }}><Pencil className="w-2.5 h-2.5" /> Edit</Button>
-                                <Button size="sm" variant="outline" className="text-[10px] h-6 px-1.5 gap-0.5" style={{ borderColor: A.red, color: A.red }} onClick={() => handleDeleteVideo(video.id)}><Trash2 className="w-2.5 h-2.5" /> Del</Button>
-                              </div>
+                              {!isLearningSkipped && (
+                                <div className="flex gap-1 shrink-0">
+                                  <Button size="sm" variant="outline" className="text-[10px] h-6 px-1.5 gap-0.5" style={{ borderColor: A.blue, color: A.blue }} onClick={() => { setEditingVideo(video); setShowAddVideo(true); setNewVideo({ title: video.title, duration: video.duration, description: video.description || '', order: video.order, video_url: video.video_url || '', thumbnail_url: video.thumbnail_url || '' }); setTimeout(() => learningScrollRef.current?.querySelector('#edit-video-form')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100) }}><Pencil className="w-2.5 h-2.5" /> Edit</Button>
+                                  <Button size="sm" variant="outline" className="text-[10px] h-6 px-1.5 gap-0.5" style={{ borderColor: A.red, color: A.red }} onClick={() => handleDeleteVideo(video.id)}><Trash2 className="w-2.5 h-2.5" /> Del</Button>
+                                </div>
+                              )}
                             </div>
                           ))}
                         </div>
@@ -2891,7 +2894,7 @@ function AdminDashboard() {
                     )}
 
                     {/* ─── ADD QUIZ BUTTON ─── */}
-                    {!showAddQuiz && learningVideos.length > 0 && (
+                    {!showAddQuiz && !isLearningSkipped && learningVideos.length > 0 && (
                       <div className="flex justify-center pt-2">
                         <Button size="sm" className="text-xs gap-1 h-7" style={{ background: A.blue, color: '#fff' }} onClick={() => { setShowAddQuiz(true); setEditingQuiz(null); setQuizQueue([]); setNewQuiz({ question: '', options: ['', '', '', ''], answer: 0, difficulty: 'EASY', order: 1, video_id: learningVideos[0]?.id || '' }) }}>
                           <Plus className="w-3 h-3" /> Add Quiz Question
@@ -2899,7 +2902,7 @@ function AdminDashboard() {
                       </div>
                     )}
                   </div>
-                )}
+                  )})()}
               </DialogContent>
             </Dialog>
           </div>

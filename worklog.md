@@ -475,3 +475,21 @@ Work Log:
 Stage Summary:
 - Navbar Home / logo / Product / Our Journey now always leave the product page, even after entering via a general campaign product link
 - No other behavior changed — general links still open their product on fresh load and refresh
+
+---
+Task ID: 9
+Agent: Super Z (invoice black & white redesign)
+Task: Invoice restyle — pure black on white (no gray/dim/colored tones), logo in the same black, signature block on the right side
+
+Work Log:
+- src/app/api/invoices/download/[id]/route.ts: replaced the ENTIRE palette with only #000 / #fff (verified by hex-color scan: 43x #000, 10x #fff, nothing else). Removed grays #6b6560/#99948d/#999, beige borders #e3dfd8/#eeebe5/#faf9f6 backgrounds, green total #48805b, green words-box #e8f0eb/#c8dccc/#3d6b4d, and the colored status badge (green/amber) — badge is now white with a 2px black border
+- Logo: CSS filter brightness(0) (+ -webkit- prefix) renders the logo PNG in the same pure black as the invoice text
+- Signature: .ft switched from justify-content:space-between (which left-aligned the single child) to flex-end, so the "For NOTJUST / Authorised Signatory" block now sits on the RIGHT; signature line widened to 160px
+- Emojis (🖨 ✉ 📞) replaced with plain text labels (Print / Save PDF, Email:, Mob:, Phone:) so nothing renders in color on screen or paper
+- Table header solid #000 with white text; print-color-adjust:exact added so the black header prints correctly; rounded corners removed for a formal black/white GST look
+- Admin invoice dialog View/Print uses the SAME route (invoiceService.getDownloadUrl → /api/invoices/download/[id]), so both admin and customer print flows get the new design
+- Verified: only #000/#fff remain in the template; next build passes (SQLite swap, MySQL schema restored); tsc baseline identical (133 pre-existing, 0 new)
+
+Stage Summary:
+- Invoice is now a strict black-on-white document: black text, black borders, black table header, black logo, no gray or colored elements
+- Signature block right-aligned; print output clean and monochrome

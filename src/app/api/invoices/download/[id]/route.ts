@@ -91,7 +91,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     const itemGst = lineTotal - taxableValue
     return `<tr>
       <td style="text-align:center">${i + 1}</td>
-      <td>${escapeHtml(it.name || '—')}${it.pack_type ? `<br/><span style="font-size:9px;color:#999">${escapeHtml(it.pack_type.replace(/_/g, ' '))}</span>` : ''}</td>
+      <td>${escapeHtml(it.name || '—')}${it.pack_type ? `<br/><span style="font-size:9px;color:#000">${escapeHtml(it.pack_type.replace(/_/g, ' '))}</span>` : ''}</td>
       <td style="text-align:center">${it.quantity || 1}</td>
       <td style="text-align:right">${inr(it.unit_price)}</td>
       <td style="text-align:right">${inr(taxableValue)}</td>
@@ -120,51 +120,50 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 <title>Invoice ${escapeHtml(invoice.invoice_number)} · NOTJUST</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Helvetica Neue',Arial,sans-serif;color:#1f1e1c;background:#f4f3f0;font-size:13px}
+body{font-family:'Helvetica Neue',Arial,sans-serif;color:#000;background:#fff;font-size:13px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .page{max-width:800px;margin:0 auto;padding:28px;background:#fff;min-height:100vh}
-.top{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #1f1e1c;padding-bottom:16px;margin-bottom:20px}
+.top{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #000;padding-bottom:16px;margin-bottom:20px}
 .brand{display:flex;align-items:center;gap:12px}
-.brand img{height:44px;width:auto}
-.brand .nm{font-size:18px;font-weight:800;letter-spacing:-.3px}
-.brand .sb{font-size:10px;color:#6b6560;margin-top:1px}
-.btn{padding:7px 14px;border-radius:6px;border:1px solid #e3dfd8;background:#fff;color:#1f1e1c;font-size:12px;font-weight:500;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:5px}
-.btn:hover{background:#f4f3f0}
-.co{text-align:right;font-size:10px;color:#6b6560;line-height:1.6}
-.co b{color:#1f1e1c}
+/* Logo rendered in the same pure black as the invoice text */
+.brand img{height:44px;width:auto;filter:brightness(0);-webkit-filter:brightness(0)}
+.btn{padding:7px 14px;border:2px solid #000;background:#fff;color:#000;font-size:12px;font-weight:700;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:5px}
+.btn:hover{background:#000;color:#fff}
+.co{text-align:right;font-size:10px;color:#000;line-height:1.6}
+.co b{color:#000}
 .hdr{display:flex;justify-content:space-between;margin-bottom:18px}
-.hdr h1{font-size:22px;letter-spacing:-.5px}
-.hdr .ino{font-size:12px;color:#6b6560;margin-top:2px}
+.hdr h1{font-size:22px;letter-spacing:-.5px;color:#000}
+.hdr .ino{font-size:12px;color:#000;margin-top:2px}
 .hdr .r{text-align:right}
-.st{display:inline-block;padding:3px 10px;border-radius:4px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.st{display:inline-block;padding:3px 10px;border:2px solid #000;background:#fff;color:#000;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
 .pn{display:flex;gap:12px;margin-bottom:18px}
-.pn>div{flex:1;padding:12px 14px;background:#faf9f6;border:1px solid #eeebe5;border-radius:8px}
-.pn h3{font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:#99948d;margin-bottom:6px;font-weight:700}
-.pn p{margin:2px 0;font-size:12px;line-height:1.5}
-.pn .m{color:#6b6560}
+.pn>div{flex:1;padding:12px 14px;background:#fff;border:2px solid #000}
+.pn h3{font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:#000;margin-bottom:6px;font-weight:700;border-bottom:1px solid #000;padding-bottom:4px}
+.pn p{margin:2px 0;font-size:12px;line-height:1.5;color:#000}
+.pn .m{color:#000}
 table{width:100%;border-collapse:collapse;margin-bottom:16px;font-size:11px}
-th{background:#1f1e1c;color:#fff;padding:8px;font-size:9px;text-transform:uppercase;letter-spacing:.4px;font-weight:600}
+th{background:#000;color:#fff;padding:8px;font-size:9px;text-transform:uppercase;letter-spacing:.4px;font-weight:700;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 th.r{text-align:right}th.c{text-align:center}
-td{padding:7px 8px;border-bottom:1px solid #eeebe5}
+td{padding:7px 8px;border-bottom:1px solid #000;color:#000}
 td.r{text-align:right}td.c{text-align:center}
 .tr{display:flex;justify-content:space-between;gap:16px;margin-bottom:16px}
-.gst{flex:1;padding:12px;background:#faf9f6;border:1px solid #eeebe5;border-radius:8px}
-.gst h3{font-size:9px;text-transform:uppercase;color:#99948d;margin-bottom:6px;font-weight:700}
-.gst .row{display:flex;justify-content:space-between;padding:3px 0;font-size:11px;color:#6b6560}
-.gst .row b{color:#1f1e1c}
+.gst{flex:1;padding:12px;background:#fff;border:2px solid #000}
+.gst h3{font-size:9px;text-transform:uppercase;color:#000;margin-bottom:6px;font-weight:700}
+.gst .row{display:flex;justify-content:space-between;padding:3px 0;font-size:11px;color:#000}
+.gst .row b{color:#000}
 .tot{width:260px}
-.tot .row{display:flex;justify-content:space-between;padding:5px 0;font-size:12px}
-.tot .m{color:#6b6560}
-.tot .tt{border-top:2px solid #1f1e1c;margin-top:4px;padding-top:8px;font-size:17px;font-weight:700}
-.tot .tt .v{color:#48805b}
-.aw{padding:8px 12px;background:#e8f0eb;border:1px solid #c8dccc;border-radius:6px;font-size:11px;color:#3d6b4d;font-style:italic;margin-bottom:16px}
-.aw b{font-style:normal;color:#1f1e1c}
-.ft{border-top:2px solid #1f1e1c;padding-top:14px;margin-top:20px;display:flex;justify-content:space-between;gap:20px}
-.ft .l{font-size:10px;color:#6b6560;line-height:1.6}
-.ft .l b{color:#1f1e1c}
-.ft .r{text-align:right;font-size:10px;color:#99948d;line-height:1.6}
+.tot .row{display:flex;justify-content:space-between;padding:5px 0;font-size:12px;color:#000}
+.tot .m{color:#000}
+.tot .tt{border-top:3px solid #000;margin-top:4px;padding-top:8px;font-size:17px;font-weight:700;color:#000}
+.tot .tt .v{color:#000}
+.aw{padding:8px 12px;background:#fff;border:2px solid #000;font-size:11px;color:#000;font-style:italic;margin-bottom:16px}
+.aw b{font-style:normal;color:#000}
+.ft{border-top:3px solid #000;padding-top:14px;margin-top:20px;display:flex;justify-content:flex-end;gap:20px}
+.ft .l{font-size:10px;color:#000;line-height:1.6}
+.ft .l b{color:#000}
+.ft .r{text-align:right;font-size:10px;color:#000;line-height:1.6}
 .ft .sig{margin-top:24px}
-.ft .sig .ln{border-top:1px solid #999;width:140px;margin-left:auto;padding-top:3px;font-size:9px}
-.dis{text-align:center;font-size:9px;color:#99948d;margin-top:14px;line-height:1.5}
+.ft .sig .ln{border-top:1px solid #000;width:160px;margin-left:auto;padding-top:3px;font-size:9px;color:#000}
+.dis{text-align:center;font-size:9px;color:#000;margin-top:14px;line-height:1.5}
 @media print{body{background:#fff}.page{max-width:none;padding:12mm}.btn{display:none!important}@page{margin:0;size:A4}}
 @media(max-width:600px){.page{padding:14px}.pn,.tr{flex-direction:column}.tot{width:100%}.hdr{flex-direction:column}.hdr .r{text-align:left}}
 </style></head><body>
@@ -173,12 +172,12 @@ td.r{text-align:right}td.c{text-align:center}
     <div class="brand">
       <img src="${LOGO_URL}" alt="NOTJUST"/>
     </div>
-    <div class="btn" onclick="window.print()">🖨 Print / Save PDF</div>
+    <div class="btn" onclick="window.print()">Print / Save PDF</div>
   </div>
   <div class="co" style="text-align:right;margin-bottom:16px">
     <b>${COMPANY.legalName}</b><br/>${COMPANY.address}<br/>
     GSTIN: <b>${COMPANY.gstin}</b> · PAN: ${COMPANY.pan}<br/>
-    CIN: ${COMPANY.cin} · 📞 ${COMPANY.phone} · ✉ ${COMPANY.email} · ${COMPANY.website}
+    CIN: ${COMPANY.cin} · Phone: ${COMPANY.phone} · Email: ${COMPANY.email} · ${COMPANY.website}
   </div>
   <div class="hdr">
     <div>
@@ -187,7 +186,7 @@ td.r{text-align:right}td.c{text-align:center}
       <div class="ino">Order Ref: ${escapeHtml(invoice.order?.order_number || '—')}</div>
     </div>
     <div class="r">
-      <div class="st" style="background:${invoice.status === 'PAID' ? '#e8f0eb' : '#fdf5e6'};color:${invoice.status === 'PAID' ? '#48805b' : '#c4880e'}">${escapeHtml(invoice.status)}</div>
+      <div class="st">${escapeHtml(invoice.status)}</div>
       <div class="ino">Invoice Date: <b>${issuedDate}</b></div>
       <div class="ino">Order Date: ${orderDate}</div>
     </div>
@@ -197,16 +196,16 @@ td.r{text-align:right}td.c{text-align:center}
       <h3>Bill To</h3>
       <p><b>${escapeHtml(invoice.customer_name)}</b></p>
       ${billingAddressLine ? `<p class="m">${billingAddressLine}</p>` : ''}
-      ${invoice.customer_email ? `<p class="m">✉ ${escapeHtml(invoice.customer_email)}</p>` : ''}
-      ${invoice.customer_phone ? `<p class="m">📞 ${escapeHtml(invoice.customer_phone)}</p>` : ''}
+      ${invoice.customer_email ? `<p class="m">Email: ${escapeHtml(invoice.customer_email)}</p>` : ''}
+      ${invoice.customer_phone ? `<p class="m">Mob: ${escapeHtml(invoice.customer_phone)}</p>` : ''}
     </div>
     ${hasShipInfo ? `
     <div>
       <h3>Ship To</h3>
       <p><b>${escapeHtml(shipName)}</b></p>
       ${shipAddressLine ? `<p class="m">${shipAddressLine}</p>` : ''}
-      ${shipEmail ? `<p class="m">✉ ${escapeHtml(shipEmail)}</p>` : ''}
-      ${shipPhone ? `<p class="m">📞 ${escapeHtml(shipPhone)}</p>` : ''}
+      ${shipEmail ? `<p class="m">Email: ${escapeHtml(shipEmail)}</p>` : ''}
+      ${shipPhone ? `<p class="m">Mob: ${escapeHtml(shipPhone)}</p>` : ''}
     </div>` : ''}
     <div>
       <h3>Payment</h3>
@@ -224,15 +223,15 @@ td.r{text-align:right}td.c{text-align:center}
       <th class="r">GST ${GST_RATE}%</th>
       <th class="r">Amount</th>
     </tr></thead>
-    <tbody>${itemRows || '<tr><td colspan="7" style="text-align:center;color:#999;padding:16px">No items</td></tr>'}</tbody>
+    <tbody>${itemRows || '<tr><td colspan="7" style="text-align:center;color:#000;padding:16px">No items</td></tr>'}</tbody>
   </table>
   <div class="tr">
     <div class="gst">
       <h3>GST Breakdown</h3>
       <div class="row"><span>CGST (${GST_RATE / 2}%)</span><span><b>${inr(cgst)}</b></span></div>
       <div class="row"><span>SGST (${GST_RATE / 2}%)</span><span><b>${inr(sgst)}</b></span></div>
-      <div class="row" style="border-top:1px solid #eeebe5;margin-top:4px;padding-top:6px"><span>Total GST</span><span><b>${inr(totalGst)}</b></span></div>
-      <div class="row" style="font-size:9px;color:#999;margin-top:4px"><span>Supplier GSTIN: ${COMPANY.gstin}</span></div>
+      <div class="row" style="border-top:1px solid #000;margin-top:4px;padding-top:6px"><span>Total GST</span><span><b>${inr(totalGst)}</b></span></div>
+      <div class="row" style="font-size:9px;color:#000;margin-top:4px"><span>Supplier GSTIN: ${COMPANY.gstin}</span></div>
     </div>
     <div class="tot">
       <div class="row m"><span>Subtotal</span><span>${inr(invoice.subtotal)}</span></div>
@@ -243,7 +242,7 @@ td.r{text-align:right}td.c{text-align:center}
   </div>
   <div class="aw"><b>Amount in Words:</b> ${numberToWords(invoice.total_amount)} Rupees Only</div>
   <div class="ft">
-    <div class="r"><div>Computer-generated invoice — no signature required.</div><div class="sig"><div style="font-weight:700;color:#1f1e1c">For ${COMPANY.brand}</div><div class="ln">Authorised Signatory</div></div></div>
+    <div class="r"><div>Computer-generated invoice — no signature required.</div><div class="sig"><div style="font-weight:700;color:#000">For ${COMPANY.brand}</div><div class="ln">Authorised Signatory</div></div></div>
   </div>
   <div class="dis">Thank you for your business! · ${COMPANY.website} · ${COMPANY.phone}</div>
 </div>

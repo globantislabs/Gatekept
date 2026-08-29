@@ -493,3 +493,19 @@ Work Log:
 Stage Summary:
 - Invoice is now a strict black-on-white document: black text, black borders, black table header, black logo, no gray or colored elements
 - Signature block right-aligned; print output clean and monochrome
+
+---
+Task ID: 10
+Agent: Super Z (Buy Now visual gate state)
+Task: Buy Now button must LOOK grayed-out while the admin-required learning process is incomplete, with Unlock beside it and a "complete the learning process" note below; active green once unlocked
+
+Work Log:
+- User feedback: functionality was correct after Task 7, but the Buy Now button LOOKED active/enabled for every product regardless of the admin "Requires Learning" gate
+- ProductDetailPage.tsx Buy Now: backgroundColor now isCompleted ? BRAND.green : '#b6b1a9' (grayed), cursor not-allowed while locked — onClick handler UNCHANGED (guest still routed to login, logged-in incomplete still routed to the learning module, so the mandatory-login + learning funnel behavior is preserved)
+- Added locked-gate note under the CTA row while !isCompleted: Lock icon + "Log in and complete the learning process to unlock the product" (guest) / "Complete the learning process to unlock the product" (logged-in)
+- Unlock Now button already sits beside Buy Now and routes guest → login, user → learning; unchanged
+- State mapping: admin toggle OFF / no active videos / learning COMPLETED => isCompleted=true => green active Buy Now; admin toggle ON & not completed => grayed
+- Verified: next build passes (SQLite swap, MySQL restored); tsc baseline identical (133 pre-existing, 0 new)
+
+Stage Summary:
+- Buy Now now visually reflects the learning gate: grayed + note while locked, green once unlocked — same logic the list pages and checkout already follow

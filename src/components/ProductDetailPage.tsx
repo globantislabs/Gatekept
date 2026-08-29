@@ -951,19 +951,20 @@ export default function ProductDetailPage() {
 
               {/* ─── Buy Now + Unlock Now Buttons ──────────────── */}
               <div className="flex flex-col sm:flex-row gap-3">
-                {/* Buy Now — always clickable: guests are sent to login (mandatory),
-                    logged-in users without completed learning are sent to the module */}
+                {/* Buy Now — VISUAL state follows the learning gate (admin "Requires Learning" toggle):
+                    gate ON & not completed => grayed out (still routes: guest → login, logged-in → learning);
+                    gate OFF or learning completed => active green. Login stays mandatory either way. */}
                 <Button
                   onClick={handleAddToCart}
-                  className="pointer-events-auto min-h-[48px] flex-1 rounded-xl font-heading font-semibold text-base transition-colors cursor-pointer touch-manipulation select-none"
+                  className="pointer-events-auto min-h-[48px] flex-1 rounded-xl font-heading font-semibold text-base transition-colors touch-manipulation select-none"
                   style={{
-                    backgroundColor: BRAND.green,
+                    backgroundColor: isCompleted ? BRAND.green : '#b6b1a9',
                     color: '#fff',
                     borderColor: 'transparent',
-                    cursor: 'pointer',
+                    cursor: isCompleted ? 'pointer' : 'not-allowed',
                     WebkitTapHighlightColor: 'transparent',
                   }}
-                  title={!user ? 'Please log in to buy' : (!isCompleted ? 'Complete the learning module to unlock Buy Now' : undefined)}
+                  title={!user ? 'Please log in to buy' : (!isCompleted ? 'Complete the learning process to unlock Buy Now' : undefined)}
                 >
                   <ShoppingCart className="w-5 h-5 mr-2" />
                   Buy Now
@@ -994,6 +995,16 @@ export default function ProductDetailPage() {
                   )}
                 </Button>
               </div>
+
+              {/* Locked-gate note — shown while the admin-enabled learning process is incomplete */}
+              {!isCompleted && (
+                <p className="flex items-center gap-1.5 text-xs mt-2 px-1" style={{ color: BRAND.muted }}>
+                  <Lock className="w-3.5 h-3.5 shrink-0" />
+                  {!user
+                    ? 'Log in and complete the learning process to unlock the product'
+                    : 'Complete the learning process to unlock the product'}
+                </p>
+              )}
 
               {/* ─── Learning Module Card ───────────────────────── */}
               {!noLearningRequired && <Card className="border rounded-2xl overflow-hidden" style={{ borderColor: BRAND.surface }}>

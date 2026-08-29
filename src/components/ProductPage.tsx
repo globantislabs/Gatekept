@@ -293,9 +293,30 @@ export default function ProductPage() {
                                 onClick={() => handleLearnMore(product)}
                                 className="bg-[#48805b] hover:bg-[#3a6a4a] text-white font-heading font-semibold rounded-full text-sm px-5 min-h-[44px] shadow-lg shadow-[#48805b]/20 transition-all duration-300 flex items-center gap-1.5"
                               >
-                                {/* Always "Learn More" — the product page handles learning, review and purchase */}
-                                <BookOpen className="w-4 h-4" />
-                                Learn More
+                                {/* Dynamic CTA — matches the product page purchase gate:
+                                    learning not required (admin toggle off / no active videos)
+                                    or already completed by this user => "Shop Now";
+                                    learning still pending => "Learn More".
+                                    Both lead to the product page, where Buy Now / Unlock takes over. */}
+                                {(() => {
+                                  const hasActiveVideos = product.videos ? product.videos.some(v => v.active !== false) : true
+                                  const learningSkipped = product.requires_learning === false || Number(product.requires_learning) === 0 || !hasActiveVideos
+                                  const learningCompleted = user && completedProductIds.has(product.id)
+                                  if (learningSkipped || learningCompleted) {
+                                    return (
+                                      <>
+                                        <ShoppingCart className="w-4 h-4" />
+                                        Shop Now
+                                      </>
+                                    )
+                                  }
+                                  return (
+                                    <>
+                                      <BookOpen className="w-4 h-4" />
+                                      Learn More
+                                    </>
+                                  )
+                                })()}
                               </Button>
                             </div>
                           </CardContent>

@@ -62,6 +62,9 @@ function getSafeProductSelect() {
     discount_label: true,
     highlights: true,
     requires_learning: true,
+    // videos (id + active only) — list cards need it to decide Learn More vs Shop Now
+    // exactly like the product page purchase gate (admin toggle + active video presence)
+    videos: { select: { id: true, active: true } },
     // qr_code_url excluded from safe select — column may not exist in production DB
     created_at: true,
     updated_at: true,

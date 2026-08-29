@@ -528,3 +528,22 @@ Stage Summary:
 - Guests now always see the locked Buy Now look with a login note; logged-in users see it until learning is complete — green active Buy Now only when actually eligible to buy
 - Click flows untouched (display-only change); on learning-gated products guests get the combined "Log in and complete the learning process" message
 - IMPORTANT: production must be redeployed from main — the live site predates even the Task 10 build
+
+---
+Task ID: 12
+Agent: Super Z (dynamic card CTA — Shop Now / Learn More)
+Task: Product cards (Landing + Products page) must show "Shop Now" when learning is not necessary OR already completed by the user, "Learn More" while learning is still pending
+
+Work Log:
+- User feedback: restore the state-aware card CTA that Task 7 had flattened to a fixed "Learn More" — completed learning or no learning needed => "Shop Now"
+- Restored the dynamic IIFE CTA in BOTH src/components/LandingPage.tsx and src/components/ProductPage.tsx (icons as pre-Task-7: ShoppingBag+ChevronRight on landing, ShoppingCart on products page); both still route through handleLearnMore → product detail, where the Buy Now / Unlock display (Task 10/11) takes over
+- Gate rule matches the product page EXACTLY (v.active !== false video rule): learningSkipped = requires_learning off (false/0) OR no active videos; learningCompleted = logged-in user has a COMPLETED learning progress for that product; Shop Now iff learningSkipped || learningCompleted
+- ROOT FIX: the products LIST endpoint (GET /api/products) safeSelect did NOT include videos, so product.videos was undefined on all cards (pre-Task-7 the check silently degraded and the label could not be trusted). Added videos: { select: { id, active } } to getSafeProductSelect — list cards now always receive video activity data; videos table/columns already used by detail endpoint + admin panel, so production-safe
+- Unknown/stale cached data fallback: hasActiveVideos defaults true (restricted "Learn More" direction) so a gated product can never show Shop Now by accident
+- completedProductIds already fetched per user in both components (productLearningService.get → status COMPLETED set) — reused as-is
+- Verified: tsc error profile byte-identical before/after via git stash diff (133 pre-existing, 0 new); next build PASSES (SQLite swap, MySQL schema restored byte-identical, md5 verified)
+
+Stage Summary:
+- Card CTAs are now state-aware: "Shop Now" for non-learning products and for products whose learning the logged-in user already completed; "Learn More" while learning is still pending
+- Label decision uses the same gate data as the product page (admin toggle + active video count), so card and detail page can never disagree
+- NOTE: production redeploy still pending — live site predates Task 10

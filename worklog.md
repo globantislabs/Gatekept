@@ -424,3 +424,20 @@ Work Log:
 Stage Summary:
 - Users can no longer bypass learning; only admin toggle or actual completion unlocks purchase
 - Gate behavior now identical on Landing list, Product list, and Product detail page
+
+---
+Task ID: 6
+Agent: Super Z (invoice + review + admin video)
+Task: Invoice layout fixes (Ship To, logo text, bottom address, address format, print headers); Review re-watch; admin video preview
+
+Work Log:
+- Invoice printable route: added Ship To block from order shipping_* fields with billing fallback; Bill To/Ship To now format Name → Address → Email → Mobile; removed logo side text; removed duplicated company/address footer block (signature kept); @page margin 0 + inner padding so browser print header/footer is suppressed
+- ProductLearningModule: added reviewMode — COMPLETED users start at Video 1 and can re-watch; review mode never saves progress (protects COMPLETED status from IN_PROGRESS downgrade); quiz steps show "already passed" + Continue in review; simulated player restarts at 100% instead of blocking; native player no longer seeks to end in review
+- AdminPanel learning dialog: per-video Preview button with inline player (previewVideoId state, reset on dialog close)
+- Verified: next build passes; tsc error baseline identical (133 pre-existing, 0 new); invoice address logic unit-tested (separate shipping + fallback cases)
+- Committed 4aeaf6c and pushed to origin/main
+
+Stage Summary:
+- Invoice: Ship To added, clean top (logo only), no bottom address duplicate, correct address order, clean print output
+- Users re-watch via Review button after completing learning
+- Admin can preview added videos inline in the Manage Learning Content dialog

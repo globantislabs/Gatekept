@@ -214,6 +214,12 @@ export default function ProductDetailPage() {
   const isInProgress = learningStatus === 'IN_PROGRESS'
   const videoProgressPct = getVideoProgressPercent(productProgress)
 
+  // Visual purchase-gate state (DISPLAY ONLY — the click flows are unchanged):
+  // - Guests ALWAYS see the locked look, because login is mandatory before any purchase
+  //   (guests on learning-gated products additionally need to complete the learning process)
+  // - Logged-in users see the locked look while the admin-required learning process is incomplete
+  const purchaseLocked = !user || !isCompleted
+
   // Discount
   const discountInfo = displayProduct ? calculateDiscount(displayProduct.price, displayProduct.mrp) : null
 
@@ -951,17 +957,19 @@ export default function ProductDetailPage() {
 
               {/* ─── Buy Now + Unlock Now Buttons ──────────────── */}
               <div className="flex flex-col sm:flex-row gap-3">
-                {/* Buy Now — VISUAL state follows the learning gate (admin "Requires Learning" toggle):
-                    gate ON & not completed => grayed out (still routes: guest → login, logged-in → learning);
-                    gate OFF or learning completed => active green. Login stays mandatory either way. */}
+                {/* Buy Now — VISUAL state follows the purchase gate (display only):
+                    locked (grayed + not-allowed cursor) for GUESTS (login is mandatory before purchase)
+                    and for logged-in users while the admin-enabled learning process is incomplete;
+                    active green once logged in AND learning is satisfied (or not required).
+                    Click flows UNCHANGED: guest → login, logged-in incomplete → learning module. */}
                 <Button
                   onClick={handleAddToCart}
                   className="pointer-events-auto min-h-[48px] flex-1 rounded-xl font-heading font-semibold text-base transition-colors touch-manipulation select-none"
                   style={{
-                    backgroundColor: isCompleted ? BRAND.green : '#b6b1a9',
+                    backgroundColor: purchaseLocked ? '#b6b1a9' : BRAND.green,
                     color: '#fff',
                     borderColor: 'transparent',
-                    cursor: isCompleted ? 'pointer' : 'not-allowed',
+                    cursor: purchaseLocked ? 'not-allowed' : 'pointer',
                     WebkitTapHighlightColor: 'transparent',
                   }}
                   title={!user ? 'Please log in to buy' : (!isCompleted ? 'Complete the learning process to unlock Buy Now' : undefined)}
@@ -970,38 +978,41 @@ export default function ProductDetailPage() {
                   Buy Now
                 </Button>
 
-                {/* Unlock Now — Starts learning module */}
+                {/* Unlock Now — guest: login first; logged-in: learning module */}
                 <Button
-                  onClick={isCompleted ? handleReview : (user ? handleStartLearning : handleLoginToSave)}
+                  onClick={purchaseLocked ? (user ? handleStartLearning : handleLoginToSave) : handleReview}
                   className="pointer-events-auto min-h-[48px] rounded-xl font-heading font-semibold text-base transition-colors cursor-pointer touch-manipulation select-none"
                   style={{
-                    backgroundColor: isCompleted ? `${BRAND.lime}20` : BRAND.lime,
-                    color: isCompleted ? BRAND.green : BRAND.dark,
-                    borderColor: isCompleted ? `${BRAND.lime}30` : 'transparent',
+                    backgroundColor: purchaseLocked ? BRAND.lime : `${BRAND.lime}20`,
+                    color: purchaseLocked ? BRAND.dark : BRAND.green,
+                    borderColor: purchaseLocked ? 'transparent' : `${BRAND.lime}30`,
                     cursor: 'pointer',
                     WebkitTapHighlightColor: 'transparent',
                   }}
                 >
-                  {isCompleted ? (
-                    <>
-                      <CheckCircle className="w-5 h-5 mr-2" />
-                      Unlocked
-                    </>
-                  ) : (
+                  {purchaseLocked ? (
                     <>
                       <Unlock className="w-5 h-5 mr-2" />
                       Unlock Now
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="w-5 h-5 mr-2" />
+                      Unlocked
                     </>
                   )}
                 </Button>
               </div>
 
-              {/* Locked-gate note — shown while the admin-enabled learning process is incomplete */}
-              {!isCompleted && (
+              {/* Locked-gate note — guests: login (+ learning when required) is needed;
+                  logged-in users: the admin-enabled learning process is still incomplete */}
+              {purchaseLocked && (
                 <p className="flex items-center gap-1.5 text-xs mt-2 px-1" style={{ color: BRAND.muted }}>
                   <Lock className="w-3.5 h-3.5 shrink-0" />
                   {!user
-                    ? 'Log in and complete the learning process to unlock the product'
+                    ? (!isCompleted
+                        ? 'Log in and complete the learning process to unlock the product'
+                        : 'Log in to buy this product')
                     : 'Complete the learning process to unlock the product'}
                 </p>
               )}

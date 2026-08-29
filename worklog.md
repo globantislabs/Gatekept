@@ -509,3 +509,22 @@ Work Log:
 
 Stage Summary:
 - Buy Now now visually reflects the learning gate: grayed + note while locked, green once unlocked — same logic the list pages and checkout already follow
+
+---
+Task ID: 11
+Agent: Super Z (guest locked-out Buy Now display)
+Task: Non-logged-in (guest) users must ALSO see the locked-out Buy Now — "log in and complete the learning process" note below — the locked display has to be there and work
+
+Work Log:
+- User feedback on Task 10: the locked-out display must apply to non-login users as well, with a combined "log in and complete the learning process" message, and it must actually work
+- ProductDetailPage.tsx: added derived DISPLAY-ONLY state `purchaseLocked = !user || !isCompleted` — guests ALWAYS get the locked look (login is mandatory before any purchase per Task 7), logged-in users get it while the admin-required learning is incomplete
+- Buy Now: gray #b6b1a9 + not-allowed cursor while purchaseLocked; active BRAND.green once logged in AND learning satisfied (or not required). onClick UNCHANGED (guest → auth-login with redirect back, logged-in incomplete → product-learning, eligible → cart)
+- Unlock Now button: shown while purchaseLocked — guest → handleLoginToSave (login, redirect back), logged-in → handleStartLearning (learning module); "Unlocked" (check) only when purchase allowed. Previously a guest on a non-gated product saw "Unlocked" — now correctly sees "Unlock Now" → login
+- Locked-gate note under the CTA row (was only shown for !isCompleted): guest + learning required → "Log in and complete the learning process to unlock the product"; guest + no learning required → "Log in to buy this product"; logged-in incomplete → "Complete the learning process to unlock the product"
+- Verified live site (notjustwatr.com): deployed JS chunks contain NO Task-10 markers ('b6b1a9'/'Unlock Now') — the server is still running a pre-Task-10 build, so a redeploy is required for the user to see any of this
+- Verified: tsc error profile byte-identical before/after via git stash diff (133 pre-existing, 0 new); next build PASSES (SQLite swap, MySQL schema restored byte-identical, md5 verified)
+
+Stage Summary:
+- Guests now always see the locked Buy Now look with a login note; logged-in users see it until learning is complete — green active Buy Now only when actually eligible to buy
+- Click flows untouched (display-only change); on learning-gated products guests get the combined "Log in and complete the learning process" message
+- IMPORTANT: production must be redeployed from main — the live site predates even the Task 10 build

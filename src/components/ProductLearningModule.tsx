@@ -428,11 +428,21 @@ export function ProductLearningModule() {
       }
 
       if (passed) {
+        const isFinalQuiz = currentStep.type === 'quiz' && currentStep.videoIndex + 1 >= videos.length
         // Mark this quiz as passed
         setPassedQuizzes((prev) => ({
           ...prev,
           [currentStep.type === 'quiz' ? currentStep.videoIndex : -1]: true,
         }))
+        if (isFinalQuiz && !reviewMode) {
+          // Final quiz passed — status was already saved as COMPLETED above.
+          // NO intermediate "Unlock Product" / "Product Unlocked!" screens:
+          // go straight back to the product page, which now shows the unlocked state.
+          toast.success('Learning complete! Product unlocked.')
+          if (selectedProductId) markProductCompleted(selectedProductId)
+          navigateTo('product-detail')
+          return
+        }
         toast.success('Quiz passed! Moving to the next lesson.')
       } else {
         toast.error(`You got ${correctCount}/${totalQuestions} correct. You need ${passThreshold} to pass. Please re-watch the video and try again.`)
@@ -452,8 +462,10 @@ export function ProductLearningModule() {
     if (nextVideoIndex < videos.length) {
       setCurrentStep({ type: 'video', videoIndex: nextVideoIndex })
     } else {
-      // All quizzes passed — unlock the product
-      setCurrentStep({ type: 'completed' })
+      // All steps done (e.g. review-mode replay of the last quiz) — no intermediate
+      // "unlock" screens; return straight to the product page (already unlocked)
+      if (selectedProductId) markProductCompleted(selectedProductId)
+      navigateTo('product-detail')
     }
   }
 
@@ -1238,77 +1250,6 @@ export function ProductLearningModule() {
                   )}
               </>
             )}
-          </motion.div>
-        )}
-
-        {/* ═══ COMPLETED STEP ═══ */}
-        {currentStep.type === 'completed' && (
-          <motion.div
-            key="completed"
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5 }}
-          >
-            <Card
-              className="border-2 text-center"
-              style={{ borderColor: BRAND.lime, backgroundColor: `${BRAND.lime}08` }}
-            >
-              <CardHeader className="pb-2">
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ type: 'spring', stiffness: 200, delay: 0.3 }}
-                >
-                  <Trophy className="h-20 w-20 mx-auto" style={{ color: BRAND.lime }} />
-                </motion.div>
-                <CardTitle className="font-heading text-3xl mt-4" style={{ color: BRAND.dark }}>
-                  Product Unlocked!
-                </CardTitle>
-                <CardDescription className="text-base mt-2" style={{ color: BRAND.muted }}>
-                  Congratulations! You have completed all learning modules and quizzes for{' '}
-                  <span className="font-semibold" style={{ color: BRAND.dark }}>
-                    {product.name}
-                  </span>
-                  .
-                </CardDescription>
-              </CardHeader>
-
-              <CardContent className="space-y-4">
-                {/* Completed steps summary */}
-                <div
-                  className="rounded-lg p-4 mx-auto max-w-sm"
-                  style={{ backgroundColor: `${BRAND.lime}15` }}
-                >
-                  <h4 className="font-heading text-sm font-semibold mb-3" style={{ color: BRAND.dark }}>
-                    Learning Journey Complete
-                  </h4>
-                  <div className="space-y-2">
-                    {videos.map((video, idx) => (
-                      <div key={video.id} className="flex items-center gap-2">
-                        <CheckCircle className="h-4 w-4 shrink-0" style={{ color: BRAND.lime }} />
-                        <span className="text-sm" style={{ color: BRAND.dark }}>
-                          Video {idx + 1} & Quiz {idx + 1}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </CardContent>
-
-              <CardFooter className="flex flex-col sm:flex-row gap-3 p-6 pt-2 justify-center">
-                <Button
-                  size="lg"
-                  className="font-heading font-semibold"
-                  style={{ backgroundColor: BRAND.lime, color: BRAND.dark }}
-                  onClick={() => {
-                    if (selectedProductId) markProductCompleted(selectedProductId)
-                    navigateTo('product-detail')
-                  }}
-                >
-                  Continue to Product <ChevronRight className="h-5 w-5 ml-1" />
-                </Button>
-              </CardFooter>
-            </Card>
           </motion.div>
         )}
       </AnimatePresence>

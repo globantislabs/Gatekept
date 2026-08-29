@@ -561,3 +561,18 @@ Work Log:
 
 Stage Summary:
 - Cart subtotal label now counts products, not units — display-only, totals unaffected
+
+---
+Task ID: 14
+Agent: Super Z (remove yellow unlock screens after learning completion)
+Task: After completing learning the user was shown TWO yellow cards asking to click Unlock (final-quiz result card with "Unlock Product" button, then the "Product Unlocked!" celebration card with "Continue to Product") — remove them
+
+Work Log:
+- src/components/ProductLearningModule.tsx quiz submit handler: when the FINAL quiz is passed (and not review mode), the flow now goes straight back to the product — toast "Learning complete! Product unlocked.", markProductCompleted (instant local unlock), navigateTo('product-detail'). The final quiz result screen no longer renders, so the yellow "Unlock Product" stop is gone. Server-side status was already saved as COMPLETED on final submit (unchanged)
+- handleQuizPassContinue: final branch no longer setCurrentStep({type:'completed'}) — it marks completed locally and returns to the product page (covers the review-mode "Continue to Product" path as well)
+- Removed the entire unreachable "Product Unlocked!" lime celebration card (Trophy header, journey summary, Continue to Product button) — the 'completed' step type remains in the union (badge logic untouched) but is never set
+- User still gets completion feedback where it matters: the product page now shows green Buy Now, "Unlocked" chip, quiz score + Passed badge
+- Verified: tsc error profile byte-identical before/after (133 pre-existing, 0 new); next build PASSES (SQLite swap, MySQL schema restored byte-identical, md5 verified)
+
+Stage Summary:
+- Learning completion is now direct: pass the last quiz → immediately back on the product page, unlocked (green Buy Now) — both yellow unlock cards removed

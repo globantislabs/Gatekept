@@ -406,3 +406,21 @@ Stage Summary:
 - Product API routes are never cached, so the admin panel always reads fresh toggle state
 - 6 files changed, 40 insertions(+), 6 deletions(-); nothing else touched
 - Apply on user machine: git am gatekept-toggle-fix.patch (or git apply), then npm run build:plesk and redeploy
+
+---
+Task ID: 5
+Agent: Super Z (learning gate consistency)
+Task: Make learning gate consistent across Landing list / Product list / Product detail page; remove user self-skip (admin-only)
+
+Work Log:
+- Audited all three surfaces: LandingPage + ProductPage lists correctly honor requires_learning; ProductDetailPage did NOT — it ignored the admin toggle AND offered users "Skip Learning & Unlock Instantly" buttons
+- ProductDetailPage.tsx: added learningDisabledByAdmin check (requires_learning === false/0 via Number coercion) into noLearningRequired — detail page now agrees with both list pages
+- Removed the entire user-facing Skip/Unskip UI block (FastForward/RotateCcw buttons) and the isSkipped gating so old localStorage skips no longer unlock products
+- Removed now-unused store functions from destructuring and unused lucide imports
+- Verified ProductLearningModule "Skip video & continue" only appears on video load error (kept); completion awarded only via the full step machine
+- Verified: next build passes; tsc baseline identical (133 pre-existing errors, 0 new)
+- Committed 96167af and pushed to origin/main
+
+Stage Summary:
+- Users can no longer bypass learning; only admin toggle or actual completion unlocks purchase
+- Gate behavior now identical on Landing list, Product list, and Product detail page

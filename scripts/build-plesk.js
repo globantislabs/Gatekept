@@ -38,7 +38,14 @@ try {
     const dbUrlMatch = envFile.match(/^DATABASE_URL=(.*)$/m);
     if (dbUrlMatch) dbEnv.DATABASE_URL = dbUrlMatch[1].trim();
   }
-  run('npx prisma db push', dbEnv);
+  // ⚠️ prisma db push must NOT abort the whole build on failure (e.g. when the
+  // production DB is briefly unreachable or the column already exists).
+  // The app routes already fall back gracefully when a column is missing.
+  try {
+    run('npx prisma db push', dbEnv);
+  } catch (dbErr) {
+    console.warn('⚠️  prisma db push failed — continuing build anyway: ' + dbErr.message);
+  }
 
   console.log('📦 Building Next.js...');
   run('npx next build');

@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { db, safeDbQuery } from '@/lib/db'
 import { NextRequest } from 'next/server'
 import { jsonResponse, errorResponse, checkAdmin, handleOptions, validateNumeric, sanitizeStringFields } from '@/lib/api-utils'
@@ -239,6 +241,24 @@ export async function PUT(
       if (sanitized[field] !== undefined) {
         updateData[field] = sanitized[field]
       }
+    }
+
+    // Force boolean fields to strict booleans — a TINYINT (0/1), string ('true'/'false')
+    // or number coming from the client must never be stored as-is, otherwise the
+    // Admin Panel "Requires Learning" toggle appears to never change its state.
+    if (sanitized.requires_learning !== undefined) {
+      updateData.requires_learning =
+        sanitized.requires_learning === true ||
+        sanitized.requires_learning === 'true' ||
+        sanitized.requires_learning === 1
+    }
+    if (sanitized.active !== undefined) {
+      updateData.active =
+        sanitized.active === true || sanitized.active === 'true' || sanitized.active === 1
+    }
+    if (sanitized.featured !== undefined) {
+      updateData.featured =
+        sanitized.featured === true || sanitized.featured === 'true' || sanitized.featured === 1
     }
 
     // Parse numeric fields

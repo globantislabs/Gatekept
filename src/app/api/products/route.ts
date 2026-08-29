@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { db, safeDbQuery } from '@/lib/db'
 import { NextRequest } from 'next/server'
 import { jsonResponse, errorResponse, checkAdmin, handleOptions, validateRequired, validateNumeric, sanitizeStringFields } from '@/lib/api-utils'
@@ -268,7 +270,12 @@ export async function POST(request: NextRequest) {
       discount_label: discount_label as string || null,
       highlights: highlights as string || null,
       qr_code_url: qr_code_url as string || null,
-      requires_learning: typeof body.requires_learning === 'boolean' ? body.requires_learning : true,
+      requires_learning:
+        body.requires_learning !== undefined
+          ? body.requires_learning === true ||
+            body.requires_learning === 'true' ||
+            body.requires_learning === 1
+          : true,
     }
 
     const createResult = await safeDbQuery(

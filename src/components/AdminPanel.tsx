@@ -2325,7 +2325,7 @@ function AdminDashboard() {
                                   <p className="text-[10px]" style={{ color: A.textMuted }}>If off, users can buy directly without watching videos.</p>
                                 </div>
                               </div>
-                              <Switch checked={newProduct.requires_learning} onCheckedChange={v => setNewProduct({ ...newProduct, requires_learning: v })} />
+                              <Switch checked={!!newProduct.requires_learning} onCheckedChange={v => setNewProduct({ ...newProduct, requires_learning: v })} />
                             </div>
                           </div>
                         </div>
@@ -2465,7 +2465,7 @@ function AdminDashboard() {
                             hsn_code: product.hsn_code || '', gst_rate: product.gst_rate || 0,
                             min_order_qty: product.min_order_qty || 1, max_order_qty: product.max_order_qty || 10,
                             discount_label: product.discount_label || '', highlights: product.highlights || '',
-                            requires_learning: product.requires_learning !== undefined ? product.requires_learning : true,
+                            requires_learning: product.requires_learning === false || Number(product.requires_learning) === 0 ? false : true,
                           })
                           setShowAddProduct(true)
                         }}>

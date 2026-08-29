@@ -295,7 +295,7 @@ export default function ProductPage() {
                               >
                                 {(() => {
                                   const hasActiveVideos = product.videos && product.videos.some(v => v.active)
-                                  const learningSkipped = product.requires_learning === false || !hasActiveVideos
+                                  const learningSkipped = product.requires_learning === false || Number(product.requires_learning) === 0 || !hasActiveVideos
                                   const learningCompleted = user && completedProductIds.has(product.id)
                                   if (learningSkipped || learningCompleted) {
                                     return (

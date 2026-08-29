@@ -547,3 +547,17 @@ Stage Summary:
 - Card CTAs are now state-aware: "Shop Now" for non-learning products and for products whose learning the logged-in user already completed; "Learn More" while learning is still pending
 - Label decision uses the same gate data as the product page (admin toggle + active video count), so card and detail page can never disagree
 - NOTE: production redeploy still pending — live site predates Task 10
+
+---
+Task ID: 13
+Agent: Super Z (cart subtotal product count)
+Task: Cart sticky footer "Subtotal (9 items)" must show the NUMBER OF PRODUCTS (distinct line items) instead of the summed item quantity
+
+Work Log:
+- src/components/CartCheckout.tsx line 221: replaced cart.reduce((s, i) => s + i.quantity, 0) (summed quantities) with cart.length (distinct products), label "items" → "product/products" (singular/plural aware)
+- Example: 3 products with qty 3+6 previously showed "Subtotal (9 items)", now shows "Subtotal (3 products)"
+- Price math untouched: line 447/449 quantity-based totals/discounts still use per-item quantities (only the LABEL changed)
+- Verified: tsc error profile identical to baseline (133 pre-existing, 0 new); next build PASSES (SQLite swap, MySQL schema restored byte-identical, md5 verified)
+
+Stage Summary:
+- Cart subtotal label now counts products, not units — display-only, totals unaffected

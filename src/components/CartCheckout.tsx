@@ -218,7 +218,7 @@ export function CartView() {
           {/* Price breakdown */}
           <div className="space-y-1.5 mb-3">
             <div className="flex justify-between text-sm text-[#88837b]">
-              <span>Subtotal ({cart.reduce((s, i) => s + i.quantity, 0)} items)</span>
+              <span>Subtotal ({cart.length} {cart.length === 1 ? 'product' : 'products'})</span>
               <span>&#8377;{total.toLocaleString('en-IN')}</span>
             </div>
             <div className="flex justify-between text-sm text-[#88837b]">

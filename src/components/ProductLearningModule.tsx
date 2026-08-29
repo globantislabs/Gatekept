@@ -91,6 +91,9 @@ export function ProductLearningModule() {
   const [answers, setAnswers] = useState<Record<number, number>>({})
   const [quizResult, setQuizResult] = useState<QuizResult | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  // Review mode: product already COMPLETED — user is re-watching videos.
+  // Playback is free, but saved progress/status must never be overwritten.
+  const [reviewMode, setReviewMode] = useState(false)
 
   // ─── Derived ──────────────────────────────────────────
   const currentVideo = currentStep.type === 'video' || currentStep.type === 'quiz'
@@ -120,6 +123,7 @@ export function ProductLearningModule() {
       setCurrentStep({ type: 'video', videoIndex: 0 })
       setVideoError(false)
       setProgress(null)
+      setReviewMode(false)
       try {
         const [prodRes, vidRes, progRes] = await Promise.all([
           productServiceCompat.getById(selectedProductId),
@@ -154,14 +158,17 @@ export function ProductLearningModule() {
           const vp = savedProgress.video_progress || {}
           const qa = savedProgress.quiz_answers || {}
 
-          // If the status is already COMPLETED, go to completed
+          // If the status is already COMPLETED, enter REVIEW mode —
+          // start from Video 1 so the user can re-watch everything freely.
+          // Saved progress and status are never overwritten in review mode.
           if (savedProgress.status === 'COMPLETED') {
             const allPassed: Record<number, boolean> = {}
             for (let i = 0; i < loadedVideos.length; i++) {
               allPassed[i] = true
             }
             setPassedQuizzes(allPassed)
-            setCurrentStep({ type: 'completed' })
+            setReviewMode(true)
+            setCurrentStep({ type: 'video', videoIndex: 0 })
           } else {
             // Reconstruct passedQuizzes from saved quiz answers for this product only
             const reconstructedPassed: Record<number, boolean> = {}
@@ -237,14 +244,14 @@ export function ProductLearningModule() {
       progressIntervalRef.current = null
     }
 
-    // Set video progress from saved data
+    // Set video progress from saved data (review mode always starts at 0)
     if (currentStep.type === 'video' && currentVideo) {
-      const savedProg = progress?.video_progress?.[currentVideo.id] ?? 0
+      const savedProg = reviewMode ? 0 : (progress?.video_progress?.[currentVideo.id] ?? 0)
       setVideoProgress(savedProg)
     } else {
       setVideoProgress(0)
     }
-  }, [currentStep.type, currentStep.type === 'video' || currentStep.type === 'quiz' ? currentStep.videoIndex : null, currentVideo?.id])
+  }, [currentStep.type, currentStep.type === 'video' || currentStep.type === 'quiz' ? currentStep.videoIndex : null, currentVideo?.id, reviewMode])
 
   // ─── Fetch quiz questions when entering a quiz step ───
   useEffect(() => {
@@ -296,6 +303,7 @@ export function ProductLearningModule() {
 
   // ─── Save video progress to backend ───────────────────
   const saveVideoProgress = useCallback(async (pct: number) => {
+    if (reviewMode) return // review replays must not overwrite saved progress/status
     if (!selectedProductId || !currentVideo) return
     if (!user) return // Skip backend save if not logged in
     try {
@@ -313,7 +321,7 @@ export function ProductLearningModule() {
     } catch (err) {
       console.error('Failed to save video progress:', err)
     }
-  }, [user, selectedProductId, currentVideo, progress])
+  }, [user, selectedProductId, currentVideo, progress, reviewMode])
 
   // ─── Auto-save when video completes ───────────────────
   useEffect(() => {
@@ -324,7 +332,12 @@ export function ProductLearningModule() {
 
   // ─── Video player handlers ────────────────────────────
   const handlePlayPause = () => {
-    if (videoProgress >= 100) return
+    // Allow re-play: restart from 0% instead of blocking at 100%
+    if (videoProgress >= 100) {
+      setVideoProgress(0)
+      setPlaying(true)
+      return
+    }
     setPlaying(!playing)
     if (playing) {
       saveVideoProgress(videoProgress)
@@ -379,8 +392,9 @@ export function ProductLearningModule() {
       }
       setQuizResult(result)
 
-      // Save progress via service (only if logged in)
-      if (user) {
+      // Save progress via service (only if logged in and NOT in review mode —
+      // review replays must not downgrade the COMPLETED status)
+      if (user && !reviewMode) {
         const overallScore = totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0
         try {
           const existingVP = progress?.video_progress || {}
@@ -544,7 +558,7 @@ export function ProductLearningModule() {
           }}
           className="text-xs font-medium"
         >
-          {currentStep.type === 'completed' ? 'Unlocked' : overallPct > 0 ? `${overallPct}% Progress` : 'Getting started'}
+          {currentStep.type === 'completed' ? 'Unlocked' : reviewMode ? 'Review Mode' : overallPct > 0 ? `${overallPct}% Progress` : 'Getting started'}
         </Badge>
       </div>
 
@@ -684,8 +698,8 @@ export function ProductLearningModule() {
                       }
                     }}
                     onLoadedMetadata={() => {
-                      // Restore saved progress
-                      if (videoProgress > 0 && videoRef.current && videoRef.current.duration > 0) {
+                      // Restore saved progress (never seek to the end in review mode)
+                      if (!reviewMode && videoProgress > 0 && videoProgress < 100 && videoRef.current && videoRef.current.duration > 0) {
                         videoRef.current.currentTime = (videoProgress / 100) * videoRef.current.duration
                       }
                     }}
@@ -879,6 +893,26 @@ export function ProductLearningModule() {
                   </Button>
                 </CardContent>
               </Card>
+            ) : reviewMode && passedQuizzes[currentStep.videoIndex] ? (
+              /* ═══ REVIEW MODE — QUIZ ALREADY PASSED ═══ */
+              <Card style={{ borderColor: BRAND.lime, backgroundColor: `${BRAND.lime}08` }}>
+                <CardContent className="p-6 text-center">
+                  <CheckCircle className="h-10 w-10 mx-auto mb-3" style={{ color: BRAND.green }} />
+                  <p className="font-heading text-lg" style={{ color: BRAND.dark }}>
+                    Quiz {currentStep.videoIndex + 1} already passed
+                  </p>
+                  <p className="text-sm mt-1" style={{ color: BRAND.muted }}>
+                    You are in review mode — your results are safe. Re-watch the videos as many times as you like.
+                  </p>
+                  <Button
+                    className="mt-4"
+                    style={{ backgroundColor: BRAND.green, color: '#fff' }}
+                    onClick={handleQuizPassContinue}
+                  >
+                    Continue <ArrowRight className="h-4 w-4 ml-1" />
+                  </Button>
+                </CardContent>
+              </Card>
             ) : quizResult ? (
               /* ═══ QUIZ RESULT ═══ */
               <Card
@@ -991,7 +1025,7 @@ export function ProductLearningModule() {
                         </>
                       ) : (
                         <>
-                          Unlock Product <Trophy className="h-4 w-4 ml-1" />
+                          {reviewMode ? 'Continue to Product' : 'Unlock Product'} <Trophy className="h-4 w-4 ml-1" />
                         </>
                       )}
                     </Button>

@@ -241,6 +241,7 @@ function AdminDashboard() {
   const [showAddVideo, setShowAddVideo] = useState(false)
   const [showAddQuiz, setShowAddQuiz] = useState(false)
   const [videoUploading, setVideoUploading] = useState(false)
+  const [previewVideoId, setPreviewVideoId] = useState<string | null>(null)
   const learningScrollRef = useRef<HTMLDivElement>(null)
   const [newVideo, setNewVideo] = useState({ title: '', duration: '', description: '', order: 1, video_url: '', thumbnail_url: '' })
   const [newQuiz, setNewQuiz] = useState({ question: '', options: ['', '', '', ''], answer: 0, difficulty: 'EASY', order: 1, video_id: '' })
@@ -2595,7 +2596,7 @@ function AdminDashboard() {
             </Dialog>
 
             {/* ═══ MANAGE LEARNING CONTENT DIALOG ═══ */}
-            <Dialog open={showManageLearning} onOpenChange={(open) => { setShowManageLearning(open); if (!open) { setLearningProductId(null); setLearningVideos([]); setLearningQuizzes([]); setShowAddVideo(false); setShowAddQuiz(false); setEditingVideo(null); setEditingQuiz(null) } }}>
+            <Dialog open={showManageLearning} onOpenChange={(open) => { setShowManageLearning(open); if (!open) { setLearningProductId(null); setLearningVideos([]); setLearningQuizzes([]); setShowAddVideo(false); setShowAddQuiz(false); setEditingVideo(null); setEditingQuiz(null); setPreviewVideoId(null) } }}>
               <DialogContent className="sm:max-w-[900px] max-h-[92vh] overflow-hidden flex flex-col">
                 <DialogHeader>
                   <DialogTitle className="text-lg flex items-center gap-2">
@@ -2644,6 +2645,19 @@ function AdminDashboard() {
                                 </div>
                                 <p className="text-[11px] mt-0.5 line-clamp-1" style={{ color: A.textMuted }}>{video.description}</p>
 
+                                {/* Inline video preview (admin can see the exact video added) */}
+                                {previewVideoId === video.id && video.video_url && (
+                                  <div className="mt-2 rounded-lg overflow-hidden bg-black max-w-xs">
+                                    <video
+                                      src={video.video_url.startsWith('/uploads/') ? `/api${video.video_url}` : video.video_url}
+                                      className="w-full aspect-video"
+                                      controls
+                                      playsInline
+                                      preload="metadata"
+                                    />
+                                  </div>
+                                )}
+
                                 {/* Quizzes for this video */}
                                 {learningQuizzes.filter(q => q.video_id === video.id).length > 0 && (
                                   <div className="mt-2 space-y-1.5">
@@ -2674,6 +2688,7 @@ function AdminDashboard() {
                                 )}
                               </div>
                               <div className="flex gap-1 shrink-0">
+                                  {video.video_url && <Button size="sm" variant="outline" className="text-[10px] h-6 px-1.5 gap-0.5" style={{ borderColor: A.green, color: A.green }} onClick={() => setPreviewVideoId(previewVideoId === video.id ? null : video.id)}><Play className="w-2.5 h-2.5" /> Preview</Button>}
                                   <Button size="sm" variant="outline" className="text-[10px] h-6 px-1.5 gap-0.5" style={{ borderColor: A.blue, color: A.blue }} onClick={() => { setEditingVideo(video); setShowAddVideo(true); setNewVideo({ title: video.title, duration: video.duration, description: video.description || '', order: video.order, video_url: video.video_url || '', thumbnail_url: video.thumbnail_url || '' }); setTimeout(() => learningScrollRef.current?.querySelector('#edit-video-form')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100) }}><Pencil className="w-2.5 h-2.5" /> Edit</Button>
                                   <Button size="sm" variant="outline" className="text-[10px] h-6 px-1.5 gap-0.5" style={{ borderColor: A.red, color: A.red }} onClick={() => handleDeleteVideo(video.id)}><Trash2 className="w-2.5 h-2.5" /> Del</Button>
                                 </div>

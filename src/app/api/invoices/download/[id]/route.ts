@@ -59,7 +59,13 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   const invoice = await db.invoice.findUnique({
     where: { id },
     include: {
-      order: { select: { id: true, order_number: true, status: true, created_at: true } },
+      order: {
+        select: {
+          id: true, order_number: true, status: true, created_at: true,
+          shipping_name: true, shipping_phone: true, shipping_email: true,
+          shipping_address: true, shipping_city: true, shipping_state: true, shipping_pincode: true,
+        },
+      },
       user: { select: { id: true, name: true, email: true, phone: true } },
     },
   })
@@ -93,6 +99,20 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
       <td style="text-align:right;font-weight:600">${inr(lineTotal)}</td>
     </tr>`
   }).join('')
+
+  // ─── Address helpers: format = Name → Address → Email → Mobile ───
+  const billingAddressLine = invoice.billing_address
+    ? `${escapeHtml(invoice.billing_address)}${invoice.billing_city ? `, ${escapeHtml(invoice.billing_city)}` : ''}${invoice.billing_state ? `, ${escapeHtml(invoice.billing_state)}` : ''}${invoice.billing_pincode ? ` - ${escapeHtml(invoice.billing_pincode)}` : ''}`
+    : ''
+
+  const ship = invoice.order || ({} as Record<string, string | null>)
+  const shipName = (ship as any).shipping_name || invoice.customer_name
+  const shipAddressLine = (ship as any).shipping_address
+    ? `${escapeHtml((ship as any).shipping_address)}${(ship as any).shipping_city ? `, ${escapeHtml((ship as any).shipping_city)}` : ''}${(ship as any).shipping_state ? `, ${escapeHtml((ship as any).shipping_state)}` : ''}${(ship as any).shipping_pincode ? ` - ${escapeHtml((ship as any).shipping_pincode)}` : ''}`
+    : billingAddressLine
+  const shipEmail = (ship as any).shipping_email || invoice.customer_email
+  const shipPhone = (ship as any).shipping_phone || invoice.customer_phone
+  const hasShipInfo = !!(shipAddressLine || shipEmail || shipPhone)
 
   const html = `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"/>
@@ -145,14 +165,13 @@ td.r{text-align:right}td.c{text-align:center}
 .ft .sig{margin-top:24px}
 .ft .sig .ln{border-top:1px solid #999;width:140px;margin-left:auto;padding-top:3px;font-size:9px}
 .dis{text-align:center;font-size:9px;color:#99948d;margin-top:14px;line-height:1.5}
-@media print{body{background:#fff}.page{max-width:none;padding:0}.btn{display:none!important}@page{margin:10mm;size:A4}}
+@media print{body{background:#fff}.page{max-width:none;padding:12mm}.btn{display:none!important}@page{margin:0;size:A4}}
 @media(max-width:600px){.page{padding:14px}.pn,.tr{flex-direction:column}.tot{width:100%}.hdr{flex-direction:column}.hdr .r{text-align:left}}
 </style></head><body>
 <div class="page">
   <div class="top">
     <div class="brand">
       <img src="${LOGO_URL}" alt="NOTJUST"/>
-      <div><div class="nm">${COMPANY.brand}</div><div class="sb">${COMPANY.product} · ${COMPANY.tagline}</div></div>
     </div>
     <div class="btn" onclick="window.print()">🖨 Print / Save PDF</div>
   </div>
@@ -177,10 +196,18 @@ td.r{text-align:right}td.c{text-align:center}
     <div>
       <h3>Bill To</h3>
       <p><b>${escapeHtml(invoice.customer_name)}</b></p>
-      ${invoice.customer_phone ? `<p class="m">📞 ${escapeHtml(invoice.customer_phone)}</p>` : ''}
+      ${billingAddressLine ? `<p class="m">${billingAddressLine}</p>` : ''}
       ${invoice.customer_email ? `<p class="m">✉ ${escapeHtml(invoice.customer_email)}</p>` : ''}
-      ${invoice.billing_address ? `<p class="m">${escapeHtml(invoice.billing_address)}${invoice.billing_city ? `, ${escapeHtml(invoice.billing_city)}` : ''}${invoice.billing_state ? `, ${escapeHtml(invoice.billing_state)}` : ''}${invoice.billing_pincode ? ` - ${escapeHtml(invoice.billing_pincode)}` : ''}</p>` : ''}
+      ${invoice.customer_phone ? `<p class="m">📞 ${escapeHtml(invoice.customer_phone)}</p>` : ''}
     </div>
+    ${hasShipInfo ? `
+    <div>
+      <h3>Ship To</h3>
+      <p><b>${escapeHtml(shipName)}</b></p>
+      ${shipAddressLine ? `<p class="m">${shipAddressLine}</p>` : ''}
+      ${shipEmail ? `<p class="m">✉ ${escapeHtml(shipEmail)}</p>` : ''}
+      ${shipPhone ? `<p class="m">📞 ${escapeHtml(shipPhone)}</p>` : ''}
+    </div>` : ''}
     <div>
       <h3>Payment</h3>
       <p><b>Method:</b> ${escapeHtml(invoice.payment_method || '—')}</p>
@@ -216,7 +243,6 @@ td.r{text-align:right}td.c{text-align:center}
   </div>
   <div class="aw"><b>Amount in Words:</b> ${numberToWords(invoice.total_amount)} Rupees Only</div>
   <div class="ft">
-    <div class="l"><b>${COMPANY.legalName}</b><br/>${COMPANY.address}<br/>GSTIN: ${COMPANY.gstin} · PAN: ${COMPANY.pan}<br/>CIN: ${COMPANY.cin}</div>
     <div class="r"><div>Computer-generated invoice — no signature required.</div><div class="sig"><div style="font-weight:700;color:#1f1e1c">For ${COMPANY.brand}</div><div class="ln">Authorised Signatory</div></div></div>
   </div>
   <div class="dis">Thank you for your business! · ${COMPANY.website} · ${COMPANY.phone}</div>

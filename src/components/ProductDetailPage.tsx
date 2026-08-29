@@ -204,7 +204,7 @@ export default function ProductDetailPage() {
   const activeLearningVideoCount = product ? product.videos.filter(v => v.active !== false).length : null
   // Admin-only control: the product's "Requires Learning" toggle (requires_learning === false/0)
   // disables the learning gate here — same rule as the LandingPage / ProductPage lists,
-  // so "Shop Now" on the list and the detail page always agree.
+  // so "Learn More" on the list and the detail page always agree.
   // Users can NEVER skip the learning themselves — only completing it unlocks purchase.
   const learningDisabledByAdmin = product
     ? product.requires_learning === false || Number(product.requires_learning) === 0
@@ -230,24 +230,25 @@ export default function ProductDetailPage() {
 
   // ─── Handlers ─────────────────────────────────────────────
   // Buy Now — adds product to cart and redirects to cart page.
-  // LOCKED until the user is logged in AND has completed the learning module.
+  // Login is MANDATORY before buying: guests are sent to login first.
+  // Learning must be completed (unless admin disabled it) before purchase.
   const handleAddToCart = () => {
+    const activeProduct = displayProduct || product
     if (!user) {
-      // Not logged in — send to login, return here after
-      if (!product) return
-      setSelectedProductId(product.id)
+      // Not logged in — login is mandatory, send to login, return here after
+      if (!activeProduct) return
+      setSelectedProductId(activeProduct.id)
       setRedirectAfterLogin('product-detail')
       navigateTo('auth-login')
       return
     }
     if (!isCompleted) {
       // Logged in but learning not completed — start learning
-      if (!product) return
-      setSelectedProductId(product.id)
+      if (!activeProduct) return
+      setSelectedProductId(activeProduct.id)
       navigateTo('product-learning')
       return
     }
-    const activeProduct = displayProduct || product
     if (!activeProduct) return
     addToCart({
       productId: activeProduct.id,
@@ -264,6 +265,14 @@ export default function ProductDetailPage() {
 
   const handleSubscribe = () => {
     const activeProduct = displayProduct || product
+    if (!user) {
+      // Login is mandatory before any purchase (incl. subscriptions)
+      if (!activeProduct) return
+      setSelectedProductId(activeProduct.id)
+      setRedirectAfterLogin('product-detail')
+      navigateTo('auth-login')
+      return
+    }
     if (!activeProduct || !isCompleted) return
     addToCart({
       productId: activeProduct.id,
@@ -942,19 +951,19 @@ export default function ProductDetailPage() {
 
               {/* ─── Buy Now + Unlock Now Buttons ──────────────── */}
               <div className="flex flex-col sm:flex-row gap-3">
-                {/* Buy Now — locked until logged in + learning completed */}
+                {/* Buy Now — always clickable: guests are sent to login (mandatory),
+                    logged-in users without completed learning are sent to the module */}
                 <Button
                   onClick={handleAddToCart}
-                  disabled={!user || !isCompleted}
-                  className="pointer-events-auto min-h-[48px] flex-1 rounded-xl font-heading font-semibold text-base transition-colors cursor-pointer touch-manipulation select-none disabled:cursor-not-allowed disabled:opacity-50"
+                  className="pointer-events-auto min-h-[48px] flex-1 rounded-xl font-heading font-semibold text-base transition-colors cursor-pointer touch-manipulation select-none"
                   style={{
                     backgroundColor: BRAND.green,
                     color: '#fff',
                     borderColor: 'transparent',
-                    cursor: (!user || !isCompleted) ? 'not-allowed' : 'pointer',
+                    cursor: 'pointer',
                     WebkitTapHighlightColor: 'transparent',
                   }}
-                  title={!user ? 'Please log in to unlock Buy Now' : (!isCompleted ? 'Complete the learning module to unlock Buy Now' : undefined)}
+                  title={!user ? 'Please log in to buy' : (!isCompleted ? 'Complete the learning module to unlock Buy Now' : undefined)}
                 >
                   <ShoppingCart className="w-5 h-5 mr-2" />
                   Buy Now

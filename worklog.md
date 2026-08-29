@@ -441,3 +441,21 @@ Stage Summary:
 - Invoice: Ship To added, clean top (logo only), no bottom address duplicate, correct address order, clean print output
 - Users re-watch via Review button after completing learning
 - Admin can preview added videos inline in the Manage Learning Content dialog
+
+---
+Task ID: 7
+Agent: Super Z (learn-more CTA + mandatory login)
+Task: Rename "Shop Now" card CTA to "Learn More"; make login mandatory before Buy Now
+
+Work Log:
+- LandingPage.tsx + ProductPage.tsx: product card CTA is now ALWAYS "Learn More" — removed the conditional IIFE that showed "Shop Now" for learning-skipped/completed products; click still routes to the product detail page (handleLearnMore), where learning, review and purchase live
+- ProductDetailPage.tsx handleAddToCart: Buy Now is now ALWAYS clickable (removed disabled={!user || !isCompleted} + not-allowed cursor). Flow: guest → auth-login (redirectAfterLogin='product-detail') → back; logged-in without completed learning → product-learning; logged-in + completed → add to cart + go to cart. Login is mandatory before any purchase
+- handleAddToCart now resolves activeProduct = displayProduct || product up front (fixes QA finding PDP-5: dead clicks when only displayProduct is loaded)
+- handleSubscribe: added the same mandatory-login guard (defense in depth; button currently not rendered)
+- CheckoutView already enforces login (auth guard → auth-login with redirectAfterLogin='checkout'); cart viewing remains open to guests by design
+- Verified: npx next build PASSES (SQLite schema swap, restored to MySQL byte-identical); tsc error profile before/after is IDENTICAL (133 pre-existing errors, 0 new — compared file+code independent of line numbers)
+- Committed and pushed to origin/main
+
+Stage Summary:
+- All product card CTAs now read "Learn More" — consistent funnel into the product page
+- Buying requires login, always: guests clicking Buy Now are taken to login and returned to the product page afterwards; learning completion (or admin-disabled learning) still gates the actual purchase

@@ -85,9 +85,21 @@ function UrlSyncHandler() {
   const scannedCampaignRef = useRef<string | null>(null)
 
   useEffect(() => {
+    // ── Read the LIVE URL (window.location), NOT useSearchParams ──
+    // useSearchParams does NOT update on manual history.pushState calls
+    // (which is exactly how this SPA navigates), so it keeps returning the
+    // ENTRY link's query long after the address bar changed. That staleness
+    // caused this: open a campaign/general product link (?product=slug),
+    // press Home → URL becomes clean '/', but the stale ?product=slug made
+    // the sync below navigate BACK to product-detail — the user appeared
+    // stuck on the product page (it just "refreshed").
+    // Deriving everything from window.location makes the address bar the
+    // single source of truth.
+    const liveParams = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '')
+
     // Capture campaign ID from URL (?campaign=ID) — stored for checkout attribution
     // Only record the scan ONCE per campaign per page session
-    const campaignId = searchParams.get('campaign')
+    const campaignId = liveParams.get('campaign')
     if (campaignId && typeof window !== 'undefined') {
       localStorage.setItem('notjust_campaign_id', campaignId)
       // Only POST the scan if we haven't already for this campaign
@@ -102,7 +114,7 @@ function UrlSyncHandler() {
     }
 
     // Handle PhonePe payment return redirect
-    const paymentReturn = searchParams.get('payment')
+    const paymentReturn = liveParams.get('payment')
     if (paymentReturn === 'return') {
       if (currentView !== 'order-success') {
         navigateTo('order-success')
@@ -110,22 +122,18 @@ function UrlSyncHandler() {
       return
     }
 
-    const slug = searchParams.get('product')
+    const slug = liveParams.get('product')
     if (!slug) return
 
     const pathname = typeof window !== 'undefined' ? window.location.pathname : ''
     const isProductLinkPath = pathname === '/' || pathname === '/product'
 
     // Don't override user-initiated navigations to other views.
-    // searchParams can be stale after pushState (useSearchParams doesn't
-    // update on manual history.pushState calls). This previously caused
-    // the handler to snap the view back to product-detail, requiring
-    // multiple clicks to actually leave the product page.
-    //
     // The only views where product-sync should be ACTIVE are:
     //   'product-detail' (current product display) and
-    //   'product-learning' (learning module for the product).
-    // For ALL other views, exit early so user navigations are respected.
+    //   'product-learning' (learning module for the product) —
+    // plus the first render on a general/product link ('/' or '/product')
+    // where the view hasn't been switched to the product yet.
     if (
       !isProductLinkPath &&
       currentView !== 'product-detail' &&
@@ -135,13 +143,20 @@ function UrlSyncHandler() {
     }
 
     const findAndNavigate = async () => {
-      const productQuery = new URLSearchParams(searchParams.toString())
+      // Build the canonical product link from the LIVE URL
+      const productQuery = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '')
       productQuery.set('product', slug)
 
       if (products.length === 0) {
         try {
           const { productService } = await import('@/lib/data-service')
           const prods = await productService.list({ active: true })
+          // Abort if the user navigated elsewhere while the fetch was in
+          // flight — otherwise this stale closure would yank them back to
+          // the product page after they left it.
+          if (typeof window === 'undefined') return
+          const liveSlug = new URLSearchParams(window.location.search).get('product')
+          if (liveSlug !== slug) return
           setProducts(prods)
           const found = prods.find(p => p.slug === slug)
           if (found) {

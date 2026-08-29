@@ -459,3 +459,19 @@ Work Log:
 Stage Summary:
 - All product card CTAs now read "Learn More" — consistent funnel into the product page
 - Buying requires login, always: guests clicking Buy Now are taken to login and returned to the product page afterwards; learning completion (or admin-disabled learning) still gates the actual purchase
+
+---
+Task ID: 8
+Agent: Super Z (navbar Home stuck-fix)
+Task: Fix pressing Home (navbar/logo) after opening a product via a general/campaign link staying stuck on the product page
+
+Work Log:
+- Root cause: UrlSyncHandler read ?product=slug from useSearchParams, which does NOT update on manual history.pushState (the SPA's only navigation method). After opening a general link (/?product=slug, e.g. a campaign QR whose linked product) the stale query persisted; pressing Home wrote a clean '/' URL, but the effect re-ran on the view change, saw the stale slug, and its pathname==='/' exemption let it navigate BACK to product-detail — the page appeared stuck/refreshing
+- src/app/page.tsx UrlSyncHandler: all sync params (campaign, payment, product) are now derived from the LIVE window.location.search instead of the stale useSearchParams value; the address bar is the single source of truth
+- findAndNavigate builds the canonical product link from the live URL too, and the async products-fetch branch now aborts if the URL's product slug changed while the fetch was in flight (kills the related snap-back race)
+- Verified flows: general link entry still syncs to the product; Home/logo/Product/Our Journey all navigate away cleanly; refresh on /product?product=slug still reopens the product; refresh on '/' stays on landing; back/forward popstate unaffected; campaign scan attribution unchanged (once-per-campaign ref guard kept)
+- Verified: next build passes (SQLite swap, MySQL schema restored byte-identical); tsc baseline identical (133 pre-existing, 0 new)
+
+Stage Summary:
+- Navbar Home / logo / Product / Our Journey now always leave the product page, even after entering via a general campaign product link
+- No other behavior changed — general links still open their product on fresh load and refresh

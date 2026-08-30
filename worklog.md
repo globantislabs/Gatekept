@@ -611,3 +611,18 @@ Work Log:
 
 Stage Summary:
 - Invoice redesigned from plain black/white to a brand-colored professional document: logo in true colors, green/lime accents everywhere, Inter typography, color-coded status chips, green Total Due banner — no functional changes
+
+---
+Task ID: 16-b
+Agent: Super Z (invoice text darkening)
+Task: Make the invoice text a little darker
+
+Work Log:
+- Darkened all secondary/muted text on the invoice for readability, keeping the brand accents: light gray #8a857c → #57524a (company info block, invoice/order ref lines, item pack-type sub-labels, footer note, signature line, thank-you strip, "No items" cell, supplier GSTIN row); medium gray #6b6560 → #3f3b35 (Bill To/Ship To address+contact lines, GST Breakdown rows, totals rows, amount-in-words, cancelled status chip text)
+- Primary text was already dark ink #1f1e1c — untouched; green headings, table header, Total Due banner and status chip colors unchanged
+- 13 occurrences updated via two palette-wide replacements (CSS + 2 inline styles) — no markup, data, or logic changes
+- Visually re-verified with a fresh browser screenshot: all secondary text clearly darker and print-legible
+- Verified: tsc error profile byte-identical before/after via git stash diff (133 pre-existing, 0 new); next build PASSES (SQLite swap, MySQL schema restored byte-identical, md5 verified; Prisma client regenerated)
+
+Stage Summary:
+- Invoice secondary text darkened across the board (two shades stepped darker) while preserving the brand-colored design; purely visual, zero functional impact

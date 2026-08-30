@@ -137,49 +137,49 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helv
 .brand img{height:46px;width:auto;display:block}
 .btn{padding:9px 16px;border:none;border-radius:7px;background:#48805b;color:#fff;font-family:inherit;font-size:12px;font-weight:600;letter-spacing:.2px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px;transition:background .15s}
 .btn:hover{background:#3a6a4a}
-.co{text-align:right;font-size:10px;color:#8a857c;line-height:1.7;margin-bottom:18px}
+.co{text-align:right;font-size:10px;color:#57524a;line-height:1.7;margin-bottom:18px}
 .co b{color:#1f1e1c;font-weight:600}
 .hdr{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:20px}
 .hdr h1{font-size:25px;font-weight:800;letter-spacing:-.5px;color:#1f1e1c;line-height:1.1}
 .hdr .accent{width:58px;height:4px;border-radius:2px;background:linear-gradient(90deg,#48805b,#afb75d);margin-top:7px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-.hdr .ino{font-size:11.5px;color:#8a857c;margin-top:9px}
+.hdr .ino{font-size:11.5px;color:#57524a;margin-top:9px}
 .hdr .ino b{color:#1f1e1c;font-weight:600}
 .hdr .r{text-align:right}
 .st{display:inline-block;padding:4px 12px;border-radius:999px;font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;margin-bottom:7px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .st.paid{background:#e8f0eb;color:#2e6142;border:1px solid #c2d6c9}
 .st.due{background:#fdf5e6;color:#9a6a0d;border:1px solid #ecd9b0}
-.st.cancelled{background:#efeeec;color:#6b6560;border:1px solid #dcd8d0}
+.st.cancelled{background:#efeeec;color:#3f3b35;border:1px solid #dcd8d0}
 .pn{display:flex;gap:12px;margin-bottom:20px}
 .pn>div{flex:1;padding:13px 15px;background:#f9f8f6;border:1px solid #e7e4de;border-radius:9px}
 .pn h3{font-size:9.5px;text-transform:uppercase;letter-spacing:1px;color:#48805b;margin-bottom:7px;font-weight:700}
 .pn p{margin:2px 0;font-size:12px;line-height:1.55;color:#1f1e1c}
-.pn .m{color:#6b6560}
+.pn .m{color:#3f3b35}
 table{width:100%;border-collapse:separate;border-spacing:0;margin-bottom:16px;font-size:11.5px;border:1px solid #e7e4de;border-radius:9px;overflow:hidden}
 th{background:#48805b;color:#fff;padding:9px 10px;font-size:9px;text-transform:uppercase;letter-spacing:.6px;font-weight:700;text-align:left;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 th.r{text-align:right}th.c{text-align:center}
 td{padding:8px 10px;border-top:1px solid #eeede9;color:#1f1e1c;vertical-align:top;background:#fff}
 tbody tr:nth-child(even) td{background:#fafaf7}
-td .sub{font-size:9px;color:#8a857c;text-transform:uppercase;letter-spacing:.4px}
+td .sub{font-size:9px;color:#57524a;text-transform:uppercase;letter-spacing:.4px}
 td.r{text-align:right;font-variant-numeric:tabular-nums}td.c{text-align:center}
 td.amt,.amt{font-weight:700}
 .tr{display:flex;justify-content:space-between;gap:12px;margin-bottom:16px}
 .gst{flex:1;padding:13px 15px;background:#f9f8f6;border:1px solid #e7e4de;border-radius:9px}
 .gst h3{font-size:9.5px;text-transform:uppercase;letter-spacing:1px;color:#48805b;margin-bottom:7px;font-weight:700}
-.gst .row{display:flex;justify-content:space-between;padding:3px 0;font-size:11.5px;color:#6b6560}
+.gst .row{display:flex;justify-content:space-between;padding:3px 0;font-size:11.5px;color:#3f3b35}
 .gst .row b{color:#1f1e1c;font-weight:600;font-variant-numeric:tabular-nums}
 .tot{width:280px;padding:13px 15px;border:1px solid #e7e4de;border-radius:9px;background:#fff}
-.tot .row{display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:#6b6560}
+.tot .row{display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:#3f3b35}
 .tot .row span+span{font-variant-numeric:tabular-nums;font-weight:600;color:#1f1e1c}
 .tot .tt{margin-top:8px;padding:11px 13px;background:#48805b;border-radius:8px;font-size:15px;font-weight:800;color:#fff;display:flex;justify-content:space-between;align-items:center;letter-spacing:.2px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .tot .tt .v{font-variant-numeric:tabular-nums}
-.aw{padding:10px 14px;background:#f5f6e9;border:1px solid #e5e8cf;border-radius:9px;font-size:11px;color:#6b6560;font-style:italic;margin-bottom:16px}
+.aw{padding:10px 14px;background:#f5f6e9;border:1px solid #e5e8cf;border-radius:9px;font-size:11px;color:#3f3b35;font-style:italic;margin-bottom:16px}
 .aw b{font-style:normal;color:#1f1e1c;font-weight:600}
 .ft{border-top:1px solid #e7e4de;padding-top:16px;margin-top:6px;display:flex;justify-content:flex-end;gap:20px}
-.ft .r{text-align:right;font-size:10px;color:#8a857c;line-height:1.6}
+.ft .r{text-align:right;font-size:10px;color:#57524a;line-height:1.6}
 .ft .sig{margin-top:22px}
 .ft .sig .who{font-weight:700;color:#48805b;font-size:11px;letter-spacing:.3px}
-.ft .sig .ln{border-top:1px solid #c9c4bb;width:175px;margin-left:auto;padding-top:4px;font-size:9px;color:#8a857c}
-.dis{text-align:center;font-size:9.5px;color:#8a857c;margin-top:16px;padding-top:12px;border-top:1px dashed #e0ddd6;line-height:1.6}
+.ft .sig .ln{border-top:1px solid #c9c4bb;width:175px;margin-left:auto;padding-top:4px;font-size:9px;color:#57524a}
+.dis{text-align:center;font-size:9.5px;color:#57524a;margin-top:16px;padding-top:12px;border-top:1px dashed #e0ddd6;line-height:1.6}
 .dis b{color:#48805b;font-weight:700}
 @media print{body{background:#fff}.page{margin:0;max-width:none;border-radius:0;box-shadow:none}.inner{padding:10mm 12mm}.btn{display:none!important}@page{margin:0;size:A4}}
 @media(max-width:600px){.inner{padding:18px}.pn,.tr{flex-direction:column}.tot{width:100%}.hdr{flex-direction:column;align-items:flex-start}.hdr .r{text-align:left;margin-top:10px}.co{text-align:left}}
@@ -243,7 +243,7 @@ td.amt,.amt{font-weight:700}
       <th class="r">GST ${GST_RATE}%</th>
       <th class="r">Amount</th>
     </tr></thead>
-    <tbody>${itemRows || '<tr><td colspan="7" style="text-align:center;color:#8a857c;padding:16px">No items</td></tr>'}</tbody>
+    <tbody>${itemRows || '<tr><td colspan="7" style="text-align:center;color:#57524a;padding:16px">No items</td></tr>'}</tbody>
   </table>
   <div class="tr">
     <div class="gst">
@@ -251,7 +251,7 @@ td.amt,.amt{font-weight:700}
       <div class="row"><span>CGST (${GST_RATE / 2}%)</span><span><b>${inr(cgst)}</b></span></div>
       <div class="row"><span>SGST (${GST_RATE / 2}%)</span><span><b>${inr(sgst)}</b></span></div>
       <div class="row" style="border-top:1px solid #e0ddd6;margin-top:4px;padding-top:6px"><span>Total GST</span><span><b>${inr(totalGst)}</b></span></div>
-      <div class="row" style="font-size:9px;color:#8a857c;margin-top:4px"><span>Supplier GSTIN: ${COMPANY.gstin}</span></div>
+      <div class="row" style="font-size:9px;color:#57524a;margin-top:4px"><span>Supplier GSTIN: ${COMPANY.gstin}</span></div>
     </div>
     <div class="tot">
       <div class="row m"><span>Subtotal</span><span>${inr(invoice.subtotal)}</span></div>

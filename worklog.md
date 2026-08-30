@@ -576,3 +576,18 @@ Work Log:
 
 Stage Summary:
 - Learning completion is now direct: pass the last quiz → immediately back on the product page, unlocked (green Buy Now) — both yellow unlock cards removed
+
+---
+Task ID: 15
+Agent: Super Z (video description character limit)
+Task: Admin panel → product section → Manage Learning video form: set a total character limit on the video Description field
+
+Work Log:
+- Added module constant VIDEO_DESC_MAX_LENGTH = 500 in src/components/AdminPanel.tsx (DB column ProductVideo.description is Text/unlimited — this is the product-level cap, aligned with the existing short_description VarChar(500) convention)
+- Video Description textarea now enforces the cap three ways: maxLength={500} attribute (blocks typing AND paste), onChange slice(0, 500) (covers programmatic paths), and legacy descriptions are clamped with slice(0, 500) when loaded into the Edit Video form
+- Counter upgraded from "N characters" to "N / 500 characters", turning red (#dc2626) once within 50 characters of the cap so the admin sees the limit approaching
+- No other fields or flows touched (title/duration/order/video file/quiz forms unchanged)
+- Verified: tsc error profile byte-identical before/after via git stash diff (133 pre-existing, 0 new); next build PASSES (SQLite swap, MySQL schema restored byte-identical, md5 verified)
+
+Stage Summary:
+- Admin video descriptions are now hard-capped at 500 characters with a live X/500 counter and near-limit warning; legacy longer descriptions are trimmed to the cap when edited

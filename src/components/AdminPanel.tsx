@@ -177,6 +177,11 @@ function downloadQrCodeAsPng(svgElement: SVGElement | null, filename: string) {
   img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)))
 }
 
+// ─── Video description character limit (admin learning content) ───
+// Hard cap enforced on the video Description textarea; the DB column is Text,
+// this is the product-level limit (aligns with short_description VarChar(500))
+const VIDEO_DESC_MAX_LENGTH = 500
+
 // ─── QuizQuestion type for content tab ────────────────────
 interface QuizQuestion {
   id: string
@@ -2689,7 +2694,7 @@ function AdminDashboard() {
                               </div>
                               <div className="flex gap-1 shrink-0">
                                   {video.video_url && <Button size="sm" variant="outline" className="text-[10px] h-6 px-1.5 gap-0.5" style={{ borderColor: A.green, color: A.green }} onClick={() => setPreviewVideoId(previewVideoId === video.id ? null : video.id)}><Play className="w-2.5 h-2.5" /> Preview</Button>}
-                                  <Button size="sm" variant="outline" className="text-[10px] h-6 px-1.5 gap-0.5" style={{ borderColor: A.blue, color: A.blue }} onClick={() => { setEditingVideo(video); setShowAddVideo(true); setNewVideo({ title: video.title, duration: video.duration, description: video.description || '', order: video.order, video_url: video.video_url || '', thumbnail_url: video.thumbnail_url || '' }); setTimeout(() => learningScrollRef.current?.querySelector('#edit-video-form')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100) }}><Pencil className="w-2.5 h-2.5" /> Edit</Button>
+                                  <Button size="sm" variant="outline" className="text-[10px] h-6 px-1.5 gap-0.5" style={{ borderColor: A.blue, color: A.blue }} onClick={() => { setEditingVideo(video); setShowAddVideo(true); setNewVideo({ title: video.title, duration: video.duration, description: (video.description || '').slice(0, VIDEO_DESC_MAX_LENGTH), order: video.order, video_url: video.video_url || '', thumbnail_url: video.thumbnail_url || '' }); setTimeout(() => learningScrollRef.current?.querySelector('#edit-video-form')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100) }}><Pencil className="w-2.5 h-2.5" /> Edit</Button>
                                   <Button size="sm" variant="outline" className="text-[10px] h-6 px-1.5 gap-0.5" style={{ borderColor: A.red, color: A.red }} onClick={() => handleDeleteVideo(video.id)}><Trash2 className="w-2.5 h-2.5" /> Del</Button>
                                 </div>
                             </div>
@@ -2710,8 +2715,8 @@ function AdminDashboard() {
                           <div><Label className="text-xs mb-1">Order</Label><Input type="number" value={newVideo.order} onChange={e => setNewVideo({ ...newVideo, order: Number(e.target.value) })} className="h-8 text-sm" /></div>
                           <div className="sm:col-span-2">
                             <Label className="text-xs mb-1">Description</Label>
-                            <Textarea placeholder="Video description..." rows={2} value={newVideo.description} onChange={e => setNewVideo({ ...newVideo, description: e.target.value })} className="text-sm resize-none" />
-                            <p className="text-[10px] text-right" style={{ color: A.textMuted }}>{(newVideo.description || '').length} characters</p>
+                            <Textarea placeholder="Video description..." rows={2} maxLength={VIDEO_DESC_MAX_LENGTH} value={newVideo.description} onChange={e => setNewVideo({ ...newVideo, description: e.target.value.slice(0, VIDEO_DESC_MAX_LENGTH) })} className="text-sm resize-none" />
+                            <p className="text-[10px] text-right" style={{ color: (newVideo.description || '').length >= VIDEO_DESC_MAX_LENGTH - 50 ? '#dc2626' : A.textMuted }}>{(newVideo.description || '').length} / {VIDEO_DESC_MAX_LENGTH} characters</p>
                           </div>
                           <div className="sm:col-span-2">
                             <Label className="text-xs mb-1">Video File</Label>

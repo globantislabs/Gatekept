@@ -591,3 +591,23 @@ Work Log:
 
 Stage Summary:
 - Admin video descriptions are now hard-capped at 500 characters with a live X/500 counter and near-limit warning; legacy longer descriptions are trimmed to the cap when edited
+
+---
+Task ID: 16
+Agent: Super Z (invoice brand redesign)
+Task: Make the invoice colorful using the logo colors, with a better overall look and better font
+
+Work Log:
+- Located the single invoice renderer: GET /api/invoices/download/[id] returns a printable HTML tax invoice (all download entries — ProfilePage, by-order download_url — point here); previously pure black-and-white with the logo force-blackened via filter:brightness(0)
+- Logo now renders in its true brand colors: switched LOGO_URL to the local /images/notjust-logo-clean.png (same asset the site uses, no cross-domain dependency) and removed the brightness(0) filter — the green→lime gradient wordmark shows as designed
+- Brand palette applied throughout, taken from the app's BRAND constants: green #48805b (logo green), lime #afb75d (logo lime), ink #1f1e1c, muted #8a857c, soft borders #e7e4de, panel bg #f9f8f6, greenLight #e8f0eb, limeLight #f5f6e9
+- New visual design: 6px green→lime gradient brand bar across the top; logo + solid-green Print button header; TAX INVOICE title with gradient accent underline; rounded soft-bordered info panels (Bill To / Ship To / Payment) with green uppercase headings; green table header with white text + zebra striping + tabular numerals; GST Breakdown in a soft panel; Total Due as a solid brand-green rounded banner with white text; Amount in Words on a lime-tinted background; "For NOTJUST" sign-off in brand green; dashed-top thank-you footer
+- Typography upgraded from Helvetica/Arial to Inter (Google Fonts 400–800 with system fallbacks, preconnect headers); amounts use font-variant-numeric:tabular-nums so columns align
+- Status chip is now color-coded (display-only): PAID → green pill, CANCELLED → neutral pill, ISSUED/OVERDUE → amber pill, replacing the old black outline box
+- Print-safe: print-color-adjust:exact retained on all colored surfaces (gradient bar, table header, Total Due, chips), print CSS resets shadow/radius and hides the button; mobile ≤600px stacks panels
+- Zero logic changes: invoice lookup, GST math (CGST/SGST split), number-to-words, escaping, addresses, and response headers untouched — purely the HTML/CSS presentation
+- Visually verified with a browser screenshot of the real template rendered against mock data (logo colors, gradient bar, table, chips all correct)
+- Verified: tsc error profile byte-identical before/after via git stash diff (133 pre-existing across 52 file+code combos, 0 new); next build PASSES (SQLite swap, MySQL schema restored byte-identical, md5 verified)
+
+Stage Summary:
+- Invoice redesigned from plain black/white to a brand-colored professional document: logo in true colors, green/lime accents everywhere, Inter typography, color-coded status chips, green Total Due banner — no functional changes

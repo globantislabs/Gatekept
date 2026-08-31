@@ -626,3 +626,21 @@ Work Log:
 
 Stage Summary:
 - Invoice secondary text darkened across the board (two shades stepped darker) while preserving the brand-colored design; purely visual, zero functional impact
+
+---
+Task ID: 17
+Agent: Super Z (admin-driven subscription options in checkout)
+Task: Checkout must show ONLY the subscription plans the admin added to the product (no standard/built-in packs); if the admin added no plans, the subscription option must not appear at all
+
+Work Log:
+- Removed the hardcoded SUBSCRIPTION_PACKS "standard" method entirely (30/60/90/180-day packs with 5-20% discounts): constant, SubscriptionPack type, selectedPack state, the fallback pack selector UI, the "Save up to 20%" marketing badge, the subscriptionDiscount calculation, the pack summary in totals, and all subPack references in order placement
+- Plans now load on cart mount/change (previously only after the user clicked Subscribe): effect fetches /api/products/[first cart item] and parses product.subscription_plans JSON; invalid entries (cycle<=0 or price<=0) are filtered out so a half-configured admin plan can't create a ₹0 checkout
+- Subscribe option is now conditional: the entire "Purchase Option" card renders ONLY when the cart's product has admin-configured plans (hasSubPlans); no plans → card not rendered, checkout is pure one-time
+- Safety: if plans disappear while in subscription mode (cart changed/emptied), a guard effect drops purchaseMode back to 'one-time'; handlePlaceOrder additionally computes effectiveMode (subscription only when a plan is actually selected) used for item prices, pack fields, and purchase_mode
+- Subscription pricing now fully reflects the chosen admin plan: subtotal becomes plan.price × total quantity, GST 18% recomputed on that subtotal (previously GST was computed on the original cart price even in subscription mode), and the totals panel shows the plan label + auto-delivery cycle line; totals now add up coherently (subtotal + GST − discount = total)
+- Order payload unchanged in shape: unit_price/total_price use the plan price per item, pack_type = plan label (or cycle_DAY), pack_days = plan cycle, purchase_mode = 'subscription' — server-side /api/orders handling untouched
+- Admin side untouched: the existing subscription plan editor (cycle/price/label rows) already writes subscription_plans JSON; /api/products/[id] already returns the field
+- Verified: tsc error profile byte-identical before/after via git stash diff (133 pre-existing across 52 file+code combos, 0 new); next build PASSES (SQLite swap, MySQL schema restored byte-identical, md5 verified; Prisma client regenerated)
+
+Stage Summary:
+- Checkout subscriptions are now 100% admin-driven: plans added in the admin product editor appear at checkout with plan-based pricing (including GST); the built-in standard packs are gone; products without admin plans show no subscription option at all

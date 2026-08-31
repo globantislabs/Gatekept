@@ -77,16 +77,11 @@ const PAYMENT_OPTIONS: { value: PaymentMethod; label: string; icon: React.ReactN
   { value: 'NET_BANKING', label: 'Net Banking', icon: <Landmark className="w-5 h-5" />, description: 'All major banks supported' },
 ]
 
-// ─── Subscription Pack Options ──────────────────────────────
+// ─── Purchase Mode ──────────────────────────────────────
+// Subscriptions are 100% admin-driven: a product offers ONLY the plans the admin
+// configures in product.subscription_plans JSON — there are no built-in standard packs.
 type PurchaseMode = 'one-time' | 'subscription'
-type SubscriptionPack = '30_DAY' | '60_DAY' | '90_DAY' | '180_DAY'
-
-const SUBSCRIPTION_PACKS: { value: SubscriptionPack; label: string; days: number; discount: number; frequency: string }[] = [
-  { value: '30_DAY', label: '30 Day Pack', days: 30, discount: 5, frequency: 'Monthly' },
-  { value: '60_DAY', label: '60 Day Pack', days: 60, discount: 10, frequency: 'Bi-monthly' },
-  { value: '90_DAY', label: '90 Day Pack', days: 90, discount: 15, frequency: 'Quarterly' },
-  { value: '180_DAY', label: '180 Day Pack', days: 180, discount: 20, frequency: 'Half-yearly' },
-]
+type SubscriptionPlan = { cycle: number, price: number, label?: string }
 
 // ═══════════════════════════════════════════════════════════
 // CartView — Shopping cart display
@@ -407,47 +402,52 @@ export function CheckoutView() {
   const [placing, setPlacing] = useState(false)
   const [formErrors, setFormErrors] = useState<Record<string, string>>({})
 
-  // ── Subscription State ──
+  // ── Subscription State (admin-driven plans only) ──
   const [purchaseMode, setPurchaseMode] = useState<PurchaseMode>('one-time')
-  const [selectedPack, setSelectedPack] = useState<SubscriptionPack>('30_DAY')
-  // Product-specific subscription plans (parsed from product.subscription_plans JSON)
-  const [productSubPlans, setProductSubPlans] = useState<Array<{cycle: number, price: number, label: string}>>([])
+  // Admin-configured plans from product.subscription_plans JSON (empty = no subscription offered)
+  const [productSubPlans, setProductSubPlans] = useState<SubscriptionPlan[]>([])
   const [selectedSubPlanIdx, setSelectedSubPlanIdx] = useState(0)
 
-  // Fetch product subscription plans when subscription mode is selected
+  // Load the cart's admin-configured subscription plans on mount / cart change so the
+  // Subscribe option is shown ONLY when the admin actually added plans to the product.
   useEffect(() => {
-    if (purchaseMode !== 'subscription' || cart.length === 0) return
+    if (cart.length === 0) { setProductSubPlans([]); return }
     const firstItem = cart[0]
+    let cancelled = false
     fetch(`/api/products/${firstItem.productId}`)
       .then(res => res.json())
       .then(data => {
+        if (cancelled) return
         const product = data.product || data
         try {
           const plans = JSON.parse(product.subscription_plans || '[]')
-          if (Array.isArray(plans) && plans.length > 0) {
-            setProductSubPlans(plans)
-            setSelectedSubPlanIdx(0)
-          }
-        } catch { /* no plans */ }
+          const valid: SubscriptionPlan[] = Array.isArray(plans)
+            ? plans.filter((p: SubscriptionPlan) => p && Number(p.cycle) > 0 && Number(p.price) > 0)
+            : []
+          setProductSubPlans(valid)
+          setSelectedSubPlanIdx(0)
+        } catch { setProductSubPlans([]) }
       })
-      .catch(() => {})
-  }, [purchaseMode, cart])
+      .catch(() => { if (!cancelled) setProductSubPlans([]) })
+    return () => { cancelled = true }
+  }, [cart])
+
+  // If plans disappear (cart changed), drop back to one-time so a stale mode can't be ordered
+  useEffect(() => {
+    if (purchaseMode === 'subscription' && productSubPlans.length === 0) setPurchaseMode('one-time')
+  }, [purchaseMode, productSubPlans])
 
   // ── Derived ──
-  const subtotal = cartTotal()
-  const taxAmount = Math.round(subtotal * 0.18)
-  const subPack = SUBSCRIPTION_PACKS.find(p => p.value === selectedPack)
-  // For product-specific plans, use the plan's price directly
+  const hasSubPlans = productSubPlans.length > 0
   const selectedSubPlan = productSubPlans[selectedSubPlanIdx] || null
-  const subscriptionDiscount = purchaseMode === 'subscription' && subPack && productSubPlans.length === 0
-    ? Math.round(subtotal * (subPack.discount / 100))
-    : 0
-  // When using product-specific plans, the subscription price replaces the cart price
-  const subscriptionSubtotal = purchaseMode === 'subscription' && selectedSubPlan
+  // In subscription mode the admin-configured plan price replaces the cart price,
+  // so subtotal, GST and total all reflect the chosen plan.
+  const subtotal = purchaseMode === 'subscription' && selectedSubPlan
     ? selectedSubPlan.price * cart.reduce((sum, item) => sum + item.quantity, 0)
-    : subtotal
-  const discountAmount = cart.reduce((sum, item) => sum + ((item.packDiscount || 0) / 100) * item.price * item.quantity, 0) + subscriptionDiscount
-  const totalAmount = (purchaseMode === 'subscription' && selectedSubPlan ? subscriptionSubtotal : subtotal) + taxAmount - discountAmount
+    : cartTotal()
+  const taxAmount = Math.round(subtotal * 0.18)
+  const discountAmount = cart.reduce((sum, item) => sum + ((item.packDiscount || 0) / 100) * item.price * item.quantity, 0)
+  const totalAmount = subtotal + taxAmount - discountAmount
   const isEmpty = cart.length === 0
 
   // ── Auth Guard ──
@@ -509,7 +509,8 @@ export function CheckoutView() {
     setPlacing(true)
 
     try {
-      const totalAmount = cartTotal() * (purchaseMode === 'subscription' && subPack ? (1 - subPack.discount / 100) : 1)
+      // Guard: subscription mode is only valid when an admin-configured plan is selected
+      const effectiveMode: PurchaseMode = purchaseMode === 'subscription' && selectedSubPlan ? 'subscription' : 'one-time'
 
       // Resolve shipping fields — when sameAsBilling, copy billing → shipping
       const finalShippingName = sameAsBilling ? billingName.trim() : shippingName.trim()
@@ -527,12 +528,12 @@ export function CheckoutView() {
           product_name: item.name,
           product_type: item.type || 'FIZZ',
           quantity: item.quantity,
-          // When using product-specific subscription plan, use the plan's price
-          unit_price: purchaseMode === 'subscription' && selectedSubPlan ? selectedSubPlan.price : item.price,
-          total_price: purchaseMode === 'subscription' && selectedSubPlan ? selectedSubPlan.price * item.quantity : item.price * item.quantity,
-          pack_type: purchaseMode === 'subscription' ? (selectedSubPlan ? (selectedSubPlan.label || `${selectedSubPlan.cycle}_DAY`) : selectedPack) : (item.packType || null),
-          pack_days: purchaseMode === 'subscription' ? (selectedSubPlan ? selectedSubPlan.cycle : subPack?.days) : (item.packDays || null),
-          pack_discount: purchaseMode === 'subscription' ? (selectedSubPlan ? 0 : subPack?.discount) : (item.packDiscount || null),
+          // When using an admin-configured subscription plan, the plan price replaces the item price
+          unit_price: effectiveMode === 'subscription' && selectedSubPlan ? selectedSubPlan.price : item.price,
+          total_price: effectiveMode === 'subscription' && selectedSubPlan ? selectedSubPlan.price * item.quantity : item.price * item.quantity,
+          pack_type: effectiveMode === 'subscription' && selectedSubPlan ? (selectedSubPlan.label || `${selectedSubPlan.cycle}_DAY`) : (item.packType || null),
+          pack_days: effectiveMode === 'subscription' && selectedSubPlan ? selectedSubPlan.cycle : (item.packDays || null),
+          pack_discount: effectiveMode === 'subscription' && selectedSubPlan ? 0 : (item.packDiscount || null),
         })),
         // ── Billing address (primary contact) ──
         billing_name: billingName.trim(),
@@ -552,7 +553,7 @@ export function CheckoutView() {
         shipping_pincode: finalShippingPincode,
         same_as_billing: sameAsBilling,
         payment_method: paymentMethod,
-        purchase_mode: purchaseMode,
+        purchase_mode: effectiveMode,
       }
 
       const order = await orderService.create(orderData)
@@ -1005,7 +1006,8 @@ export function CheckoutView() {
             </motion.div>
           )}
 
-          {/* Purchase Mode — One-time vs Subscription */}
+          {/* Purchase Mode — shown ONLY when the product has admin-configured subscription plans */}
+          {hasSubPlans && (
           <motion.div variants={fadeInUp}>
             <Card className="bg-white border-[#e3dfd8] shadow-sm rounded-xl">
               <CardHeader className="pb-2">
@@ -1014,7 +1016,7 @@ export function CheckoutView() {
                   Purchase Option
                 </CardTitle>
                 <CardDescription className="text-[#88837b] text-sm">
-                  Choose one-time purchase or subscribe & save
+                  Choose one-time purchase or subscribe with a plan configured by the store
                 </CardDescription>
               </CardHeader>
               <CardContent className="pt-2 space-y-4">
@@ -1052,9 +1054,6 @@ export function CheckoutView() {
                     <div className="flex items-center gap-2 mb-1">
                       <Repeat className={`w-4 h-4 ${purchaseMode === 'subscription' ? 'text-[#48805b]' : 'text-[#88837b]'}`} />
                       <span className="font-semibold text-sm text-[#1f1e1c]">Subscribe</span>
-                      <Badge className="bg-[#afb75d]/20 text-[#48805b] text-[10px] px-1.5 py-0 border-[#afb75d]/30">
-                        Save up to 20%
-                      </Badge>
                     </div>
                     <p className="text-xs text-[#88837b]">Auto-delivery, cancel anytime</p>
                     {purchaseMode === 'subscription' && (
@@ -1072,55 +1071,29 @@ export function CheckoutView() {
                     className="space-y-2"
                   >
                     <p className="text-xs font-medium text-[#88837b] uppercase tracking-wider">Select Subscription Cycle</p>
-                    {productSubPlans.length > 0 ? (
-                      /* Product-specific subscription plans */
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        {productSubPlans.map((plan, idx) => (
-                          <button
-                            key={idx}
-                            type="button"
-                            onClick={() => setSelectedSubPlanIdx(idx)}
-                            className={`p-3 rounded-lg border-2 text-left transition-all ${
-                              selectedSubPlanIdx === idx
-                                ? 'border-[#48805b] bg-[#48805b]/8'
-                                : 'border-[#e3dfd8] bg-[#f4f3f0] hover:border-[#48805b]/30'
-                            }`}
-                          >
-                            <div className="flex items-center justify-between">
-                              <p className="font-semibold text-sm text-[#1f1e1c]">{plan.label || `${plan.cycle} days`}</p>
-                              <p className="font-bold text-sm text-[#48805b]">₹{plan.price.toLocaleString('en-IN')}</p>
-                            </div>
-                            <div className="flex items-center gap-1 mt-1">
-                              <Calendar className="w-3 h-3 text-[#88837b]" />
-                              <p className="text-[10px] text-[#88837b]">Every {plan.cycle} days · ₹{Math.round(plan.price / plan.cycle)}/day</p>
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                    ) : (
-                      /* Fallback: hardcoded packs (when product has no custom plans) */
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                        {SUBSCRIPTION_PACKS.map(pack => (
-                          <button
-                            key={pack.value}
-                            type="button"
-                            onClick={() => setSelectedPack(pack.value)}
-                            className={`p-2.5 rounded-lg border-2 text-center transition-all ${
-                              selectedPack === pack.value
-                                ? 'border-[#48805b] bg-[#48805b]/8'
-                                : 'border-[#e3dfd8] bg-[#f4f3f0] hover:border-[#48805b]/30'
-                            }`}
-                          >
-                            <p className="font-semibold text-sm text-[#1f1e1c]">{pack.label}</p>
-                            <p className="text-xs text-[#48805b] font-medium mt-0.5">{pack.discount}% off</p>
-                            <div className="flex items-center justify-center gap-1 mt-1">
-                              <Calendar className="w-3 h-3 text-[#88837b]" />
-                              <p className="text-[10px] text-[#88837b]">{pack.frequency}</p>
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                    )}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {productSubPlans.map((plan, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => setSelectedSubPlanIdx(idx)}
+                          className={`p-3 rounded-lg border-2 text-left transition-all ${
+                            selectedSubPlanIdx === idx
+                              ? 'border-[#48805b] bg-[#48805b]/8'
+                              : 'border-[#e3dfd8] bg-[#f4f3f0] hover:border-[#48805b]/30'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <p className="font-semibold text-sm text-[#1f1e1c]">{plan.label || `${plan.cycle} days`}</p>
+                            <p className="font-bold text-sm text-[#48805b]">₹{plan.price.toLocaleString('en-IN')}</p>
+                          </div>
+                          <div className="flex items-center gap-1 mt-1">
+                            <Calendar className="w-3 h-3 text-[#88837b]" />
+                            <p className="text-[10px] text-[#88837b]">Every {plan.cycle} days · ₹{Math.round(plan.price / plan.cycle)}/day</p>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
                     {selectedSubPlan && (
                       <div className="p-2.5 bg-[#48805b]/10 border border-[#48805b]/20 rounded-lg flex items-center gap-2">
                         <Sparkles className="w-4 h-4 text-[#48805b] flex-shrink-0" />
@@ -1134,6 +1107,7 @@ export function CheckoutView() {
               </CardContent>
             </Card>
           </motion.div>
+          )}
 
           {/* Payment Method */}
           <motion.div variants={fadeInUp}>
@@ -1266,16 +1240,14 @@ export function CheckoutView() {
                   </div>
                   {discountAmount > 0 && (
                     <div className="flex justify-between text-sm">
-                      <span className="text-[#48805b]">
-                        {purchaseMode === 'subscription' ? 'Subscription Discount' : 'Pack Discount'}
-                      </span>
+                      <span className="text-[#48805b]">Pack Discount</span>
                       <span className="text-[#48805b]">-&#8377;{discountAmount.toLocaleString('en-IN')}</span>
                     </div>
                   )}
-                  {purchaseMode === 'subscription' && subPack && (
+                  {purchaseMode === 'subscription' && selectedSubPlan && (
                     <div className="flex items-center gap-1.5 text-xs text-[#48805b] pt-1">
                       <Repeat className="w-3 h-3" />
-                      <span>{subPack.label} · {subPack.frequency} delivery</span>
+                      <span>{selectedSubPlan.label || `${selectedSubPlan.cycle}-day cycle`} · auto-delivery every {selectedSubPlan.cycle} days</span>
                     </div>
                   )}
                   <div className="flex justify-between text-sm">

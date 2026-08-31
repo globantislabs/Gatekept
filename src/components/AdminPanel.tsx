@@ -219,6 +219,7 @@ function AdminDashboard() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [orderView, setOrderView] = useState<'kanban' | 'table'>('table')
+  const [orderSearch, setOrderSearch] = useState('')
   const [adminProducts, setAdminProducts] = useState<Product[]>([])
   const [adminSubscriptions, setAdminSubscriptions] = useState<Subscription[]>([])
   const [productVideoCounts, setProductVideoCounts] = useState<Record<string, number>>({})
@@ -714,7 +715,19 @@ function AdminDashboard() {
     : users
 
   const orderStatuses = ['PLACED', 'CONFIRMED', 'SHIPPED', 'DELIVERED'] as const
-  const ordersByKanbanStatus = (status: string) => orders.filter((o) => o.status === status)
+  // Search covers order number, customer identity, products, payment and status
+  const filteredOrders = orderSearch.trim()
+    ? orders.filter((o) => {
+        const u: any = (o as any).user || {}
+        const haystack = [
+          o.order_number, o.id, o.status, o.payment_method, o.payment_status,
+          u.name, u.email, u.phone,
+          ...((o.items || []) as any[]).map((i) => i.product_name),
+        ].filter(Boolean).join(' ').toLowerCase()
+        return haystack.includes(orderSearch.trim().toLowerCase())
+      })
+    : orders
+  const ordersByKanbanStatus = (status: string) => filteredOrders.filter((o) => o.status === status)
 
   const statusColors: Record<string, { text: string; bg: string; dot: string }> = {
     PLACED: { text: A.amber, bg: A.amberLight, dot: A.amber },
@@ -1149,18 +1162,41 @@ function AdminDashboard() {
 
         return (
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-3 flex-wrap">
               <div>
                 <h2 className="text-base font-semibold" style={{ color: A.text }}>Orders</h2>
-                <p className="text-[12px]" style={{ color: A.textMuted }}>{orders.length} total orders</p>
+                <p className="text-[12px]" style={{ color: A.textMuted }}>
+                  {orderSearch.trim() ? `${filteredOrders.length} of ${orders.length} orders match` : `${orders.length} total orders`}
+                </p>
               </div>
-              <div className="flex items-center gap-1 p-1 rounded-md border" style={{ borderColor: A.border, background: '#fff' }}>
-                <button onClick={() => setOrderView('table')} className={`px-3 py-1.5 rounded text-[11px] font-medium transition-colors ${orderView === 'table' ? 'text-white' : ''}`} style={orderView === 'table' ? { background: A.green, color: '#fff' } : { color: A.textSecondary }}>
-                  <ClipboardList className="w-3.5 h-3.5 inline mr-1" /> Table
-                </button>
-                <button onClick={() => setOrderView('kanban')} className={`px-3 py-1.5 rounded text-[11px] font-medium transition-colors ${orderView === 'kanban' ? 'text-white' : ''}`} style={orderView === 'kanban' ? { background: A.green, color: '#fff' } : { color: A.textSecondary }}>
-                  <Columns3 className="w-3.5 h-3.5 inline mr-1" /> Board
-                </button>
+              <div className="flex items-center gap-2 flex-wrap">
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none" style={{ color: A.textMuted }} />
+                  <Input
+                    value={orderSearch}
+                    onChange={(e) => setOrderSearch(e.target.value)}
+                    placeholder="Search ID, customer, product, status…"
+                    className="h-8 pl-8 pr-7 text-[12px] w-full sm:w-64"
+                    style={{ borderColor: A.border, background: '#fff', color: A.text }}
+                  />
+                  {orderSearch && (
+                    <button
+                      onClick={() => setOrderSearch('')}
+                      className="absolute right-2 top-1/2 -translate-y-1/2"
+                      title="Clear search"
+                    >
+                      <X className="w-3.5 h-3.5" style={{ color: A.textMuted }} />
+                    </button>
+                  )}
+                </div>
+                <div className="flex items-center gap-1 p-1 rounded-md border" style={{ borderColor: A.border, background: '#fff' }}>
+                  <button onClick={() => setOrderView('table')} className={`px-3 py-1.5 rounded text-[11px] font-medium transition-colors ${orderView === 'table' ? 'text-white' : ''}`} style={orderView === 'table' ? { background: A.green, color: '#fff' } : { color: A.textSecondary }}>
+                    <ClipboardList className="w-3.5 h-3.5 inline mr-1" /> Table
+                  </button>
+                  <button onClick={() => setOrderView('kanban')} className={`px-3 py-1.5 rounded text-[11px] font-medium transition-colors ${orderView === 'kanban' ? 'text-white' : ''}`} style={orderView === 'kanban' ? { background: A.green, color: '#fff' } : { color: A.textSecondary }}>
+                    <Columns3 className="w-3.5 h-3.5 inline mr-1" /> Board
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -1285,7 +1321,7 @@ function AdminDashboard() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {orders.map((o) => {
+                    {filteredOrders.map((o) => {
                       const inv = (o as any).invoice as InvoiceListItem | null | undefined
                       return (
                         <TableRow key={o.id} className="hover:bg-[#f8f7f5] cursor-pointer" style={{ borderColor: A.borderLight }} onClick={() => setSelectedOrder(o)}>
@@ -1343,6 +1379,13 @@ function AdminDashboard() {
                         </TableRow>
                       )
                     })}
+                    {filteredOrders.length === 0 && (
+                      <TableRow style={{ borderColor: A.borderLight }}>
+                        <TableCell colSpan={7} className="text-center py-10 text-[12px]" style={{ color: A.textMuted }}>
+                          {orderSearch.trim() ? `No orders match "${orderSearch.trim()}"` : 'No orders yet.'}
+                        </TableCell>
+                      </TableRow>
+                    )}
                   </TableBody>
                 </Table>
               </div>

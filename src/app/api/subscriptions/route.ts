@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { checkAdmin, jsonResponse, errorResponse, handleOptions } from '@/lib/api-utils'
+import { healMissingOrderSubscriptions } from '@/lib/subscription-utils'
 
 // OPTIONS - CORS preflight
 export async function OPTIONS() {
@@ -19,7 +20,16 @@ export async function GET(req: NextRequest) {
       if (!isAdmin) {
         return errorResponse('Unauthorized: Admin access required', 403)
       }
-      
+
+      // Self-heal: write Subscription rows for subscription orders that were
+      // placed before auto-creation existed (idempotent, best-effort)
+      try {
+        const healed = await healMissingOrderSubscriptions()
+        if (healed > 0) console.log(`[Subscriptions] Self-heal created ${healed} missing subscription row(s)`)
+      } catch (healErr: any) {
+        console.error('[Subscriptions] Self-heal pass failed:', healErr?.message || healErr)
+      }
+
       const subscriptions = await db.subscription.findMany({
         include: {
           user: { select: { id: true, name: true, email: true, phone: true } },

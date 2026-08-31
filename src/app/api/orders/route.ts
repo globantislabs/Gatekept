@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { checkAdmin, jsonResponse, errorResponse, handleOptions } from '@/lib/api-utils'
 import { notificationService } from '@/lib/notification-service'
+import { ensureSubscriptionForOrder, pickSubscriptionItem, matchesProductPlan } from '@/lib/subscription-utils'
 
 // OPTIONS - CORS preflight
 export async function OPTIONS() {
@@ -72,6 +73,7 @@ export async function POST(req: NextRequest) {
       shipping_city, shipping_state, shipping_pincode,
       same_as_billing,
       payment_method, notes,
+      purchase_mode,
     } = body
 
     if (!user_id || !items || items.length === 0) {
@@ -244,6 +246,29 @@ export async function POST(req: NextRequest) {
     } catch (invErr: any) {
       console.error('[Orders] Failed to auto-generate invoice:', invErr.message)
       // Don't block order creation if invoice generation fails
+    }
+
+    // ── Auto-create the subscription record for subscription-mode orders ──
+    // Checkout sends purchase_mode explicitly; current one-time items carry no
+    // pack info. If purchase_mode is missing (cached/legacy client), fall back
+    // to the item's pack cycle matching an admin-configured plan — so old-style
+    // one-time pack purchases on plan-less products never become subscriptions.
+    // Subscription.order_id is unique → exactly one subscription per order.
+    try {
+      const mode = String(purchase_mode || '').toLowerCase()
+      const subItem = pickSubscriptionItem(order as any)
+      const isSubscriptionOrder =
+        mode === 'subscription' ||
+        (!purchase_mode && !!subItem && (await matchesProductPlan(subItem)))
+      if (isSubscriptionOrder) {
+        const subscription = await ensureSubscriptionForOrder(order as any)
+        if (subscription) {
+          console.log(`[Orders] Auto-created subscription ${subscription.id} for order ${order.order_number}`)
+        }
+      }
+    } catch (subErr: any) {
+      // Never block order creation if the subscription row fails
+      console.error('[Orders] Failed to auto-create subscription:', subErr?.message || subErr)
     }
 
     // Fire order placed notification asynchronously (don't block the response)

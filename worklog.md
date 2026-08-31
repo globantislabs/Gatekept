@@ -695,3 +695,20 @@ Work Log:
 
 Stage Summary:
 - Admin can now delete orders (with cascade to items/tracking/subscription/invoice) and delete products regardless of linked orders (links detach, history snapshots preserved); new orders get sequential human-friendly NJMSPN001 IDs across app/WhatsApp/email/SMS/invoices; one physical QR scan records exactly one row (60s server-side dedupe); uploads live at project-root data/uploads and survive every build/redeploy; invoice dates always show the current IST date
+
+---
+Task ID: 21
+Agent: Super Z (subscriptions auto-create + self-heal + orders search)
+Task: (a) admin Subscriptions page showed 0 subscriptions even though subscription orders were placed from the user account; (b) subscriptions must appear/update in the user's account after placing a subscription order; (c) admin Orders needs a search option
+
+Work Log:
+- ROOT CAUSE (a+b): no Subscription row was EVER created — POST /api/orders ignored the checkout's purchase_mode field and the client never called /api/subscriptions (subscriptionService.create has zero callers), so admin Subscriptions showed 0 and the user's account subscriptions tab had nothing to show; the pause/resume OTP flows in ProfilePage already existed but had no rows to act on
+- New shared helper src/lib/subscription-utils.ts: pickSubscriptionItem (first item with pack_days>0), buildSubscriptionData (maps order+item to a Subscription row: frequency = plan cycle, next_delivery = now+cycle days, ACTIVE, quantity aggregated across items), ensureSubscriptionForOrder (idempotent create — skips when a row already exists), matchesProductPlan (item pack cycle must match an admin-configured plan on the product), healMissingOrderSubscriptions
+- POST /api/orders now auto-creates the subscription: purchase_mode='subscription' (explicit, trusted) OR (legacy clients, no purchase_mode) item pack cycle matches an admin-configured plan — old-style one-time pack purchases on plan-less products can never become phantom subscriptions; failures are logged and never block order creation; order_id unique → exactly one subscription per order
+- Self-heal for pre-existing orders: GET /api/subscriptions?admin=true now runs healMissingOrderSubscriptions first — orders without a subscription whose item pack cycle matches the product's admin plans get their row written (idempotent; pre-plan one-time packs deliberately excluded); the user's existing broken data heals itself on the next admin visit
+- Orders search in AdminPanel: orderSearch state + search input in the Orders header (visible in both Table and Board views) matching order number, id, status, payment method/status, customer name/email/phone and product names; table renders filteredOrders with "X of Y orders match" counter and a "No orders match" empty state; kanban columns filter the same way
+- Live-verified with dev server + fresh SQLite DB (14/14 checks): subscription order → 1 ACTIVE row, frequency_days from plan cycle, quantity aggregated; one-time order → no row; wiped row recreated by admin-GET self-heal with user relation intact; repeat admin GETs create no duplicates; plan-less-product legacy pack order NOT healed; user_id subscriptions list returns the row (ProfilePage data source); non-admin blocked 403
+- Verified: tsc error profile byte-identical before/after via git stash diff (130 pre-existing, 0 new); next build PASSES (SQLite swap, MySQL schema restored byte-identical md5-verified, Prisma client regenerated); test DB removed
+
+Stage Summary:
+- Subscription orders now automatically create a Subscription record (status ACTIVE, delivery schedule from the admin plan) — admin Subscriptions page and the user's account subscriptions populate correctly, and orders placed before this fix self-heal the next time the admin opens the Subscriptions tab; admin Orders table and board now have full-text search across order ID, customer, products, payment and status

@@ -661,3 +661,19 @@ Work Log:
 
 Stage Summary:
 - Campaign/product QR links now reliably land on the linked product: the premature 1-second redirect race is eliminated (waits while ?product= is present, 8s cap) and slug matching tolerates legacy/name-based/case-drifted links; verified end-to-end in a live browser
+
+---
+Task ID: 19
+Agent: Super Z (editable subscription plans in admin product editor)
+Task: Admin subscription plans must be editable — existing plans on a product must appear and be editable when the admin opens the product edit dialog
+
+Work Log:
+- ROOT CAUSE: the product Edit handler did not carry subscription_plans (nor slug) into the form state — the Edit dialog always opened with an EMPTY subscription plan editor, so saved plans could neither be seen nor edited; if the admin added a new plan while editing, the empty-start array silently REPLACED the product's existing plans
+- Added subscription_plans (string, JSON) to the newProduct form state shape (initial useState + resetProductForm) — also eliminates 3 pre-existing baseline tsc errors (TS2339/TS2353 on the editor, TS2345 missing slug in the edit handler)
+- Edit handler now hydrates subscription_plans: (product as any).subscription_plans || '[]' — existing plan rows (cycle/price/label) load straight into the editor with per-row edit + delete + add, exactly like creation time
+- Edit handler now also hydrates slug: product.slug || '' — previously the slug field opened EMPTY and every edit+save silently regenerated the slug from the name, which would break product/campaign QR links pointing at the old slug; slug is now stable across edits unless the admin explicitly edits the field
+- Verified no data-wipe path exists server-side: PUT /api/products/[id] only updates fields that are !== undefined (sanitizeStringFields copies all fields through), GET /api/products admin list already returns subscription_plans (select includes it), schema field is String? @db.Text so JSON.parse hydration is direct
+- Verified: tsc error profile diff shows ONLY the 3 pre-existing error removals, 0 new errors; next build PASSES (SQLite swap, MySQL schema restored byte-identical md5-verified, Prisma client regenerated)
+
+Stage Summary:
+- Subscription plans are now fully editable: opening Edit on a product loads its saved plans into the cycle/price/label editor (edit any row, delete rows, add new ones); saving persists changes; removing all rows clears the plans (checkout then shows no subscription option); slug stays stable across edits protecting QR/campaign links

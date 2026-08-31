@@ -259,6 +259,7 @@ function AdminDashboard() {
     serving_size: '', allergen_info: '', storage_info: '',
     shelf_life: '', country_origin: '', fssai_license: '', hsn_code: '',
     gst_rate: 0, min_order_qty: 1, max_order_qty: 10, discount_label: '', highlights: '',
+    subscription_plans: '',
   })
 
   const resetProductForm = () => {
@@ -270,6 +271,7 @@ function AdminDashboard() {
       serving_size: '', allergen_info: '', storage_info: '',
       shelf_life: '', country_origin: '', fssai_license: '', hsn_code: '',
       gst_rate: 0, min_order_qty: 1, max_order_qty: 10, discount_label: '', highlights: '',
+      subscription_plans: '',
     })
     setEditingProduct(null)
   }
@@ -2458,8 +2460,9 @@ function AdminDashboard() {
                         <Button variant="ghost" size="sm" className="h-7 text-[11px] gap-1 flex-1" style={{ color: A.blue }} onClick={() => {
                           setEditingProduct(product)
                           setNewProduct({
-                            name: product.name, description: product.description || '', short_description: product.short_description || '',
+                            name: product.name, slug: product.slug || '', description: product.description || '', short_description: product.short_description || '',
                             price: product.price, subscription_price: (product as any).subscription_price || 0, mrp: product.mrp || 0, stock: product.stock,
+                            subscription_plans: (product as any).subscription_plans || '[]',
                             image_url: product.image_url || '', gallery_images: product.gallery_images || '',
                             type: product.type, category: product.category || '',
                             sku: product.sku || '', weight: product.weight || '',

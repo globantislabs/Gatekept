@@ -170,15 +170,25 @@ export default function ProductDetailPage() {
     }
   }, [])
 
-  // Timeout redirect: if no product ID after 1 second, redirect to products page
+  // Timeout redirect: if no product ID, eventually redirect to the products page.
+  // QR / campaign / share links land on /product?product=slug with selectedProductId
+  // still empty — the URL sync handler resolves the slug ASYNC (it fetches the whole
+  // product list first). The old 1-second timer used to fire BEFORE that fetch
+  // finished on slower connections, sending QR visitors to the catalog too early;
+  // the sync handler then aborted because the URL no longer carried ?product=.
+  // Now we keep waiting while the URL still carries a product slug, and only
+  // redirect once the link is genuinely gone or clearly unresolvable (8s cap).
   useEffect(() => {
     if (selectedProductId) return
-    const timer = setTimeout(() => {
-      if (!selectedProductId) {
+    const started = Date.now()
+    const timer = setInterval(() => {
+      const liveSlug = new URLSearchParams(window.location.search).get('product')
+      if (!liveSlug || Date.now() - started > 8000) {
+        clearInterval(timer)
         navigateTo('products')
       }
-    }, 1000)
-    return () => clearTimeout(timer)
+    }, 500)
+    return () => clearInterval(timer)
   }, [selectedProductId, navigateTo])
 
   // Fetch learning progress for logged-in user (re-fetch when progressFetchKey changes)

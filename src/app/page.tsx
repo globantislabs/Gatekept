@@ -72,6 +72,17 @@ const pathToView = (pathname: string): AppView => {
   }
 }
 
+// ─── Tolerant product matching for QR / campaign / share links ────────────
+// QR codes built by the admin panel encode `product.slug || slugify(name)`. If a
+// product's stored slug ever drifts (legacy name-based link, case/separator
+// differences), an exact `p.slug === slug` lookup fails silently and the visitor
+// never reaches the product. Match on stored slug OR normalized slug OR
+// normalized name so all these link variants resolve.
+const normSlug = (s: string | null | undefined) =>
+  (s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+const matchesProductSlug = (p: { slug: string; name: string }, slug: string) =>
+  p.slug === slug || normSlug(p.slug) === normSlug(slug) || normSlug(p.name) === normSlug(slug)
+
 // ─── URL Sync: reads ?product=slug and navigates ────────────
 function UrlSyncHandler() {
   const searchParams = useSearchParams()
@@ -158,7 +169,7 @@ function UrlSyncHandler() {
           const liveSlug = new URLSearchParams(window.location.search).get('product')
           if (liveSlug !== slug) return
           setProducts(prods)
-          const found = prods.find(p => p.slug === slug)
+          const found = prods.find(p => matchesProductSlug(p, slug))
           if (found) {
             setSelectedProductId(found.id)
             if (currentView !== 'product-detail' && currentView !== 'product-learning') {
@@ -167,7 +178,7 @@ function UrlSyncHandler() {
           }
         } catch { /* ignore */ }
       } else {
-        const found = products.find(p => p.slug === slug)
+        const found = products.find(p => matchesProductSlug(p, slug))
         if (found) {
           setSelectedProductId(found.id)
           if (currentView !== 'product-detail' && currentView !== 'product-learning') {

@@ -644,3 +644,20 @@ Work Log:
 
 Stage Summary:
 - Checkout subscriptions are now 100% admin-driven: plans added in the admin product editor appear at checkout with plan-based pricing (including GST); the built-in standard packs are gone; products without admin plans show no subscription option at all
+
+---
+Task ID: 18
+Agent: Super Z (campaign QR landing fix)
+Task: Campaign QR codes do not navigate to the respective product — investigate and fix
+
+Work Log:
+- Traced the full QR landing flow: admin QR encodes https://notjustwatr.com/product?campaign=ID&product=slug → next.config SPA rewrite serves / → pathToView('/product') boots the app STRAIGHT INTO product-detail view with selectedProductId still null → ProductDetailPage mounts → its "no product after 1 second" timeout fires → navigateTo('products')
+- ROOT CAUSE (race condition): the URL sync handler resolves the slug ASYNC (dynamic import + full product-list fetch, routinely >1s on mobile/cold start). The old 1-second redirect timer won that race, the URL lost its ?product= param, and when the fetch finally completed the sync handler's stale-URL guard (liveSlug !== slug) aborted — QR visitors were left on the catalog page, never reaching the product
+- Fix 1 (ProductDetailPage.tsx): replaced the 1s setTimeout with a 500ms interval that keeps waiting while the live URL still carries ?product=<slug>, redirecting to the catalog only when the link is genuinely gone (user navigated away / no link) or clearly unresolvable (8s cap); interval auto-clears when a product id arrives
+- Fix 2 (page.tsx): tolerant link matching — QRs built by the admin encode product.slug || slugify(name), so legacy name-based links and case/separator drift used to fail the exact p.slug === slug lookup; both lookup branches now match stored slug OR normalized slug OR normalized product name (normSlug helper)
+- Live-verified with a real browser against a dev server + seeded SQLite product: /product?campaign=TEST-CAMP-01&product=test-watr-qr renders the actual product detail page (name, ₹499 price, image, details) with the campaign URL preserved; uppercase variant TEST-WATR-QR also resolves through the tolerant matcher; campaign attribution (?campaign= → localStorage + /api/scans POST) untouched
+- Campaign-side code (buildProductUrl / buildCampaignUrl, campaigns API include product) inspected — generation is correct; the bug was purely in the landing race + strict slug matching
+- Verified: tsc error profile byte-identical before/after via git stash diff (133 pre-existing, 0 new); next build PASSES (SQLite swap, MySQL schema restored byte-identical, md5 verified; Prisma client regenerated); test dev.db removed after verification
+
+Stage Summary:
+- Campaign/product QR links now reliably land on the linked product: the premature 1-second redirect race is eliminated (waits while ?product= is present, 8s cap) and slug matching tolerates legacy/name-based/case-drifted links; verified end-to-end in a live browser

@@ -115,13 +115,20 @@ for (const dir of requiredDirs) {
   }
 }
 
-// ─── Create Upload Directories ───────────────────────────────
-const uploadDirs = [
-  path.join(standaloneDir, 'public', 'uploads', 'products'),
-  path.join(standaloneDir, 'public', 'uploads', 'videos'),
-  path.join(standaloneDir, 'public', 'uploads', 'audio'),
+// ─── Anchor Upload Storage To The Project Root ───────────────
+// CRITICAL: the Next.js standalone server runs with process.chdir()
+// pointing INSIDE .next/standalone — any upload path resolved from
+// process.cwd() lands inside .next and is DESTROYED on every build
+// (`next build` regenerates .next from scratch). Anchoring uploads
+// to the project root (data/uploads) makes them permanent: neither
+// `npm run build`, `npm run build:plesk`, nor git deploys touch them.
+process.env.UPLOAD_ROOT = path.join(__dirname, 'data', 'uploads');
+const dataUploadDirs = [
+  path.join(process.env.UPLOAD_ROOT, 'products'),
+  path.join(process.env.UPLOAD_ROOT, 'videos'),
+  path.join(process.env.UPLOAD_ROOT, 'audio'),
 ];
-for (const dir of uploadDirs) {
+for (const dir of dataUploadDirs) {
   try {
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });

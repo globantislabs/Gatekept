@@ -33,6 +33,31 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   }
 }
 
+// DELETE /api/orders/[id] — Delete an order (admin only)
+// All children (items, tracking, subscription, invoice) are removed with it
+// via the schema's cascade rules. This also unblocks deleting a product that
+// was only referenced by this order.
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const isAdmin = await checkAdmin(req)
+    if (!isAdmin) {
+      return errorResponse('Unauthorized: Admin access required', 403)
+    }
+
+    const { id } = await params
+    const existing = await db.order.findUnique({ where: { id } })
+    if (!existing) {
+      return errorResponse('Order not found', 404)
+    }
+
+    await db.order.delete({ where: { id } })
+
+    return jsonResponse({ message: 'Order deleted successfully' })
+  } catch (error: any) {
+    return errorResponse(error.message || 'Failed to delete order', 500)
+  }
+}
+
 // PATCH /api/orders/[id] — Update order (OTP-gated for cancellation, or admin status update)
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {

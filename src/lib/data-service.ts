@@ -629,6 +629,13 @@ export const orderService = {
     return res.data || null
   },
 
+  async delete(orderId: string, userId: string): Promise<void> {
+    await apiFetch(`/api/orders/${orderId}`, {
+      method: 'DELETE',
+      headers: getAdminHeaders(userId),
+    })
+  },
+
   async create(data: {
     user_id: string
     items: any[]

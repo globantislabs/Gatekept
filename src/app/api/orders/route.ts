@@ -88,8 +88,20 @@ export async function POST(req: NextRequest) {
     }, 0)
     const totalAmount = subtotal + taxAmount - discountAmount
 
-    // Generate order number
-    const orderNumber = `NJ${Date.now().toString(36).toUpperCase()}${Math.random().toString(36).substring(2, 5).toUpperCase()}`
+    // Generate sequential order number: NJMSPN001, NJMSPN002, ...
+    // This human-friendly ID is used everywhere the order is referenced —
+    // admin panel, profile, WhatsApp, email, SMS, and invoices.
+    const generateOrderNumber = async (): Promise<string> => {
+      const rows = await db.order.findMany({
+        where: { order_number: { startsWith: 'NJMSPN' } },
+        select: { order_number: true },
+      })
+      const maxN = rows.reduce((m, r) => {
+        const n = parseInt(String(r.order_number).slice('NJMSPN'.length), 10)
+        return Number.isFinite(n) && n > m ? n : m
+      }, 0)
+      return `NJMSPN${String(maxN + 1).padStart(3, '0')}`
+    }
 
     // ── Resolve shipping fields when "same as billing" is checked ──
     const isSameAsBilling = same_as_billing !== false
@@ -101,7 +113,12 @@ export async function POST(req: NextRequest) {
     const finalShippingState = isSameAsBilling ? billing_state : shipping_state
     const finalShippingPincode = isSameAsBilling ? billing_pincode : shipping_pincode
 
-    const order = await db.order.create({
+    let order: any = null
+    let lastCreateError: unknown = null
+    for (let attempt = 0; attempt < 5 && !order; attempt++) {
+      const orderNumber = await generateOrderNumber()
+      try {
+        order = await db.order.create({
       data: {
         user_id,
         order_number: orderNumber,
@@ -155,7 +172,18 @@ export async function POST(req: NextRequest) {
         tracking: true,
         invoice: true,
       },
-    })
+        })
+      } catch (e: any) {
+        lastCreateError = e
+        // Retry only on a unique-constraint collision on order_number
+        // (two simultaneous orders racing for the same sequential number)
+        const isDup = e?.code === 'P2002' && JSON.stringify(e?.meta?.target || e?.meta?.field_name || '').includes('order_number')
+        if (!isDup) throw e
+      }
+    }
+    if (!order) {
+      throw lastCreateError || new Error('Failed to create order')
+    }
 
     // ── Auto-generate invoice for this order ──
     try {

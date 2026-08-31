@@ -283,7 +283,7 @@ model Invoice {
 model OrderItem {
   id              String   @id @default(cuid())
   order_id        String
-  product_id      String
+  product_id      String?
   product_name    String
   product_type    String   @default("FIZZ")
   quantity        Int      @default(1)
@@ -295,7 +295,7 @@ model OrderItem {
   created_at      DateTime @default(now())
 
   order           Order    @relation(fields: [order_id], references: [id], onDelete: Cascade)
-  product         Product  @relation(fields: [product_id], references: [id])
+  product         Product?  @relation(fields: [product_id], references: [id], onDelete: SetNull)
 }
 
 // ─── Order Tracking ────────────────────────────────────────────
@@ -317,7 +317,7 @@ model Subscription {
   id              String   @id @default(cuid())
   user_id         String
   order_id        String   @unique
-  product_id      String
+  product_id      String?
   product_name    String
   product_type    String   @default("FIZZ")
   pack_type       String   // 30_DAY, 60_DAY, 90_DAY, 180_DAY
@@ -339,7 +339,7 @@ model Subscription {
 
   user            UserProfile @relation(fields: [user_id], references: [id], onDelete: Cascade)
   order           Order      @relation(fields: [order_id], references: [id], onDelete: Cascade)
-  product         Product    @relation(fields: [product_id], references: [id])
+  product         Product?   @relation(fields: [product_id], references: [id], onDelete: SetNull)
 }
 
 // ─── OTP Verification ──────────────────────────────────────────

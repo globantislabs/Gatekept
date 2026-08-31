@@ -3,7 +3,21 @@ import { readFile, stat, open } from 'fs/promises'
 import path from 'path'
 
 // Serve files from data/uploads/ (persistent) with fallback to public/uploads/ (static)
-const DATA_UPLOAD_ROOT = path.join(process.cwd(), 'data', 'uploads')
+// UPLOAD_ROOT (set by server.js) anchors storage to the PROJECT ROOT so builds
+// that regenerate .next can never delete uploaded videos/images.
+function resolveUploadRoot(): string {
+  if (process.env.UPLOAD_ROOT) return process.env.UPLOAD_ROOT
+  const cwd = process.cwd()
+  // Safety net: Next standalone boots with cwd inside .next/standalone — climb to project root
+  if (path.basename(cwd) === 'standalone' && path.basename(path.dirname(cwd)) === '.next') {
+    return path.join(path.dirname(path.dirname(cwd)), 'data', 'uploads')
+  }
+  return path.join(cwd, 'data', 'uploads')
+}
+
+const DATA_UPLOAD_ROOT = resolveUploadRoot()
+// Legacy locations kept as read fallbacks (older builds stored uploads relative to cwd)
+const LEGACY_UPLOAD_ROOT = path.join(process.cwd(), 'data', 'uploads')
 const PUBLIC_UPLOAD_ROOT = path.join(process.cwd(), 'public', 'uploads')
 
 // MIME type map for common extensions
@@ -27,6 +41,24 @@ const MIME_TYPES: Record<string, string> = {
 // Chunk size for streaming video (1MB)
 const CHUNK_SIZE = 1024 * 1024
 
+// ─── Internal helper: locate an uploaded file across storage roots ───
+// Order: active data/uploads (project-root anchored) → legacy cwd data/uploads → public/uploads
+async function findUploadFile(...pathSegments: string[]): Promise<{ filePath: string; fileSize: number } | null> {
+  const candidates = [DATA_UPLOAD_ROOT, LEGACY_UPLOAD_ROOT, PUBLIC_UPLOAD_ROOT]
+  for (const root of candidates) {
+    const candidatePath = path.join(root, ...pathSegments)
+    // Security: prevent directory traversal
+    if (!path.resolve(candidatePath).startsWith(path.resolve(root))) continue
+    try {
+      const s = await stat(candidatePath)
+      return { filePath: candidatePath, fileSize: s.size }
+    } catch {
+      // try next root
+    }
+  }
+  return null
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ path: string[] }> }
@@ -38,43 +70,13 @@ export async function GET(
       return NextResponse.json({ error: 'No file path provided' }, { status: 400 })
     }
 
-    // Try data/uploads/ first, then public/uploads/
-    const dataFilePath = path.join(DATA_UPLOAD_ROOT, ...pathSegments)
-    const publicFilePath = path.join(PUBLIC_UPLOAD_ROOT, ...pathSegments)
-
-    // Security: prevent directory traversal
-    const resolvedDataPath = path.resolve(dataFilePath)
-    const resolvedPublicPath = path.resolve(publicFilePath)
-    if (
-      !resolvedDataPath.startsWith(path.resolve(DATA_UPLOAD_ROOT)) &&
-      !resolvedPublicPath.startsWith(path.resolve(PUBLIC_UPLOAD_ROOT))
-    ) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-    }
-
-    // Check data/uploads/ first (persistent)
-    let filePath: string | null = null
-    let fileSize = 0
-    try {
-      const s = await stat(dataFilePath)
-      filePath = dataFilePath
-      fileSize = s.size
-    } catch {
-      // Fallback: try public/uploads/
-      try {
-        const s = await stat(publicFilePath)
-        filePath = publicFilePath
-        fileSize = s.size
-      } catch {
-        return NextResponse.json({ error: 'File not found' }, { status: 404 })
-      }
-    }
-
-    if (!filePath) {
+    // Try data/uploads/ first, then legacy cwd uploads, then public/uploads/
+    const found = await findUploadFile(...pathSegments)
+    if (!found) {
       return NextResponse.json({ error: 'File not found' }, { status: 404 })
     }
 
-    return await serveFile(request, filePath, fileSize)
+    return await serveFile(request, found.filePath, found.fileSize)
   } catch (error) {
     console.error('[Serve Upload API] Error:', error)
     return NextResponse.json({ error: 'Failed to serve file' }, { status: 500 })
@@ -93,37 +95,13 @@ export async function HEAD(
       return NextResponse.json({ error: 'No file path provided' }, { status: 400 })
     }
 
-    const dataFilePath = path.join(DATA_UPLOAD_ROOT, ...pathSegments)
-    const publicFilePath = path.join(PUBLIC_UPLOAD_ROOT, ...pathSegments)
-
-    const resolvedDataPath = path.resolve(dataFilePath)
-    const resolvedPublicPath = path.resolve(publicFilePath)
-    if (
-      !resolvedDataPath.startsWith(path.resolve(DATA_UPLOAD_ROOT)) &&
-      !resolvedPublicPath.startsWith(path.resolve(PUBLIC_UPLOAD_ROOT))
-    ) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-    }
-
-    let filePath: string | null = null
-    let fileSize = 0
-    try {
-      const s = await stat(dataFilePath)
-      filePath = dataFilePath
-      fileSize = s.size
-    } catch {
-      try {
-        const s = await stat(publicFilePath)
-        filePath = publicFilePath
-        fileSize = s.size
-      } catch {
-        return NextResponse.json({ error: 'File not found' }, { status: 404 })
-      }
-    }
-
-    if (!filePath) {
+    const found = await findUploadFile(...pathSegments)
+    if (!found) {
       return NextResponse.json({ error: 'File not found' }, { status: 404 })
     }
+
+    const filePath = found.filePath
+    const fileSize = found.fileSize
 
     const ext = path.extname(filePath).toLowerCase()
     const contentType = MIME_TYPES[ext] || 'application/octet-stream'

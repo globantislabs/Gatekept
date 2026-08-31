@@ -1242,6 +1242,24 @@ function AdminDashboard() {
                                     Invoice
                                   </button>
                                 )}
+                                <button
+                                  onClick={async (e) => {
+                                    e.stopPropagation()
+                                    if (!confirm(`Delete order ${o.order_number}? Its items, invoice and subscription records will be removed too.`)) return
+                                    try {
+                                      await orderService.delete(o.id, userId)
+                                      toast.success(`Order ${o.order_number} deleted`)
+                                      refreshData()
+                                    } catch (err: any) {
+                                      toast.error(err?.message || 'Failed to delete order')
+                                    }
+                                  }}
+                                  className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-medium transition-colors"
+                                  style={{ color: A.destructive, background: A.bg, border: `1px solid ${A.borderLight}` }}
+                                  title={`Delete order ${o.order_number}`}
+                                >
+                                  <Trash2 className="w-2.5 h-2.5" />
+                                </button>
                               </div>
                             </div>
                           )
@@ -1271,7 +1289,7 @@ function AdminDashboard() {
                       const inv = (o as any).invoice as InvoiceListItem | null | undefined
                       return (
                         <TableRow key={o.id} className="hover:bg-[#f8f7f5] cursor-pointer" style={{ borderColor: A.borderLight }} onClick={() => setSelectedOrder(o)}>
-                          <TableCell className="font-mono text-[11px]" style={{ color: A.textMuted }}>{o.id.slice(0, 10)}</TableCell>
+                          <TableCell className="font-mono text-[11px]" style={{ color: A.textMuted }}>{o.order_number}</TableCell>
                           <TableCell className="text-[12px]" style={{ color: A.text }}>{(o as any).user?.name || 'Customer'}</TableCell>
                           <TableCell className="font-semibold text-[12px]" style={{ color: A.green }}>₹{(o.total_amount || 0).toLocaleString()}</TableCell>
                           <TableCell><StatusBadge status={o.status} /></TableCell>
@@ -1301,6 +1319,26 @@ function AdminDashboard() {
                                 Generate
                               </Button>
                             )}
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-7 gap-1 text-[11px] rounded-md ml-1"
+                              style={{ borderColor: A.destructive, color: A.destructive }}
+                              title={`Delete order ${o.order_number}`}
+                              onClick={async () => {
+                                if (!confirm(`Delete order ${o.order_number}? Its items, invoice and subscription records will be removed too.`)) return
+                                try {
+                                  await orderService.delete(o.id, userId)
+                                  toast.success(`Order ${o.order_number} deleted`)
+                                  setSelectedOrder(null)
+                                  refreshData()
+                                } catch (err: any) {
+                                  toast.error(err?.message || 'Failed to delete order')
+                                }
+                              }}
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </Button>
                           </TableCell>
                         </TableRow>
                       )
@@ -1317,7 +1355,7 @@ function AdminDashboard() {
                 {selectedOrder && (
                   <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-3 text-sm">
-                      <div><span className="text-[11px]" style={{ color: A.textMuted }}>Order ID</span><p className="font-mono text-[11px]" style={{ color: A.text }}>{selectedOrder.id}</p></div>
+                      <div><span className="text-[11px]" style={{ color: A.textMuted }}>Order ID</span><p className="font-mono text-[11px]" style={{ color: A.text }}>{selectedOrder.order_number}</p></div>
                       <div><span className="text-[11px]" style={{ color: A.textMuted }}>Customer</span><p className="font-medium" style={{ color: A.text }}>{(selectedOrder as any).user?.name || selectedOrder.user_id}</p></div>
                       <div><span className="text-[11px]" style={{ color: A.textMuted }}>Amount</span><p className="font-bold" style={{ color: A.green }}>₹{(selectedOrder.total_amount || 0).toLocaleString()}</p></div>
                       <div><span className="text-[11px]" style={{ color: A.textMuted }}>Status</span><StatusBadge status={selectedOrder.status} /></div>

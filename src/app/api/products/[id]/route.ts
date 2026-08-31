@@ -339,28 +339,25 @@ export async function DELETE(
       return errorResponse('Product not found', 404)
     }
 
-    // Check if product has linked orders (foreign key constraint)
-    const orderItemsResult = await safeDbQuery(
-      (client) => client.orderItem.findFirst({ where: { product_id: id } }),
-      { operationName: `DELETE /api/products/${id} (check orderItems)` }
-    )
-    if (orderItemsResult.success && orderItemsResult.data) {
-      return errorResponse(
-        'Cannot delete product: it has linked orders. Deactivate it instead (set Active = false).',
-        409
-      )
-    }
-
-    // Check linked subscriptions
-    const subscriptionResult = await safeDbQuery(
-      (client) => client.subscription.findFirst({ where: { product_id: id } }),
-      { operationName: `DELETE /api/products/${id} (check subscriptions)` }
-    )
-    if (subscriptionResult.success && subscriptionResult.data) {
-      return errorResponse(
-        'Cannot delete product: it has linked subscriptions. Deactivate it instead (set Active = false).',
-        409
-      )
+    // ── Detach linked records so the product can be deleted while order
+    // history stays intact. OrderItem/Subscription store full snapshots
+    // (product_name, product_type, unit_price, pack info), so clearing the
+    // product link preserves every detail for reporting and invoices.
+    // Each detach is best-effort: if the live DB hasn't received the latest
+    // schema push yet (column still NOT NULL), we skip that detach gracefully.
+    const detachLinks: Array<[string, () => Promise<unknown>]> = [
+      ['order items', () => db.orderItem.updateMany({ where: { product_id: id }, data: { product_id: null } })],
+      ['subscriptions', () => db.subscription.updateMany({ where: { product_id: id }, data: { product_id: null } })],
+      ['campaigns', () => db.campaign.updateMany({ where: { product_id: id }, data: { product_id: null } })],
+      ['videos', () => db.productVideo.deleteMany({ where: { product_id: id } })],
+      ['quizzes', () => db.productQuiz.deleteMany({ where: { product_id: id } })],
+      ['learning progress', () => db.productLearningProgress.deleteMany({ where: { product_id: id } })],
+    ]
+    for (const [label, run] of detachLinks) {
+      const detachResult = await safeDbQuery(run, { operationName: `DELETE /api/products/${id} (detach ${label})` })
+      if (!detachResult.success) {
+        console.warn(`[Products] Could not detach ${label} before delete (continuing):`, detachResult.error?.message)
+      }
     }
 
     const deleteResult = await safeDbQuery(
@@ -369,12 +366,13 @@ export async function DELETE(
     )
 
     if (!deleteResult.success) {
-      // Check if it's a foreign key constraint error
+      // Check if it's a foreign key constraint error (e.g. prod DB schema
+      // not yet pushed — run `prisma db push` / rebuild to align the FKs)
       const errMsg = deleteResult.error?.message || 'Unknown error'
       const isFkError = errMsg.toLowerCase().includes('foreign key') || errMsg.toLowerCase().includes('constraint')
       if (isFkError) {
         return errorResponse(
-          'Cannot delete product: it is linked to existing orders or subscriptions. Deactivate it instead.',
+          'Cannot delete product: the database schema is out of date. Redeploy once so `prisma db push` aligns the foreign keys, then try again.',
           409
         )
       }

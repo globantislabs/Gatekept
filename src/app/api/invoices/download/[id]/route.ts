@@ -78,8 +78,10 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   let lineItems: Array<{ name: string; quantity: number; unit_price: number; total_price: number; pack_type?: string | null }> = []
   try { lineItems = JSON.parse(invoice.items || '[]') } catch { lineItems = [] }
 
-  const issuedDate = new Date(invoice.issued_at).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' })
-  const orderDate = invoice.order?.created_at ? new Date(invoice.order.created_at).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' }) : issuedDate
+  // Pin dates to Indian Standard Time — the server may run in UTC, which would
+  // otherwise show yesterday's date for orders placed early morning IST.
+  const issuedDate = new Date(invoice.issued_at).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', year: 'numeric', month: 'short', day: 'numeric' })
+  const orderDate = invoice.order?.created_at ? new Date(invoice.order.created_at).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', year: 'numeric', month: 'short', day: 'numeric' }) : issuedDate
 
   const totalGst = Number(invoice.tax_amount) || 0
   const cgst = totalGst / 2

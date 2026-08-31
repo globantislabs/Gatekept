@@ -7,8 +7,21 @@ import { existsSync } from 'fs'
 // Saves to data/uploads/ ONLY (persistent across Plesk git pulls — data/ is gitignored)
 // Files are served via GET /api/uploads/[...path] which reads from data/uploads/
 // Returns { url: '/uploads/<type>/<filename>' }
+//
+// UPLOAD_ROOT is set by server.js in production (project root/data/uploads) so
+// uploads NEVER land inside .next — `next build` regenerates .next from scratch
+// and would otherwise wipe every uploaded video/image on each build.
+function resolveUploadRoot(): string {
+  if (process.env.UPLOAD_ROOT) return process.env.UPLOAD_ROOT
+  const cwd = process.cwd()
+  // Safety net: Next standalone boots with cwd inside .next/standalone — climb to project root
+  if (path.basename(cwd) === 'standalone' && path.basename(path.dirname(cwd)) === '.next') {
+    return path.join(path.dirname(path.dirname(cwd)), 'data', 'uploads')
+  }
+  return path.join(cwd, 'data', 'uploads')
+}
 
-const DATA_UPLOAD_ROOT = path.join(process.cwd(), 'data', 'uploads')
+const DATA_UPLOAD_ROOT = resolveUploadRoot()
 
 const MAX_SIZES: Record<string, number> = {
   image: 5 * 1024 * 1024,      // 5MB for images

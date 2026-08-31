@@ -11,6 +11,24 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
 
+    // ── Dedupe bursts: one physical scan must record ONE row ──
+    // QR scanner apps and in-app browsers (WhatsApp/Instagram) often prefetch
+    // or reload the landing URL several times per scan; each load re-posts
+    // here. If an identical scan (same campaign + device signature) was
+    // recorded within the last 60 seconds, return that record instead of
+    // creating a duplicate.
+    const recent = await db.qrScan.findFirst({
+      where: {
+        campaign_id: body.campaign_id || null,
+        device: body.device || null,
+        created_at: { gte: new Date(Date.now() - 60_000) },
+      },
+      orderBy: { created_at: 'desc' },
+    })
+    if (recent) {
+      return jsonResponse({ scan: recent, deduped: true })
+    }
+
     const scan = await db.qrScan.create({
       data: {
         campaign_id: body.campaign_id || null,

@@ -727,3 +727,17 @@ Work Log:
 
 Stage Summary:
 - Every admin page now has working filters that combine with search; all dashboard stat cards, chart cards and quick-stat widgets redirect to their related section; a real-data Scans vs Orders comparison chart with conversion rate sits on the dashboard; Subscribe flow, campaign creation and QR scan dedupe all verified working live
+
+---
+Task ID: 23
+Agent: Super Z (video learning mobile compat + Add-Video form at top + double-upload guard)
+Task: (a) video learning page is not mobile compatible; (b) Add Video form widget loads at the bottom of the Manage Learning Content modal with no clue it needs scrolling — move it to the top; (c) double-clicking Upload/Save saves the video twice
+
+Work Log:
+- Add-Video form moved ABOVE the video list inside the Manage Learning Content modal: the {showAddVideo} form block now renders directly under the "Videos (n)" section header, so it is immediately visible on open (previously it rendered below the entire video list at the bottom of the scrollable modal); the Add Video button now also smooth-scrolls the form into view (same pattern as Edit) so it can never be missed
+- Double-save fixed at the root: handleSaveVideo had no re-entrancy guard, so a double-click on "Add Video" fired productVideoService.create twice and stored duplicate videos; added a videoSaving state — first click sets it, re-entrant calls return immediately, the save button is disabled with a "Saving…" spinner while in flight, and the flag clears in finally
+- Video learning page (ProductLearningModule) mobile fixes: header row now wraps (flex-wrap) with the long product name breaking cleanly (text-lg → text-2xl, break-words, min-width on the text block) and a compact non-shrinking status badge; step progress indicator scrolls horizontally with snap points and touch scrolling, steps no longer compress; video title/controls row wraps with the "Take Quiz" button going full-width on phones; quiz footer wraps and Previous/Next/Submit buttons flex to half/full width on small screens for comfortable touch targets
+- Verified: tsc stash-diff 130 baseline vs 130 after (0 new); next build PASSES (SQLite swap, MySQL schema restored byte-identical md5-verified, Prisma client regenerated); DOM order assert confirms the video form renders above the video list and above the quiz form
+
+Stage Summary:
+- The Add Video form now appears at the top of the videos section (immediately visible, auto-scrolled into view), double-clicking Save can no longer create duplicate videos, and the video learning page lays out cleanly on mobile (wrapping header, scroll-snapping step indicator, full-width CTAs, touch-friendly quiz buttons)

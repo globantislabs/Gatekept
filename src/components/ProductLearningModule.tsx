@@ -546,20 +546,20 @@ export function ProductLearningModule() {
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: BRAND.bg }}>
     <motion.div {...fadeInUp} transition={{ duration: 0.4 }} className="max-w-4xl mx-auto px-4 py-6 flex-1">
       {/* ─── Header ────────────────────────────────────── */}
-      <div className="flex items-center gap-3 mb-4">
+      <div className="flex items-center gap-2 sm:gap-3 mb-4 flex-wrap">
         <Button
           variant="ghost"
           size="sm"
           onClick={() => { setSelectedProductId(null); navigateTo('products') }}
-          className="p-2"
+          className="p-2 shrink-0"
         >
           <ArrowLeft className="h-5 w-5" style={{ color: BRAND.dark }} />
         </Button>
-        <div className="flex-1">
-          <h1 className="font-heading text-xl sm:text-2xl font-bold" style={{ color: BRAND.dark }}>
+        <div className="flex-1 min-w-[140px]">
+          <h1 className="font-heading text-lg sm:text-2xl font-bold break-words" style={{ color: BRAND.dark }}>
             Learn: {product.name}
           </h1>
-          <p className="text-sm" style={{ color: BRAND.muted }}>
+          <p className="text-xs sm:text-sm" style={{ color: BRAND.muted }}>
             Complete each video and quiz to unlock this product
           </p>
         </div>
@@ -568,7 +568,7 @@ export function ProductLearningModule() {
             backgroundColor: currentStep.type === 'completed' ? BRAND.lime : BRAND.surface,
             color: currentStep.type === 'completed' ? BRAND.dark : BRAND.muted,
           }}
-          className="text-xs font-medium"
+          className="text-[10px] sm:text-xs font-medium shrink-0"
         >
           {currentStep.type === 'completed' ? 'Unlocked' : reviewMode ? 'Review Mode' : overallPct > 0 ? `${overallPct}% Progress` : 'Getting started'}
         </Badge>
@@ -577,7 +577,7 @@ export function ProductLearningModule() {
       {/* ─── Step Progress Indicator ───────────────────── */}
       <Card className="mb-6" style={{ borderColor: BRAND.surface }}>
         <CardContent className="p-4">
-          <div className="flex items-center justify-between gap-1 overflow-x-auto pb-1">
+          <div className="flex items-center justify-between gap-1 overflow-x-auto pb-1 snap-x" style={{ WebkitOverflowScrolling: 'touch' }}>
             {stepList.map((step, idx) => {
               const isCurrent =
                 currentStep.type !== 'completed' &&
@@ -649,7 +649,7 @@ export function ProductLearningModule() {
                       }}
                     />
                   )}
-                  <div className="flex flex-col items-center gap-1 min-w-[48px]">
+                  <div className="flex flex-col items-center gap-1 min-w-[48px] shrink-0 snap-start">
                     <div
                       className="h-8 w-8 rounded-full flex items-center justify-center transition-all"
                       style={{ backgroundColor: bgColor, color: iconColor }}
@@ -831,7 +831,7 @@ export function ProductLearningModule() {
                   {currentVideo?.description || ''}
                 </p>
 
-                <div className="flex items-center justify-between mt-4">
+                <div className="flex items-center justify-between gap-2 mt-4 flex-wrap">
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-medium" style={{ color: BRAND.green }}>
                       {videoProgress > 0 ? `${videoProgress}%` : 'Not started'}
@@ -844,6 +844,7 @@ export function ProductLearningModule() {
                   {videoProgress >= 100 && (
                     <Button
                       size="sm"
+                      className="w-full sm:w-auto"
                       style={{ backgroundColor: BRAND.green, color: '#fff' }}
                       onClick={handleVideoComplete}
                     >
@@ -1182,13 +1183,14 @@ export function ProductLearningModule() {
                           </RadioGroup>
                         </CardContent>
 
-                        <CardFooter className="flex justify-between p-6 pt-2">
+                        <CardFooter className="flex justify-between gap-2 flex-wrap p-6 pt-2">
                           <Button
                             variant="outline"
                             disabled={currentQuestionIdx === 0}
                             onClick={() =>
                               setCurrentQuestionIdx(Math.max(0, currentQuestionIdx - 1))
                             }
+                            className="flex-1 sm:flex-none"
                             style={{ borderColor: BRAND.surface, color: BRAND.dark }}
                           >
                             <ArrowLeft className="h-4 w-4 mr-1" /> Previous
@@ -1196,6 +1198,7 @@ export function ProductLearningModule() {
 
                           {currentQuestionIdx < quizQuestions.length - 1 ? (
                             <Button
+                              className="flex-1 sm:flex-none"
                               onClick={() => setCurrentQuestionIdx(currentQuestionIdx + 1)}
                               style={{ backgroundColor: BRAND.green, color: '#fff' }}
                             >
@@ -1203,6 +1206,7 @@ export function ProductLearningModule() {
                             </Button>
                           ) : (
                             <Button
+                              className="flex-1 sm:flex-none"
                               onClick={handleSubmitQuiz}
                               disabled={
                                 Object.keys(answers).length < quizQuestions.length || submitting

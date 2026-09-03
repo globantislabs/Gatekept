@@ -220,6 +220,13 @@ function AdminDashboard() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [orderView, setOrderView] = useState<'kanban' | 'table'>('table')
   const [orderSearch, setOrderSearch] = useState('')
+  const [orderStatusFilter, setOrderStatusFilter] = useState('all')
+  const [orderDateRange, setOrderDateRange] = useState<'all' | 'today' | '7d' | '30d'>('all')
+  const [subSearch, setSubSearch] = useState('')
+  const [subStatusFilter, setSubStatusFilter] = useState('all')
+  const [userFilter, setUserFilter] = useState<'all' | 'completed' | 'pending' | 'admin'>('all')
+  const [invoiceSearch, setInvoiceSearch] = useState('')
+  const [invoiceStatusFilter, setInvoiceStatusFilter] = useState('all')
   const [adminProducts, setAdminProducts] = useState<Product[]>([])
   const [adminSubscriptions, setAdminSubscriptions] = useState<Subscription[]>([])
   const [productVideoCounts, setProductVideoCounts] = useState<Record<string, number>>({})
@@ -710,13 +717,25 @@ function AdminDashboard() {
     { value: 'analytics', label: 'Analytics', icon: TrendingUp, badge: null },
   ]
 
-  const filteredUsers = userSearch
-    ? users.filter((u) => u.name?.toLowerCase().includes(userSearch.toLowerCase()) || u.email?.toLowerCase().includes(userSearch.toLowerCase()))
+  const filteredUsers = (userSearch || userFilter !== 'all')
+    ? users.filter((u) => {
+        const q = userSearch.toLowerCase()
+        const matchSearch = !q || u.name?.toLowerCase().includes(q) || u.email?.toLowerCase().includes(q) || u.phone?.toLowerCase().includes(q)
+        const matchFilter = userFilter === 'all' || (userFilter === 'admin' ? u.is_admin : userFilter === 'completed' ? u.learning_completed : !u.learning_completed)
+        return matchSearch && matchFilter
+      })
     : users
 
   const orderStatuses = ['PLACED', 'CONFIRMED', 'SHIPPED', 'DELIVERED'] as const
   // Search covers order number, customer identity, products, payment and status
-  const filteredOrders = orderSearch.trim()
+  const orderDateCutoff = orderDateRange === 'today'
+    ? new Date(new Date().setHours(0, 0, 0, 0)).getTime()
+    : orderDateRange === '7d'
+      ? Date.now() - 7 * 86400000
+      : orderDateRange === '30d'
+        ? Date.now() - 30 * 86400000
+        : 0
+  const filteredOrders = (orderSearch.trim() || orderStatusFilter !== 'all' || orderDateRange !== 'all')
     ? orders.filter((o) => {
         const u: any = (o as any).user || {}
         const haystack = [
@@ -724,10 +743,52 @@ function AdminDashboard() {
           u.name, u.email, u.phone,
           ...((o.items || []) as any[]).map((i) => i.product_name),
         ].filter(Boolean).join(' ').toLowerCase()
-        return haystack.includes(orderSearch.trim().toLowerCase())
+        const matchSearch = !orderSearch.trim() || haystack.includes(orderSearch.trim().toLowerCase())
+        const matchStatus = orderStatusFilter === 'all' || o.status === orderStatusFilter
+        const matchDate = !orderDateCutoff || new Date(o.created_at).getTime() >= orderDateCutoff
+        return matchSearch && matchStatus && matchDate
       })
     : orders
   const ordersByKanbanStatus = (status: string) => filteredOrders.filter((o) => o.status === status)
+
+  // ── Subscriptions filter (search + status) ──
+  const filteredSubscriptions = (subSearch.trim() || subStatusFilter !== 'all')
+    ? adminSubscriptions.filter((s) => {
+        const u = users.find((x) => x.id === s.user_id)
+        const haystack = [s.id, s.product_name, s.pack_type, s.status, u?.name, u?.email, u?.phone].filter(Boolean).join(' ').toLowerCase()
+        const matchSearch = !subSearch.trim() || haystack.includes(subSearch.trim().toLowerCase())
+        const matchStatus = subStatusFilter === 'all' || s.status === subStatusFilter
+        return matchSearch && matchStatus
+      })
+    : adminSubscriptions
+
+  // ── Invoices filter (search + status) ──
+  const filteredInvoices = (invoiceSearch.trim() || invoiceStatusFilter !== 'all')
+    ? invoices.filter((inv) => {
+        const haystack = [inv.invoice_number, (inv.order as any)?.order_number, inv.customer_name, inv.customer_phone, inv.customer_email, inv.status, inv.payment_status].filter(Boolean).join(' ').toLowerCase()
+        const matchSearch = !invoiceSearch.trim() || haystack.includes(invoiceSearch.trim().toLowerCase())
+        const matchStatus = invoiceStatusFilter === 'all' || inv.status === invoiceStatusFilter
+        return matchSearch && matchStatus
+      })
+    : invoices
+
+  // ── Scans vs orders daily comparison (last 14 days, real data) ──
+  const scanOrderTrend = (() => {
+    const days = 14
+    const start = new Date(); start.setHours(0, 0, 0, 0)
+    const buckets: { key: string; label: string; scans: number; orders: number }[] = []
+    for (let i = days - 1; i >= 0; i--) {
+      const d = new Date(start); d.setDate(d.getDate() - i)
+      buckets.push({ key: d.toISOString().slice(0, 10), label: d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }), scans: 0, orders: 0 })
+    }
+    const byKey = new Map(buckets.map((b) => [b.key, b]))
+    scans.forEach((s) => { const b = byKey.get(String(s.created_at).slice(0, 10)); if (b) b.scans++ })
+    orders.forEach((o) => { const b = byKey.get(String(o.created_at).slice(0, 10)); if (b) b.orders++ })
+    return buckets
+  })()
+  const periodScans = scanOrderTrend.reduce((s, b) => s + b.scans, 0)
+  const periodOrders = scanOrderTrend.reduce((s, b) => s + b.orders, 0)
+  const periodConversion = periodScans ? Math.round((periodOrders / periodScans) * 100) : 0
 
   const statusColors: Record<string, { text: string; bg: string; dot: string }> = {
     PLACED: { text: A.amber, bg: A.amberLight, dot: A.amber },
@@ -759,12 +820,12 @@ function AdminDashboard() {
             {/* Stat Cards */}
             <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
               {[
-                { label: 'Total Users', value: stats.totalUsers, icon: Users, color: A.green, bgColor: A.greenLight, trend: '+12%', sub: `${stats.learningCompleted || stats.learningCompletions} completed learning` },
-                { label: 'QR Scans', value: stats.totalScans, icon: QrCode, color: A.blue, bgColor: A.blueLight, trend: '+8%', sub: `${campaigns.filter(c => c.status === 'ACTIVE').length} active campaigns` },
-                { label: 'Total Orders', value: stats.totalOrders, icon: Package, color: A.lime, bgColor: A.limeLight, trend: '+23%', sub: `${orders.filter((o) => o.status === 'DELIVERED').length} delivered` },
-                { label: 'Revenue', value: `₹${(stats.totalRevenue || 0).toLocaleString()}`, icon: DollarSign, color: A.green, bgColor: A.greenLight, trend: '+15%', sub: `₹${stats.totalRevenue ? Math.round(stats.totalRevenue * 0.3).toLocaleString() : 0} this month` },
+                { label: 'Total Users', value: stats.totalUsers, icon: Users, color: A.green, bgColor: A.greenLight, trend: '+12%', sub: `${stats.learningCompleted || stats.learningCompletions} completed learning`, tab: 'users', tabLabel: 'Users' },
+                { label: 'QR Scans', value: stats.totalScans, icon: QrCode, color: A.blue, bgColor: A.blueLight, trend: '+8%', sub: `${campaigns.filter(c => c.status === 'ACTIVE').length} active campaigns`, tab: 'campaigns', tabLabel: 'Campaigns' },
+                { label: 'Total Orders', value: stats.totalOrders, icon: Package, color: A.lime, bgColor: A.limeLight, trend: '+23%', sub: `${orders.filter((o) => o.status === 'DELIVERED').length} delivered`, tab: 'orders', tabLabel: 'Orders' },
+                { label: 'Revenue', value: `₹${(stats.totalRevenue || 0).toLocaleString()}`, icon: DollarSign, color: A.green, bgColor: A.greenLight, trend: '+15%', sub: `₹${stats.totalRevenue ? Math.round(stats.totalRevenue * 0.3).toLocaleString() : 0} this month`, tab: 'invoices', tabLabel: 'Invoices' },
               ].map(card => (
-                <div key={card.label} className="bg-white border rounded-lg p-4 hover:shadow-sm transition-shadow" style={{ borderColor: A.border }}>
+                <div key={card.label} className="bg-white border rounded-lg p-4 hover:shadow-md transition-all cursor-pointer group" style={{ borderColor: A.border }} onClick={() => setAdminTab(card.tab)} title={`Go to ${card.tabLabel}`}>
                   <div className="flex items-center justify-between mb-3">
                     <div className="w-8 h-8 rounded-md flex items-center justify-center" style={{ backgroundColor: card.bgColor }}>
                       <card.icon className="w-4 h-4" style={{ color: card.color }} />
@@ -774,13 +835,16 @@ function AdminDashboard() {
                   <p className="text-xl font-bold" style={{ color: A.text }}>{card.value}</p>
                   <p className="text-[12px] mt-0.5" style={{ color: A.textSecondary }}>{card.label}</p>
                   <p className="text-[11px] mt-1" style={{ color: A.textMuted }}>{card.sub}</p>
+                  <div className="flex items-center gap-0.5 mt-2 text-[11px] font-semibold transition-opacity opacity-70 group-hover:opacity-100" style={{ color: card.color }}>
+                    Open {card.tabLabel} <ChevronRight className="w-3 h-3" />
+                  </div>
                 </div>
               ))}
             </div>
 
             {/* Charts Row */}
             <div className="grid lg:grid-cols-2 gap-4">
-              <div className="bg-white border rounded-lg p-5" style={{ borderColor: A.border }}>
+              <div className="bg-white border rounded-lg p-5 cursor-pointer hover:shadow-sm transition-shadow" style={{ borderColor: A.border }} onClick={() => setAdminTab('invoices')}>
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-sm font-semibold" style={{ color: A.text }}>Revenue Trend</h3>
                   <span className="text-[11px] px-2 py-0.5 rounded" style={{ background: A.greenLight, color: A.green }}>6 months</span>
@@ -796,7 +860,7 @@ function AdminDashboard() {
                   </LineChart>
                 </ResponsiveContainer>
               </div>
-              <div className="bg-white border rounded-lg p-5" style={{ borderColor: A.border }}>
+              <div className="bg-white border rounded-lg p-5 cursor-pointer hover:shadow-sm transition-shadow" style={{ borderColor: A.border }} onClick={() => setAdminTab('orders')}>
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-sm font-semibold" style={{ color: A.text }}>Orders by Status</h3>
                   <span className="text-[11px] px-2 py-0.5 rounded" style={{ background: A.blueLight, color: A.blue }}>{orders.length} total</span>
@@ -810,6 +874,54 @@ function AdminDashboard() {
                     <Legend formatter={(value: string) => <span style={{ color: A.textSecondary, fontSize: 12 }}>{value}</span>} />
                   </PieChart>
                 </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* ═══ Scans vs Orders Comparison (last 14 days, real data) ═══ */}
+            <div className="grid lg:grid-cols-3 gap-4">
+              <div className="lg:col-span-2 bg-white border rounded-lg p-5" style={{ borderColor: A.border }}>
+                <div className="flex items-center justify-between mb-4 gap-2 flex-wrap">
+                  <div>
+                    <h3 className="text-sm font-semibold" style={{ color: A.text }}>Scans vs Orders — Last 14 Days</h3>
+                    <p className="text-[11px] mt-0.5" style={{ color: A.textMuted }}>Daily QR scans compared with orders placed</p>
+                  </div>
+                  <button onClick={() => setAdminTab('campaigns')} className="text-[11px] font-semibold inline-flex items-center gap-0.5" style={{ color: A.blue }}>
+                    Open Campaigns <ChevronRight className="w-3 h-3" />
+                  </button>
+                </div>
+                <ResponsiveContainer width="100%" height={220}>
+                  <BarChart data={scanOrderTrend} barGap={2}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#eeebe5" />
+                    <XAxis dataKey="label" tick={{ fontSize: 10, fill: A.textMuted }} axisLine={{ stroke: A.border }} interval="preserveStartEnd" />
+                    <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: A.textMuted }} axisLine={{ stroke: A.border }} />
+                    <Tooltip contentStyle={{ backgroundColor: '#fff', border: `1px solid ${A.border}`, borderRadius: 8, color: A.text, fontSize: 12 }} />
+                    <Legend formatter={(value: string) => <span style={{ color: A.textSecondary, fontSize: 12 }}>{value}</span>} />
+                    <Bar dataKey="scans" name="QR Scans" fill={A.blue} radius={[3, 3, 0, 0]} />
+                    <Bar dataKey="orders" name="Orders Placed" fill={A.green} radius={[3, 3, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="bg-white border rounded-lg p-5 flex flex-col justify-center gap-3" style={{ borderColor: A.border }}>
+                <div>
+                  <p className="text-[11px] uppercase tracking-wider" style={{ color: A.textMuted }}>Scans (14d)</p>
+                  <p className="text-2xl font-bold" style={{ color: A.blue }}>{periodScans}</p>
+                </div>
+                <div>
+                  <p className="text-[11px] uppercase tracking-wider" style={{ color: A.textMuted }}>Orders Placed (14d)</p>
+                  <p className="text-2xl font-bold" style={{ color: A.green }}>{periodOrders}</p>
+                </div>
+                <div>
+                  <p className="text-[11px] uppercase tracking-wider" style={{ color: A.textMuted }}>Scan → Order Conversion</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-2xl font-bold" style={{ color: A.lime }}>{periodConversion}%</p>
+                    <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: A.borderLight }}>
+                      <div className="h-full rounded-full" style={{ width: `${Math.min(periodConversion, 100)}%`, background: A.lime }} />
+                    </div>
+                  </div>
+                </div>
+                <button onClick={() => setAdminTab('orders')} className="text-[11px] font-semibold inline-flex items-center gap-0.5 self-start" style={{ color: A.blue }}>
+                  Open Orders <ChevronRight className="w-3 h-3" />
+                </button>
               </div>
             </div>
 
@@ -848,7 +960,7 @@ function AdminDashboard() {
               <div className="bg-white border rounded-lg p-5" style={{ borderColor: A.border }}>
                 <h3 className="text-sm font-semibold mb-4" style={{ color: A.text }}>Quick Stats</h3>
                 <div className="space-y-4">
-                  <div>
+                  <div className="cursor-pointer" onClick={() => setAdminTab('campaigns')}>
                     <div className="flex items-center justify-between mb-1.5">
                       <span className="text-[12px]" style={{ color: A.textSecondary }}>Conversion Rate</span>
                       <span className="text-[12px] font-semibold" style={{ color: A.green }}>{stats.conversionRate}%</span>
@@ -857,7 +969,7 @@ function AdminDashboard() {
                       <div className="h-full rounded-full" style={{ width: `${stats.conversionRate}%`, background: A.green }} />
                     </div>
                   </div>
-                  <div>
+                  <div className="cursor-pointer" onClick={() => setAdminTab('users')}>
                     <div className="flex items-center justify-between mb-1.5">
                       <span className="text-[12px]" style={{ color: A.textSecondary }}>Learning Completion</span>
                       <span className="text-[12px] font-semibold" style={{ color: A.blue }}>{stats.totalUsers ? Math.round(((stats.learningCompleted || stats.learningCompletions) / stats.totalUsers) * 100) : 0}%</span>
@@ -866,7 +978,7 @@ function AdminDashboard() {
                       <div className="h-full rounded-full" style={{ width: `${stats.totalUsers ? Math.round(((stats.learningCompleted || stats.learningCompletions) / stats.totalUsers) * 100) : 0}%`, background: A.blue }} />
                     </div>
                   </div>
-                  <div>
+                  <div className="cursor-pointer" onClick={() => setAdminTab('orders')}>
                     <div className="flex items-center justify-between mb-1.5">
                       <span className="text-[12px]" style={{ color: A.textSecondary }}>Order Fulfillment</span>
                       <span className="text-[12px] font-semibold" style={{ color: A.lime }}>{stats.totalOrders ? Math.round((orders.filter((o) => o.status === 'DELIVERED').length / stats.totalOrders) * 100) : 0}%</span>
@@ -896,15 +1008,24 @@ function AdminDashboard() {
       case 'users':
         return (
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-3 flex-wrap">
               <div>
                 <h2 className="text-base font-semibold" style={{ color: A.text }}>Users</h2>
-                <p className="text-[12px]" style={{ color: A.textMuted }}>{users.length} registered users</p>
+                <p className="text-[12px]" style={{ color: A.textMuted }}>
+                  {userFilter !== 'all' || userSearch ? `${filteredUsers.length} of ${users.length} users shown` : `${users.length} registered users`}
+                </p>
               </div>
               <div className="relative">
                 <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2" style={{ color: A.textMuted }} />
                 <Input placeholder="Search users..." value={userSearch} onChange={e => setUserSearch(e.target.value)} className="pl-9 w-64 h-8 text-sm" style={{ background: '#fff', borderColor: A.border, color: A.text }} />
               </div>
+            </div>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {(['all', 'completed', 'pending', 'admin'] as const).map((f) => (
+                <button key={f} onClick={() => setUserFilter(f)} className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${userFilter === f ? 'text-white' : ''}`} style={userFilter === f ? { background: A.green, color: '#fff' } : { background: A.bg, color: A.textSecondary }}>
+                  {f === 'all' ? 'All Users' : f === 'completed' ? 'Learning Completed' : f === 'pending' ? 'Learning Pending' : 'Admins'}
+                </button>
+              ))}
             </div>
             <div className="bg-white border rounded-lg overflow-hidden" style={{ borderColor: A.border }}>
               <Table>
@@ -1688,6 +1809,19 @@ function AdminDashboard() {
               </Button>
             </div>
 
+            {/* Search + status filters */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className="relative flex-1 min-w-[220px] sm:max-w-xs">
+                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2" style={{ color: A.textMuted }} />
+                <Input placeholder="Search invoice #, order #, customer…" value={invoiceSearch} onChange={e => setInvoiceSearch(e.target.value)} className="pl-9 h-8 text-sm w-full" style={{ background: '#fff', borderColor: A.border, color: A.text }} />
+              </div>
+              {(['all', 'ISSUED', 'PAID', 'CANCELLED', 'OVERDUE'] as const).map((f) => (
+                <button key={f} onClick={() => setInvoiceStatusFilter(f)} className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${invoiceStatusFilter === f ? 'text-white' : ''}`} style={invoiceStatusFilter === f ? { background: A.green, color: '#fff' } : { background: A.bg, color: A.textSecondary }}>
+                  {f === 'all' ? 'All' : f.charAt(0) + f.slice(1).toLowerCase()}
+                </button>
+              ))}
+            </div>
+
             {/* Summary Cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
               <div className="bg-white border rounded-lg p-4" style={{ borderColor: A.border }}>
@@ -1734,10 +1868,10 @@ function AdminDashboard() {
 
             {/* Invoices Table */}
             <div className="bg-white border rounded-lg overflow-hidden" style={{ borderColor: A.border }}>
-              {invoices.length === 0 ? (
+              {filteredInvoices.length === 0 ? (
                 <div className="p-12 text-center">
                   <Receipt className="w-12 h-12 mx-auto mb-3" style={{ color: A.textMuted, opacity: 0.3 }} />
-                  <p className="text-sm font-medium" style={{ color: A.text }}>No invoices yet</p>
+                  <p className="text-sm font-medium" style={{ color: A.text }}>{invoiceSearch.trim() || invoiceStatusFilter !== 'all' ? 'No invoices match your filters' : 'No invoices yet'}</p>
                   <p className="text-[12px] mt-1" style={{ color: A.textMuted }}>Invoices are auto-generated when orders are placed.</p>
                 </div>
               ) : (
@@ -1756,7 +1890,7 @@ function AdminDashboard() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {invoices.map(inv => (
+                      {filteredInvoices.map(inv => (
                         <TableRow key={inv.id} className="cursor-pointer hover:bg-gray-50" onClick={() => setSelectedInvoice(inv)}>
                           <TableCell className="text-[12px] font-mono font-semibold" style={{ color: A.text }}>{inv.invoice_number}</TableCell>
                           <TableCell className="text-[11px] font-mono" style={{ color: A.textSecondary }}>{inv.order?.order_number || '—'}</TableCell>
@@ -1796,11 +1930,24 @@ function AdminDashboard() {
       case 'subscriptions':
         return (
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-3 flex-wrap">
               <div>
                 <h2 className="text-base font-semibold" style={{ color: A.text }}>Subscriptions</h2>
-                <p className="text-[12px]" style={{ color: A.textMuted }}>{adminSubscriptions.length} total subscriptions</p>
+                <p className="text-[12px]" style={{ color: A.textMuted }}>
+                  {subSearch.trim() || subStatusFilter !== 'all' ? `${filteredSubscriptions.length} of ${adminSubscriptions.length} subscriptions shown` : `${adminSubscriptions.length} total subscriptions`}
+                </p>
               </div>
+              <div className="relative">
+                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2" style={{ color: A.textMuted }} />
+                <Input placeholder="Search ID, user, product, pack…" value={subSearch} onChange={e => setSubSearch(e.target.value)} className="pl-9 w-full sm:w-64 h-8 text-sm" style={{ background: '#fff', borderColor: A.border, color: A.text }} />
+              </div>
+            </div>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {(['all', 'ACTIVE', 'PAUSED', 'CANCELLED', 'EXPIRED'] as const).map((f) => (
+                <button key={f} onClick={() => setSubStatusFilter(f)} className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${subStatusFilter === f ? 'text-white' : ''}`} style={subStatusFilter === f ? { background: A.green, color: '#fff' } : { background: A.bg, color: A.textSecondary }}>
+                  {f === 'all' ? 'All' : f.charAt(0) + f.slice(1).toLowerCase()}
+                </button>
+              ))}
             </div>
             {/* Stats Cards */}
             <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
@@ -1834,7 +1981,7 @@ function AdminDashboard() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {adminSubscriptions.map(sub => {
+                  {filteredSubscriptions.map(sub => {
                     const subUser = users.find(u => u.id === sub.user_id)
                     const subProduct = adminProducts.find(p => p.id === sub.product_id)
                     return (
@@ -1851,10 +1998,12 @@ function AdminDashboard() {
                   })}
                 </TableBody>
               </Table>
-              {adminSubscriptions.length === 0 && (
+              {filteredSubscriptions.length === 0 && (
                 <div className="py-16 text-center">
                   <CreditCard className="w-10 h-10 mx-auto mb-3" style={{ color: A.border }} />
-                  <p className="text-sm" style={{ color: A.textMuted }}>No subscriptions yet.</p>
+                  <p className="text-sm" style={{ color: A.textMuted }}>
+                    {subSearch.trim() || subStatusFilter !== 'all' ? 'No subscriptions match your filters.' : 'No subscriptions yet.'}
+                  </p>
                 </div>
               )}
             </div>
@@ -3076,6 +3225,8 @@ function AdminDashboard() {
 // ============================================================
 function CampaignManagerInner({ campaigns, setCampaigns, scans, orders, userId, products }: { campaigns: Campaign[]; setCampaigns: React.Dispatch<React.SetStateAction<Campaign[]>>; scans: QrScan[]; orders: Order[]; userId: string; products: Product[] }) {
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [campaignSearch, setCampaignSearch] = useState('')
+  const [campaignStatusFilter, setCampaignStatusFilter] = useState<'all' | 'ACTIVE' | 'ARCHIVED'>('all')
   const [detailCampaign, setDetailCampaign] = useState<Campaign | null>(null)
   const [form, setForm] = useState<{ name: string; channel: string; partner_name: string; location: string; product_id: string }>({ name: '', channel: 'HOTEL', partner_name: '', location: '', product_id: '' })
 
@@ -3085,6 +3236,15 @@ function CampaignManagerInner({ campaigns, setCampaigns, scans, orders, userId, 
   }
 
   const getProductById = (id?: string | null) => products.find(p => p.id === id) || null
+
+  const filteredCampaigns = (campaignSearch.trim() || campaignStatusFilter !== 'all')
+    ? campaigns.filter((c) => {
+        const haystack = [c.name, c.channel, c.partner_name, c.location, (c.product as any)?.name].filter(Boolean).join(' ').toLowerCase()
+        const matchSearch = !campaignSearch.trim() || haystack.includes(campaignSearch.trim().toLowerCase())
+        const matchStatus = campaignStatusFilter === 'all' || c.status === campaignStatusFilter
+        return matchSearch && matchStatus
+      })
+    : campaigns
 
   const handleCreate = async () => {
     if (!form.name) { toast.error('Campaign name is required'); return }
@@ -3134,11 +3294,25 @@ function CampaignManagerInner({ campaigns, setCampaigns, scans, orders, userId, 
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
         <div>
           <h2 className="text-base font-semibold" style={{ color: A.text }}>Campaigns</h2>
-          <p className="text-[12px]" style={{ color: A.textMuted }}>{campaigns.length} total campaigns</p>
+          <p className="text-[12px]" style={{ color: A.textMuted }}>
+            {campaignSearch.trim() || campaignStatusFilter !== 'all' ? `${filteredCampaigns.length} of ${campaigns.length} campaigns shown` : `${campaigns.length} total campaigns`}
+          </p>
         </div>
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="relative">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2" style={{ color: A.textMuted }} />
+            <Input placeholder="Search name, partner, channel…" value={campaignSearch} onChange={e => setCampaignSearch(e.target.value)} className="pl-9 h-8 text-sm w-full sm:w-56" style={{ background: '#fff', borderColor: A.border, color: A.text }} />
+          </div>
+          {(['all', 'ACTIVE', 'ARCHIVED'] as const).map((f) => (
+            <button key={f} onClick={() => setCampaignStatusFilter(f)} className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${campaignStatusFilter === f ? 'text-white' : ''}`} style={campaignStatusFilter === f ? { background: A.green, color: '#fff' } : { background: A.bg, color: A.textSecondary }}>
+              {f === 'all' ? 'All' : f.charAt(0) + f.slice(1).toLowerCase()}
+            </button>
+          ))}
+        </div>
+      </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
             <Button size="sm" className="rounded-md text-[12px] h-8 text-white" style={{ background: A.green }}>
@@ -3190,10 +3364,9 @@ function CampaignManagerInner({ campaigns, setCampaigns, scans, orders, userId, 
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      </div>
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        {campaigns.map(campaign => {
+        {filteredCampaigns.map(campaign => {
           const linkedProduct = campaign.product || getProductById(campaign.product_id)
           const qrUrl = buildCampaignUrl(campaign, linkedProduct)
           return (
@@ -3230,10 +3403,12 @@ function CampaignManagerInner({ campaigns, setCampaigns, scans, orders, userId, 
             </div>
           )
         })}
-        {campaigns.length === 0 && (
+        {filteredCampaigns.length === 0 && (
           <div className="col-span-full bg-white border rounded-lg py-16 text-center" style={{ borderColor: A.border }}>
             <Megaphone className="w-10 h-10 mx-auto mb-3" style={{ color: A.border }} />
-            <p className="text-sm" style={{ color: A.textMuted }}>No campaigns yet. Create one to get started.</p>
+            <p className="text-sm" style={{ color: A.textMuted }}>
+              {campaignSearch.trim() || campaignStatusFilter !== 'all' ? 'No campaigns match your filters.' : 'No campaigns yet. Create one to get started.'}
+            </p>
           </div>
         )}
       </div>
